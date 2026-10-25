@@ -103,14 +103,14 @@ Expected: failures because the registry and version contracts do not yet exist.
   - Candidate creation is a pure copy-and-merge of generic policy parameters.
   - A failed report must not alter active version or history of accepted versions.
   - A rollback must preserve the rejected/current version in history and activate only an existing accepted target.
-- [ ] **Step 4: Run evolution tests and the full suite**
+- [ ] **Step 4: Run evolution tests and the compatible focused suite; defer full-suite verification until Task 3**
 
 ```powershell
 uv run --locked pytest tests/test_evolution.py -q
-uv run --locked pytest -q
+uv run --locked pytest tests/test_contract.py tests/test_tools.py tests/test_evolution.py -q
 ```
 
-Expected: all tests pass.
+Expected: all listed tests pass. The legacy graph/demo tests remain temporarily incompatible until Task 3 migrates their incident-shaped API, as recorded in the ledger.
 
 ### Task 3: Extend LangGraph into a simulated decision, approval, and feedback flow
 
