@@ -40,5 +40,6 @@ uv run pytest -q
 ```
 
 技术基线可由 `decision_poc.evaluation.evaluate_cases` 记录：完成数、阻断数、错误数、步骤数、重试次数、序列化结果和耗时；它不替代最终行业评价指标。
+固定的通用基线入口和风险清单见 [`docs/technical-baseline.md`](docs/technical-baseline.md)。
 
 未覆盖：真实 LLM 推理质量、真实工具副作用、人工审批持久化、LangGraph 检查点恢复、真实 Nexent 接入和生产级错误恢复。策略候选、评测门禁和回滚已在内存注册表中验证，但尚未接入持久化存储。该 PoC 不能作为生产实现或比赛完整方案。
