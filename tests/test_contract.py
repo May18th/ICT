@@ -94,7 +94,6 @@ def test_decision_policy_defaults_are_domain_neutral_and_bounded():
     policy = DecisionPolicy()
 
     assert policy.max_tool_attempts == 2
-    assert policy.approval_risk_levels == [RiskLevel.HIGH]
     assert policy.initial_parameters == {}
 
     with pytest.raises(ValidationError):

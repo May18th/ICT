@@ -154,6 +154,20 @@ def test_missing_approval_blocks_high_risk_execution():
     assert result["termination_reason"] == "approval_required"
 
 
+def test_missing_approval_blocks_low_risk_execution_too():
+    result = asyncio.run(
+        run_decision_async(
+            _request("req-low"),
+            model_output=_model_output("req-low", risk_level="low"),
+            evidence_results=[_evidence()],
+            approval=None,
+        )
+    )
+
+    assert result["execution"] is None
+    assert result["termination_reason"] == "approval_required"
+
+
 def test_unknown_approval_value_is_rejected():
     with pytest.raises(ValueError, match="approval"):
         asyncio.run(
@@ -167,15 +181,19 @@ def test_unknown_approval_value_is_rejected():
 
 
 def test_invalid_decision_stops_before_approval():
-    with pytest.raises(ValueError, match="request_id mismatch"):
-        asyncio.run(
-            run_decision_async(
-                _request(),
-                model_output=_model_output("wrong-request"),
-                evidence_results=[_evidence()],
-                approval="approved",
-            )
+    result = asyncio.run(
+        run_decision_async(
+            _request(),
+            model_output=_model_output("wrong-request"),
+            evidence_results=[_evidence()],
+            approval="approved",
         )
+    )
+
+    assert result["execution"] is None
+    assert result["termination_reason"] == "decision_invalid"
+    assert result["error"]["code"] == "DECISION_INVALID"
+    assert result["trace"][-1] == "decision_validation_failed"
 
 
 def test_graph_state_is_json_serializable_after_success_and_tool_failure():
@@ -210,7 +228,7 @@ def test_transient_evidence_failure_retries_and_records_attempt_count():
             _request(),
             model_output=_model_output(),
             evidence_results=[_failed_evidence(), _evidence()],
-            approval=None,
+            approval="approved",
         )
     )
 
@@ -222,30 +240,36 @@ def test_decision_cannot_cite_evidence_not_returned_by_tool():
     mismatched = _evidence()
     mismatched.data["items"][0]["content"] = "Different observation"
 
-    with pytest.raises(ValueError, match="evidence not found"):
-        asyncio.run(
-            run_decision_async(
-                _request(),
-                model_output=_model_output(),
-                evidence_results=[mismatched],
-                approval="approved",
-            )
+    result = asyncio.run(
+        run_decision_async(
+            _request(),
+            model_output=_model_output(),
+            evidence_results=[mismatched],
+            approval="approved",
         )
+    )
+
+    assert result["execution"] is None
+    assert result["termination_reason"] == "decision_invalid"
+    assert result["error"]["code"] == "DECISION_INVALID"
 
 
 def test_decision_evidence_must_match_source_and_version():
     mismatched = _evidence()
     mismatched.data["items"][0]["source"] = "mock://different-source"
 
-    with pytest.raises(ValueError, match="evidence not found"):
-        asyncio.run(
-            run_decision_async(
-                _request(),
-                model_output=_model_output(),
-                evidence_results=[mismatched],
-                approval="approved",
-            )
+    result = asyncio.run(
+        run_decision_async(
+            _request(),
+            model_output=_model_output(),
+            evidence_results=[mismatched],
+            approval="approved",
         )
+    )
+
+    assert result["execution"] is None
+    assert result["termination_reason"] == "decision_invalid"
+    assert result["error"]["code"] == "DECISION_INVALID"
 
 
 def test_empty_scripted_evidence_does_not_fabricate_context_evidence():

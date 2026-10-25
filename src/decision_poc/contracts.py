@@ -63,7 +63,6 @@ class RiskLevel(StrEnum):
 
 class DecisionPolicy(StrictModel):
     max_tool_attempts: int = Field(default=2, ge=1, le=10)
-    approval_risk_levels: list[RiskLevel] = Field(default_factory=lambda: [RiskLevel.HIGH])
     initial_parameters: dict[str, Any] = Field(default_factory=dict)
 
 
