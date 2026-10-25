@@ -1,5 +1,5 @@
 """Minimal LangGraph + Pydantic AI + LangChain decision PoC."""
 
-from .contracts import DecisionInput, DecisionOutput
+from .contracts import DecisionOutput, DecisionRequest, ToolResult
 
-__all__ = ["DecisionInput", "DecisionOutput"]
+__all__ = ["DecisionOutput", "DecisionRequest", "ToolResult"]
