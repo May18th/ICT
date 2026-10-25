@@ -52,3 +52,20 @@ class SimulatedEvidenceTool:
                 "stats": ToolStats(attempt=attempts, latency_ms=latency_ms),
             }
         )
+
+
+class SimulatedActionTool:
+    """Return an execution envelope without performing a real side effect."""
+
+    def run(self, *, request_id: str, option_id: str) -> ToolResult:
+        return ToolResult(
+            status="ok",
+            data={
+                "request_id": request_id,
+                "option_id": option_id,
+                "simulated": True,
+            },
+            error=None,
+            stats=ToolStats(attempt=1, latency_ms=0),
+            context=ToolContext(source="mock://action", version="v1"),
+        )

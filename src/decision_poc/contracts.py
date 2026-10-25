@@ -61,6 +61,12 @@ class RiskLevel(StrEnum):
     HIGH = "high"
 
 
+class DecisionPolicy(StrictModel):
+    max_tool_attempts: int = Field(default=2, ge=1, le=10)
+    approval_risk_levels: list[RiskLevel] = Field(default_factory=lambda: [RiskLevel.HIGH])
+    initial_parameters: dict[str, Any] = Field(default_factory=dict)
+
+
 class FeedbackOutcome(StrEnum):
     POSITIVE = "positive"
     NEGATIVE = "negative"
@@ -91,6 +97,22 @@ class EvaluationReport(StrictModel):
     passed: bool
     metrics: dict[str, float | int | str]
     notes: str
+
+
+class ApprovalStatus(StrEnum):
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    REQUIRED = "required"
+
+
+class ApprovalDecision(StrictModel):
+    status: ApprovalStatus
+    reason: str
+
+    @field_validator("reason")
+    @classmethod
+    def reject_blank_reason(cls, value: str) -> str:
+        return _nonblank(value)
 
 
 class VersionHistoryEntry(StrictModel):

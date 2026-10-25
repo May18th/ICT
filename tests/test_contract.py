@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from decision_poc.contracts import (
     DecisionOption,
     DecisionOutput,
+    DecisionPolicy,
     DecisionRequest,
     EvidenceItem,
     RiskLevel,
@@ -87,3 +88,14 @@ def test_tool_result_status_and_error_fields_must_agree():
 
     with pytest.raises(ValidationError, match="non-error status forbids error"):
         ToolResult(status="ok", error=error, **common)
+
+
+def test_decision_policy_defaults_are_domain_neutral_and_bounded():
+    policy = DecisionPolicy()
+
+    assert policy.max_tool_attempts == 2
+    assert policy.approval_risk_levels == [RiskLevel.HIGH]
+    assert policy.initial_parameters == {}
+
+    with pytest.raises(ValidationError):
+        DecisionPolicy(max_tool_attempts=0)

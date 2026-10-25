@@ -1,36 +1,40 @@
+import json
 from typing import Any
 
 from pydantic_ai import Agent
 from pydantic_ai.models.test import TestModel
 
-from .contracts import DecisionInput, DecisionOutput
+from .contracts import DecisionOutput, DecisionRequest
 
 
 def _build_agent() -> Agent:
     return Agent(
         output_type=DecisionOutput,
         instructions=(
-            "Return a typed incident decision. Include evidence and risks. "
-            "Do not invent an incident id; copy the request incident_id."
+            "Generate a domain-neutral decision using only the supplied request "
+            "and evidence. Return a selected option, explicit risks, and evidence. "
+            "Copy request_id exactly from the request."
         ),
     )
 
 
-def _prompt(request: DecisionInput) -> str:
-    return (
-        f"incident_id={request.incident_id}\n"
-        f"service={request.service}\n"
-        f"alert={request.alert}"
+def _prompt(request: DecisionRequest, evidence: list[dict[str, Any]]) -> str:
+    return json.dumps(
+        {"request": request.model_dump(mode="json"), "evidence": evidence},
+        ensure_ascii=False,
+        sort_keys=True,
     )
 
 
 async def generate_decision_async(
-    request: DecisionInput, model_output: dict[str, Any]
+    request: DecisionRequest,
+    evidence: list[dict[str, Any]],
+    model_output: dict[str, Any],
 ) -> DecisionOutput:
     """Run the typed agent with a deterministic, credential-free test model."""
 
     result = await _build_agent().run(
-        _prompt(request),
+        _prompt(request, evidence),
         model=TestModel(custom_output_args=model_output),
     )
     return result.output
