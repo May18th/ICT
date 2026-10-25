@@ -1,4 +1,5 @@
 from enum import StrEnum
+from typing import Literal
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -58,6 +59,46 @@ class RiskLevel(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+
+
+class FeedbackOutcome(StrEnum):
+    POSITIVE = "positive"
+    NEGATIVE = "negative"
+    NEUTRAL = "neutral"
+
+
+class FeedbackRecord(StrictModel):
+    request_id: str = Field(min_length=1)
+    outcome: FeedbackOutcome
+    note: str
+    proposed_updates: dict[str, Any]
+
+    @field_validator("request_id")
+    @classmethod
+    def reject_blank_request_id(cls, value: str) -> str:
+        return _nonblank(value)
+
+
+class PolicyVersion(StrictModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    version_id: str = Field(min_length=1)
+    parent_version_id: str | None
+    parameters: dict[str, Any]
+
+
+class EvaluationReport(StrictModel):
+    passed: bool
+    metrics: dict[str, float | int | str]
+    notes: str
+
+
+class VersionHistoryEntry(StrictModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    action: Literal["proposed", "promoted", "rejected", "rollback"]
+    version_id: str
+    target_version_id: str | None = None
 
 
 class DecisionOutput(StrictModel):
