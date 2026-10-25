@@ -63,14 +63,13 @@ Expected: collection or assertion failures for the not-yet-defined generic contr
   - Keep unknown input fields forbidden.
   - Validate nonblank identifiers and text, confidence in `[0, 1]`, selected option membership, and nonempty evidence for a usable decision.
   - Preserve the final structured error and attempt count when retries are exhausted.
-- [ ] **Step 4: Run the focused tests and then the full suite**
+- [ ] **Step 4: Run the focused tests; defer full-suite verification until Task 3 migrates graph consumers**
 
 ```powershell
 uv run --locked pytest tests/test_contract.py tests/test_tools.py -q
-uv run --locked pytest -q
 ```
 
-Expected: all focused tests and the full suite pass.
+Expected: all focused tests pass. The pre-existing graph/demo suite intentionally cannot collect until Task 3 replaces its incident-shaped API; this temporary incompatibility is recorded in the execution ledger and must be cleared by Task 3.
 
 ### Task 2: Implement feedback and evaluation-gated policy versioning
 
