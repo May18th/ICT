@@ -48,10 +48,10 @@
 - `ToolResult(status, data, error, stats, context)` with explicit `ToolError(code, message, retryable)`, attempt/latency stats, and source/version context.
 - `SimulatedEvidenceTool.run(request, scripted_results) -> ToolResult` retries retryable outcomes only up to `max_attempts`; it performs no external I/O.
 
-- [ ] **Step 1: Write contract and tool tests first**
+- [x] **Step 1: Write contract and tool tests first**
   - Replace incident-specific tests with generic request validation and decision correlation/evidence schema tests.
   - Add `test_transient_tool_error_retries_until_success`, `test_tool_retries_are_bounded`, and `test_non_retryable_tool_error_is_not_retried`.
-- [ ] **Step 2: Run the focused tests and verify expected failures**
+- [x] **Step 2: Run the focused tests and verify expected failures**
 
 ```powershell
 uv run --locked pytest tests/test_contract.py tests/test_tools.py -q
@@ -59,11 +59,11 @@ uv run --locked pytest tests/test_contract.py tests/test_tools.py -q
 
 Expected: collection or assertion failures for the not-yet-defined generic contracts/tool behavior.
 
-- [ ] **Step 3: Implement generic Pydantic models and the deterministic mock tool**
+- [x] **Step 3: Implement generic Pydantic models and the deterministic mock tool**
   - Keep unknown input fields forbidden.
   - Validate nonblank identifiers and text, confidence in `[0, 1]`, selected option membership, and nonempty evidence for a usable decision.
   - Preserve the final structured error and attempt count when retries are exhausted.
-- [ ] **Step 4: Run the focused tests; defer full-suite verification until Task 3 migrates graph consumers**
+- [x] **Step 4: Run the focused tests; defer full-suite verification until Task 3 migrates graph consumers**
 
 ```powershell
 uv run --locked pytest tests/test_contract.py tests/test_tools.py -q
@@ -86,12 +86,12 @@ Expected: all focused tests pass. The pre-existing graph/demo suite intentionall
 - `VersionRegistry.promote(candidate, report) -> PolicyVersion` changes active version only when `report.passed` is true.
 - `VersionRegistry.rollback(version_id) -> PolicyVersion` only targets a known version and records the rollback in history.
 
-- [ ] **Step 1: Write version lifecycle tests first**
+- [x] **Step 1: Write version lifecycle tests first**
   - Add `test_feedback_creates_candidate_without_mutating_active_version`.
   - Add `test_failed_evaluation_keeps_active_version_unchanged`.
   - Add `test_passed_evaluation_promotes_candidate`.
   - Add `test_rollback_restores_known_previous_version_and_unknown_version_fails`.
-- [ ] **Step 2: Run the focused tests and verify the missing behavior**
+- [x] **Step 2: Run the focused tests and verify the missing behavior**
 
 ```powershell
 uv run --locked pytest tests/test_evolution.py -q
@@ -99,11 +99,11 @@ uv run --locked pytest tests/test_evolution.py -q
 
 Expected: failures because the registry and version contracts do not yet exist.
 
-- [ ] **Step 3: Implement immutable candidate creation, evaluation gate, and rollback**
+- [x] **Step 3: Implement immutable candidate creation, evaluation gate, and rollback**
   - Candidate creation is a pure copy-and-merge of generic policy parameters.
   - A failed report must not alter active version or history of accepted versions.
   - A rollback must preserve the rejected/current version in history and activate only an existing accepted target.
-- [ ] **Step 4: Run evolution tests and the compatible focused suite; defer full-suite verification until Task 3**
+- [x] **Step 4: Run evolution tests and the compatible focused suite; defer full-suite verification until Task 3**
 
 ```powershell
 uv run --locked pytest tests/test_evolution.py -q
@@ -119,7 +119,6 @@ Expected: all listed tests pass. The legacy graph/demo tests remain temporarily 
 - Modify: `src/decision_poc/agent.py`
 - Modify: `src/decision_poc/contracts.py`
 - Modify: `src/decision_poc/tools.py`
-- Create: `tests/test_graph.py`
 - Modify: `tests/test_decision_flow.py`
 
 **Interfaces:**
@@ -128,13 +127,13 @@ Expected: all listed tests pass. The legacy graph/demo tests remain temporarily 
 - Graph nodes execute in this order: collect evidence → generate typed decision → validate correlation/evidence → route simulated approval → simulate execution only if approved → record feedback → propose candidate → evaluate and promote/retain active version.
 - A single `DecisionPolicy` supplies `max_tool_attempts` and required-approval risk levels; no industry behavior is encoded.
 
-- [ ] **Step 1: Write graph branch and serialization tests first**
+- [x] **Step 1: Write graph branch and serialization tests first**
   - Add `test_approved_request_reaches_simulated_execution_and_feedback`.
   - Add `test_rejected_approval_blocks_execution` and `test_missing_approval_blocks_high_risk_execution`.
   - Add `test_invalid_decision_stops_before_approval`.
   - Add `test_graph_state_is_json_serializable_after_success_and_tool_failure`.
   - Preserve LangChain sync and async Runnable boundary tests using the new generic input.
-- [ ] **Step 2: Run focused tests and verify expected failures**
+- [x] **Step 2: Run focused tests and verify expected failures**
 
 ```powershell
 uv run --locked pytest tests/test_graph.py tests/test_decision_flow.py -q
@@ -142,12 +141,12 @@ uv run --locked pytest tests/test_graph.py tests/test_decision_flow.py -q
 
 Expected: failures for the not-yet-implemented graph branches and generic API.
 
-- [ ] **Step 3: Implement graph state/nodes and explicit routing**
+- [x] **Step 3: Implement graph state/nodes and explicit routing**
   - Store only JSON-compatible values in LangGraph state; validate with Pydantic at node boundaries.
   - Stop before execution on evidence/decision validation errors or denied/missing required approval.
   - Use simulated tool envelopes and bounded retries; retain error, attempt count, and trace.
   - Invoke the version registry after feedback; report whether the candidate was promoted or retained as unevaluated/rejected, without inventing a domain score.
-- [ ] **Step 4: Run graph tests and the full suite**
+- [x] **Step 4: Run graph tests and the full suite**
 
 ```powershell
 uv run --locked pytest tests/test_graph.py tests/test_decision_flow.py -q
@@ -169,11 +168,11 @@ Expected: all success, rejection, failure, and serialization cases pass.
 - `evaluate_cases(runnable, cases) -> EvaluationSummary` records technical outcomes: completed/blocked/error counts, graph steps, retry totals, serialization status, and elapsed time for observation only.
 - Evaluation cases can supply arbitrary assertions/expectations; no fixed final competition or industry thresholds are introduced.
 
-- [ ] **Step 1: Write boundary and baseline tests first**
+- [x] **Step 1: Write boundary and baseline tests first**
   - Add `test_langchain_adapter_calls_graph_and_returns_json_safe_output`.
   - Add `test_evaluation_summary_records_generic_technical_baselines`.
   - Add `test_evaluation_does_not_claim_promotion_when_case_fails`.
-- [ ] **Step 2: Run focused tests and verify missing behavior**
+- [x] **Step 2: Run focused tests and verify missing behavior**
 
 ```powershell
 uv run --locked pytest tests/test_decision_flow.py tests/test_evaluation.py -q
@@ -181,11 +180,11 @@ uv run --locked pytest tests/test_decision_flow.py tests/test_evaluation.py -q
 
 Expected: failures for the missing generic boundary and evaluation summary.
 
-- [ ] **Step 3: Implement thin LangChain adapter, technical evaluator, and docs**
+- [x] **Step 3: Implement thin LangChain adapter, technical evaluator, and docs**
   - Keep business flow out of `demo.py` and evaluation helpers.
   - Document architecture boundaries, local run commands, baseline fields, non-goals, and known limits.
   - Do not add any new dependency unless a test proves an essential capability is missing.
-- [ ] **Step 4: Run final verification and inspect staged changes**
+- [x] **Step 4: Run final verification and inspect staged changes**
 
 ```powershell
 uv lock --check

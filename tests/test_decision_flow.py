@@ -262,7 +262,7 @@ def test_empty_scripted_evidence_does_not_fabricate_context_evidence():
     assert "decision" not in result
 
 
-def test_langchain_boundary_accepts_generic_request():
+def test_langchain_adapter_calls_graph_and_returns_json_safe_output():
     runnable = build_demo_runnable(
         model_output=_model_output("req-demo"),
         evidence_results=[_evidence()],
@@ -278,4 +278,26 @@ def test_langchain_boundary_accepts_generic_request():
     )
 
     assert result["decision"]["request_id"] == "req-demo"
+    assert result["termination_reason"] == "completed"
+    json.dumps(result, ensure_ascii=False)
+
+
+def test_langchain_boundary_accepts_generic_request_async():
+    runnable = build_demo_runnable(
+        model_output=_model_output("req-demo-async"),
+        evidence_results=[_evidence()],
+        approval="approved",
+    )
+    result = asyncio.run(
+        runnable.ainvoke(
+            {
+                "request_id": "req-demo-async",
+                "goal": "Choose a safe next action",
+                "context": {"signal": "anomaly"},
+                "constraints": ["preserve evidence"],
+            }
+        )
+    )
+
+    assert result["decision"]["request_id"] == "req-demo-async"
     assert result["termination_reason"] == "completed"
