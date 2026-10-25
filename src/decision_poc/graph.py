@@ -2,6 +2,7 @@ import asyncio
 from typing import Any, Literal
 
 from langgraph.graph import END, START, StateGraph
+from pydantic import ValidationError
 from typing_extensions import TypedDict
 
 from .agent import generate_decision_async
@@ -41,6 +42,7 @@ class DecisionState(TypedDict, total=False):
     trace: list[str]
     termination_reason: str
     retry_counts: dict[str, int]
+    error: dict[str, Any]
 
 
 def _tool_from_state(value: dict[str, Any]) -> ToolResult:
@@ -109,28 +111,41 @@ async def _generate_node(state: DecisionState) -> dict[str, Any]:
 
 
 def _validate_node(state: DecisionState) -> dict[str, Any]:
-    request = DecisionRequest.model_validate(state["request"])
-    decision = DecisionOutput.model_validate(state["decision"])
-    if decision.request_id != request.request_id:
-        raise ValueError(
-            "request_id mismatch: "
-            f"expected {request.request_id}, got {decision.request_id}"
+    try:
+        request = DecisionRequest.model_validate(state["request"])
+        decision = DecisionOutput.model_validate(state["decision"])
+        if decision.request_id != request.request_id:
+            raise ValueError(
+                "request_id mismatch: "
+                f"expected {request.request_id}, got {decision.request_id}"
+            )
+        if not state.get("evidence"):
+            raise ValueError("decision requires collected evidence")
+        available_evidence = {
+            (
+                item.get("source"),
+                item.get("version"),
+                item.get("content"),
+            )
+            for item in state["evidence"]
+        }
+        if any(
+            (item.source, item.version, item.content) not in available_evidence
+            for item in decision.evidence
+        ):
+            raise ValueError("evidence not found in collected tool results")
+    except (ValidationError, ValueError) as exc:
+        error = ToolError(
+            code="DECISION_INVALID",
+            message=str(exc) or "decision validation failed",
+            retryable=False,
         )
-    if not state.get("evidence"):
-        raise ValueError("decision requires collected evidence")
-    available_evidence = {
-        (
-            item.get("source"),
-            item.get("version"),
-            item.get("content"),
-        )
-        for item in state["evidence"]
-    }
-    if any(
-        (item.source, item.version, item.content) not in available_evidence
-        for item in decision.evidence
-    ):
-        raise ValueError("evidence not found in collected tool results")
+        return {
+            "error": error.model_dump(mode="json"),
+            "termination_reason": "decision_invalid",
+            "trace": [*state.get("trace", []), "decision_validation_failed"],
+        }
+
     return {"trace": [*state.get("trace", []), "decision_validated"]}
 
 
@@ -139,10 +154,10 @@ def _approval_node(state: DecisionState, policy: DecisionPolicy) -> dict[str, An
     supplied = state.get("approval")
     if supplied not in {None, "approved", "rejected"}:
         raise ValueError("approval must be approved, rejected, or omitted")
-    if decision.risk_level in policy.approval_risk_levels and supplied is None:
+    if supplied is None:
         approval = ApprovalDecision(
             status=ApprovalStatus.REQUIRED,
-            reason="risk level requires explicit simulated approval",
+            reason="explicit simulated approval is required",
         )
         return {
             "approval": approval.model_dump(mode="json"),
@@ -234,6 +249,10 @@ def _route_evidence(state: DecisionState) -> Literal["generate", "finish"]:
     return "generate" if state.get("evidence_status") == "ok" else "finish"
 
 
+def _route_validation(state: DecisionState) -> Literal["approval", "finish"]:
+    return "finish" if state.get("termination_reason") == "decision_invalid" else "approval"
+
+
 def _route_approval(state: DecisionState) -> Literal["execute", "finish"]:
     status = state.get("approval", {}).get("status")
     return "execute" if status == ApprovalStatus.APPROVED.value else "finish"
@@ -268,7 +287,11 @@ def build_graph(
         "collect_evidence", _route_evidence, {"generate": "generate_decision", "finish": "finish"}
     )
     graph.add_edge("generate_decision", "validate_decision")
-    graph.add_edge("validate_decision", "check_approval")
+    graph.add_conditional_edges(
+        "validate_decision",
+        _route_validation,
+        {"approval": "check_approval", "finish": "finish"},
+    )
     graph.add_conditional_edges(
         "check_approval", _route_approval, {"execute": "execute", "finish": "finish"}
     )

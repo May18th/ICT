@@ -125,11 +125,11 @@ Expected: all listed tests pass. The legacy graph/demo tests remain temporarily 
 - `run_decision_async(request, *, model_output, evidence_results, approval, feedback, evaluation_report) -> DecisionState`.
 - State includes JSON-compatible `request`, evidence/tool envelopes, decision, approval status, simulated execution result, feedback, candidate/active version summaries, trace, retry counts, and `termination_reason`.
 - Graph nodes execute in this order: collect evidence → generate typed decision → validate correlation/evidence → route simulated approval → simulate execution only if approved → record feedback → propose candidate → evaluate and promote/retain active version.
-- A single `DecisionPolicy` supplies `max_tool_attempts` and required-approval risk levels; no industry behavior is encoded.
+- A single `DecisionPolicy` supplies `max_tool_attempts`; every simulated action requires an explicit approval decision regardless of risk level.
 
 - [x] **Step 1: Write graph branch and serialization tests first**
   - Add `test_approved_request_reaches_simulated_execution_and_feedback`.
-  - Add `test_rejected_approval_blocks_execution` and `test_missing_approval_blocks_high_risk_execution`.
+  - Add `test_rejected_approval_blocks_execution`, `test_missing_approval_blocks_high_risk_execution`, and a corresponding low-risk missing-approval case.
   - Add `test_invalid_decision_stops_before_approval`.
   - Add `test_graph_state_is_json_serializable_after_success_and_tool_failure`.
   - Preserve LangChain sync and async Runnable boundary tests using the new generic input.
@@ -143,7 +143,7 @@ Expected: failures for the not-yet-implemented graph branches and generic API.
 
 - [x] **Step 3: Implement graph state/nodes and explicit routing**
   - Store only JSON-compatible values in LangGraph state; validate with Pydantic at node boundaries.
-  - Stop before execution on evidence/decision validation errors or denied/missing required approval.
+  - Stop before execution on evidence/decision validation errors or denied/missing approval; return decision validation failures as structured terminal state.
   - Use simulated tool envelopes and bounded retries; retain error, attempt count, and trace.
   - Invoke the version registry after feedback; report whether the candidate was promoted or retained as unevaluated/rejected, without inventing a domain score.
 - [x] **Step 4: Run graph tests and the full suite**
