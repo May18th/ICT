@@ -1,45 +1,85 @@
-# Agent Framework PoC
+# ICT：可进化决策智能体 PoC
 
-这是一个通用、离线、非生产用途的可进化决策内核验证：
+这是一个面向华为 ModelEngine Nexent 赛题方向的通用、离线、非生产决策智能体内核验证项目。当前不绑定具体行业，不接入真实 Nexent、真实模型或生产系统，先验证可复用的决策流程与受控进化机制。
 
-- **LangGraph**：唯一的决策流程编排器。
-- **Pydantic AI**：图中的结构化决策节点，结果由 Pydantic 模型校验。
-- **LangChain Core**：将图包装为 `RunnableLambda`，供演示或评测调用；不承担第二套编排。
-- **确定性规则与版本注册表**：负责证据一致性、审批门禁、反馈候选版本、评测发布和回滚。
+## 项目目标
 
-## 环境
+- 用通用 Schema 表达决策请求、证据、选项、风险、审批和反馈。
+- 用状态图串联“证据 → 决策 → 校验 → 审批 → 执行 → 反馈 → 进化”。
+- 验证有限重试、证据一致性校验、结构化失败和 JSON 状态序列化。
+- 验证候选策略经过评测后才能发布，失败时保留旧版本并支持回滚。
 
-- Python 3.12
-- LangGraph 1.2.17（MIT）
-- Pydantic AI Slim 2.61.0（MIT）
-- LangChain Core 1.7.0（MIT）
-- Pydantic 2.14.1（MIT）
-- pytest 9.1.1（MIT）
+## 架构边界
 
-版本已在 `pyproject.toml` 中固定，解析锁定后由 `uv.lock` 记录完整依赖图。
-`pydantic-ai-slim` 只引入本 PoC 所需核心能力，避免安装未使用的模型提供商和工具集。
+| 组件 | 职责 | 当前边界 |
+| --- | --- | --- |
+| LangGraph | 唯一流程编排器、状态流和终止路由 | 不引入第二套 Agent Loop |
+| Pydantic AI | 生成类型化决策输出 | 当前使用无凭据的 `TestModel` |
+| 确定性 Python 规则 | Schema、证据校验、审批门禁、版本发布和回滚 | 不绑定行业规则 |
+| LangChain Core | 同步/异步 `Runnable` 演示和评测适配 | 不负责流程编排 |
 
-## 运行
+## 当前范围
+
+已完成：
+
+- 通用决策 Schema 与 JSON 兼容状态；
+- 模拟证据工具、模拟动作工具和模拟审批；
+- 可重试/不可重试错误与有限重试；
+- 关联 ID、证据来源、版本和内容一致性校验；
+- 缺少审批或审批拒绝时阻断执行；
+- 反馈记录、候选策略、评测门禁、发布和回滚；
+- LangChain 同步/异步适配；
+- 技术基线与风险记录。
+
+暂不做：
+
+- 固定行业业务流程和主题专属逻辑；
+- 真实 Nexent、真实模型、数据库或生产工具接入；
+- 完整业务 UI；
+- 最终行业评价指标。
+
+## 快速开始
+
+要求：Python 3.12 和 [uv](https://docs.astral.sh/uv/)。
 
 ```powershell
 uv sync --locked
-uv run pytest -q
+uv run --locked pytest -q
 ```
 
-测试使用 Pydantic AI 内置 `TestModel`，无需 API Key；不会连接真实模型、执行生产动作或调用 Nexent 服务。
+运行技术基线：
 
-## 当前验证范围
+```powershell
+$env:PYTHONPATH = "src"
+uv run --locked python -c "from decision_poc.baseline import run_technical_baseline; print(run_technical_baseline())"
+```
 
-已覆盖：通用 Schema、结构化工具信封、有限重试、证据来源/版本校验、LangGraph 节点顺序、模拟审批、模拟执行、反馈候选版本、评测门禁、版本回滚、LangChain Runnable 调用，以及整个图状态的 JSON 序列化。
+测试使用 Pydantic AI 内置 `TestModel`，无需 API Key，不会连接真实模型、调用 Nexent 或执行生产动作。
 
-## 通用决策流程
+## 仓库结构
 
 ```text
-请求 → 模拟证据 → 结构化决策 → 证据/风险校验 → 模拟审批
-     → 模拟执行 → 反馈 → 候选策略版本 → 评测通过后发布 / 失败保留旧版本
+agent_poc/
+├─ src/decision_poc/       # 决策契约、图编排、工具、评测和版本注册表
+├─ tests/                  # 契约、工具、流程、评测、基线测试
+├─ docs/                   # 文档导航、技术基线、设计和实施计划
+├─ pyproject.toml          # Python 与依赖约束
+├─ uv.lock                 # 锁定后的完整依赖图
+├─ AGENTS.md               # 项目级协作与验证约束
+└─ README.md               # 项目入口说明
 ```
 
-技术基线可由 `decision_poc.evaluation.evaluate_cases` 记录：完成数、阻断数、错误数、步骤数、重试次数、序列化结果和耗时；它不替代最终行业评价指标。
-固定的通用基线入口和风险清单见 [`docs/technical-baseline.md`](docs/technical-baseline.md)。
+## 文档入口
 
-未覆盖：真实 LLM 推理质量、真实工具副作用、人工审批持久化、LangGraph 检查点恢复、真实 Nexent 接入和生产级错误恢复。策略候选、评测门禁和回滚已在内存注册表中验证，但尚未接入持久化存储。该 PoC 不能作为生产实现或比赛完整方案。
+- [文档导航](docs/README.md)
+- [技术基线与风险](docs/technical-baseline.md)
+- [通用内核设计](docs/superpowers/specs/2026-10-26-generic-evolution-kernel-design.md)
+- [实施计划](docs/superpowers/plans/2026-10-26-generic-evolution-kernel.md)
+
+## 验证状态
+
+当前基线：`uv run --locked pytest -q` 共 28 项测试通过；同时要求锁文件、Python 编译和依赖一致性检查通过。技术基线只衡量通用流程的技术行为，不替代赛题确定后的行业指标。
+
+## 后续演进
+
+赛题主题确定后，仅替换领域 Schema、规则、工具和评测集；LangGraph 状态流、Pydantic AI 类型化输出、审批门禁、评测发布和回滚机制继续复用。真实 Nexent 接入应作为独立适配层，不直接破坏当前离线 PoC。
