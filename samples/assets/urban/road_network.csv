@@ -1,0 +1,8 @@
+﻿road_id,name,district,road_class,lanes,length_m,elevation_m,drainage_zone,status,note
+R-101,兴华路,A-03,次干路,4,820,3.2,DZ-01,normal,片区最低点，历史易涝
+R-102,建设大道,A-03,主干路,6,1450,4.8,DZ-01,normal,排水主干通道
+R-103,民生街,A-03,支路,2,610,5.6,DZ-01,normal,沿线有小学，高峰限速
+R-104,环城北路,A-03,主干路,6,1800,6.1,DZ-02,normal,北部绕行主通道
+R-105,兴华支路,A-03,支路,2,340,3.4,DZ-01,under_construction,与 R-101 平交
+R-201,滨河路,B-01,次干路,4,920,5.4,DZ-02,normal,片区改造中，路面加铺
+R-202,工业大道,B-01,主干路,6,1600,6.0,DZ-02,normal,货运主通道

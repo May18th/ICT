@@ -169,6 +169,8 @@ class ToolStats(StrictModel):
 class ToolContext(StrictModel):
     source: str = Field(min_length=1)
     version: str | None = None
+    # 调用链 id：MCP/Agent 侧带上它，日志、溯源、失败重试才能串成一条线
+    trace_id: str | None = None
 
     @field_validator("source")
     @classmethod

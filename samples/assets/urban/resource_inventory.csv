@@ -1,0 +1,10 @@
+﻿resource_id,name,category,qty_available,unit,owner_org,district,storage_site,capacity_note
+RES-PUMP-M,移动抽水泵,equipment,4,台,ORG-DRAIN,A-03,兴华养护站,单台 400 m3/h
+RES-PUMP-M-B01,移动抽水泵,equipment,2,台,ORG-DRAIN,B-01,滨河养护站,单台 400 m3/h，跨区调用需 40 分钟
+RES-BARRIER,交通围挡,equipment,60,块,ORG-ROAD,A-03,市政仓库,
+RES-SIGN,警示标志牌,equipment,120,块,ORG-TRAFFIC,A-03,交警一大队,
+RES-SAND,防汛沙袋,material,800,只,ORG-EMERG,A-03,区应急仓库,
+RES-SAND-B01,防汛沙袋,material,400,只,ORG-EMERG,B-01,区应急仓库二库,
+RES-GAS-DETECT,便携燃气检测仪,equipment,3,台,ORG-GAS,A-03,燃气抢修中心,
+RES-GEN,移动发电车,equipment,1,台,ORG-POWER,A-03,供电所,500 kW
+RES-GAS-VALVE,燃气抢修阀件组,equipment,2,套,ORG-GAS,A-03,燃气抢修中心,

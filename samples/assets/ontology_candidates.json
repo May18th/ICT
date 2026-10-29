@@ -1,0 +1,2051 @@
+{
+  "schema_version": "1",
+  "seed": {
+    "version": "2026-10-29",
+    "types": [
+      {
+        "name": "Equipment",
+        "parent": "Asset",
+        "description": "可独立检修、有台账编号的物理设备",
+        "seeds": [
+          "减速机",
+          "油泵",
+          "风机",
+          "空压机",
+          "电机",
+          "水泵"
+        ]
+      },
+      {
+        "name": "EquipmentClass",
+        "parent": "Concept",
+        "description": "设备类型（分类节点），用于同类故障复用",
+        "seeds": [
+          "减速机",
+          "液压泵",
+          "风机",
+          "压缩机",
+          "电机"
+        ]
+      },
+      {
+        "name": "Line",
+        "parent": "Location",
+        "description": "产线或机组，停机决策的最小影响域",
+        "seeds": [
+          "L2",
+          "L3",
+          "C1",
+          "D1"
+        ]
+      },
+      {
+        "name": "Metric",
+        "parent": "Concept",
+        "description": "可测量指标及其单位",
+        "seeds": [
+          "振动",
+          "轴承温度",
+          "噪声"
+        ]
+      },
+      {
+        "name": "FaultMode",
+        "parent": "Concept",
+        "description": "故障模式，由指标越限或人工判定触发",
+        "seeds": [
+          "振动超限",
+          "轴承过热"
+        ]
+      },
+      {
+        "name": "ThresholdRule",
+        "parent": "Rule",
+        "description": "指标判定区间与处置要求，可跨文档匹配观测值",
+        "seeds": []
+      },
+      {
+        "name": "Process",
+        "parent": "Concept",
+        "description": "一份可执行的处置流程",
+        "seeds": [
+          "异常振动处置"
+        ]
+      },
+      {
+        "name": "ProcedureStep",
+        "parent": "Concept",
+        "description": "流程中的单步动作，可被引用与排序",
+        "seeds": []
+      },
+      {
+        "name": "Standard",
+        "parent": "Reference",
+        "description": "外部或厂内标准，如 ISO 10816-3:2009",
+        "seeds": []
+      },
+      {
+        "name": "StandardClause",
+        "parent": "Reference",
+        "description": "标准条款，溯源的最小锚点",
+        "seeds": []
+      }
+    ],
+    "relations": [
+      {
+        "name": "located_in",
+        "domain": [
+          "Equipment"
+        ],
+        "range": [
+          "Line"
+        ],
+        "description": "设备所属产线"
+      },
+      {
+        "name": "classified_as",
+        "domain": [
+          "Equipment"
+        ],
+        "range": [
+          "EquipmentClass"
+        ],
+        "description": "设备归属类型"
+      },
+      {
+        "name": "measured_by",
+        "domain": [
+          "Equipment"
+        ],
+        "range": [
+          "Metric"
+        ],
+        "description": "设备被该指标持续观测"
+      },
+      {
+        "name": "exhibits",
+        "domain": [
+          "Equipment"
+        ],
+        "range": [
+          "FaultMode"
+        ],
+        "description": "设备出现该故障模式（可跨文档证据）"
+      },
+      {
+        "name": "triggered_by",
+        "domain": [
+          "FaultMode"
+        ],
+        "range": [
+          "ThresholdRule"
+        ],
+        "description": "故障模式由该判定规则触发"
+      },
+      {
+        "name": "defined_in",
+        "domain": [
+          "ThresholdRule"
+        ],
+        "range": [
+          "StandardClause"
+        ],
+        "description": "判定规则的出处条款"
+      },
+      {
+        "name": "part_of",
+        "domain": [
+          "StandardClause",
+          "ProcedureStep"
+        ],
+        "range": [
+          "Standard",
+          "Process"
+        ],
+        "description": "条款归属标准、步骤归属流程"
+      },
+      {
+        "name": "applies_to",
+        "domain": [
+          "Process"
+        ],
+        "range": [
+          "Equipment"
+        ],
+        "description": "流程适用的设备"
+      },
+      {
+        "name": "has_step",
+        "domain": [
+          "Process"
+        ],
+        "range": [
+          "ProcedureStep"
+        ],
+        "description": "流程包含的步骤"
+      },
+      {
+        "name": "cites",
+        "domain": [
+          "ProcedureStep"
+        ],
+        "range": [
+          "StandardClause"
+        ],
+        "description": "步骤引用的条款"
+      },
+      {
+        "name": "precedes",
+        "domain": [
+          "ProcedureStep"
+        ],
+        "range": [
+          "ProcedureStep"
+        ],
+        "description": "步骤先后顺序"
+      }
+    ]
+  },
+  "stats": {
+    "asset_count": 4,
+    "entity_count": 43,
+    "relation_count": 53,
+    "candidate_count": 96,
+    "decision_counts": {
+      "auto_accept": 94,
+      "review": 2,
+      "drop": 0
+    },
+    "provenance_rate": 1.0,
+    "cross_asset_candidates": 13,
+    "type_coverage": 1.0,
+    "types_covered": [
+      "Equipment",
+      "EquipmentClass",
+      "FaultMode",
+      "Line",
+      "Metric",
+      "ProcedureStep",
+      "Process",
+      "Standard",
+      "StandardClause",
+      "ThresholdRule"
+    ],
+    "review_load_per_asset": 0.5,
+    "auto_accept_rate": 0.9792,
+    "seed_type_count": 10,
+    "warning_count": 2,
+    "review_hint": "每份资产需人工确认 0.5 条"
+  },
+  "entities": [
+    {
+      "candidate_id": "EN-Equipment-主传动减速机",
+      "name": "主传动减速机",
+      "type": "Equipment",
+      "confidence": 0.92,
+      "attributes": {
+        "equipment_id": "A-101",
+        "commissioned_on": "2021-03-15",
+        "criticality": "A",
+        "last_overhaul": "2025-11-02",
+        "rated_power_kw": 75.0
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:2",
+          "quote": "equipment_id=A-101、name=主传动减速机、line=L2、equipment_class=减速机、commissioned_on=2021-03-15、rated_power_kw=75、criticality=A、last_overhaul=2025-11-02"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-Equipment-冷却风机",
+      "name": "冷却风机",
+      "type": "Equipment",
+      "confidence": 0.92,
+      "attributes": {
+        "equipment_id": "A-103",
+        "commissioned_on": "2022-01-20",
+        "criticality": "B",
+        "last_overhaul": "2026-02-11",
+        "rated_power_kw": 30.0
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:4",
+          "quote": "equipment_id=A-103、name=冷却风机、line=L2、equipment_class=风机、commissioned_on=2022-01-20、rated_power_kw=30、criticality=B、last_overhaul=2026-02-11"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-Equipment-包装封口机",
+      "name": "包装封口机",
+      "type": "Equipment",
+      "confidence": 0.92,
+      "attributes": {
+        "equipment_id": "B-201",
+        "commissioned_on": "2019-11-05",
+        "criticality": "B",
+        "last_overhaul": "2025-06-30",
+        "rated_power_kw": 12.0
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:5",
+          "quote": "equipment_id=B-201、name=包装封口机、line=L3、equipment_class=封口机、commissioned_on=2019-11-05、rated_power_kw=12、criticality=B、last_overhaul=2025-06-30"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-Equipment-干燥机",
+      "name": "干燥机",
+      "type": "Equipment",
+      "confidence": 0.92,
+      "attributes": {
+        "equipment_id": "C-302",
+        "commissioned_on": "2020-03-30",
+        "criticality": "B",
+        "last_overhaul": "2025-10-05",
+        "rated_power_kw": 37.0
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:8",
+          "quote": "equipment_id=C-302、name=干燥机、line=C1、equipment_class=干燥机、commissioned_on=2020-03-30、rated_power_kw=37、criticality=B、last_overhaul=2025-10-05"
+        }
+      ],
+      "decision": "review",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-Equipment-循环水泵",
+      "name": "循环水泵",
+      "type": "Equipment",
+      "confidence": 0.92,
+      "attributes": {
+        "equipment_id": "D-401",
+        "commissioned_on": "2023-04-18",
+        "criticality": "C",
+        "last_overhaul": "2026-03-02",
+        "rated_power_kw": 15.0
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:9",
+          "quote": "equipment_id=D-401、name=循环水泵、line=D1、equipment_class=水泵、commissioned_on=2023-04-18、rated_power_kw=15、criticality=C、last_overhaul=2026-03-02"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-Equipment-液压站油泵",
+      "name": "液压站油泵",
+      "type": "Equipment",
+      "confidence": 0.92,
+      "attributes": {
+        "equipment_id": "A-102",
+        "commissioned_on": "2020-07-01",
+        "criticality": "A",
+        "last_overhaul": "2025-09-18",
+        "rated_power_kw": 45.0
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:3",
+          "quote": "equipment_id=A-102、name=液压站油泵、line=L2、equipment_class=液压泵、commissioned_on=2020-07-01、rated_power_kw=45、criticality=A、last_overhaul=2025-09-18"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-Equipment-空压机",
+      "name": "空压机",
+      "type": "Equipment",
+      "confidence": 0.92,
+      "attributes": {
+        "equipment_id": "C-301",
+        "commissioned_on": "2018-05-23",
+        "criticality": "A",
+        "last_overhaul": "2025-12-20",
+        "rated_power_kw": 110.0
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:7",
+          "quote": "equipment_id=C-301、name=空压机、line=C1、equipment_class=压缩机、commissioned_on=2018-05-23、rated_power_kw=110、criticality=A、last_overhaul=2025-12-20"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-Equipment-输送带驱动电机",
+      "name": "输送带驱动电机",
+      "type": "Equipment",
+      "confidence": 0.92,
+      "attributes": {
+        "equipment_id": "B-202",
+        "commissioned_on": "2021-09-12",
+        "criticality": "B",
+        "last_overhaul": "2026-01-08",
+        "rated_power_kw": 22.0
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:6",
+          "quote": "equipment_id=B-202、name=输送带驱动电机、line=L3、equipment_class=电机、commissioned_on=2021-09-12、rated_power_kw=22、criticality=B、last_overhaul=2026-01-08"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-EquipmentClass-减速机",
+      "name": "减速机",
+      "type": "EquipmentClass",
+      "confidence": 0.92,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:2",
+          "quote": "equipment_id=A-101、name=主传动减速机、line=L2、equipment_class=减速机、commissioned_on=2021-03-15、rated_power_kw=75、criticality=A、last_overhaul=2025-11-02"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-EquipmentClass-压缩机",
+      "name": "压缩机",
+      "type": "EquipmentClass",
+      "confidence": 0.92,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:7",
+          "quote": "equipment_id=C-301、name=空压机、line=C1、equipment_class=压缩机、commissioned_on=2018-05-23、rated_power_kw=110、criticality=A、last_overhaul=2025-12-20"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-EquipmentClass-封口机",
+      "name": "封口机",
+      "type": "EquipmentClass",
+      "confidence": 0.92,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:5",
+          "quote": "equipment_id=B-201、name=包装封口机、line=L3、equipment_class=封口机、commissioned_on=2019-11-05、rated_power_kw=12、criticality=B、last_overhaul=2025-06-30"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-EquipmentClass-干燥机",
+      "name": "干燥机",
+      "type": "EquipmentClass",
+      "confidence": 0.92,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:8",
+          "quote": "equipment_id=C-302、name=干燥机、line=C1、equipment_class=干燥机、commissioned_on=2020-03-30、rated_power_kw=37、criticality=B、last_overhaul=2025-10-05"
+        }
+      ],
+      "decision": "review",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-EquipmentClass-水泵",
+      "name": "水泵",
+      "type": "EquipmentClass",
+      "confidence": 0.92,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:9",
+          "quote": "equipment_id=D-401、name=循环水泵、line=D1、equipment_class=水泵、commissioned_on=2023-04-18、rated_power_kw=15、criticality=C、last_overhaul=2026-03-02"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-EquipmentClass-液压泵",
+      "name": "液压泵",
+      "type": "EquipmentClass",
+      "confidence": 0.92,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:3",
+          "quote": "equipment_id=A-102、name=液压站油泵、line=L2、equipment_class=液压泵、commissioned_on=2020-07-01、rated_power_kw=45、criticality=A、last_overhaul=2025-09-18"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-EquipmentClass-电机",
+      "name": "电机",
+      "type": "EquipmentClass",
+      "confidence": 0.92,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:6",
+          "quote": "equipment_id=B-202、name=输送带驱动电机、line=L3、equipment_class=电机、commissioned_on=2021-09-12、rated_power_kw=22、criticality=B、last_overhaul=2026-01-08"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-EquipmentClass-风机",
+      "name": "风机",
+      "type": "EquipmentClass",
+      "confidence": 0.92,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:4",
+          "quote": "equipment_id=A-103、name=冷却风机、line=L2、equipment_class=风机、commissioned_on=2022-01-20、rated_power_kw=30、criticality=B、last_overhaul=2026-02-11"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-FaultMode-振动C区超限",
+      "name": "振动C区超限",
+      "type": "FaultMode",
+      "confidence": 0.8,
+      "attributes": {
+        "metric": "振动",
+        "observed_value": 5.2,
+        "unit": "mm/s",
+        "observed_at": "2026-10-28 20:00",
+        "zone": "C",
+        "verdict": "不宜长期运行",
+        "recommended_action": "制定检修计划，缩短巡检间隔",
+        "trigger_asset": "AS-A-101-巡检记录-4e9585ab"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:5",
+          "quote": "2026-10-28 20:00 A-101 振动=5.2mm/s"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:18",
+          "quote": "C | 4.5 ~ 7.1 | 不宜长期运行 | 制定检修计划，缩短巡检间隔"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "cross_document_rule_match"
+    },
+    {
+      "candidate_id": "EN-FaultMode-振动D区超限",
+      "name": "振动D区超限",
+      "type": "FaultMode",
+      "confidence": 0.8,
+      "attributes": {
+        "metric": "振动",
+        "observed_value": 7.8,
+        "unit": "mm/s",
+        "observed_at": "2026-10-29 06:00",
+        "zone": "D",
+        "verdict": "危险",
+        "recommended_action": "立即降负荷并安排停机检查",
+        "trigger_asset": "AS-A-101-巡检记录-4e9585ab"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:6",
+          "quote": "2026-10-29 06:00 A-101 振动=7.8mm/s"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:19",
+          "quote": "D | > 7.1 | 危险 | 立即降负荷并安排停机检查"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "cross_document_rule_match"
+    },
+    {
+      "candidate_id": "EN-FaultMode-轴承温度超限",
+      "name": "轴承温度超限",
+      "type": "FaultMode",
+      "confidence": 0.8,
+      "attributes": {
+        "metric": "轴承温度",
+        "observed_value": 85.0,
+        "unit": "C",
+        "observed_at": "2026-10-29 06:00",
+        "zone": "",
+        "verdict": "报警",
+        "recommended_action": "",
+        "trigger_asset": "AS-A-101-巡检记录-4e9585ab"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:6",
+          "quote": "2026-10-29 06:00 A-101 轴承温度=85.0C"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:21",
+          "quote": "轴承温度依据厂内规程 Q/XX-2024-11：正常运行 60~70°C，**85°C 为报警值，90°C 为停机值**。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "cross_document_rule_match"
+    },
+    {
+      "candidate_id": "EN-Line-C1",
+      "name": "C1",
+      "type": "Line",
+      "confidence": 0.92,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:7",
+          "quote": "equipment_id=C-301、name=空压机、line=C1、equipment_class=压缩机、commissioned_on=2018-05-23、rated_power_kw=110、criticality=A、last_overhaul=2025-12-20"
+        },
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:8",
+          "quote": "equipment_id=C-302、name=干燥机、line=C1、equipment_class=干燥机、commissioned_on=2020-03-30、rated_power_kw=37、criticality=B、last_overhaul=2025-10-05"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-Line-D1",
+      "name": "D1",
+      "type": "Line",
+      "confidence": 0.92,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:9",
+          "quote": "equipment_id=D-401、name=循环水泵、line=D1、equipment_class=水泵、commissioned_on=2023-04-18、rated_power_kw=15、criticality=C、last_overhaul=2026-03-02"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-Line-L2",
+      "name": "L2",
+      "type": "Line",
+      "confidence": 0.92,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:2",
+          "quote": "equipment_id=A-101、name=主传动减速机、line=L2、equipment_class=减速机、commissioned_on=2021-03-15、rated_power_kw=75、criticality=A、last_overhaul=2025-11-02"
+        },
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:3",
+          "quote": "equipment_id=A-102、name=液压站油泵、line=L2、equipment_class=液压泵、commissioned_on=2020-07-01、rated_power_kw=45、criticality=A、last_overhaul=2025-09-18"
+        },
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:4",
+          "quote": "equipment_id=A-103、name=冷却风机、line=L2、equipment_class=风机、commissioned_on=2022-01-20、rated_power_kw=30、criticality=B、last_overhaul=2026-02-11"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-Line-L3",
+      "name": "L3",
+      "type": "Line",
+      "confidence": 0.92,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:5",
+          "quote": "equipment_id=B-201、name=包装封口机、line=L3、equipment_class=封口机、commissioned_on=2019-11-05、rated_power_kw=12、criticality=B、last_overhaul=2025-06-30"
+        },
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:6",
+          "quote": "equipment_id=B-202、name=输送带驱动电机、line=L3、equipment_class=电机、commissioned_on=2021-09-12、rated_power_kw=22、criticality=B、last_overhaul=2026-01-08"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "EN-Metric-噪声",
+      "name": "噪声",
+      "type": "Metric",
+      "confidence": 0.92,
+      "attributes": {
+        "unit": "dB"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#header",
+          "quote": "列名 噪声dB（单位 dB）"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "EN-Metric-振动",
+      "name": "振动",
+      "type": "Metric",
+      "confidence": 0.92,
+      "attributes": {
+        "unit": "mm/s"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#header",
+          "quote": "列名 振动mm/s（单位 mm/s）"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "EN-Metric-轴承温度",
+      "name": "轴承温度",
+      "type": "Metric",
+      "confidence": 0.92,
+      "attributes": {
+        "unit": "C"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#header",
+          "quote": "列名 轴承温度C（单位 C）"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "EN-ProcedureStep-4-小时内若振动未回落至-4-5-mm-s-以下-或温度持续-90-C-立即",
+      "name": "4 小时内若振动未回落至 4.5 mm/s 以下，或温度持续 ≥ 90°C，立即…",
+      "type": "ProcedureStep",
+      "confidence": 0.88,
+      "attributes": {
+        "order": 5,
+        "section": "3. 不停产处置步骤"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:29",
+          "quote": "5. 4 小时内若振动未回落至 4.5 mm/s 以下，或温度持续 ≥ 90°C，立即转入停机检修流程。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "EN-ProcedureStep-加装临时强制风冷-出风口对准轴承座散热片-禁止直吹密封面",
+      "name": "加装临时强制风冷，出风口对准轴承座散热片，禁止直吹密封面。",
+      "type": "ProcedureStep",
+      "confidence": 0.88,
+      "attributes": {
+        "order": 3,
+        "section": "3. 不停产处置步骤"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:27",
+          "quote": "3. 加装临时强制风冷，出风口对准轴承座散热片，禁止直吹密封面。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "EN-ProcedureStep-对轴承座补加耐高温润滑脂-NLGI-2-级-滴点-180-C",
+      "name": "对轴承座补加耐高温润滑脂（NLGI 2 级，滴点 ≥ 180°C）。",
+      "type": "ProcedureStep",
+      "confidence": 0.88,
+      "attributes": {
+        "order": 2,
+        "section": "3. 不停产处置步骤"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:26",
+          "quote": "2. 对轴承座补加耐高温润滑脂（NLGI 2 级，滴点 ≥ 180°C）。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "EN-ProcedureStep-将产线负荷降至-50-70-避免冲击载荷-依据规程-Q-XX-2024-11",
+      "name": "将产线负荷降至 50%~70%，避免冲击载荷（依据规程 Q/XX-2024-11…",
+      "type": "ProcedureStep",
+      "confidence": 0.88,
+      "attributes": {
+        "order": 1,
+        "section": "3. 不停产处置步骤"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:25",
+          "quote": "1. 将产线负荷降至 50%~70%，避免冲击载荷（依据规程 Q/XX-2024-11 第 5.3 条）。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "EN-ProcedureStep-巡检间隔缩短至-30-分钟-同时记录振动-温度-噪声三项",
+      "name": "巡检间隔缩短至 **30 分钟**，同时记录振动、温度、噪声三项。",
+      "type": "ProcedureStep",
+      "confidence": 0.88,
+      "attributes": {
+        "order": 4,
+        "section": "3. 不停产处置步骤"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:28",
+          "quote": "4. 巡检间隔缩短至 **30 分钟**，同时记录振动、温度、噪声三项。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "EN-Process-减速机异常振动处置规程",
+      "name": "减速机异常振动处置规程",
+      "type": "Process",
+      "confidence": 0.84,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#heading",
+          "quote": "减速机异常振动处置规程"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_prose"
+    },
+    {
+      "candidate_id": "EN-Standard-ISO-10816-3-2009",
+      "name": "ISO 10816-3:2009",
+      "type": "Standard",
+      "confidence": 0.84,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:12",
+          "quote": "依据 ISO 10816-3:2009 第 7.2 节，刚性安装、功率 15kW 以上机组的振动烈度分区如下："
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:3",
+          "quote": "> 说明：本文为参赛演示用合成文档，条款编号引用 ISO 10816-3:2009 与厂内规程编号，"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:33",
+          "quote": "- 振动 > 11.2 mm/s（ISO 10816-3:2009 第 7.3 节停机阈值）；"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#standard_refs",
+          "quote": "ISO 10816-3:2009 §7.2"
+        },
+        {
+          "asset_id": "AS-A-101-频谱图-de777a09",
+          "locator": "A-101/频谱图/v1#standard_refs",
+          "quote": "ISO 10816-3:2009 §7.3"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "declared_standard_ref"
+    },
+    {
+      "candidate_id": "EN-Standard-Q-XX-2024-11",
+      "name": "Q/XX-2024-11",
+      "type": "Standard",
+      "confidence": 0.84,
+      "attributes": {},
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#standard_refs",
+          "quote": "Q/XX-2024-11 §5.3"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:21",
+          "quote": "轴承温度依据厂内规程 Q/XX-2024-11：正常运行 60~70°C，**85°C 为报警值，90°C 为停机值**。"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#standard_refs",
+          "quote": "Q/XX-2024-11 §5.3"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "declared_standard_ref"
+    },
+    {
+      "candidate_id": "EN-StandardClause-ISO-10816-3-2009-7-2",
+      "name": "ISO 10816-3:2009 §7.2",
+      "type": "StandardClause",
+      "confidence": 0.84,
+      "attributes": {
+        "standard": "ISO 10816-3:2009",
+        "clause": "7.2"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:12",
+          "quote": "依据 ISO 10816-3:2009 第 7.2 节，刚性安装、功率 15kW 以上机组的振动烈度分区如下："
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#standard_refs",
+          "quote": "ISO 10816-3:2009 §7.2"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "declared_standard_ref"
+    },
+    {
+      "candidate_id": "EN-StandardClause-ISO-10816-3-2009-7-3",
+      "name": "ISO 10816-3:2009 §7.3",
+      "type": "StandardClause",
+      "confidence": 0.84,
+      "attributes": {
+        "standard": "ISO 10816-3:2009",
+        "clause": "7.3"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:33",
+          "quote": "- 振动 > 11.2 mm/s（ISO 10816-3:2009 第 7.3 节停机阈值）；"
+        },
+        {
+          "asset_id": "AS-A-101-频谱图-de777a09",
+          "locator": "A-101/频谱图/v1#standard_refs",
+          "quote": "ISO 10816-3:2009 §7.3"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_prose"
+    },
+    {
+      "candidate_id": "EN-StandardClause-Q-XX-2024-11-5-3",
+      "name": "Q/XX-2024-11 §5.3",
+      "type": "StandardClause",
+      "confidence": 0.95,
+      "attributes": {
+        "standard": "Q/XX-2024-11",
+        "clause": "5.3"
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#standard_refs",
+          "quote": "Q/XX-2024-11 §5.3"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#standard_refs",
+          "quote": "Q/XX-2024-11 §5.3"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "declared_standard_ref"
+    },
+    {
+      "candidate_id": "EN-ThresholdRule-振动烈度A区判定",
+      "name": "振动烈度A区判定",
+      "type": "ThresholdRule",
+      "confidence": 0.9,
+      "attributes": {
+        "metric": "振动烈度",
+        "unit": "(mm/s)",
+        "zone": "A",
+        "verdict": "新机正常",
+        "action": "无需处理",
+        "on": "2. 判定阈值",
+        "upper": 2.8,
+        "upper_inclusive": true
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:16",
+          "quote": "A | ≤ 2.8 | 新机正常 | 无需处理"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "rule_table"
+    },
+    {
+      "candidate_id": "EN-ThresholdRule-振动烈度B区判定",
+      "name": "振动烈度B区判定",
+      "type": "ThresholdRule",
+      "confidence": 0.9,
+      "attributes": {
+        "metric": "振动烈度",
+        "unit": "(mm/s)",
+        "zone": "B",
+        "verdict": "可长期运行",
+        "action": "加强监测",
+        "on": "2. 判定阈值",
+        "lower": 2.8,
+        "upper": 4.5,
+        "lower_inclusive": true,
+        "upper_inclusive": true
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:17",
+          "quote": "B | 2.8 ~ 4.5 | 可长期运行 | 加强监测"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "rule_table"
+    },
+    {
+      "candidate_id": "EN-ThresholdRule-振动烈度C区判定",
+      "name": "振动烈度C区判定",
+      "type": "ThresholdRule",
+      "confidence": 0.9,
+      "attributes": {
+        "metric": "振动烈度",
+        "unit": "(mm/s)",
+        "zone": "C",
+        "verdict": "不宜长期运行",
+        "action": "制定检修计划，缩短巡检间隔",
+        "on": "2. 判定阈值",
+        "lower": 4.5,
+        "upper": 7.1,
+        "lower_inclusive": true,
+        "upper_inclusive": true
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:18",
+          "quote": "C | 4.5 ~ 7.1 | 不宜长期运行 | 制定检修计划，缩短巡检间隔"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "rule_table"
+    },
+    {
+      "candidate_id": "EN-ThresholdRule-振动烈度D区判定",
+      "name": "振动烈度D区判定",
+      "type": "ThresholdRule",
+      "confidence": 0.9,
+      "attributes": {
+        "metric": "振动烈度",
+        "unit": "(mm/s)",
+        "zone": "D",
+        "verdict": "危险",
+        "action": "立即降负荷并安排停机检查",
+        "on": "2. 判定阈值",
+        "lower": 7.1,
+        "lower_inclusive": false
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:19",
+          "quote": "D | > 7.1 | 危险 | 立即降负荷并安排停机检查"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "rule_table"
+    },
+    {
+      "candidate_id": "EN-ThresholdRule-轴承温度停机值",
+      "name": "轴承温度停机值",
+      "type": "ThresholdRule",
+      "confidence": 0.84,
+      "attributes": {
+        "metric": "轴承温度",
+        "kind": "停机",
+        "threshold": 90.0,
+        "lower": 90.0,
+        "lower_inclusive": true
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:21",
+          "quote": "轴承温度依据厂内规程 Q/XX-2024-11：正常运行 60~70°C，**85°C 为报警值，90°C 为停机值**。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "threshold_prose"
+    },
+    {
+      "candidate_id": "EN-ThresholdRule-轴承温度报警值",
+      "name": "轴承温度报警值",
+      "type": "ThresholdRule",
+      "confidence": 0.84,
+      "attributes": {
+        "metric": "轴承温度",
+        "kind": "报警",
+        "threshold": 85.0,
+        "lower": 85.0,
+        "lower_inclusive": true
+      },
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:21",
+          "quote": "轴承温度依据厂内规程 Q/XX-2024-11：正常运行 60~70°C，**85°C 为报警值，90°C 为停机值**。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "threshold_prose"
+    }
+  ],
+  "relations": [
+    {
+      "candidate_id": "REL-applies_to-减速机异常振动处置规程-A-101",
+      "subject": "减速机异常振动处置规程",
+      "predicate": "applies_to",
+      "object": "A-101",
+      "confidence": 0.84,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#heading",
+          "quote": "减速机异常振动处置规程"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_prose"
+    },
+    {
+      "candidate_id": "REL-cites-将产线负荷降至-50-70-避免冲击载荷-依据规程-Q-XX-2024-11-Q-XX-2024-11-5-3",
+      "subject": "将产线负荷降至 50%~70%，避免冲击载荷（依据规程 Q/XX-2024-11…",
+      "predicate": "cites",
+      "object": "Q/XX-2024-11 §5.3",
+      "confidence": 0.88,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:25",
+          "quote": "1. 将产线负荷降至 50%~70%，避免冲击载荷（依据规程 Q/XX-2024-11 第 5.3 条）。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "REL-classified_as-主传动减速机-减速机",
+      "subject": "主传动减速机",
+      "predicate": "classified_as",
+      "object": "减速机",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:2",
+          "quote": "equipment_id=A-101、name=主传动减速机、line=L2、equipment_class=减速机、commissioned_on=2021-03-15、rated_power_kw=75、criticality=A、last_overhaul=2025-11-02"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-classified_as-冷却风机-风机",
+      "subject": "冷却风机",
+      "predicate": "classified_as",
+      "object": "风机",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:4",
+          "quote": "equipment_id=A-103、name=冷却风机、line=L2、equipment_class=风机、commissioned_on=2022-01-20、rated_power_kw=30、criticality=B、last_overhaul=2026-02-11"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-classified_as-包装封口机-封口机",
+      "subject": "包装封口机",
+      "predicate": "classified_as",
+      "object": "封口机",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:5",
+          "quote": "equipment_id=B-201、name=包装封口机、line=L3、equipment_class=封口机、commissioned_on=2019-11-05、rated_power_kw=12、criticality=B、last_overhaul=2025-06-30"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-classified_as-循环水泵-水泵",
+      "subject": "循环水泵",
+      "predicate": "classified_as",
+      "object": "水泵",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:9",
+          "quote": "equipment_id=D-401、name=循环水泵、line=D1、equipment_class=水泵、commissioned_on=2023-04-18、rated_power_kw=15、criticality=C、last_overhaul=2026-03-02"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-classified_as-液压站油泵-液压泵",
+      "subject": "液压站油泵",
+      "predicate": "classified_as",
+      "object": "液压泵",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:3",
+          "quote": "equipment_id=A-102、name=液压站油泵、line=L2、equipment_class=液压泵、commissioned_on=2020-07-01、rated_power_kw=45、criticality=A、last_overhaul=2025-09-18"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-classified_as-空压机-压缩机",
+      "subject": "空压机",
+      "predicate": "classified_as",
+      "object": "压缩机",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:7",
+          "quote": "equipment_id=C-301、name=空压机、line=C1、equipment_class=压缩机、commissioned_on=2018-05-23、rated_power_kw=110、criticality=A、last_overhaul=2025-12-20"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-classified_as-输送带驱动电机-电机",
+      "subject": "输送带驱动电机",
+      "predicate": "classified_as",
+      "object": "电机",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:6",
+          "quote": "equipment_id=B-202、name=输送带驱动电机、line=L3、equipment_class=电机、commissioned_on=2021-09-12、rated_power_kw=22、criticality=B、last_overhaul=2026-01-08"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-defined_in-振动烈度A区判定-ISO-10816-3-2009-7-2",
+      "subject": "振动烈度A区判定",
+      "predicate": "defined_in",
+      "object": "ISO 10816-3:2009 §7.2",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:16",
+          "quote": "A | ≤ 2.8 | 新机正常 | 无需处理"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "rule_table"
+    },
+    {
+      "candidate_id": "REL-defined_in-振动烈度B区判定-ISO-10816-3-2009-7-2",
+      "subject": "振动烈度B区判定",
+      "predicate": "defined_in",
+      "object": "ISO 10816-3:2009 §7.2",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:17",
+          "quote": "B | 2.8 ~ 4.5 | 可长期运行 | 加强监测"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "rule_table"
+    },
+    {
+      "candidate_id": "REL-defined_in-振动烈度C区判定-ISO-10816-3-2009-7-2",
+      "subject": "振动烈度C区判定",
+      "predicate": "defined_in",
+      "object": "ISO 10816-3:2009 §7.2",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:18",
+          "quote": "C | 4.5 ~ 7.1 | 不宜长期运行 | 制定检修计划，缩短巡检间隔"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "rule_table"
+    },
+    {
+      "candidate_id": "REL-defined_in-振动烈度D区判定-ISO-10816-3-2009-7-2",
+      "subject": "振动烈度D区判定",
+      "predicate": "defined_in",
+      "object": "ISO 10816-3:2009 §7.2",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:19",
+          "quote": "D | > 7.1 | 危险 | 立即降负荷并安排停机检查"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "rule_table"
+    },
+    {
+      "candidate_id": "REL-defined_in-轴承温度停机值-ISO-10816-3-2009-7-2",
+      "subject": "轴承温度停机值",
+      "predicate": "defined_in",
+      "object": "ISO 10816-3:2009 §7.2",
+      "confidence": 0.84,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:21",
+          "quote": "轴承温度依据厂内规程 Q/XX-2024-11：正常运行 60~70°C，**85°C 为报警值，90°C 为停机值**。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "threshold_prose"
+    },
+    {
+      "candidate_id": "REL-defined_in-轴承温度报警值-ISO-10816-3-2009-7-2",
+      "subject": "轴承温度报警值",
+      "predicate": "defined_in",
+      "object": "ISO 10816-3:2009 §7.2",
+      "confidence": 0.84,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:21",
+          "quote": "轴承温度依据厂内规程 Q/XX-2024-11：正常运行 60~70°C，**85°C 为报警值，90°C 为停机值**。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "threshold_prose"
+    },
+    {
+      "candidate_id": "REL-exhibits-A-101-振动C区超限",
+      "subject": "A-101",
+      "predicate": "exhibits",
+      "object": "振动C区超限",
+      "confidence": 0.8,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:5",
+          "quote": "2026-10-28 20:00 A-101 振动=5.2mm/s"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:18",
+          "quote": "C | 4.5 ~ 7.1 | 不宜长期运行 | 制定检修计划，缩短巡检间隔"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "cross_document_rule_match"
+    },
+    {
+      "candidate_id": "REL-exhibits-A-101-振动D区超限",
+      "subject": "A-101",
+      "predicate": "exhibits",
+      "object": "振动D区超限",
+      "confidence": 0.8,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:6",
+          "quote": "2026-10-29 06:00 A-101 振动=7.8mm/s"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:19",
+          "quote": "D | > 7.1 | 危险 | 立即降负荷并安排停机检查"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "cross_document_rule_match"
+    },
+    {
+      "candidate_id": "REL-exhibits-A-101-轴承温度超限",
+      "subject": "A-101",
+      "predicate": "exhibits",
+      "object": "轴承温度超限",
+      "confidence": 0.8,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:6",
+          "quote": "2026-10-29 06:00 A-101 轴承温度=85.0C"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:21",
+          "quote": "轴承温度依据厂内规程 Q/XX-2024-11：正常运行 60~70°C，**85°C 为报警值，90°C 为停机值**。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "cross_document_rule_match"
+    },
+    {
+      "candidate_id": "REL-has_step-减速机异常振动处置规程-4-小时内若振动未回落至-4-5-mm-s-以下-或温度持续-90-C-立即",
+      "subject": "减速机异常振动处置规程",
+      "predicate": "has_step",
+      "object": "4 小时内若振动未回落至 4.5 mm/s 以下，或温度持续 ≥ 90°C，立即…",
+      "confidence": 0.88,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:29",
+          "quote": "5. 4 小时内若振动未回落至 4.5 mm/s 以下，或温度持续 ≥ 90°C，立即转入停机检修流程。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "REL-has_step-减速机异常振动处置规程-加装临时强制风冷-出风口对准轴承座散热片-禁止直吹密封面",
+      "subject": "减速机异常振动处置规程",
+      "predicate": "has_step",
+      "object": "加装临时强制风冷，出风口对准轴承座散热片，禁止直吹密封面。",
+      "confidence": 0.88,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:27",
+          "quote": "3. 加装临时强制风冷，出风口对准轴承座散热片，禁止直吹密封面。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "REL-has_step-减速机异常振动处置规程-对轴承座补加耐高温润滑脂-NLGI-2-级-滴点-180-C",
+      "subject": "减速机异常振动处置规程",
+      "predicate": "has_step",
+      "object": "对轴承座补加耐高温润滑脂（NLGI 2 级，滴点 ≥ 180°C）。",
+      "confidence": 0.88,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:26",
+          "quote": "2. 对轴承座补加耐高温润滑脂（NLGI 2 级，滴点 ≥ 180°C）。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "REL-has_step-减速机异常振动处置规程-将产线负荷降至-50-70-避免冲击载荷-依据规程-Q-XX-2024-11",
+      "subject": "减速机异常振动处置规程",
+      "predicate": "has_step",
+      "object": "将产线负荷降至 50%~70%，避免冲击载荷（依据规程 Q/XX-2024-11…",
+      "confidence": 0.88,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:25",
+          "quote": "1. 将产线负荷降至 50%~70%，避免冲击载荷（依据规程 Q/XX-2024-11 第 5.3 条）。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "REL-has_step-减速机异常振动处置规程-巡检间隔缩短至-30-分钟-同时记录振动-温度-噪声三项",
+      "subject": "减速机异常振动处置规程",
+      "predicate": "has_step",
+      "object": "巡检间隔缩短至 **30 分钟**，同时记录振动、温度、噪声三项。",
+      "confidence": 0.88,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:28",
+          "quote": "4. 巡检间隔缩短至 **30 分钟**，同时记录振动、温度、噪声三项。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "REL-located_in-主传动减速机-L2",
+      "subject": "主传动减速机",
+      "predicate": "located_in",
+      "object": "L2",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:2",
+          "quote": "equipment_id=A-101、name=主传动减速机、line=L2、equipment_class=减速机、commissioned_on=2021-03-15、rated_power_kw=75、criticality=A、last_overhaul=2025-11-02"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-located_in-冷却风机-L2",
+      "subject": "冷却风机",
+      "predicate": "located_in",
+      "object": "L2",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:4",
+          "quote": "equipment_id=A-103、name=冷却风机、line=L2、equipment_class=风机、commissioned_on=2022-01-20、rated_power_kw=30、criticality=B、last_overhaul=2026-02-11"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-located_in-包装封口机-L3",
+      "subject": "包装封口机",
+      "predicate": "located_in",
+      "object": "L3",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:5",
+          "quote": "equipment_id=B-201、name=包装封口机、line=L3、equipment_class=封口机、commissioned_on=2019-11-05、rated_power_kw=12、criticality=B、last_overhaul=2025-06-30"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-located_in-干燥机-C1",
+      "subject": "干燥机",
+      "predicate": "located_in",
+      "object": "C1",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:8",
+          "quote": "equipment_id=C-302、name=干燥机、line=C1、equipment_class=干燥机、commissioned_on=2020-03-30、rated_power_kw=37、criticality=B、last_overhaul=2025-10-05"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-located_in-循环水泵-D1",
+      "subject": "循环水泵",
+      "predicate": "located_in",
+      "object": "D1",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:9",
+          "quote": "equipment_id=D-401、name=循环水泵、line=D1、equipment_class=水泵、commissioned_on=2023-04-18、rated_power_kw=15、criticality=C、last_overhaul=2026-03-02"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-located_in-液压站油泵-L2",
+      "subject": "液压站油泵",
+      "predicate": "located_in",
+      "object": "L2",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:3",
+          "quote": "equipment_id=A-102、name=液压站油泵、line=L2、equipment_class=液压泵、commissioned_on=2020-07-01、rated_power_kw=45、criticality=A、last_overhaul=2025-09-18"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-located_in-空压机-C1",
+      "subject": "空压机",
+      "predicate": "located_in",
+      "object": "C1",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:7",
+          "quote": "equipment_id=C-301、name=空压机、line=C1、equipment_class=压缩机、commissioned_on=2018-05-23、rated_power_kw=110、criticality=A、last_overhaul=2025-12-20"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-located_in-输送带驱动电机-L3",
+      "subject": "输送带驱动电机",
+      "predicate": "located_in",
+      "object": "L3",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-UNK-设备台账-d2fa0a1a",
+          "locator": "设备台账/v1#row:6",
+          "quote": "equipment_id=B-202、name=输送带驱动电机、line=L3、equipment_class=电机、commissioned_on=2021-09-12、rated_power_kw=22、criticality=B、last_overhaul=2026-01-08"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "ledger_table"
+    },
+    {
+      "candidate_id": "REL-measured_by-A-101-噪声",
+      "subject": "A-101",
+      "predicate": "measured_by",
+      "object": "噪声",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:2",
+          "quote": "observed_at=2026-10-27 08:00、equipment_id=A-101、conclusion=正常、inspector=张伟、噪声dB=78"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "REL-measured_by-A-101-振动",
+      "subject": "A-101",
+      "predicate": "measured_by",
+      "object": "振动",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:2",
+          "quote": "observed_at=2026-10-27 08:00、equipment_id=A-101、conclusion=正常、inspector=张伟、振动mm/s=2.1"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "REL-measured_by-A-101-轴承温度",
+      "subject": "A-101",
+      "predicate": "measured_by",
+      "object": "轴承温度",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:2",
+          "quote": "observed_at=2026-10-27 08:00、equipment_id=A-101、conclusion=正常、inspector=张伟、轴承温度C=62"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "REL-measured_by-A-102-噪声",
+      "subject": "A-102",
+      "predicate": "measured_by",
+      "object": "噪声",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:7",
+          "quote": "observed_at=2026-10-29 08:00、equipment_id=A-102、conclusion=正常、inspector=王强、噪声dB=74"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "REL-measured_by-A-102-振动",
+      "subject": "A-102",
+      "predicate": "measured_by",
+      "object": "振动",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:7",
+          "quote": "observed_at=2026-10-29 08:00、equipment_id=A-102、conclusion=正常、inspector=王强、振动mm/s=1.8"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "REL-measured_by-A-102-轴承温度",
+      "subject": "A-102",
+      "predicate": "measured_by",
+      "object": "轴承温度",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:7",
+          "quote": "observed_at=2026-10-29 08:00、equipment_id=A-102、conclusion=正常、inspector=王强、轴承温度C=55"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "REL-measured_by-A-103-噪声",
+      "subject": "A-103",
+      "predicate": "measured_by",
+      "object": "噪声",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:8",
+          "quote": "observed_at=2026-10-29 08:00、equipment_id=A-103、conclusion=正常、inspector=王强、噪声dB=80"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "REL-measured_by-A-103-振动",
+      "subject": "A-103",
+      "predicate": "measured_by",
+      "object": "振动",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:8",
+          "quote": "observed_at=2026-10-29 08:00、equipment_id=A-103、conclusion=正常、inspector=王强、振动mm/s=2.2"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "REL-measured_by-A-103-轴承温度",
+      "subject": "A-103",
+      "predicate": "measured_by",
+      "object": "轴承温度",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:8",
+          "quote": "observed_at=2026-10-29 08:00、equipment_id=A-103、conclusion=正常、inspector=王强、轴承温度C=48"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "REL-measured_by-C-301-噪声",
+      "subject": "C-301",
+      "predicate": "measured_by",
+      "object": "噪声",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:9",
+          "quote": "observed_at=2026-10-29 09:00、equipment_id=C-301、conclusion=关注、inspector=李娜、噪声dB=88"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "REL-measured_by-C-301-振动",
+      "subject": "C-301",
+      "predicate": "measured_by",
+      "object": "振动",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:9",
+          "quote": "observed_at=2026-10-29 09:00、equipment_id=C-301、conclusion=关注、inspector=李娜、振动mm/s=4.1"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "REL-measured_by-C-301-轴承温度",
+      "subject": "C-301",
+      "predicate": "measured_by",
+      "object": "轴承温度",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:9",
+          "quote": "observed_at=2026-10-29 09:00、equipment_id=C-301、conclusion=关注、inspector=李娜、轴承温度C=72"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "observation_table"
+    },
+    {
+      "candidate_id": "REL-part_of-ISO-10816-3-2009-7-2-ISO-10816-3-2009",
+      "subject": "ISO 10816-3:2009 §7.2",
+      "predicate": "part_of",
+      "object": "ISO 10816-3:2009",
+      "confidence": 0.95,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#standard_refs",
+          "quote": "ISO 10816-3:2009 §7.2"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "declared_standard_ref"
+    },
+    {
+      "candidate_id": "REL-part_of-ISO-10816-3-2009-7-3-ISO-10816-3-2009",
+      "subject": "ISO 10816-3:2009 §7.3",
+      "predicate": "part_of",
+      "object": "ISO 10816-3:2009",
+      "confidence": 0.84,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:33",
+          "quote": "- 振动 > 11.2 mm/s（ISO 10816-3:2009 第 7.3 节停机阈值）；"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_prose"
+    },
+    {
+      "candidate_id": "REL-part_of-Q-XX-2024-11-5-3-Q-XX-2024-11",
+      "subject": "Q/XX-2024-11 §5.3",
+      "predicate": "part_of",
+      "object": "Q/XX-2024-11",
+      "confidence": 0.95,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#standard_refs",
+          "quote": "Q/XX-2024-11 §5.3"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "declared_standard_ref"
+    },
+    {
+      "candidate_id": "REL-precedes-加装临时强制风冷-出风口对准轴承座散热片-禁止直吹密封面-巡检间隔缩短至-30-分钟-同时记录振动-温度-噪声三项",
+      "subject": "加装临时强制风冷，出风口对准轴承座散热片，禁止直吹密封面。",
+      "predicate": "precedes",
+      "object": "巡检间隔缩短至 **30 分钟**，同时记录振动、温度、噪声三项。",
+      "confidence": 0.88,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:28",
+          "quote": "4. 巡检间隔缩短至 **30 分钟**，同时记录振动、温度、噪声三项。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "REL-precedes-对轴承座补加耐高温润滑脂-NLGI-2-级-滴点-180-C-加装临时强制风冷-出风口对准轴承座散热片-禁止直吹密封面",
+      "subject": "对轴承座补加耐高温润滑脂（NLGI 2 级，滴点 ≥ 180°C）。",
+      "predicate": "precedes",
+      "object": "加装临时强制风冷，出风口对准轴承座散热片，禁止直吹密封面。",
+      "confidence": 0.88,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:27",
+          "quote": "3. 加装临时强制风冷，出风口对准轴承座散热片，禁止直吹密封面。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "REL-precedes-将产线负荷降至-50-70-避免冲击载荷-依据规程-Q-XX-2024-11-对轴承座补加耐高温润滑脂-NLGI-2-级-滴点-180-C",
+      "subject": "将产线负荷降至 50%~70%，避免冲击载荷（依据规程 Q/XX-2024-11…",
+      "predicate": "precedes",
+      "object": "对轴承座补加耐高温润滑脂（NLGI 2 级，滴点 ≥ 180°C）。",
+      "confidence": 0.88,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:26",
+          "quote": "2. 对轴承座补加耐高温润滑脂（NLGI 2 级，滴点 ≥ 180°C）。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "REL-precedes-巡检间隔缩短至-30-分钟-同时记录振动-温度-噪声三项-4-小时内若振动未回落至-4-5-mm-s-以下-或温度持续-90-C-立即",
+      "subject": "巡检间隔缩短至 **30 分钟**，同时记录振动、温度、噪声三项。",
+      "predicate": "precedes",
+      "object": "4 小时内若振动未回落至 4.5 mm/s 以下，或温度持续 ≥ 90°C，立即…",
+      "confidence": 0.88,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:29",
+          "quote": "5. 4 小时内若振动未回落至 4.5 mm/s 以下，或温度持续 ≥ 90°C，立即转入停机检修流程。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "procedure_step"
+    },
+    {
+      "candidate_id": "REL-triggered_by-振动C区超限-振动烈度C区判定",
+      "subject": "振动C区超限",
+      "predicate": "triggered_by",
+      "object": "振动烈度C区判定",
+      "confidence": 0.8,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:5",
+          "quote": "2026-10-28 20:00 A-101 振动=5.2mm/s"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:18",
+          "quote": "C | 4.5 ~ 7.1 | 不宜长期运行 | 制定检修计划，缩短巡检间隔"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "cross_document_rule_match"
+    },
+    {
+      "candidate_id": "REL-triggered_by-振动D区超限-振动烈度D区判定",
+      "subject": "振动D区超限",
+      "predicate": "triggered_by",
+      "object": "振动烈度D区判定",
+      "confidence": 0.8,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:6",
+          "quote": "2026-10-29 06:00 A-101 振动=7.8mm/s"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:19",
+          "quote": "D | > 7.1 | 危险 | 立即降负荷并安排停机检查"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "cross_document_rule_match"
+    },
+    {
+      "candidate_id": "REL-triggered_by-轴承温度超限-轴承温度报警值",
+      "subject": "轴承温度超限",
+      "predicate": "triggered_by",
+      "object": "轴承温度报警值",
+      "confidence": 0.8,
+      "evidence": [
+        {
+          "asset_id": "AS-A-101-巡检记录-4e9585ab",
+          "locator": "A-101/巡检记录/v1#row:6",
+          "quote": "2026-10-29 06:00 A-101 轴承温度=85.0C"
+        },
+        {
+          "asset_id": "AS-A-101-检修规程-7c666e42",
+          "locator": "A-101/检修规程/v1#line:21",
+          "quote": "轴承温度依据厂内规程 Q/XX-2024-11：正常运行 60~70°C，**85°C 为报警值，90°C 为停机值**。"
+        }
+      ],
+      "decision": "auto_accept",
+      "extractor": "cross_document_rule_match"
+    }
+  ],
+  "warnings": [
+    "同名多类型，需人工确认：['Equipment', 'EquipmentClass']",
+    "自指关系已跳过：干燥机 -classified_as-> 干燥机"
+  ]
+}

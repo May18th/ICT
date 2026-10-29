@@ -1,0 +1,4 @@
+﻿plan_id,project_name,road_id,pipeline_id,work_type,excavation_depth_m,start_at,end_at,permit_org,contractor,closure_scope,status
+CP-2026-041,兴华路燃气主干管更换,R-101,PL-GAS-101,pipe_replacement,2.5,2026-10-29T08:00:00+08:00,2026-10-29T18:00:00+08:00,ORG-ROAD,C-8812,半幅封闭,approved
+CP-2026-038,民生街通信管道敷设,R-103,PL-TEL-103,trenching,1.0,2026-10-27T08:00:00+08:00,2026-11-05T18:00:00+08:00,ORG-ROAD,C-7734,占道施工,approved
+CP-2026-035,兴华支路路面修复,R-105,,pavement_repair,0.2,2026-10-25T08:00:00+08:00,2026-11-10T18:00:00+08:00,ORG-ROAD,C-5501,全封闭,approved

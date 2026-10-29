@@ -1,0 +1,258 @@
+{
+  "manifest_version": "1.1",
+  "order": [
+    "understand",
+    "impact",
+    "resource",
+    "deduce",
+    "audit"
+  ],
+  "envelope": {
+    "status": [
+      "ok",
+      "partial",
+      "error"
+    ],
+    "data_keys": [
+      "skill",
+      "stage",
+      "payload",
+      "degraded",
+      "notice?"
+    ],
+    "note": "Skill 与 MCP 工具使用同一 ToolResult 信封；partial 不带 error，缺口原因在 degraded/notice"
+  },
+  "standalone_tools": [
+    {
+      "name": "counterfactual_run",
+      "when": "已有一条可发布的基线结论，用户追问“如果……会怎样”",
+      "mcp_tools": [
+        "counterfactual_run"
+      ],
+      "cases": [
+        "CF1",
+        "CF2",
+        "CF3"
+      ],
+      "failure_mode": "基线越权或不可计算 -> PERMISSION_DENIED / EVIDENCE_INSUFFICIENT，不给空差异"
+    }
+  ],
+  "skills": [
+    {
+      "name": "event_understand",
+      "stage": "understand",
+      "description": "把工单/事件编号解析成可推演的事件事实：位置、量级、响应等级、规则覆盖与数据缺口。",
+      "request_schema": {
+        "additionalProperties": false,
+        "description": "Every skill starts from the same three facts. Narrowing it per skill would\nforce the orchestrator to reshape the same context five times.",
+        "properties": {
+          "event_id": {
+            "minLength": 1,
+            "title": "Event Id",
+            "type": "string"
+          },
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "caller_labels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Caller Labels",
+            "type": "array"
+          }
+        },
+        "required": [
+          "event_id",
+          "as_of"
+        ],
+        "title": "SkillRequest",
+        "type": "object"
+      },
+      "mcp_tools": [
+        "semantic_query",
+        "twin_neighbors",
+        "evidence_locate"
+      ],
+      "failure_mode": "事件不存在或不是事件对象 -> NOT_FOUND / VALIDATION_FAILED，整链终止"
+    },
+    {
+      "name": "impact_analysis",
+      "stage": "impact",
+      "description": "沿真实传导关系扩散到受影响对象；片区只作为范围标签，不作为传导介质。",
+      "request_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "minLength": 1,
+            "title": "Event Id",
+            "type": "string"
+          },
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "caller_labels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Caller Labels",
+            "type": "array"
+          },
+          "max_hops": {
+            "default": 3,
+            "maximum": 4,
+            "minimum": 1,
+            "title": "Max Hops",
+            "type": "integer"
+          },
+          "min_confidence": {
+            "default": 0.6,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Min Confidence",
+            "type": "number"
+          }
+        },
+        "required": [
+          "event_id",
+          "as_of"
+        ],
+        "title": "ImpactRequest",
+        "type": "object"
+      },
+      "mcp_tools": [
+        "semantic_query",
+        "twin_neighbors",
+        "evidence_locate"
+      ],
+      "failure_mode": "种子不可达 -> 空范围 + 原因码；越权证据被过滤 -> partial"
+    },
+    {
+      "name": "resource_check",
+      "stage": "resource",
+      "description": "按预案折算系数算需求、比对库存、给出缺口；参数规则缺失时不给数字。",
+      "request_schema": {
+        "additionalProperties": false,
+        "description": "Every skill starts from the same three facts. Narrowing it per skill would\nforce the orchestrator to reshape the same context five times.",
+        "properties": {
+          "event_id": {
+            "minLength": 1,
+            "title": "Event Id",
+            "type": "string"
+          },
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "caller_labels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Caller Labels",
+            "type": "array"
+          }
+        },
+        "required": [
+          "event_id",
+          "as_of"
+        ],
+        "title": "SkillRequest",
+        "type": "object"
+      },
+      "mcp_tools": [
+        "event_deduce",
+        "evidence_locate"
+      ],
+      "failure_mode": "折算参数不可用 -> partial，缺口留空而不是填 0"
+    },
+    {
+      "name": "cross_department_deduction",
+      "stage": "deduce",
+      "description": "六跳推演：现象→对象→部门→冲突→资源→动作，含二次风险与转人工信号。",
+      "request_schema": {
+        "additionalProperties": false,
+        "description": "Every skill starts from the same three facts. Narrowing it per skill would\nforce the orchestrator to reshape the same context five times.",
+        "properties": {
+          "event_id": {
+            "minLength": 1,
+            "title": "Event Id",
+            "type": "string"
+          },
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "caller_labels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Caller Labels",
+            "type": "array"
+          }
+        },
+        "required": [
+          "event_id",
+          "as_of"
+        ],
+        "title": "SkillRequest",
+        "type": "object"
+      },
+      "mcp_tools": [
+        "event_deduce",
+        "conflict_check",
+        "evidence_locate"
+      ],
+      "failure_mode": "结论引用了调用方不可见的依据 -> PERMISSION_DENIED（不降级删证据）"
+    },
+    {
+      "name": "evidence_audit",
+      "stage": "audit",
+      "description": "把结论转成 claim 过引用闸门、落哈希链账本，并返回可逐条追溯的审计报告。",
+      "request_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "minLength": 1,
+            "title": "Event Id",
+            "type": "string"
+          },
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "caller_labels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Caller Labels",
+            "type": "array"
+          },
+          "persist": {
+            "default": true,
+            "title": "Persist",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "event_id",
+          "as_of"
+        ],
+        "title": "AuditRequest",
+        "type": "object"
+      },
+      "mcp_tools": [
+        "claim_trace",
+        "provenance_verify",
+        "evidence_locate"
+      ],
+      "failure_mode": "任一 claim 不达标 -> EVIDENCE_INSUFFICIENT，不落账、整链不可发布"
+    }
+  ]
+}

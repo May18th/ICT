@@ -1,0 +1,596 @@
+{
+  "manifest_version": "urban-1",
+  "asset_count": 15,
+  "type_counts": {
+    "construction_plan": 1,
+    "drainage_facility": 1,
+    "duty_list": 1,
+    "emergency_plan": 2,
+    "pipeline_ledger": 1,
+    "procedure": 2,
+    "public_notice": 2,
+    "resource_inventory": 1,
+    "road_network": 1,
+    "schematic_map": 1,
+    "weather_alert": 1,
+    "work_order": 1
+  },
+  "modality_counts": {
+    "image": 1,
+    "table": 8,
+    "text": 6
+  },
+  "source_org_counts": {
+    "区城建档案中心": 3,
+    "区应急管理局": 4,
+    "区排水公司": 2,
+    "区道路管理中心": 3,
+    "市气象台": 1,
+    "市燃气公司": 2
+  },
+  "assets": [
+    {
+      "asset_id": "AS-A-03-construction_plan-79142c4f",
+      "modality": "table",
+      "parse_status": "parsed",
+      "file_name": "construction_plans.csv",
+      "doc_type": "construction_plan",
+      "equipment_id": "A-03",
+      "version": "v3",
+      "standard_refs": [],
+      "locator": "A-03/construction_plan/v3",
+      "checksum_sha256": "79142c4fde6b5ba38589c613815237b0062249eb307bbf8433f7c2f1ef986142",
+      "byte_size": 615,
+      "summary": "表格资产：3 行 × 12 列，列名 plan_id、project_name、road_id、pipeline_id、work_type、excavation_depth_m 等",
+      "structure": {
+        "rows": 3,
+        "columns": 12,
+        "headers": [
+          "plan_id",
+          "project_name",
+          "road_id",
+          "pipeline_id",
+          "work_type",
+          "excavation_depth_m",
+          "start_at",
+          "end_at",
+          "permit_org",
+          "contractor",
+          "closure_scope",
+          "status"
+        ]
+      },
+      "governance": {
+        "asset_type": "construction_plan",
+        "title": "在建占道施工计划表",
+        "source_uri": "demo://urban/construction_plans.csv",
+        "source_org": "区道路管理中心",
+        "published_at": "2026-10-26T10:00:00+08:00",
+        "valid_from": "2026-10-26T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "79142c4fde6b5ba38589c613815237b0062249eb307bbf8433f7c2f1ef986142",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-A-03-drainage_facility-cd569425",
+      "modality": "table",
+      "parse_status": "parsed",
+      "file_name": "drainage_facilities.csv",
+      "doc_type": "drainage_facility",
+      "equipment_id": "A-03",
+      "version": "v1",
+      "standard_refs": [],
+      "locator": "A-03/drainage_facility/v1",
+      "checksum_sha256": "cd5694259697fcdb11c74a23007329cd11b260a334774ab177506376ea25d394",
+      "byte_size": 766,
+      "summary": "表格资产：6 行 × 11 列，列名 facility_id、name、facility_type、road_id、drainage_zone、capacity_m3h 等",
+      "structure": {
+        "rows": 6,
+        "columns": 11,
+        "headers": [
+          "facility_id",
+          "name",
+          "facility_type",
+          "road_id",
+          "drainage_zone",
+          "capacity_m3h",
+          "backup_power",
+          "last_inspection",
+          "state",
+          "owner_org",
+          "note"
+        ]
+      },
+      "governance": {
+        "asset_type": "drainage_facility",
+        "title": "A-03 片区排水设施台账",
+        "source_uri": "demo://urban/drainage_facilities.csv",
+        "source_org": "区排水公司",
+        "published_at": "2026-09-10T09:00:00+08:00",
+        "valid_from": "2026-09-10T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "cd5694259697fcdb11c74a23007329cd11b260a334774ab177506376ea25d394",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-A-03-duty_list-07d920f0",
+      "modality": "table",
+      "parse_status": "parsed",
+      "file_name": "department_duties.csv",
+      "doc_type": "duty_list",
+      "equipment_id": "A-03",
+      "version": "v2",
+      "standard_refs": [],
+      "locator": "A-03/duty_list/v2",
+      "checksum_sha256": "07d920f0f21c946276293a8433905dd5d9cad45d7dda3f9cfbcf97592c9521bf",
+      "byte_size": 1081,
+      "summary": "表格资产：8 行 × 7 列，列名 org_id、org_name、scope_type、scope_ref、authority、contact 等",
+      "structure": {
+        "rows": 8,
+        "columns": 7,
+        "headers": [
+          "org_id",
+          "org_name",
+          "scope_type",
+          "scope_ref",
+          "authority",
+          "contact",
+          "escalation_note"
+        ]
+      },
+      "governance": {
+        "asset_type": "duty_list",
+        "title": "部门职责清单",
+        "source_uri": "demo://urban/department_duties.csv",
+        "source_org": "区应急管理局",
+        "published_at": "2026-01-05T09:00:00+08:00",
+        "valid_from": "2026-01-05T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "07d920f0f21c946276293a8433905dd5d9cad45d7dda3f9cfbcf97592c9521bf",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-A-03-emergency_plan-cbaa17ca",
+      "modality": "text",
+      "parse_status": "parsed",
+      "file_name": "plan_flood_emergency_v1.md",
+      "doc_type": "emergency_plan",
+      "equipment_id": "A-03",
+      "version": "v1.0",
+      "standard_refs": [
+        "YJ-FX-2021-001"
+      ],
+      "locator": "A-03/emergency_plan/v1.0",
+      "checksum_sha256": "cbaa17cae29ca33f46e56d83a11ce4f16e59a7706c53896f8864395db43d6a6c",
+      "byte_size": 1207,
+      "summary": "文本资产：39 行，首段「| 项目 | 内容 |」",
+      "structure": {
+        "lines": 39,
+        "lead": "| 项目 | 内容 |"
+      },
+      "governance": {
+        "asset_type": "emergency_plan",
+        "title": "城区防汛排涝应急预案 v1.0（已废止）",
+        "source_uri": "demo://urban/plan_flood_emergency_v1.md",
+        "source_org": "区应急管理局",
+        "published_at": "2021-04-15T09:00:00+08:00",
+        "valid_from": "2021-05-01T00:00:00+08:00",
+        "valid_to": "2025-06-01T00:00:00+08:00",
+        "visibility": [],
+        "content_hash": "cbaa17cae29ca33f46e56d83a11ce4f16e59a7706c53896f8864395db43d6a6c",
+        "status": "deprecated"
+      }
+    },
+    {
+      "asset_id": "AS-A-03-emergency_plan-df41ffb1",
+      "modality": "text",
+      "parse_status": "parsed",
+      "file_name": "plan_flood_emergency_v2.md",
+      "doc_type": "emergency_plan",
+      "equipment_id": "A-03",
+      "version": "v2.0",
+      "standard_refs": [
+        "YJ-FX-2025-002"
+      ],
+      "locator": "A-03/emergency_plan/v2.0",
+      "checksum_sha256": "df41ffb1cc966ba3d1eec4bcf733cb3aaedc77d7328f7e9d5a6651970c85b3f2",
+      "byte_size": 3566,
+      "summary": "文本资产：65 行，首段「| 项目 | 内容 |」",
+      "structure": {
+        "lines": 65,
+        "lead": "| 项目 | 内容 |"
+      },
+      "governance": {
+        "asset_type": "emergency_plan",
+        "title": "城区防汛排涝应急预案 v2.0",
+        "source_uri": "demo://urban/plan_flood_emergency_v2.md",
+        "source_org": "区应急管理局",
+        "published_at": "2025-05-20T09:00:00+08:00",
+        "valid_from": "2025-06-01T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "df41ffb1cc966ba3d1eec4bcf733cb3aaedc77d7328f7e9d5a6651970c85b3f2",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-A-03-pipeline_ledger-4741e97f",
+      "modality": "table",
+      "parse_status": "parsed",
+      "file_name": "pipeline_ledger.csv",
+      "doc_type": "pipeline_ledger",
+      "equipment_id": "A-03",
+      "version": "v1",
+      "standard_refs": [],
+      "locator": "A-03/pipeline_ledger/v1",
+      "checksum_sha256": "4741e97fe68e2f308fa76be390748b5fefbb9c398640ad02e081c6a7f48a0de5",
+      "byte_size": 751,
+      "summary": "表格资产：8 行 × 10 列，列名 pipeline_id、kind、road_id、depth_m、diameter_mm、material 等",
+      "structure": {
+        "rows": 8,
+        "columns": 10,
+        "headers": [
+          "pipeline_id",
+          "kind",
+          "road_id",
+          "depth_m",
+          "diameter_mm",
+          "material",
+          "install_year",
+          "owner_org",
+          "status",
+          "note"
+        ]
+      },
+      "governance": {
+        "asset_type": "pipeline_ledger",
+        "title": "A-03 片区地下管线台账",
+        "source_uri": "demo://urban/pipeline_ledger.csv",
+        "source_org": "区城建档案中心",
+        "published_at": "2026-02-01T09:00:00+08:00",
+        "valid_from": "2026-02-01T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "4741e97fe68e2f308fa76be390748b5fefbb9c398640ad02e081c6a7f48a0de5",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-A-03-procedure-21ee9523",
+      "modality": "text",
+      "parse_status": "parsed",
+      "file_name": "procedure_gas_protection.md",
+      "doc_type": "procedure",
+      "equipment_id": "A-03",
+      "version": "v3.1",
+      "standard_refs": [
+        "GC-GAS-2025-011"
+      ],
+      "locator": "A-03/procedure/v3.1",
+      "checksum_sha256": "21ee9523f707df05ca1cbf486700fac57f33d0965f0c49260731d925d3875e92",
+      "byte_size": 1270,
+      "summary": "文本资产：31 行，首段「| 项目 | 内容 |」",
+      "structure": {
+        "lines": 31,
+        "lead": "| 项目 | 内容 |"
+      },
+      "governance": {
+        "asset_type": "procedure",
+        "title": "地下燃气管道施工保护规程",
+        "source_uri": "demo://urban/procedure_gas_protection.md",
+        "source_org": "市燃气公司",
+        "published_at": "2025-09-01T09:00:00+08:00",
+        "valid_from": "2025-09-15T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [
+          "ORG-GAS",
+          "ORG-EMERG"
+        ],
+        "content_hash": "21ee9523f707df05ca1cbf486700fac57f33d0965f0c49260731d925d3875e92",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-A-03-procedure-30dc5dcb",
+      "modality": "text",
+      "parse_status": "parsed",
+      "file_name": "procedure_waterlogging.md",
+      "doc_type": "procedure",
+      "equipment_id": "A-03",
+      "version": "v1.2",
+      "standard_refs": [
+        "ZY-DRN-2026-003"
+      ],
+      "locator": "A-03/procedure/v1.2",
+      "checksum_sha256": "30dc5dcbeca0684d9a982245d583b7b0667fce116684337f4eb861d450a5a37c",
+      "byte_size": 1152,
+      "summary": "文本资产：32 行，首段「| 项目 | 内容 |」",
+      "structure": {
+        "lines": 32,
+        "lead": "| 项目 | 内容 |"
+      },
+      "governance": {
+        "asset_type": "procedure",
+        "title": "道路积水处置作业指引",
+        "source_uri": "demo://urban/procedure_waterlogging.md",
+        "source_org": "区排水公司",
+        "published_at": "2026-03-10T09:00:00+08:00",
+        "valid_from": "2026-03-15T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [
+          "ORG-DRAIN",
+          "ORG-EMERG"
+        ],
+        "content_hash": "30dc5dcbeca0684d9a982245d583b7b0667fce116684337f4eb861d450a5a37c",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-A-03-resource_inventory-8133c741",
+      "modality": "table",
+      "parse_status": "parsed",
+      "file_name": "resource_inventory.csv",
+      "doc_type": "resource_inventory",
+      "equipment_id": "A-03",
+      "version": "v1",
+      "standard_refs": [],
+      "locator": "A-03/resource_inventory/v1",
+      "checksum_sha256": "8133c74194d562da62a54f9df208e317afc4e28e65871b10644e94cbbc4318ef",
+      "byte_size": 848,
+      "summary": "表格资产：9 行 × 9 列，列名 resource_id、name、category、qty_available、unit、owner_org 等",
+      "structure": {
+        "rows": 9,
+        "columns": 9,
+        "headers": [
+          "resource_id",
+          "name",
+          "category",
+          "qty_available",
+          "unit",
+          "owner_org",
+          "district",
+          "storage_site",
+          "capacity_note"
+        ]
+      },
+      "governance": {
+        "asset_type": "resource_inventory",
+        "title": "防汛应急资源库存表",
+        "source_uri": "demo://urban/resource_inventory.csv",
+        "source_org": "区应急管理局",
+        "published_at": "2026-10-01T09:00:00+08:00",
+        "valid_from": "2026-10-01T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "8133c74194d562da62a54f9df208e317afc4e28e65871b10644e94cbbc4318ef",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-A-03-road_network-7149cd0c",
+      "modality": "table",
+      "parse_status": "parsed",
+      "file_name": "road_network.csv",
+      "doc_type": "road_network",
+      "equipment_id": "A-03",
+      "version": "v1",
+      "standard_refs": [],
+      "locator": "A-03/road_network/v1",
+      "checksum_sha256": "7149cd0c1e30a805864e98e2613691e633450293932df8a008bde3465a5b24f9",
+      "byte_size": 655,
+      "summary": "表格资产：7 行 × 10 列，列名 road_id、name、district、road_class、lanes、length_m 等",
+      "structure": {
+        "rows": 7,
+        "columns": 10,
+        "headers": [
+          "road_id",
+          "name",
+          "district",
+          "road_class",
+          "lanes",
+          "length_m",
+          "elevation_m",
+          "drainage_zone",
+          "status",
+          "note"
+        ]
+      },
+      "governance": {
+        "asset_type": "road_network",
+        "title": "A-03 片区道路基础台账",
+        "source_uri": "demo://urban/road_network.csv",
+        "source_org": "区城建档案中心",
+        "published_at": "2026-01-15T09:00:00+08:00",
+        "valid_from": "2026-01-15T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "7149cd0c1e30a805864e98e2613691e633450293932df8a008bde3465a5b24f9",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-A-03-schematic_map-68ff291d",
+      "modality": "image",
+      "parse_status": "parsed",
+      "file_name": "pipeline_map.png",
+      "doc_type": "schematic_map",
+      "equipment_id": "A-03",
+      "version": "v1",
+      "standard_refs": [],
+      "locator": "A-03/schematic_map/v1",
+      "checksum_sha256": "68ff291d5b28c7a8341d68e8e4754000505378daaff3cad1e938b1b65f6fddea",
+      "byte_size": 7070,
+      "summary": "图片资产：800×520 像素（PNG）",
+      "structure": {
+        "width": 800,
+        "height": 520
+      },
+      "governance": {
+        "asset_type": "schematic_map",
+        "title": "A-03 管线示意图",
+        "source_uri": "demo://urban/pipeline_map.png",
+        "source_org": "区城建档案中心",
+        "published_at": "2026-10-29T08:00:00+08:00",
+        "valid_from": "2026-10-29T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "68ff291d5b28c7a8341d68e8e4754000505378daaff3cad1e938b1b65f6fddea",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-A-03-weather_alert-4a63cb03",
+      "modality": "table",
+      "parse_status": "parsed",
+      "file_name": "weather_alerts.csv",
+      "doc_type": "weather_alert",
+      "equipment_id": "A-03",
+      "version": "v2",
+      "standard_refs": [],
+      "locator": "A-03/weather_alert/v2",
+      "checksum_sha256": "4a63cb03a2ce9ccc572fcca0465c864da1d1681ff1ea508a8c16c1449c930172",
+      "byte_size": 619,
+      "summary": "表格资产：3 行 × 10 列，列名 alert_id、issued_at、valid_from、valid_to、level、rainfall_mm_3h 等",
+      "structure": {
+        "rows": 3,
+        "columns": 10,
+        "headers": [
+          "alert_id",
+          "issued_at",
+          "valid_from",
+          "valid_to",
+          "level",
+          "rainfall_mm_3h",
+          "district",
+          "source_org",
+          "status",
+          "description"
+        ]
+      },
+      "governance": {
+        "asset_type": "weather_alert",
+        "title": "气象预警发布记录",
+        "source_uri": "demo://urban/weather_alerts.csv",
+        "source_org": "市气象台",
+        "published_at": "2026-10-29T07:30:00+08:00",
+        "valid_from": "2026-10-29T07:30:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "4a63cb03a2ce9ccc572fcca0465c864da1d1681ff1ea508a8c16c1449c930172",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-A-03-work_order-8a8ea14d",
+      "modality": "table",
+      "parse_status": "parsed",
+      "file_name": "work_orders.csv",
+      "doc_type": "work_order",
+      "equipment_id": "A-03",
+      "version": "v1",
+      "standard_refs": [],
+      "locator": "A-03/work_order/v1",
+      "checksum_sha256": "8a8ea14db4ad5de19a4e451fd1740481436a4eda3260217adcd966dfe329873c",
+      "byte_size": 862,
+      "summary": "表格资产：5 行 × 10 列，列名 order_id、road_id、facility_id、pipeline_id、order_type、reported_at 等",
+      "structure": {
+        "rows": 5,
+        "columns": 10,
+        "headers": [
+          "order_id",
+          "road_id",
+          "facility_id",
+          "pipeline_id",
+          "order_type",
+          "reported_at",
+          "reporter_org",
+          "severity",
+          "status",
+          "description"
+        ]
+      },
+      "governance": {
+        "asset_type": "work_order",
+        "title": "设施维修工单记录",
+        "source_uri": "demo://urban/work_orders.csv",
+        "source_org": "区道路管理中心",
+        "published_at": "2026-10-29T09:40:00+08:00",
+        "valid_from": "2026-10-29T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "8a8ea14db4ad5de19a4e451fd1740481436a4eda3260217adcd966dfe329873c",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-R-101-public_notice-27eaffa5",
+      "modality": "text",
+      "parse_status": "parsed",
+      "file_name": "notice_road_closure.md",
+      "doc_type": "public_notice",
+      "equipment_id": "R-101",
+      "version": "v1.0",
+      "standard_refs": [
+        "GG-JT-2026-1029-01"
+      ],
+      "locator": "R-101/public_notice/v1.0",
+      "checksum_sha256": "27eaffa5b2824e0eb0b2234bd724a9494b11e0ccdea3c53fbe1234347ba13d08",
+      "byte_size": 1192,
+      "summary": "文本资产：32 行，首段「| 项目 | 内容 |」",
+      "structure": {
+        "lines": 32,
+        "lead": "| 项目 | 内容 |"
+      },
+      "governance": {
+        "asset_type": "public_notice",
+        "title": "兴华路临时封闭公告",
+        "source_uri": "demo://urban/notice_road_closure.md",
+        "source_org": "区道路管理中心",
+        "published_at": "2026-10-29T08:30:00+08:00",
+        "valid_from": "2026-10-29T08:30:00+08:00",
+        "valid_to": "2026-10-29T18:00:00+08:00",
+        "visibility": [],
+        "content_hash": "27eaffa5b2824e0eb0b2234bd724a9494b11e0ccdea3c53fbe1234347ba13d08",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-R-101-public_notice-cc38b190",
+      "modality": "text",
+      "parse_status": "parsed",
+      "file_name": "notice_gas_construction.md",
+      "doc_type": "public_notice",
+      "equipment_id": "R-101",
+      "version": "v1.0",
+      "standard_refs": [
+        "GG-GAS-2026-041"
+      ],
+      "locator": "R-101/public_notice/v1.0",
+      "checksum_sha256": "cc38b190bcd33658751136a3ec5dbf9628efb2f04231275d4f9d4091cca40832",
+      "byte_size": 1095,
+      "summary": "文本资产：30 行，首段「| 项目 | 内容 |」",
+      "structure": {
+        "lines": 30,
+        "lead": "| 项目 | 内容 |"
+      },
+      "governance": {
+        "asset_type": "public_notice",
+        "title": "兴华路燃气管道施工公告",
+        "source_uri": "demo://urban/notice_gas_construction.md",
+        "source_org": "市燃气公司",
+        "published_at": "2026-10-27T16:00:00+08:00",
+        "valid_from": "2026-10-29T08:00:00+08:00",
+        "valid_to": "2026-10-29T18:00:00+08:00",
+        "visibility": [],
+        "content_hash": "cc38b190bcd33658751136a3ec5dbf9628efb2f04231275d4f9d4091cca40832",
+        "status": "published"
+      }
+    }
+  ]
+}
