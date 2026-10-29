@@ -2,7 +2,7 @@
 
 对应 `docs/urban-scenario-ground-truth.md` §4 的三个反事实问题，以及创新点二「因果推演 + 反事实」。
 
-产物：`src/decision_poc/counterfactual.py`、`tests/test_counterfactual.py`（18 项）、MCP 第 8 个工具 `counterfactual_run`、绑定表 `samples/nexent/skills.json`（1.1）。全量 **342 passed**。
+产物：`src/decision_poc/counterfactual.py`、`src/decision_poc/road_graph.py`、`tests/test_counterfactual.py`（22 项）、`tests/test_road_graph.py`（8 项）、MCP 第 8 个工具 `counterfactual_run`、绑定表 `samples/nexent/skills.json`（1.1）。全量 **355 passed**。
 
 第二轮补上了 CF3 所需的数据与规则（详见 §2 CF3 小节），三个反事实现在全部有可计算的结论。
 
