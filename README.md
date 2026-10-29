@@ -10,6 +10,8 @@
 
 ## 项目目标
 
+外部知识引用可通过 `external_items_to_tool_result` 转成现有证据信封后再进入决策校验；`equipment_decision_agent` 的四段式报告则通过 `parse_business_report` 独立解析，不与 JSON 决策契约混用。
+
 - 用通用 Schema 表达决策请求、证据、选项、风险、审批和反馈。
 - 用状态图串联“证据 → 决策 → 校验 → 审批 → 执行 → 反馈 → 进化”。
 - 验证有限重试、证据一致性校验、结构化失败和 JSON 状态序列化。
