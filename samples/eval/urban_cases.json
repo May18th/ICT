@@ -1,0 +1,306 @@
+{
+  "schema_version": "urban-eval-1",
+  "note": "P8 评测用例。expect 只声明可核查的期望；没写的字段不检查。改这里的数字等于改验收标准，需同步 ground truth。",
+  "cases": [
+    {
+      "case_id": "N01",
+      "title": "核心事件六跳齐全",
+      "kind": "normal",
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-10-29T09:40:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["ok"],
+        "publishable": true,
+        "six_hops": true,
+        "min_actions": 9,
+        "min_affected": 9,
+        "must_objects": ["R-101", "DF-PS-01", "CP-2026-041"],
+        "must_locators": ["emergency_plan/v2.0#line:29", "road_network/v1.1#row:2"],
+        "depth_cm": 30,
+        "warning_level": "orange",
+        "citation_completeness": 1.0
+      }
+    },
+    {
+      "case_id": "N02",
+      "title": "同一事件两小时后（预警仍有效）",
+      "kind": "normal",
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-10-29T12:30:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["ok"],
+        "publishable": true,
+        "six_hops": true,
+        "gap": {"RES-PUMP-M": 1},
+        "warning_level": "orange"
+      }
+    },
+    {
+      "case_id": "N03",
+      "title": "次日红色预警生效时",
+      "kind": "normal",
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-10-30T07:00:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["ok"],
+        "publishable": true,
+        "six_hops": true,
+        "warning_level": "red",
+        "min_actions": 6
+      }
+    },
+    {
+      "case_id": "N04",
+      "title": "基坑沉陷（无积水深度）",
+      "kind": "normal",
+      "event_id": "WO-20261029-009",
+      "as_of": "2026-10-29T09:45:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["partial"],
+        "publishable": false,
+        "conflict_kinds": ["overlap", "gap", "contention"],
+        "gap": {"RES-PUMP-M": 1},
+        "warning_level": "orange"
+      }
+    },
+    {
+      "case_id": "N05",
+      "title": "B-01 未达阈值积水",
+      "kind": "normal",
+      "event_id": "WO-20261029-011",
+      "as_of": "2026-10-29T09:55:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["partial"],
+        "publishable": false,
+        "depth_cm": 18,
+        "warning_level": "yellow",
+        "conflict_kinds": ["overlap"]
+      }
+    },
+    {
+      "case_id": "N06",
+      "title": "泵站故障单独成案",
+      "kind": "normal",
+      "event_id": "WO-20261026-013",
+      "as_of": "2026-10-26T16:00:00+08:00",
+      "caller_labels": ["ORG-DRAIN"],
+      "expect": {
+        "status": ["partial"],
+        "publishable": false,
+        "conflict_kinds": ["overlap", "gap"]
+      }
+    },
+    {
+      "case_id": "N07",
+      "title": "联合身份（应急+道路）",
+      "kind": "normal",
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-10-29T09:40:00+08:00",
+      "caller_labels": ["ORG-EMERG", "ORG-ROAD"],
+      "expect": {
+        "status": ["ok"],
+        "publishable": true,
+        "six_hops": true,
+        "gap": {"RES-PUMP-M": 1}
+      }
+    },
+    {
+      "case_id": "C01",
+      "title": "三类冲突编号齐全",
+      "kind": "conflict",
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-10-29T09:40:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["ok"],
+        "conflict_ids": ["C1", "C2", "C3"],
+        "conflict_kinds": ["overlap", "gap", "contention"],
+        "gap": {"RES-PUMP-M": 1}
+      }
+    },
+    {
+      "case_id": "C02",
+      "title": "职责空白必须出现（泵站无运维主体）",
+      "kind": "conflict",
+      "event_id": "WO-20261026-013",
+      "as_of": "2026-10-26T16:00:00+08:00",
+      "caller_labels": ["ORG-DRAIN"],
+      "expect": {
+        "conflict_ids": ["C2"],
+        "conflict_kinds": ["gap"]
+      }
+    },
+    {
+      "case_id": "C03",
+      "title": "未达阈值时不该编造资源争用",
+      "kind": "conflict",
+      "event_id": "WO-20261029-011",
+      "as_of": "2026-10-29T09:55:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "conflict_kinds": ["overlap"],
+        "gap": {}
+      }
+    },
+    {
+      "case_id": "I01",
+      "title": "未知事件",
+      "kind": "insufficient",
+      "event_id": "WO-2099-000",
+      "as_of": "2026-10-29T09:40:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["error"],
+        "error_code": "NOT_FOUND",
+        "publishable": false
+      }
+    },
+    {
+      "case_id": "I02",
+      "title": "as_of 早于工单上报时间",
+      "kind": "insufficient",
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-10-29T05:00:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["partial", "error"],
+        "refused": true,
+        "publishable": false,
+        "six_hops": false
+      }
+    },
+    {
+      "case_id": "I03",
+      "title": "已闭环工单不再推演",
+      "kind": "insufficient",
+      "event_id": "WO-20261020-002",
+      "as_of": "2026-10-22T09:00:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["partial", "error"],
+        "refused": true,
+        "publishable": false
+      }
+    },
+    {
+      "case_id": "I04",
+      "title": "时点早于全部数据（2026-03）",
+      "kind": "insufficient",
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-03-01T09:00:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["partial", "error"],
+        "refused": true,
+        "publishable": false
+      }
+    },
+    {
+      "case_id": "I05",
+      "title": "上报前 40 分钟",
+      "kind": "insufficient",
+      "event_id": "WO-20261026-013",
+      "as_of": "2026-10-26T15:00:00+08:00",
+      "caller_labels": ["ORG-DRAIN"],
+      "expect": {
+        "status": ["partial", "error"],
+        "refused": true,
+        "publishable": false
+      }
+    },
+    {
+      "case_id": "I06",
+      "title": "B-01 上报前（差 20 分钟）",
+      "kind": "insufficient",
+      "event_id": "WO-20261029-011",
+      "as_of": "2026-10-29T09:10:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["partial", "error"],
+        "refused": true,
+        "publishable": false
+      }
+    },
+    {
+      "case_id": "P01",
+      "title": "无身份调用",
+      "kind": "permission",
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-10-29T09:40:00+08:00",
+      "caller_labels": [],
+      "expect": {
+        "status": ["partial", "error"],
+        "publishable": false,
+        "error_code": "PERMISSION_DENIED"
+      }
+    },
+    {
+      "case_id": "P02",
+      "title": "燃气方视角（依据不可见）",
+      "kind": "permission",
+      "event_id": "WO-20261029-009",
+      "as_of": "2026-10-29T09:45:00+08:00",
+      "caller_labels": ["ORG-GAS"],
+      "expect": {
+        "status": ["partial", "error"],
+        "publishable": false,
+        "error_code": "PERMISSION_DENIED"
+      }
+    },
+    {
+      "case_id": "E01",
+      "title": "预警与封路公告都过期（20:00）",
+      "kind": "expired",
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-10-29T20:00:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["ok"],
+        "warning_level": null,
+        "min_actions": 6
+      }
+    },
+    {
+      "case_id": "E02",
+      "title": "民生街占道施工结束前（11-05 20:00）",
+      "kind": "expired",
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-11-05T20:00:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["ok"],
+        "warning_level": null
+      }
+    },
+    {
+      "case_id": "E03",
+      "title": "全部施工计划结束后（11-10）",
+      "kind": "expired",
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-11-10T20:00:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "status": ["ok"],
+        "warning_level": null,
+        "six_hops": true
+      }
+    },
+    {
+      "case_id": "E04",
+      "title": "B-01 预警过期后",
+      "kind": "expired",
+      "event_id": "WO-20261029-011",
+      "as_of": "2026-10-29T20:00:00+08:00",
+      "caller_labels": ["ORG-EMERG"],
+      "expect": {
+        "warning_level": null,
+        "depth_cm": 18
+      }
+    }
+  ]
+}

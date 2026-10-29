@@ -191,11 +191,19 @@ def test_twin_neighbors_returns_triples(toolkit: UrbanToolkit, server: McpServer
 # --- evidence locate -----------------------------------------------------
 
 
-def test_evidence_locate_row_returns_parsed_fields(server: McpServer) -> None:
+def _work_order_ref(toolkit: UrbanToolkit, suffix: str) -> str:
+    """asset_id 是内容寻址的：改一个字符就换 id，所以测试自己算，别抄字面量。"""
+    asset = next(a for a in toolkit._assets.values() if a.file_name == "work_orders.csv")
+    return f"{asset.asset_id}#A-03/work_order/v1#{suffix}"
+
+
+def test_evidence_locate_row_returns_parsed_fields(
+    toolkit: UrbanToolkit, server: McpServer
+) -> None:
     payload = _call(
         server,
         "evidence_locate",
-        {"evidence_ref": "AS-A-03-work_order-8a8ea14d#A-03/work_order/v1#row:2"},
+        {"evidence_ref": _work_order_ref(toolkit, "row:2")},
     )
     assert payload["status"] == "ok"
     assert payload["data"]["row"]["order_id"] == "WO-20261029-007"
@@ -243,11 +251,11 @@ def test_evidence_locate_unknown_asset(server: McpServer) -> None:
     assert payload["error"]["code"] == "NOT_FOUND"
 
 
-def test_evidence_locate_out_of_range(server: McpServer) -> None:
+def test_evidence_locate_out_of_range(toolkit: UrbanToolkit, server: McpServer) -> None:
     payload = _call(
         server,
         "evidence_locate",
-        {"evidence_ref": "AS-A-03-work_order-8a8ea14d#A-03/work_order/v1#row:999"},
+        {"evidence_ref": _work_order_ref(toolkit, "row:999")},
     )
     assert payload["status"] == "error"
     assert payload["error"]["code"] == "VALIDATION_FAILED"

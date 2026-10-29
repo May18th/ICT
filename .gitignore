@@ -7,3 +7,9 @@ __pycache__/
 
 # Local Codex handoff notes
 codex/
+
+# Unreal generated project state
+visualization/unreal/Saved/
+visualization/unreal/Intermediate/
+visualization/unreal/DerivedDataCache/
+visualization/unreal/Binaries/

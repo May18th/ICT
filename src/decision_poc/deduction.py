@@ -502,6 +502,60 @@ class DeductionEngine:
         return str(values[0])
 
     # --- stages ----------------------------------------------------------
+    def _temporal_refusal(self, incident: TwinObject, as_of: datetime) -> DeductionResult | None:
+        """事件本身不成立时，六跳一条都不该往下走。
+
+        两种情形以前会被照常推演，出来的结论看上去和真的一样：
+
+        - `as_of` 早于工单上报时间——等于用一张还没产生的工单去推演；
+        - 工单已闭环——等于把修好的事再处置一遍。
+
+        这两种都返回"只有一跳、状态 insufficient"的结果：调用方看到的是
+        `partial` + 不可发布 + 一句明确原因，而不是一份看似完整的处置方案。
+        """
+        reported = _time(incident.attributes.get("reported_at"))
+        if reported is not None and reported > as_of:
+            return self._refusal_step(
+                incident,
+                as_of,
+                f"事件尚未上报：工单上报时间 {reported.isoformat()} 晚于 as_of {as_of.isoformat()}",
+            )
+        status = str(incident.attributes.get("status") or "").lower()
+        if status in {"closed", "cancelled", "done"}:
+            return self._refusal_step(
+                incident,
+                as_of,
+                f"事件已闭环（status={status}），不再进入处置推演",
+            )
+        return None
+
+    def _refusal_step(self, incident: TwinObject, as_of: datetime, reason: str) -> DeductionResult:
+        step = DeductionStep(
+            step_id="S1-observed",
+            stage="observed",
+            conclusion={"refused": reason},
+            evidence_refs=self._refs_of(incident.twin_id),
+            status=StageStatus.INSUFFICIENT,
+            detail=reason,
+        )
+        root = EventContext(
+            event_id=incident.name,
+            as_of=as_of,
+            incident_twin_id=incident.twin_id,
+            district=self._district_of(incident),
+            snapshot_hash=self.store.snapshot_hash(),
+        )
+        return DeductionResult(
+            event_id=incident.name,
+            root=root,
+            steps=[step],
+            uncovered_stages=[stage for stage in DEDUCTION_STAGES if stage != "observed"],
+            handoff_required=True,
+            handoff_reasons=[reason],
+            rules_version=self.rules.version,
+            snapshot_hash=self.store.snapshot_hash(),
+        )
+
     def deduce(
         self,
         event_id: str,
@@ -516,6 +570,10 @@ class DeductionEngine:
         incident = self._obj(event_id)
         if incident is None or incident.kind is not ObjectKind.INCIDENT:
             raise KeyError(f"unknown incident: {event_id}")
+
+        refusal = self._temporal_refusal(incident, as_of)
+        if refusal is not None:
+            return refusal
 
         context, root = self._stage_observed(incident, as_of)
         steps: list[DeductionStep] = [self._step_observed(context, root)]
