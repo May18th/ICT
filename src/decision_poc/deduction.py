@@ -1101,13 +1101,19 @@ class DeductionEngine:
             if district in depths:
                 continue
             depths[district] = _incident_depth(incident)
+        lowspot_rule = self.rules.get("RULE-RES-LOWSPOT-PUMPS")
         for district, depth in sorted(depths.items()):
             if depth is None:
                 basis.append(
                     f"{district} 积水深度未知，低洼点临时抽排需求不测算（不按 0 计）"
                 )
                 continue
-            if depth >= closure_threshold:
+            below = depth < closure_threshold
+            # 规则里写的适用条件就是"未达封路阈值"，这里真的去求值，而不是照着
+            # 一句注释办事——条件不命中就不产出这类台数，也不静默改成 0。
+            if not self._matches(
+                lowspot_rule, {"waterlogging_below_closure": "true" if below else "false"}
+            ):
                 basis.append(
                     f"{district} 积水 {depth:g}cm ≥ 封路阈值 {closure_threshold:g}cm，"
                     "按泵站补位与基坑排水测算，不叠加低洼点台数"

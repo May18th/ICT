@@ -204,7 +204,7 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **355 项**测试通过；同时要求锁文件、Python 编译和依赖一致性检查通过。
+当前基线：`uv run --locked pytest -q` 共 **356 项**测试通过；同时要求锁文件、Python 编译和依赖一致性检查通过。
 P0-P6 的验收口径与实测数字见各阶段回传报告（`docs/reports/`）。
 
 ## 后续演进

@@ -41,6 +41,8 @@
 
 两条都带 `assumption: true` + `assumption_note`，并出现在结果的两处：`result.assumptions`（展示用）和 `handoff_reasons`（触发转人工）。
 
+`RULE-RES-LOWSPOT-PUMPS` 原来的 `when` 写的是 `next_district_required`，代码里没有任何地方求值——条件写了等于没写。现在条件改成 `waterlogging_below_closure`（该片区积水是否未达封路阈值），引擎真的调用 `_matches()` 求值，规则集版本随之升到 `urban-rules-1.1`。有一条测试把条件翻成 `false` 后断言 B-01 那 2 台不再出现（同时 A-03 因为条件翻转多出 2 台），证明确实是条件在起作用，而不是注释。
+
 这么做是为了答辩时能直接说清：哪些是文件规定的，哪些是演示需要现场核实的。混在一起讲，被追问一次就站不住。
 
 ## 4. 与 ground truth 的逐跳对照

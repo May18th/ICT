@@ -9,6 +9,7 @@ sample dataset untouched.
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -155,6 +156,28 @@ def test_district_demand_does_not_depend_on_which_district_is_primary(runtime: S
     assert from_b01.demand_by_district["B-01"] == 2
     assert from_a03.demand_by_district["A-03"] == 5
     assert sum(from_a03.demand_by_district.values()) == 7, "按片区归集后合计仍是 5+2"
+
+
+def test_lowspot_rule_condition_is_evaluated_not_decorative(tmp_path: Path) -> None:
+    """规则里的适用条件必须真的被求值：把条件翻成 false，B-01 那 2 台就该消失。"""
+    from decision_poc.deduction import DEFAULT_RULES_PATH, load_rules
+
+    payload = json.loads(DEFAULT_RULES_PATH.read_text(encoding="utf-8"))
+    for rule in payload["rules"]:
+        if rule["rule_id"] == "RULE-RES-LOWSPOT-PUMPS":
+            rule["when"] = {"waterlogging_below_closure": ["false"]}
+    patched = tmp_path / "rules.json"
+    patched.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    assert load_rules(patched).get("RULE-RES-LOWSPOT-PUMPS").when == {
+        "waterlogging_below_closure": ["false"]
+    }
+
+    runtime = SkillRuntime(rules_path=patched)
+    result = runtime.engine.deduce(EVENT, as_of=AS_OF)
+    # 条件翻成 "未达阈值 = false" 之后，命中者从 B-01 变成 A-03：
+    # B-01 那 2 台消失、A-03 多出 2 台。结论是谁变了，但"条件真的被求值"这件事被证明了。
+    assert result.demand_by_district.get("B-01", 0) == 0, "条件不命中就不该再产出低洼点台数"
+    assert result.demand_by_district == {"A-03": 7}
 
 
 def test_lowspot_pumps_only_apply_below_the_closure_threshold(runtime: SkillRuntime) -> None:
