@@ -6,7 +6,7 @@
 
 | 文件 | 类型 | 模态 | 用途 |
 | --- | --- | --- | --- |
-| `road_network.csv` | road_network | 表格 | 7 条道路（A-03 五条 + B-01 两条），含高程、排水分区；R-101 为片区最低点 |
+| `road_network.csv` | road_network | 表格 | 7 条道路（A-03 五条 + B-01 两条），含高程、排水分区；R-101 为片区最低点；`from_node/to_node/speed_kmh/work_zone_factor` 是路段连接与限速，封路绕行与通行时间由它算出（R-103 占道施工降速 ×0.5） |
 | `pipeline_ledger.csv` | pipeline_ledger | 表格 | 8 条管线，含埋深/管径/权属；PL-DRN-101 管径不足、PL-GAS-101 为施工对象 |
 | `drainage_facilities.csv` | drainage_facility | 表格 | 6 处泵站与雨水口；DF-PS-01 故障且 `owner_org` 为空（职责空白来源），DF-PS-03 为 B-01 正常泵站 |
 | `construction_plans.csv` | construction_plan | 表格 | 3 个在建项目；CP-2026-041 开挖 2.5m，CP-2026-038 占用 R-103 |
