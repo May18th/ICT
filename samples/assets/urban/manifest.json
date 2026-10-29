@@ -491,7 +491,7 @@
       }
     },
     {
-      "asset_id": "AS-A-03-work_order-8a8ea14d",
+      "asset_id": "AS-A-03-work_order-afb7c435",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "work_orders.csv",
@@ -500,8 +500,8 @@
       "version": "v1",
       "standard_refs": [],
       "locator": "A-03/work_order/v1",
-      "checksum_sha256": "8a8ea14db4ad5de19a4e451fd1740481436a4eda3260217adcd966dfe329873c",
-      "byte_size": 862,
+      "checksum_sha256": "afb7c435503a99fd0950ee98fe7c190f6fca3f3aa4dd182d56c4415380318994",
+      "byte_size": 868,
       "summary": "表格资产：5 行 × 10 列，列名 order_id、road_id、facility_id、pipeline_id、order_type、reported_at 等",
       "structure": {
         "rows": 5,
@@ -528,7 +528,7 @@
         "valid_from": "2026-10-29T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "8a8ea14db4ad5de19a4e451fd1740481436a4eda3260217adcd966dfe329873c",
+        "content_hash": "afb7c435503a99fd0950ee98fe7c190f6fca3f3aa4dd182d56c4415380318994",
         "status": "published"
       }
     },

@@ -407,3 +407,39 @@ def test_cli_runs_the_whole_chain_and_records(tmp_path) -> None:
     )
     assert restored.verify().ok
     assert len(restored.records()) == 1
+
+
+# --- 时点与状态闸门：不该推演的事件不许推 ------------------------------
+
+
+def test_event_reported_after_as_of_is_refused(engine: DeductionEngine) -> None:
+    """as_of 早于工单上报时间 = 拿一张还没产生的工单推演，只能拒答。"""
+    early = datetime.fromisoformat("2026-10-29T05:00:00+08:00")
+    refused = engine.deduce(EVENT, as_of=early)
+    assert [step.stage for step in refused.steps] == ["observed"]
+    assert refused.steps[0].status is StageStatus.INSUFFICIENT
+    assert "尚未上报" in refused.steps[0].detail
+    assert refused.action_order == [], "拒答时不能产出任何处置动作"
+    assert refused.handoff_required is True
+    assert refused.demand_by_district == {}
+
+
+def test_closed_order_is_refused(engine: DeductionEngine) -> None:
+    """已闭环工单再推一遍处置，是把修好的事重新处置——同样拒答。"""
+    closed = engine.deduce("WO-20261020-002", as_of=datetime.fromisoformat("2026-10-22T09:00:00+08:00"))
+    assert closed.steps[0].status is StageStatus.INSUFFICIENT
+    assert "已闭环" in closed.steps[0].detail
+    assert closed.action_order == []
+
+
+def test_refusal_makes_the_pipeline_unpublishable() -> None:
+    """拒答必须传导到编排层：状态 partial、不可发布、且写明原因。"""
+    from decision_poc.skills import SkillPipeline, SkillRuntime
+
+    report = SkillPipeline(SkillRuntime()).run(
+        EVENT, "2026-10-29T05:00:00+08:00", caller_labels=["ORG-EMERG"], persist=False
+    )
+    assert report.publishable is False
+    assert report.status in {"partial", "error"}
+    assert report.handoff_required is True
+    assert any("尚未上报" in reason for reason in report.handoff_reasons)

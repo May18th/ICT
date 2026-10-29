@@ -1,6 +1,6 @@
 {
   "schema_version": "urban-twin-scene-v1",
-  "snapshot_hash": "774d40f9f7c9b70e08800fd93403f7ffce71d1eebc245955343594db2734ab29",
+  "snapshot_hash": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db",
   "objects": [
     {
       "twin_id": "TW-action-先组织抽排降低水位",
@@ -423,7 +423,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-work_order-8a8ea14d"
+        "AS-A-03-work_order-afb7c435"
       ],
       "attributes": {
         "road_id": "R-103",
@@ -444,7 +444,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-work_order-8a8ea14d"
+        "AS-A-03-work_order-afb7c435"
       ],
       "attributes": {
         "road_id": "R-101",
@@ -465,7 +465,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-work_order-8a8ea14d"
+        "AS-A-03-work_order-afb7c435"
       ],
       "attributes": {
         "road_id": "R-101",
@@ -486,7 +486,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-work_order-8a8ea14d"
+        "AS-A-03-work_order-afb7c435"
       ],
       "attributes": {
         "road_id": "R-101",
@@ -507,13 +507,13 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-work_order-8a8ea14d"
+        "AS-A-03-work_order-afb7c435"
       ],
       "attributes": {
         "road_id": "R-201",
         "facility_id": "DF-IN-201",
         "order_type": "waterlogging",
-        "reported_at": "2026-10-29T09:50:00+08:00",
+        "reported_at": "2026-10-29T09:30:00+08:00",
         "reporter_org": "ORG-ROAD",
         "severity": "medium",
         "status": "open",

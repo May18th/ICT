@@ -15,13 +15,9 @@ SCENE_PATH = ROOT / "samples" / "assets" / "urban" / "scene.json"
 
 
 def _material(name, color):
-    asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
-    factory = unreal.MaterialFactoryNew()
-    material = asset_tools.create_asset(name, "/Game/UrbanTwin/Materials", unreal.Material, factory)
-    if material:
-        material.set_editor_property("blend_mode", unreal.BlendMode.BLEND_O_PAQUE)
-        material.set_editor_property("diffuse_color", unreal.LinearColor(*color, 1.0))
-    return material
+    # UE 5.8 does not expose a direct diffuse-color property on UMaterial.
+    # Keep the hook so a MaterialInstance-based palette can be added later.
+    return None
 
 
 def _spawn_box(label, location, scale, material=None):
@@ -39,6 +35,8 @@ def _spawn_box(label, location, scale, material=None):
 
 def build():
     payload = json.loads(SCENE_PATH.read_text(encoding="utf-8"))
+    unreal.EditorAssetLibrary.make_directory("/Game/UrbanTwin/Maps")
+    unreal.EditorLevelLibrary.new_level("/Game/UrbanTwin/Maps/UrbanTwinLevel")
     unreal.EditorLevelLibrary.select_nothing()
     road = _material("M_Road", (0.12, 0.16, 0.22))
     water = _material("M_FloodWater", (0.03, 0.35, 0.9))
@@ -50,8 +48,13 @@ def build():
     for item in payload.get("objects", []):
         if item.get("kind") in {"drainage", "pump_station", "gas", "power", "telecom"}:
             actor = _spawn_box(item["twin_id"], (0, 0, 35), (.18, .18, .25), risk)
-            actor.set_metadata("twin_id", item["twin_id"])
-            actor.set_metadata("geometry_ref", item.get("position", ""))
+            actor.set_editor_property(
+                "tags",
+                [
+                    unreal.Name(item["twin_id"]),
+                    unreal.Name("geometry_ref=" + item.get("position", "")),
+                ],
+            )
     unreal.EditorLevelLibrary.save_current_level()
     unreal.log("UrbanTwin level generated from " + str(SCENE_PATH))
 
