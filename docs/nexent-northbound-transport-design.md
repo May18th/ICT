@@ -266,7 +266,35 @@ uv run --locked python -m decision_poc.nexent_smoke
 **新发现：记忆污染**。这次三条 `evidence` 的来源全部是「Agent 记忆-历史处置经验 / 设备历史 /
 约束条件」，说明 `workbench_main` 开了长期记忆，把上一轮（`conversation_id=11`）的结论固化后
 直接复用。后果：同一 `request_id` 重放得到的不是独立推理，演示时答案会“背稿”。
-若要做可复现回归，需先清该 Agent 的记忆（`memory` 相关表或前端记忆管理），或换新 `agent_name`。
+
+#### 记忆污染的清理路径（实测）
+
+只软删 Postgres **无效**：记忆召回走 Elasticsearch，索引 `mem_bge-m3_1024`，
+文档 `_id` 即 `memory_id`，`_source.metadata` 里带 `conversation_id` / `agent_id` / `status`。
+软删 `nexent.memory_records_t.delete_flag='Y'` 后重跑，`evidence` 依旧来自 `agent_memory`。
+
+真正生效的做法是先删 ES 文档（本例按 `_id` 删除），再对齐 DB 标记：
+
+```bash
+# ES 必须带凭据，凭据在容器环境变量 ELASTIC_PASSWORD
+docker exec nexent-elasticsearch sh -lc 'curl -s -u "elastic:${ELASTIC_PASSWORD}" \
+  -X DELETE "localhost:9200/mem_bge-m3_1024/_doc/1"
+  '
+# 删完务必 refresh，再 _count 核对
+```
+
+注意：ES 的 `_delete_by_query` 在 Windows + PowerShell 下传 JSON body 极易被引号吃掉
+（表现为 `Validation Failed: 1: query is missing`），按 `_id` 逐个 DELETE 最稳。
+清理后 `count=0`，再跑一次 smoke：
+
+| 检查 | 清理前（conv 13） | 清理后（conv 15） |
+| --- | --- | --- |
+| `evidence.source` | `agent_memory` ×3 | ISO 10816-1 / 轴承温度行业规范 / 设备劣化曲线 |
+| `decision` | opt1，conf 0.92 | opt-b，conf 0.85，4 选项 / 4 风险 |
+| 结论 | 复用上轮结论 | 独立推理 |
+
+另外：**每次成功调用都会重新写入短期记忆**（conv 15 跑完又产生新记录），
+所以“清一次就永久干净”不成立；演示前清一次即可，或换新 `agent_name`。
 
 
 ## 9. 来源
