@@ -4,6 +4,8 @@
 
 当前提供 `NexentAdapter` 作为离线适配边界：它只把 `DecisionRequest` 转成可传输的 JSON 负载，并调用注入的传输函数；默认不会联网。真实 Nexent 接入应在独立传输层中实现，并继续保留现有审批、评测和回滚门禁。
 
+策略演进可通过 `evaluate_and_apply` 执行离线评测门禁：候选策略只有在 `EvaluationReport.passed` 为真时才会升为 active 版本，评测失败则保留当前版本并记录拒绝历史。
+
 ## 项目目标
 
 - 用通用 Schema 表达决策请求、证据、选项、风险、审批和反馈。
