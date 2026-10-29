@@ -8,6 +8,8 @@
 
 - [通用内核设计](superpowers/specs/2026-10-26-generic-evolution-kernel-design.md)：目标、边界、架构和验收范围。
 - [实施计划](superpowers/plans/2026-10-26-generic-evolution-kernel.md)：按任务拆分的实现记录。
+- [Nexent 集成边界](nexent-integration-boundary.md)：适配层职责与接入验收。
+- [Nexent 北向传输层设计](nexent-northbound-transport-design.md)：已核对的 `/nb/v1` 契约、SSE 事件、幂等/限流与传输层落地方案。
 
 ## 阅读顺序
 

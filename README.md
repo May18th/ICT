@@ -2,7 +2,7 @@
 
 这是一个面向华为 ModelEngine Nexent 赛题方向的通用、离线、非生产决策智能体内核验证项目。当前不绑定具体行业，不接入真实 Nexent、真实模型或生产系统，先验证可复用的决策流程与受控进化机制。
 
-当前提供 `NexentAdapter` 作为离线适配边界：它只把 `DecisionRequest` 转成可传输的 JSON 负载，并调用注入的传输函数；默认不会联网。真实 Nexent 接入应在独立传输层中实现，并继续保留现有审批、评测和回滚门禁。
+当前提供 `NexentAdapter` 作为离线适配边界：它只把 `DecisionRequest` 转成可传输的 JSON 负载，并调用注入的传输函数；默认不会联网。真实 Nexent 接入由 `NexentHttpTransport` 承担，走官方北向 `/nb/v1/chat/run` SSE 契约（Bearer API Key + `Idempotency-Key`），并且只在显式构造时才联网，现有审批、评测和回滚门禁保持不变。
 
 策略演进可通过 `evaluate_and_apply` 执行离线评测门禁：候选策略只有在 `EvaluationReport.passed` 为真时才会升为 active 版本，评测失败则保留当前版本并记录拒绝历史。
 
@@ -23,6 +23,7 @@
 | Pydantic AI | 生成类型化决策输出 | 当前使用无凭据的 `TestModel` |
 | 确定性 Python 规则 | Schema、证据校验、审批门禁、版本发布和回滚 | 不绑定行业规则 |
 | LangChain Core | 同步/异步 `Runnable` 演示和评测适配 | 不负责流程编排 |
+| httpx 传输层 | 调用 Nexent 北向 `/nb/v1/chat/run`、聚合 SSE、映射错误 | 不做编排，不影响离线路径 |
 
 ## 当前范围
 
@@ -35,6 +36,7 @@
 - 缺少审批或审批拒绝时阻断执行；
 - 反馈记录、候选策略、评测门禁、发布和回滚；
 - LangChain 同步/异步适配；
+- Nexent 北向传输层（SSE 聚合、幂等键、401/429/冲突错误映射，默认不联网）；
 - 技术基线与风险记录。
 
 暂不做：
@@ -61,6 +63,19 @@ uv run --locked python -c "from decision_poc.baseline import run_technical_basel
 ```
 
 测试使用 Pydantic AI 内置 `TestModel`，无需 API Key，不会连接真实模型、调用 Nexent 或执行生产动作。
+Nexent 传输层单测全部使用 `httpx.MockTransport` 回放 SSE，同样不触网。
+
+真机联调（可选，需自行提供凭据）：
+
+```powershell
+$env:NEXENT_BASE_URL   = "http://<nexent-host>:5013"
+$env:NEXENT_API_KEY    = "<发布 Agent 后生成的 Access Key>"
+$env:NEXENT_AGENT_NAME = "<已发布 Agent 名称>"
+$env:PYTHONPATH = "src"
+uv run --locked python -m decision_poc.nexent_smoke
+```
+
+缺凭据时脚本直接列出缺失项并返回退出码 2，不会发请求。
 
 ## 仓库结构
 
@@ -79,12 +94,14 @@ agent_poc/
 
 - [文档导航](docs/README.md)
 - [技术基线与风险](docs/technical-baseline.md)
+- [Nexent 集成边界](docs/nexent-integration-boundary.md)
+- [Nexent 北向传输层设计](docs/nexent-northbound-transport-design.md)
 - [通用内核设计](docs/superpowers/specs/2026-10-26-generic-evolution-kernel-design.md)
 - [实施计划](docs/superpowers/plans/2026-10-26-generic-evolution-kernel.md)
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 28 项测试通过；同时要求锁文件、Python 编译和依赖一致性检查通过。技术基线只衡量通用流程的技术行为，不替代赛题确定后的行业指标。
+当前基线：`uv run --locked pytest -q` 共 49 项测试通过；同时要求锁文件、Python 编译和依赖一致性检查通过。技术基线只衡量通用流程的技术行为，不替代赛题确定后的行业指标。
 
 ## 后续演进
 

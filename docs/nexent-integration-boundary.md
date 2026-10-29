@@ -8,8 +8,15 @@
 
 - `NexentAdapter` 只负责把 `DecisionRequest` 序列化为 JSON 负载。
 - 传输行为通过 `invoke` 注入，默认不联网。
+- 真实网络调用集中在 `NexentHttpTransport`（`/nb/v1/chat/run` SSE），只有显式构造才会发请求。
 - LangGraph 流程不依赖 Nexent SDK、凭据、数据库或生产工具。
 - 适配层不得绕过审批状态或直接执行副作用。
+
+## 真实契约来源
+
+Nexent 北向 API 的路径、鉴权头、请求体字段、SSE 事件、幂等与限流约定已在
+[北向传输层设计](nexent-northbound-transport-design.md) 中按官方文档与源码逐项核对，
+不需要靠猜测推进；该文档同时给出传输层实现和离线测试方案。
 
 ## 请求契约
 
@@ -34,7 +41,7 @@
 
 ## 非目标
 
-- 当前阶段不实现真实 Nexent HTTP/API 客户端。
-- 不在 PoC 中保存生产凭据。
+- 不在 PoC 中保存生产凭据（凭据只从环境变量读取，不落库、不打日志）。
 - 不把 Nexent 的编排循环引入 LangGraph 之外。
+- 传输层不实现审批、评测或回滚，这些仍由本地确定性规则负责。
 
