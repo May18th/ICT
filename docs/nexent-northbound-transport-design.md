@@ -139,7 +139,7 @@ class NexentHttpTransport:
 
 ## 5. 测试（已落地，全部离线）
 
-`tests/test_nexent_transport.py` 共 12 项，全部用 `httpx.MockTransport` 回放，不触网：
+`tests/test_nexent_transport.py` 共 16 项，全部用 `httpx.MockTransport` 回放，不触网：
 
 1. SSE 聚合：`conversation_created` + `final_answer` → accepted、`conversation_id`、`decision` 解析成功。
 2. 契约头/体：`Authorization: Bearer`、`Idempotency-Key`、`agent_name`、query 模板。
@@ -153,11 +153,38 @@ class NexentHttpTransport:
 10. `NexentAdapter(invoke=transport)` 端到端（含 ```json 围栏剥离）。
 11. `NexentSettings.from_env()` 缺 Key / 缺 Agent 名 → `NexentConfigError`。
 12. `build_decision_query` / `parse_decision_output` 辅助函数。
+13. 噪声答案里提取 JSON（含 `<|tool_call_start|>` 标记与前置散文）。
+14. 证据内容含嵌套花括号时正确截断。
+15. `</think>` 残留清洗。
+16. 完全无 JSON 的答案报错。
 
 另有 `tests/test_nexent_smoke.py` 4 项：缺凭据退出码 2、注入传输成功退出码 0、
 传输失败退出码 1、`missing_env` 的空值识别。
+以及 `tests/test_nexent_sdk_transport.py` 5 项（fake SDK）：聚合出决策、无 `final_answer`、
+`error` 事件、SDK 未安装、模型凭据缺失。
 
-## 6. 待确认事项
+## 6. 备选路径：SDK 内嵌（无可用平台环境时）
+
+现实约束：CI / 沙箱容器（如华为云 AI 开发者空间）是 K8s 沙箱里的 ARM64 容器，
+拿不到 Docker daemon，起不了 Nexent 全栈（Postgres + Redis + ES + MinIO + 前后端）。
+此时走 SDK 内嵌，`src/decision_poc/nexent_sdk_transport.py`：
+
+```python
+transport = NexentSdkTransport(model_id="...", api_key="...", api_base="https://.../v1")
+NexentAdapter(invoke=transport).run(request)
+```
+
+- 可选依赖，不写进 `pyproject.toml`：`uv pip install "nexent==1.8.1"`（PyPI 实测存在，要求 Python ≥3.10）。
+  未安装时构造即抛 `NexentConfigError` 并给出安装命令，离线路径零影响。
+- 走官方 SDK 的 `agent_run` 事件流，按 `final_answer` / `error` 聚合，语义与 HTTP 路径一致：
+  无 `final_answer` 一律 `NexentStreamError`，不返回 accepted。
+- **代价**：这条路径验证的是 Agent 运行时，不是 `/nb/v1` 北向契约。要给平台契约背书，仍须
+  `NexentHttpTransport` + 真实部署。
+- **未在真机验证**：实现依据官方 SDK 文档（`agent_run` / `AgentRunInfo` / `ModelConfig` 字段），
+  首次真机运行需核对事件字段名；我方聚合逻辑由 fake SDK 单测覆盖（5 项）。
+- 不能在有运行中事件循环的进程里同步调用（`asyncio.run` 限制），会明确报错而不是死等。
+
+## 7. 待确认事项
 
 1. ~~是否加 `httpx` 依赖~~ → 已加 `httpx==0.28.1`。
 2. ~~Agent 输出契约~~ → 已定为严格 JSON，失败降级为 `decision_error`。
@@ -166,7 +193,64 @@ class NexentHttpTransport:
    脚本已就位：`uv run --locked python -m decision_poc.nexent_smoke`；
    缺凭据时列出缺失环境变量并返回 2，不发任何请求；调用失败返回 1；成功返回 0 并打印聚合结果。
 
-## 7. 来源
+## 8. 本机部署实测（2026-10-29）
+
+对一台本地 Docker 部署的 Nexent **v2.7.0**（`nexent-northbound` 容器映射 `5013->5013`，
+前端 `3000->3000`）做了只读核对，结论：
+
+1. `GET /nb/v1/health` → `200 {"status":"healthy","service":"northbound-api"}`，健康检查无需鉴权。
+2. `GET /openapi.json` → `Nexent Northbound API v1.0.0`，路径与本设计第 2.1 节一致。
+3. `/nb/v1/chat/run` 实际 schema：`required: [agent_name, query]`；可选
+   `conversation_id` / `attachments` / `model_id` / `metadata` / `meta_data` / `tool_params`；
+   请求头参数 `Idempotency-Key` 存在且非必填。**与传输层实现逐字段一致。**
+4. `GET /nb/v1/agents` 无 Bearer → `401`，与 `NexentAuthError` 映射一致。
+5. 数据库 `nexent.user_token_info_t` 为空 → 未生成过 API Key；`nexent.ag_tenant_agent_t`
+   已有 `equipment_decision_agent`（设备故障决策智能体，`current_version_no=2`）与
+   `workbench_main`。
+
+待办只有一步：在前端「智能体开发 → 发布 → 生成 API 密钥」拿到 Access Key，或者直接复用本机已建的
+测试 Key（`nexent.user_token_info_t.token_id=1`，本机自用，演示完可删）。
+
+```powershell
+$env:NEXENT_BASE_URL   = "http://localhost:5013"
+$env:NEXENT_API_KEY    = "<Access Key>"
+$env:NEXENT_AGENT_NAME = "workbench_main"
+$env:PYTHONPATH = "src"
+uv run --locked python -m decision_poc.nexent_smoke
+```
+
+### 8.1 真机调用结果（三次，实测）
+
+| # | Agent | 结果 |
+| --- | --- | --- |
+| 1 | `equipment_decision_agent` + `metadata` | **400**：该 Agent `allow_chat_metadata=false`，带 `metadata` 直接被拒 |
+| 2 | `equipment_decision_agent` 去掉 `metadata` | **200**，但 `final_answer` 停在“第一步：检索”，内容是一段 Python 代码调用 `knowledge_base_search`（`model_output_code` 53 段），`decision_error` |
+| 3 | `workbench_main` 同一 query | **200**，`decision` 校验通过：3 个选项、3 条证据、`risk_level=high` |
+
+由此修正两条实现：
+
+- `metadata` 改为只走 `meta_data`（审计用，平台始终接受），决策 ID 另由 `Idempotency-Key` 承载。
+- `final_answer` 会夹带 `</think>` 残留与工具调用标记，解析器改为「标签清洗 → 代码围栏剥离 →
+  逐候选 JSON 块校验」，工具调用那段 JSON 会被跳过，直到找到能通过 `DecisionOutput` 校验的块。
+
+### 8.2 结论：Agent 提示词是最后一道门
+
+`equipment_decision_agent` 的 `duty_prompt` 强制「检索 → 推理 → 结论」三步且要求先调工具，
+`constraint_prompt` 又限定“500 字以内、结论/依据/推理链/建议四段”，**与 JSON 输出契约直接冲突**，
+所以它永远不会返回我们的结构。`workbench_main` 没有这些约束，一次就吐出了合规 JSON。
+
+要让它也能走同一契约，最小改动是在该 Agent 的 `constraint_prompt` **追加一条覆盖规则**：
+
+```text
+0. 若调用方在提问中给出了明确的 JSON 结构要求，则最终输出必须且只能是该 JSON：
+   不得输出“结论/依据/推理链/建议”分段文本，不得输出代码块或工具调用标记；
+   证据与风险一律填进 JSON 的 evidence / risks 字段。此条优先于第 6 条的字数限制。
+```
+
+不改提示词也能演示：对外统一用 `workbench_main` 走决策契约，`equipment_decision_agent`
+保留原来的中文决策报告能力，两者各自成立。
+
+## 9. 来源
 
 - 官方后端 API 参考：`http://modelengine-group.github.io/nexent/zh/backend/api-reference.html`（端口 5013、`/nb/v1` 端点、Bearer 鉴权）
 - 源码 `develop` 分支，核对于 2026-10-29：

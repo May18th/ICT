@@ -8,6 +8,7 @@ refuses to report success without a `final_answer` event.
 
 import json
 import os
+import re
 import time
 import uuid
 from collections.abc import Callable
@@ -20,6 +21,13 @@ import httpx
 from .contracts import DecisionOutput
 
 CHAT_RUN_PATH = "/nb/v1/chat/run"
+
+DECISION_SCHEMA_HINT = (
+    '{"request_id": "<string>", "summary": "<string>", "options": [{"option_id": "<string>", '
+    '"description": "<string>", "expected_impact": "<string>"}], "selected_option_id": "<string>", '
+    '"confidence": <0-1 的数字>, "risk_level": "low|medium|high", "risks": ["<string>"], '
+    '"evidence": [{"source": "<string>", "content": "<string>"}]}'
+)
 
 
 class NexentError(Exception):
@@ -79,6 +87,7 @@ class NexentSettings:
 def build_decision_query(payload: Mapping[str, Any]) -> str:
     """Render a decision request as a single deterministic chat query."""
     goal = str(payload.get("goal", "")).strip()
+    request_id = str(payload.get("request_id", "")).strip()
     context = payload.get("context") or {}
     constraints = [str(item).strip() for item in payload.get("constraints") or []]
     context_text = json.dumps(context, ensure_ascii=False, sort_keys=True)
@@ -90,7 +99,14 @@ def build_decision_query(payload: Mapping[str, Any]) -> str:
     lines.extend(f"- {item}" for item in constraints if item)
     if not constraints:
         lines.append("- 无")
-    lines.append("只输出符合 DecisionOutput 结构的严格 JSON，不要输出解释或 Markdown 代码块。")
+    lines.extend(
+        [
+            "请基于本 Agent 的领域知识给出可执行决策，并严格按下面的 JSON 结构输出：",
+            DECISION_SCHEMA_HINT,
+            f"其中 request_id 固定填 \"{request_id}\"。",
+            "只输出这段 JSON 本身，不要 Markdown 代码块、不要解释、不要输出任何工具调用标记。",
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -106,9 +122,77 @@ def _strip_code_fence(text: str) -> str:
     return "\n".join(lines).strip()
 
 
+def _match_brace(text: str, start: int) -> str | None:
+    """Return the balanced `{...}` starting at `start`, ignoring braces in strings."""
+    depth = 0
+    in_string = False
+    escaped = False
+    for index in range(start, len(text)):
+        char = text[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : index + 1]
+    return None
+
+
+def _iter_json_blocks(text: str):
+    """Yield every balanced top-level `{...}` block in order.
+
+    Live agents sometimes wrap the answer in prose or leak tool-call markers
+    such as `<|tool_call_start|>` into the final answer, so a strict
+    `json.loads` on the whole payload is not enough. A tool-call payload can
+    also look like valid JSON, so candidates are tried in order until one
+    validates as a decision.
+    """
+    index = 0
+    while True:
+        start = text.find("{", index)
+        if start == -1:
+            return
+        block = _match_brace(text, start)
+        if block is None:
+            index = start + 1
+            continue
+        yield block
+        index = start + len(block)
+
+
+def _strip_reasoning_tags(text: str) -> str:
+    """Drop leaked reasoning wrappers observed in live answers (`</think>`)."""
+    return re.sub(r"</?think[^>]*>", "", text, flags=re.I).strip()
+
+
 def parse_decision_output(text: str) -> DecisionOutput:
     """Parse a strict-JSON agent answer into a DecisionOutput."""
-    return DecisionOutput.model_validate(json.loads(_strip_code_fence(text)))
+    body = _strip_code_fence(_strip_reasoning_tags(text))
+    last_error: Exception | None = None
+    for candidate in [body, *_iter_json_blocks(body)]:
+        try:
+            payload = json.loads(candidate)
+        except json.JSONDecodeError as exc:
+            last_error = exc
+            continue
+        try:
+            return DecisionOutput.model_validate(payload)
+        except ValueError as exc:
+            last_error = exc
+            continue
+    if last_error is None:
+        raise ValueError("agent answer contains no JSON object")
+    raise last_error
 
 
 def _text(content: Any) -> str:
@@ -197,10 +281,13 @@ class NexentHttpTransport:
         ) from last_error
 
     def _build_body(self, payload: Mapping[str, Any]) -> dict[str, Any]:
+        # `metadata` is gated per agent by `allow_chat_metadata`; when that flag is
+        # false the platform answers 400. `meta_data` is audit-only and always
+        # accepted, so the decision id travels there instead of the agent context.
         body: dict[str, Any] = {
             "agent_name": self._settings.agent_name,
             "query": build_decision_query(payload),
-            "metadata": {
+            "meta_data": {
                 "decision_request_id": str(payload.get("request_id") or ""),
             },
         }
@@ -331,6 +418,6 @@ class NexentHttpTransport:
 
 def _safe_body(response: httpx.Response) -> str:
     try:
-        return response.text[:200]
+        return response.read().decode("utf-8", errors="replace")[:200]
     except Exception:
         return "<unreadable body>"

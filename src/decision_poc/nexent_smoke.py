@@ -65,16 +65,29 @@ def run(
         result = NexentAdapter(invoke=invoke).run(
             DecisionRequest(
                 request_id="req-smoke",
-                goal="choose",
-                context={"purpose": "nexent smoke test"},
-                constraints=["read-only"],
+                goal=(
+                    "设备A-101振动值由2.1mm/s升至7.8mm/s、轴承温度85°C，"
+                    "产线L2不能停，如何在4小时内处置"
+                ),
+                context={
+                    "device": "A-101",
+                    "vibration_mm_s": 7.8,
+                    "temp_c": 85,
+                    "line": "L2",
+                },
+                constraints=["不停产", "4小时内闭环", "给出现场可执行步骤"],
             )
         )
     except NexentError as exc:
         out.write(f"调用失败：{type(exc).__name__}: {exc}\n")
         return 1
 
-    out.write(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+    preview = dict(result)
+    answer = preview.get("answer")
+    if isinstance(answer, str):
+        preview["answer_length"] = len(answer)
+        preview["answer"] = answer[:300] + ("..." if len(answer) > 300 else "")
+    out.write(json.dumps(preview, ensure_ascii=False, indent=2) + "\n")
     if result.get("decision") is None:
         out.write(
             "提示：链路已通，但 Agent 未返回可解析的 DecisionOutput JSON；"

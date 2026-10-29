@@ -24,6 +24,7 @@
 | 确定性 Python 规则 | Schema、证据校验、审批门禁、版本发布和回滚 | 不绑定行业规则 |
 | LangChain Core | 同步/异步 `Runnable` 演示和评测适配 | 不负责流程编排 |
 | httpx 传输层 | 调用 Nexent 北向 `/nb/v1/chat/run`、聚合 SSE、映射错误 | 不做编排，不影响离线路径 |
+| Nexent SDK 传输层（可选） | 无平台环境时内嵌运行 Nexent Agent | 需手动装 `nexent`，不验证北向契约 |
 
 ## 当前范围
 
@@ -37,6 +38,8 @@
 - 反馈记录、候选策略、评测门禁、发布和回滚；
 - LangChain 同步/异步适配；
 - Nexent 北向传输层（SSE 聚合、幂等键、401/429/冲突错误映射，默认不联网）；
+- Nexent SDK 传输层（无平台环境时的内嵌路径，可选依赖）；
+- 北向链路真机验证（本机 Nexent v2.7.0，SSE → 结构化决策）；
 - 技术基线与风险记录。
 
 暂不做：
@@ -70,12 +73,28 @@ Nexent 传输层单测全部使用 `httpx.MockTransport` 回放 SSE，同样不�
 ```powershell
 $env:NEXENT_BASE_URL   = "http://<nexent-host>:5013"
 $env:NEXENT_API_KEY    = "<发布 Agent 后生成的 Access Key>"
-$env:NEXENT_AGENT_NAME = "<已发布 Agent 名称>"
+$env:NEXENT_AGENT_NAME = "workbench_main"
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.nexent_smoke
 ```
 
 缺凭据时脚本直接列出缺失项并返回退出码 2，不会发请求。
+
+本机实测（Nexent v2.7.0）用 `workbench_main` 一次即返回可校验的 `DecisionOutput`；
+`equipment_decision_agent` 的提示词强制「检索→推理→结论」四段中文报告，与 JSON 契约冲突，
+因此对外统一走 `workbench_main`，业务报告仍由该 Agent 自己承担。原因见
+[设计文档 8.2 节](docs/nexent-northbound-transport-design.md)。
+
+没有可用的 Nexent 平台部署时（例如只有一台 ARM64 沙箱容器、起不了 Docker 全栈），改走 SDK 内嵌：
+
+```powershell
+uv pip install "nexent==1.8.1"   # 可选依赖，不入 pyproject
+$env:PYTHONPATH = "src"
+uv run --locked python -c "from decision_poc.nexent_sdk_transport import NexentSdkTransport; from decision_poc.nexent_adapter import NexentAdapter; from decision_poc.contracts import DecisionRequest; t = NexentSdkTransport(model_id='<模型名>', api_key='<模型 Key>', api_base='<OpenAI 兼容地址>'); print(NexentAdapter(invoke=t).run(DecisionRequest(request_id='req-sdk', goal='choose', context={}, constraints=['safe'])))"
+```
+
+这条路径用真实模型和真实 Nexent Agent 运行时，但不验证 `/nb/v1` 北向契约；两者取舍见
+[北向传输层设计](docs/nexent-northbound-transport-design.md) 第 6 节。
 
 ## 仓库结构
 
@@ -101,7 +120,7 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 49 项测试通过；同时要求锁文件、Python 编译和依赖一致性检查通过。技术基线只衡量通用流程的技术行为，不替代赛题确定后的行业指标。
+当前基线：`uv run --locked pytest -q` 共 58 项测试通过；同时要求锁文件、Python 编译和依赖一致性检查通过。技术基线只衡量通用流程的技术行为，不替代赛题确定后的行业指标。
 
 ## 后续演进
 
