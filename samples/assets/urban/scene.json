@@ -1,0 +1,1267 @@
+{
+  "schema_version": "urban-twin-scene-v1",
+  "snapshot_hash": "4c971db1befaae21c9fe61017ffbff89fa93461badd47d21240d7a6cbe0ab86c",
+  "objects": [
+    {
+      "twin_id": "TW-action-先组织抽排降低水位",
+      "kind": "action",
+      "name": "先组织抽排降低水位",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-emergency_plan-cbaa17ca"
+      ],
+      "attributes": {
+        "step_no": "4.1",
+        "text": "先组织抽排降低水位。",
+        "plan": "城区防汛排涝应急预案（2021 年版，已废止）"
+      }
+    },
+    {
+      "twin_id": "TW-action-先隔离风险源-对积水影响范围内的压力管线-燃气",
+      "kind": "action",
+      "name": "先隔离风险源：对积水影响范围内的压力管线（燃气、",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-emergency_plan-df41ffb1"
+      ],
+      "attributes": {
+        "step_no": "5.1",
+        "text": "先隔离风险源：对积水影响范围内的压力管线（燃气、电力）执行关阀、断电或降负荷，确认无泄漏、无漏电后方可进入下一步。",
+        "plan": "城区防汛排涝应急预案（2025 年修订）"
+      }
+    },
+    {
+      "twin_id": "TW-action-全程同步交通管制与信息发布",
+      "kind": "action",
+      "name": "全程同步交通管制与信息发布",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-emergency_plan-df41ffb1"
+      ],
+      "attributes": {
+        "step_no": "5.4",
+        "text": "全程同步交通管制与信息发布。",
+        "plan": "城区防汛排涝应急预案（2025 年修订）"
+      }
+    },
+    {
+      "twin_id": "TW-action-再控制水势-启动泵站抽排-泵站不可用时调用移动泵",
+      "kind": "action",
+      "name": "再控制水势：启动泵站抽排；泵站不可用时调用移动泵",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-emergency_plan-df41ffb1"
+      ],
+      "attributes": {
+        "step_no": "5.2",
+        "text": "再控制水势：启动泵站抽排；泵站不可用时调用移动泵车，按 400 m³/h 单台能力折算所需台数。",
+        "plan": "城区防汛排涝应急预案（2025 年修订）"
+      }
+    },
+    {
+      "twin_id": "TW-action-后实施开挖与回填-水位降至基坑底以下-0-3m",
+      "kind": "action",
+      "name": "后实施开挖与回填：水位降至基坑底以下 0.3m",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-emergency_plan-df41ffb1"
+      ],
+      "attributes": {
+        "step_no": "5.3",
+        "text": "后实施开挖与回填：水位降至基坑底以下 0.3m 后方可恢复作业。",
+        "plan": "城区防汛排涝应急预案（2025 年修订）"
+      }
+    },
+    {
+      "twin_id": "TW-action-抽排与交通疏导可并行开展",
+      "kind": "action",
+      "name": "抽排与交通疏导可并行开展",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-emergency_plan-cbaa17ca"
+      ],
+      "attributes": {
+        "step_no": "4.3",
+        "text": "抽排与交通疏导可并行开展。",
+        "plan": "城区防汛排涝应急预案（2021 年版，已废止）"
+      }
+    },
+    {
+      "twin_id": "TW-action-水位下降后再排查地下管线-发现泄漏另行处置",
+      "kind": "action",
+      "name": "水位下降后再排查地下管线，发现泄漏另行处置",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-emergency_plan-cbaa17ca"
+      ],
+      "attributes": {
+        "step_no": "4.2",
+        "text": "水位下降后再排查地下管线，发现泄漏另行处置。",
+        "plan": "城区防汛排涝应急预案（2021 年版，已废止）"
+      }
+    },
+    {
+      "twin_id": "TW-department-ORG-DRAIN",
+      "kind": "department",
+      "name": "ORG-DRAIN",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-duty_list-07d920f0"
+      ],
+      "attributes": {
+        "org_name": "区排水公司",
+        "scope_type": "pipeline_kind",
+        "scope_ref": "drainage",
+        "authority": "雨水管网养护与雨水口清掏；移动泵车调用",
+        "contact": "021-1001",
+        "escalation_note": "泵站运维主体未在本文件界定"
+      }
+    },
+    {
+      "twin_id": "TW-department-ORG-EMERG",
+      "kind": "department",
+      "name": "ORG-EMERG",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-duty_list-07d920f0"
+      ],
+      "attributes": {
+        "org_name": "区应急管理局",
+        "scope_type": "district",
+        "scope_ref": "A-03",
+        "authority": "应急响应统筹；防汛物资调配；跨部门协调",
+        "contact": "021-1005",
+        "escalation_note": "橙色及以上预警自动进入统筹"
+      }
+    },
+    {
+      "twin_id": "TW-department-ORG-GAS",
+      "kind": "department",
+      "name": "ORG-GAS",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-duty_list-07d920f0"
+      ],
+      "attributes": {
+        "org_name": "市燃气公司",
+        "scope_type": "pipeline_kind",
+        "scope_ref": "gas",
+        "authority": "燃气管道抢修；停气与放散作业",
+        "contact": "021-1004",
+        "escalation_note": "开挖前须报道路管理中心备案"
+      }
+    },
+    {
+      "twin_id": "TW-department-ORG-METEO",
+      "kind": "department",
+      "name": "ORG-METEO",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-duty_list-07d920f0"
+      ],
+      "attributes": {
+        "org_name": "市气象台",
+        "scope_type": "district",
+        "scope_ref": "A-03",
+        "authority": "气象预警发布与解除",
+        "contact": "021-1008"
+      }
+    },
+    {
+      "twin_id": "TW-department-ORG-POWER",
+      "kind": "department",
+      "name": "ORG-POWER",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-duty_list-07d920f0"
+      ],
+      "attributes": {
+        "org_name": "供电公司",
+        "scope_type": "pipeline_kind",
+        "scope_ref": "power",
+        "authority": "供电保障；临时发电车调配",
+        "contact": "021-1006",
+        "escalation_note": "泵站失电时优先保障"
+      }
+    },
+    {
+      "twin_id": "TW-department-ORG-ROAD",
+      "kind": "department",
+      "name": "ORG-ROAD",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-duty_list-07d920f0"
+      ],
+      "attributes": {
+        "org_name": "区道路管理中心",
+        "scope_type": "road_class",
+        "scope_ref": "次干路;支路",
+        "authority": "路面养护；占道施工审批；封闭道路实施",
+        "contact": "021-1002",
+        "escalation_note": "封路需与交警联合发布"
+      }
+    },
+    {
+      "twin_id": "TW-department-ORG-TRAFFIC",
+      "kind": "department",
+      "name": "ORG-TRAFFIC",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-duty_list-07d920f0"
+      ],
+      "attributes": {
+        "org_name": "交警支队一大队",
+        "scope_type": "district",
+        "scope_ref": "A-03",
+        "authority": "交通管制；绕行组织；封路审批",
+        "contact": "021-1003",
+        "escalation_note": "与道路管理中心存在封路权限交叉"
+      }
+    },
+    {
+      "twin_id": "TW-department-ORG-WATER",
+      "kind": "department",
+      "name": "ORG-WATER",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-duty_list-07d920f0"
+      ],
+      "attributes": {
+        "org_name": "自来水公司",
+        "scope_type": "pipeline_kind",
+        "scope_ref": "water",
+        "authority": "供水管网抢修",
+        "contact": "021-1007"
+      }
+    },
+    {
+      "twin_id": "TW-drainage-DF-IN-101",
+      "kind": "drainage",
+      "name": "DF-IN-101",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-drainage_facility-cd569425"
+      ],
+      "attributes": {
+        "name": "兴华路雨水口组",
+        "facility_type": "intake",
+        "road_id": "R-101",
+        "drainage_zone": "DZ-01",
+        "capacity_m3h": "180.0",
+        "last_inspection": "2026-09-30T00:00:00",
+        "state": "clogged",
+        "owner_org": "ORG-DRAIN",
+        "note": "落叶淤积"
+      }
+    },
+    {
+      "twin_id": "TW-drainage-DF-IN-103",
+      "kind": "drainage",
+      "name": "DF-IN-103",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-drainage_facility-cd569425"
+      ],
+      "attributes": {
+        "name": "民生街雨水口组",
+        "facility_type": "intake",
+        "road_id": "R-103",
+        "drainage_zone": "DZ-01",
+        "capacity_m3h": "120.0",
+        "last_inspection": "2026-09-28T00:00:00",
+        "state": "in_service",
+        "owner_org": "ORG-DRAIN"
+      }
+    },
+    {
+      "twin_id": "TW-drainage-DF-IN-201",
+      "kind": "drainage",
+      "name": "DF-IN-201",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-drainage_facility-cd569425"
+      ],
+      "attributes": {
+        "name": "滨河路雨水口组",
+        "facility_type": "intake",
+        "road_id": "R-201",
+        "drainage_zone": "DZ-02",
+        "capacity_m3h": "150.0",
+        "last_inspection": "2026-09-18T00:00:00",
+        "state": "in_service",
+        "owner_org": "ORG-DRAIN"
+      }
+    },
+    {
+      "twin_id": "TW-drainage-PL-DRN-101",
+      "kind": "drainage",
+      "name": "PL-DRN-101",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-pipeline_ledger-4741e97f"
+      ],
+      "attributes": {
+        "kind": "drainage",
+        "road_id": "R-101",
+        "depth_m": "2.8",
+        "diameter_mm": "600",
+        "material": "concrete",
+        "install_year": "2009",
+        "owner_org": "ORG-DRAIN",
+        "status": "in_service",
+        "note": "按现行标准重现期不足，管径偏小"
+      }
+    },
+    {
+      "twin_id": "TW-drainage-PL-DRN-102",
+      "kind": "drainage",
+      "name": "PL-DRN-102",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-pipeline_ledger-4741e97f"
+      ],
+      "attributes": {
+        "kind": "drainage",
+        "road_id": "R-102",
+        "depth_m": "3.0",
+        "diameter_mm": "1000",
+        "material": "concrete",
+        "install_year": "2015",
+        "owner_org": "ORG-DRAIN",
+        "status": "in_service"
+      }
+    },
+    {
+      "twin_id": "TW-drainage-PL-DRN-201",
+      "kind": "drainage",
+      "name": "PL-DRN-201",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-pipeline_ledger-4741e97f"
+      ],
+      "attributes": {
+        "kind": "drainage",
+        "road_id": "R-201",
+        "depth_m": "2.6",
+        "diameter_mm": "800",
+        "material": "concrete",
+        "install_year": "2018",
+        "owner_org": "ORG-DRAIN",
+        "status": "in_service",
+        "note": "重现期达标"
+      }
+    },
+    {
+      "twin_id": "TW-gas-PL-GAS-101",
+      "kind": "gas",
+      "name": "PL-GAS-101",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-pipeline_ledger-4741e97f"
+      ],
+      "attributes": {
+        "kind": "gas",
+        "road_id": "R-101",
+        "depth_m": "2.5",
+        "diameter_mm": "300",
+        "material": "steel",
+        "install_year": "2003",
+        "owner_org": "ORG-GAS",
+        "status": "in_service",
+        "note": "本次施工更换对象"
+      }
+    },
+    {
+      "twin_id": "TW-incident-WO-20261020-002",
+      "kind": "incident",
+      "name": "WO-20261020-002",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-work_order-8a8ea14d"
+      ],
+      "attributes": {
+        "road_id": "R-103",
+        "pipeline_id": "PL-TEL-103",
+        "order_type": "road_subsidence",
+        "reported_at": "2026-10-20T11:10:00+08:00",
+        "reporter_org": "ORG-ROAD",
+        "severity": "medium",
+        "status": "closed",
+        "description": "沟槽回填不实导致路面轻微沉陷，已修复"
+      }
+    },
+    {
+      "twin_id": "TW-incident-WO-20261026-013",
+      "kind": "incident",
+      "name": "WO-20261026-013",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-work_order-8a8ea14d"
+      ],
+      "attributes": {
+        "road_id": "R-101",
+        "facility_id": "DF-PS-01",
+        "order_type": "pump_fault",
+        "reported_at": "2026-10-26T15:40:00+08:00",
+        "reporter_org": "ORG-DRAIN",
+        "severity": "high",
+        "status": "open",
+        "description": "1# 泵组电机故障停运，等待备件到货"
+      }
+    },
+    {
+      "twin_id": "TW-incident-WO-20261029-007",
+      "kind": "incident",
+      "name": "WO-20261029-007",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-work_order-8a8ea14d"
+      ],
+      "attributes": {
+        "road_id": "R-101",
+        "facility_id": "DF-IN-101",
+        "order_type": "waterlogging",
+        "reported_at": "2026-10-29T09:20:00+08:00",
+        "reporter_org": "ORG-ROAD",
+        "severity": "high",
+        "status": "open",
+        "description": "兴华路 K0+320 积水深约 30cm，雨水口反涌"
+      }
+    },
+    {
+      "twin_id": "TW-incident-WO-20261029-009",
+      "kind": "incident",
+      "name": "WO-20261029-009",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-work_order-8a8ea14d"
+      ],
+      "attributes": {
+        "road_id": "R-101",
+        "pipeline_id": "PL-GAS-101",
+        "order_type": "ground_settlement",
+        "reported_at": "2026-10-29T09:35:00+08:00",
+        "reporter_org": "ORG-GAS",
+        "severity": "high",
+        "status": "open",
+        "description": "施工基坑东侧出现沉陷，基坑内积水上涨"
+      }
+    },
+    {
+      "twin_id": "TW-incident-WO-20261029-011",
+      "kind": "incident",
+      "name": "WO-20261029-011",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-work_order-8a8ea14d"
+      ],
+      "attributes": {
+        "road_id": "R-201",
+        "facility_id": "DF-IN-201",
+        "order_type": "waterlogging",
+        "reported_at": "2026-10-29T09:50:00+08:00",
+        "reporter_org": "ORG-ROAD",
+        "severity": "medium",
+        "status": "open",
+        "description": "滨河路 K1+050 积水约 18cm，未达封路阈值，泵站运行正常"
+      }
+    },
+    {
+      "twin_id": "TW-plan-地下燃气管道施工保护规程",
+      "kind": "plan",
+      "name": "地下燃气管道施工保护规程",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-procedure-21ee9523"
+      ],
+      "attributes": {
+        "file_name": "procedure_gas_protection.md",
+        "version": "v3.1",
+        "standard_refs": "GC-GAS-2025-011"
+      }
+    },
+    {
+      "twin_id": "TW-plan-城区防汛排涝应急预案-2021-年版-已废止",
+      "kind": "plan",
+      "name": "城区防汛排涝应急预案（2021 年版，已废止）",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-emergency_plan-cbaa17ca"
+      ],
+      "attributes": {
+        "file_name": "plan_flood_emergency_v1.md",
+        "version": "v1.0",
+        "standard_refs": "YJ-FX-2021-001"
+      }
+    },
+    {
+      "twin_id": "TW-plan-城区防汛排涝应急预案-2025-年修订",
+      "kind": "plan",
+      "name": "城区防汛排涝应急预案（2025 年修订）",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-emergency_plan-df41ffb1"
+      ],
+      "attributes": {
+        "file_name": "plan_flood_emergency_v2.md",
+        "version": "v2.0",
+        "standard_refs": "YJ-FX-2025-002"
+      }
+    },
+    {
+      "twin_id": "TW-plan-道路积水处置作业指引",
+      "kind": "plan",
+      "name": "道路积水处置作业指引",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-procedure-30dc5dcb"
+      ],
+      "attributes": {
+        "file_name": "procedure_waterlogging.md",
+        "version": "v1.2",
+        "standard_refs": "ZY-DRN-2026-003"
+      }
+    },
+    {
+      "twin_id": "TW-power-PL-PWR-101",
+      "kind": "power",
+      "name": "PL-PWR-101",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-pipeline_ledger-4741e97f"
+      ],
+      "attributes": {
+        "kind": "power",
+        "road_id": "R-101",
+        "depth_m": "1.2",
+        "diameter_mm": "150",
+        "material": "PVC",
+        "install_year": "1998",
+        "owner_org": "ORG-POWER",
+        "status": "in_service",
+        "note": "为 DF-PS-01 供电"
+      }
+    },
+    {
+      "twin_id": "TW-pump_station-DF-PS-01",
+      "kind": "pump_station",
+      "name": "DF-PS-01",
+      "position": "",
+      "state": "under_maintenance",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-drainage_facility-cd569425"
+      ],
+      "attributes": {
+        "name": "兴华路雨水泵站",
+        "facility_type": "pump_station",
+        "road_id": "R-101",
+        "drainage_zone": "DZ-01",
+        "capacity_m3h": "1200.0",
+        "backup_power": "no",
+        "last_inspection": "2026-08-12T00:00:00",
+        "state": "fault_pending_repair",
+        "note": "1#泵组电机故障，运维主体未明确"
+      }
+    },
+    {
+      "twin_id": "TW-pump_station-DF-PS-02",
+      "kind": "pump_station",
+      "name": "DF-PS-02",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-drainage_facility-cd569425"
+      ],
+      "attributes": {
+        "name": "建设大道泵站",
+        "facility_type": "pump_station",
+        "road_id": "R-102",
+        "drainage_zone": "DZ-01",
+        "capacity_m3h": "2400.0",
+        "backup_power": "yes",
+        "last_inspection": "2026-09-05T00:00:00",
+        "state": "in_service",
+        "owner_org": "ORG-DRAIN",
+        "note": "备用电源可用"
+      }
+    },
+    {
+      "twin_id": "TW-pump_station-DF-PS-03",
+      "kind": "pump_station",
+      "name": "DF-PS-03",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-drainage_facility-cd569425"
+      ],
+      "attributes": {
+        "name": "滨河路雨水泵站",
+        "facility_type": "pump_station",
+        "road_id": "R-201",
+        "drainage_zone": "DZ-02",
+        "capacity_m3h": "1800.0",
+        "backup_power": "yes",
+        "last_inspection": "2026-09-20T00:00:00",
+        "state": "in_service",
+        "owner_org": "ORG-DRAIN",
+        "note": "备用电源可用"
+      }
+    },
+    {
+      "twin_id": "TW-region-A-03",
+      "kind": "region",
+      "name": "A-03",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-resource_inventory-8133c741",
+        "AS-A-03-road_network-7149cd0c",
+        "AS-A-03-weather_alert-de042dd8"
+      ],
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-region-B-01",
+      "kind": "region",
+      "name": "B-01",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-resource_inventory-8133c741",
+        "AS-A-03-road_network-7149cd0c",
+        "AS-A-03-weather_alert-de042dd8"
+      ],
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-resource-RES-BARRIER",
+      "kind": "resource",
+      "name": "RES-BARRIER",
+      "position": "",
+      "state": "in_service",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-resource_inventory-8133c741"
+      ],
+      "attributes": {
+        "name": "交通围挡",
+        "category": "equipment",
+        "qty_available": "60",
+        "unit": "块",
+        "owner_org": "ORG-ROAD",
+        "district": "A-03",
+        "storage_site": "市政仓库"
+      }
+    },
+    {
+      "twin_id": "TW-resource-RES-GAS-DETECT",
+      "kind": "resource",
+      "name": "RES-GAS-DETECT",
+      "position": "",
+      "state": "in_service",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-resource_inventory-8133c741"
+      ],
+      "attributes": {
+        "name": "便携燃气检测仪",
+        "category": "equipment",
+        "qty_available": "3",
+        "unit": "台",
+        "owner_org": "ORG-GAS",
+        "district": "A-03",
+        "storage_site": "燃气抢修中心"
+      }
+    },
+    {
+      "twin_id": "TW-resource-RES-GAS-VALVE",
+      "kind": "resource",
+      "name": "RES-GAS-VALVE",
+      "position": "",
+      "state": "in_service",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-resource_inventory-8133c741"
+      ],
+      "attributes": {
+        "name": "燃气抢修阀件组",
+        "category": "equipment",
+        "qty_available": "2",
+        "unit": "套",
+        "owner_org": "ORG-GAS",
+        "district": "A-03",
+        "storage_site": "燃气抢修中心"
+      }
+    },
+    {
+      "twin_id": "TW-resource-RES-GEN",
+      "kind": "resource",
+      "name": "RES-GEN",
+      "position": "",
+      "state": "in_service",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-resource_inventory-8133c741"
+      ],
+      "attributes": {
+        "name": "移动发电车",
+        "category": "equipment",
+        "qty_available": "1",
+        "unit": "台",
+        "owner_org": "ORG-POWER",
+        "district": "A-03",
+        "storage_site": "供电所",
+        "capacity_note": "500 kW"
+      }
+    },
+    {
+      "twin_id": "TW-resource-RES-PUMP-M",
+      "kind": "resource",
+      "name": "RES-PUMP-M",
+      "position": "",
+      "state": "in_service",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-resource_inventory-8133c741"
+      ],
+      "attributes": {
+        "name": "移动抽水泵",
+        "category": "equipment",
+        "qty_available": "4",
+        "unit": "台",
+        "owner_org": "ORG-DRAIN",
+        "district": "A-03",
+        "storage_site": "兴华养护站",
+        "capacity_note": "单台 400 m3/h"
+      }
+    },
+    {
+      "twin_id": "TW-resource-RES-PUMP-M-B01",
+      "kind": "resource",
+      "name": "RES-PUMP-M-B01",
+      "position": "",
+      "state": "in_service",
+      "region_id": "B-01",
+      "asset_ids": [
+        "AS-A-03-resource_inventory-8133c741"
+      ],
+      "attributes": {
+        "name": "移动抽水泵",
+        "category": "equipment",
+        "qty_available": "2",
+        "unit": "台",
+        "owner_org": "ORG-DRAIN",
+        "district": "B-01",
+        "storage_site": "滨河养护站",
+        "capacity_note": "单台 400 m3/h，跨区调用需 40 分钟"
+      }
+    },
+    {
+      "twin_id": "TW-resource-RES-SAND",
+      "kind": "resource",
+      "name": "RES-SAND",
+      "position": "",
+      "state": "in_service",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-resource_inventory-8133c741"
+      ],
+      "attributes": {
+        "name": "防汛沙袋",
+        "category": "material",
+        "qty_available": "800",
+        "unit": "只",
+        "owner_org": "ORG-EMERG",
+        "district": "A-03",
+        "storage_site": "区应急仓库"
+      }
+    },
+    {
+      "twin_id": "TW-resource-RES-SAND-B01",
+      "kind": "resource",
+      "name": "RES-SAND-B01",
+      "position": "",
+      "state": "in_service",
+      "region_id": "B-01",
+      "asset_ids": [
+        "AS-A-03-resource_inventory-8133c741"
+      ],
+      "attributes": {
+        "name": "防汛沙袋",
+        "category": "material",
+        "qty_available": "400",
+        "unit": "只",
+        "owner_org": "ORG-EMERG",
+        "district": "B-01",
+        "storage_site": "区应急仓库二库"
+      }
+    },
+    {
+      "twin_id": "TW-resource-RES-SIGN",
+      "kind": "resource",
+      "name": "RES-SIGN",
+      "position": "",
+      "state": "in_service",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-resource_inventory-8133c741"
+      ],
+      "attributes": {
+        "name": "警示标志牌",
+        "category": "equipment",
+        "qty_available": "120",
+        "unit": "块",
+        "owner_org": "ORG-TRAFFIC",
+        "district": "A-03",
+        "storage_site": "交警一大队"
+      }
+    },
+    {
+      "twin_id": "TW-road-R-101",
+      "kind": "road",
+      "name": "R-101",
+      "position": "",
+      "state": "in_service",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-road_network-7149cd0c"
+      ],
+      "attributes": {
+        "name": "兴华路",
+        "district": "A-03",
+        "road_class": "次干路",
+        "lanes": "4",
+        "length_m": "820.0",
+        "elevation_m": "3.2",
+        "drainage_zone": "DZ-01",
+        "status": "normal",
+        "note": "片区最低点，历史易涝"
+      }
+    },
+    {
+      "twin_id": "TW-road-R-102",
+      "kind": "road",
+      "name": "R-102",
+      "position": "",
+      "state": "in_service",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-road_network-7149cd0c"
+      ],
+      "attributes": {
+        "name": "建设大道",
+        "district": "A-03",
+        "road_class": "主干路",
+        "lanes": "6",
+        "length_m": "1450.0",
+        "elevation_m": "4.8",
+        "drainage_zone": "DZ-01",
+        "status": "normal",
+        "note": "排水主干通道"
+      }
+    },
+    {
+      "twin_id": "TW-road-R-103",
+      "kind": "road",
+      "name": "R-103",
+      "position": "",
+      "state": "in_service",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-road_network-7149cd0c"
+      ],
+      "attributes": {
+        "name": "民生街",
+        "district": "A-03",
+        "road_class": "支路",
+        "lanes": "2",
+        "length_m": "610.0",
+        "elevation_m": "5.6",
+        "drainage_zone": "DZ-01",
+        "status": "normal",
+        "note": "沿线有小学，高峰限速"
+      }
+    },
+    {
+      "twin_id": "TW-road-R-104",
+      "kind": "road",
+      "name": "R-104",
+      "position": "",
+      "state": "in_service",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-road_network-7149cd0c"
+      ],
+      "attributes": {
+        "name": "环城北路",
+        "district": "A-03",
+        "road_class": "主干路",
+        "lanes": "6",
+        "length_m": "1800.0",
+        "elevation_m": "6.1",
+        "drainage_zone": "DZ-02",
+        "status": "normal",
+        "note": "北部绕行主通道"
+      }
+    },
+    {
+      "twin_id": "TW-road-R-105",
+      "kind": "road",
+      "name": "R-105",
+      "position": "",
+      "state": "unknown",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-road_network-7149cd0c"
+      ],
+      "attributes": {
+        "name": "兴华支路",
+        "district": "A-03",
+        "road_class": "支路",
+        "lanes": "2",
+        "length_m": "340.0",
+        "elevation_m": "3.4",
+        "drainage_zone": "DZ-01",
+        "status": "under_construction",
+        "note": "与 R-101 平交"
+      }
+    },
+    {
+      "twin_id": "TW-road-R-201",
+      "kind": "road",
+      "name": "R-201",
+      "position": "",
+      "state": "in_service",
+      "region_id": "B-01",
+      "asset_ids": [
+        "AS-A-03-road_network-7149cd0c"
+      ],
+      "attributes": {
+        "name": "滨河路",
+        "district": "B-01",
+        "road_class": "次干路",
+        "lanes": "4",
+        "length_m": "920.0",
+        "elevation_m": "5.4",
+        "drainage_zone": "DZ-02",
+        "status": "normal",
+        "note": "片区改造中，路面加铺"
+      }
+    },
+    {
+      "twin_id": "TW-road-R-202",
+      "kind": "road",
+      "name": "R-202",
+      "position": "",
+      "state": "in_service",
+      "region_id": "B-01",
+      "asset_ids": [
+        "AS-A-03-road_network-7149cd0c"
+      ],
+      "attributes": {
+        "name": "工业大道",
+        "district": "B-01",
+        "road_class": "主干路",
+        "lanes": "6",
+        "length_m": "1600.0",
+        "elevation_m": "6.0",
+        "drainage_zone": "DZ-02",
+        "status": "normal",
+        "note": "货运主通道"
+      }
+    },
+    {
+      "twin_id": "TW-telecom-PL-TEL-103",
+      "kind": "telecom",
+      "name": "PL-TEL-103",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-pipeline_ledger-4741e97f"
+      ],
+      "attributes": {
+        "kind": "telecom",
+        "road_id": "R-103",
+        "depth_m": "1.0",
+        "diameter_mm": "100",
+        "material": "PVC",
+        "install_year": "2012",
+        "owner_org": "ORG-TELECOM",
+        "status": "in_service",
+        "note": "占道施工中"
+      }
+    },
+    {
+      "twin_id": "TW-water-PL-WTR-103",
+      "kind": "water",
+      "name": "PL-WTR-103",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-pipeline_ledger-4741e97f"
+      ],
+      "attributes": {
+        "kind": "water",
+        "road_id": "R-103",
+        "depth_m": "1.8",
+        "diameter_mm": "300",
+        "material": "ductile_iron",
+        "install_year": "2010",
+        "owner_org": "ORG-WATER",
+        "status": "in_service"
+      }
+    },
+    {
+      "twin_id": "TW-water-PL-WTR-202",
+      "kind": "water",
+      "name": "PL-WTR-202",
+      "position": "",
+      "state": "in_service",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-pipeline_ledger-4741e97f"
+      ],
+      "attributes": {
+        "kind": "water",
+        "road_id": "R-202",
+        "depth_m": "1.6",
+        "diameter_mm": "300",
+        "material": "ductile_iron",
+        "install_year": "2016",
+        "owner_org": "ORG-WATER",
+        "status": "in_service"
+      }
+    },
+    {
+      "twin_id": "TW-weather-WA-20261028-07",
+      "kind": "weather",
+      "name": "WA-20261028-07",
+      "position": "",
+      "state": "decommissioned",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-weather_alert-de042dd8"
+      ],
+      "attributes": {
+        "issued_at": "2026-10-28T14:00:00+08:00",
+        "valid_from": "2026-10-28T14:00:00+08:00",
+        "valid_to": "2026-10-28T20:00:00+08:00",
+        "level": "yellow",
+        "rainfall_mm_3h": "20.0",
+        "district": "A-03",
+        "source_org": "ORG-METEO",
+        "status": "expired",
+        "description": "暴雨黄色预警，已解除"
+      }
+    },
+    {
+      "twin_id": "TW-weather-WA-20261029-01",
+      "kind": "weather",
+      "name": "WA-20261029-01",
+      "position": "",
+      "state": "in_service",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-weather_alert-de042dd8"
+      ],
+      "attributes": {
+        "issued_at": "2026-10-29T07:30:00+08:00",
+        "valid_from": "2026-10-29T08:00:00+08:00",
+        "valid_to": "2026-10-29T14:00:00+08:00",
+        "level": "orange",
+        "rainfall_mm_3h": "60.0",
+        "district": "A-03",
+        "source_org": "ORG-METEO",
+        "status": "active",
+        "description": "暴雨橙色预警，未来两小时局地雨量可达 80mm"
+      }
+    },
+    {
+      "twin_id": "TW-weather-WA-20261029-02",
+      "kind": "weather",
+      "name": "WA-20261029-02",
+      "position": "",
+      "state": "in_service",
+      "region_id": "B-01",
+      "asset_ids": [
+        "AS-A-03-weather_alert-de042dd8"
+      ],
+      "attributes": {
+        "issued_at": "2026-10-29T07:30:00+08:00",
+        "valid_from": "2026-10-29T08:00:00+08:00",
+        "valid_to": "2026-10-29T14:00:00+08:00",
+        "level": "yellow",
+        "rainfall_mm_3h": "30.0",
+        "district": "B-01",
+        "source_org": "ORG-METEO",
+        "status": "active",
+        "description": "暴雨黄色预警，B-01 片区累计雨量 30mm"
+      }
+    },
+    {
+      "twin_id": "TW-weather-WA-20261030-01",
+      "kind": "weather",
+      "name": "WA-20261030-01",
+      "position": "",
+      "state": "in_service",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-weather_alert-de042dd8"
+      ],
+      "attributes": {
+        "issued_at": "2026-10-29T06:00:00+08:00",
+        "valid_from": "2026-10-30T06:00:00+08:00",
+        "valid_to": "2026-10-30T12:00:00+08:00",
+        "level": "red",
+        "rainfall_mm_3h": "120.0",
+        "district": "A-03",
+        "source_org": "ORG-METEO",
+        "status": "active",
+        "description": "10-30 暴雨红色预警（提前 24 小时发布），累计雨量预计 120mm"
+      }
+    },
+    {
+      "twin_id": "TW-work_site-CP-2026-035",
+      "kind": "work_site",
+      "name": "CP-2026-035",
+      "position": "",
+      "state": "planned",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-construction_plan-79142c4f"
+      ],
+      "attributes": {
+        "project_name": "兴华支路路面修复",
+        "road_id": "R-105",
+        "work_type": "pavement_repair",
+        "excavation_depth_m": "0.2",
+        "start_at": "2026-10-25T08:00:00+08:00",
+        "end_at": "2026-11-10T18:00:00+08:00",
+        "permit_org": "ORG-ROAD",
+        "contractor": "C-5501",
+        "closure_scope": "全封闭",
+        "status": "approved"
+      }
+    },
+    {
+      "twin_id": "TW-work_site-CP-2026-038",
+      "kind": "work_site",
+      "name": "CP-2026-038",
+      "position": "",
+      "state": "planned",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-construction_plan-79142c4f"
+      ],
+      "attributes": {
+        "project_name": "民生街通信管道敷设",
+        "road_id": "R-103",
+        "pipeline_id": "PL-TEL-103",
+        "work_type": "trenching",
+        "excavation_depth_m": "1.0",
+        "start_at": "2026-10-27T08:00:00+08:00",
+        "end_at": "2026-11-05T18:00:00+08:00",
+        "permit_org": "ORG-ROAD",
+        "contractor": "C-7734",
+        "closure_scope": "占道施工",
+        "status": "approved"
+      }
+    },
+    {
+      "twin_id": "TW-work_site-CP-2026-041",
+      "kind": "work_site",
+      "name": "CP-2026-041",
+      "position": "",
+      "state": "planned",
+      "region_id": null,
+      "asset_ids": [
+        "AS-A-03-construction_plan-79142c4f"
+      ],
+      "attributes": {
+        "project_name": "兴华路燃气主干管更换",
+        "road_id": "R-101",
+        "pipeline_id": "PL-GAS-101",
+        "work_type": "pipe_replacement",
+        "excavation_depth_m": "2.5",
+        "start_at": "2026-10-29T08:00:00+08:00",
+        "end_at": "2026-10-29T18:00:00+08:00",
+        "permit_org": "ORG-ROAD",
+        "contractor": "C-8812",
+        "closure_scope": "半幅封闭",
+        "status": "approved"
+      }
+    }
+  ],
+  "notes": "position is a stable geometry_ref; Blender/Unreal may resolve it to scene coordinates"
+}

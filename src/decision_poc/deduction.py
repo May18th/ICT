@@ -72,6 +72,9 @@ REQUIRED_RULE_IDS: tuple[str, ...] = (
 DEPTH_PATTERN = re.compile(r"(\d+(?:\.\d+)?)\s*cm")
 
 
+WARNING_LEVEL_RANK: dict[str, int] = {"blue": 1, "yellow": 2, "orange": 3, "red": 4}
+
+
 class StageStatus(StrEnum):
     SUPPORTED = "supported"
     INSUFFICIENT = "insufficient"
@@ -220,6 +223,9 @@ class DeductionResult(StrictModel):
     # 需要人接手的三类情形：有跳证据不足、有职责空白、用了演示假设
     handoff_required: bool = False
     handoff_reasons: list[str] = Field(default_factory=list)
+    # 开挖面暴露期与同片区预警窗口的重叠结果：工期类反事实直接比这两个值
+    exposed_warning_level: str = "none"
+    exposed_hours: float = 0.0
     rules_version: str = ""
     snapshot_hash: str = ""
 
@@ -300,6 +306,15 @@ def verify_rules(rules: RuleSet, dataset_root: Path | str) -> list[tuple[str, st
 
 
 # --- engine -------------------------------------------------------------
+
+
+def _time(value: Any) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
 
 
 def _num(value: Any) -> float | None:
@@ -476,6 +491,11 @@ class DeductionEngine:
 
         steps.append(self._stage_resource(resource_plan, context))
         steps.extend(self._stage_action(affected, context, resource_plan, conflicts))
+
+        pits = [obj for obj in affected if obj.kind is ObjectKind.WORK_SITE]
+        exposed_level, exposed_hours = self._warning_exposure(pits, context.get("district"))
+        context["pit_exposed_warning_level"] = exposed_level
+        context["pit_exposed_hours"] = f"{exposed_hours:g}"
         risks = self._residual_risks(affected, context)
 
         assumptions = [f"{rule.rule_id}: {rule.assumption_note}" for rule in self.rules.assumptions]
@@ -499,6 +519,8 @@ class DeductionEngine:
             assumptions=assumptions,
             handoff_required=bool(handoff),
             handoff_reasons=handoff,
+            exposed_warning_level=exposed_level,
+            exposed_hours=exposed_hours,
             rules_version=self.rules.version,
             snapshot_hash=self.store.snapshot_hash(),
         )
@@ -735,6 +757,44 @@ class DeductionEngine:
             return datetime.fromisoformat(start) <= as_of <= datetime.fromisoformat(end)
         except ValueError:
             return True
+
+    def _warning_exposure(
+        self, pits: Sequence[TwinObject], district: str | None
+    ) -> tuple[str, float]:
+        """开挖面的暴露期落在哪些预警窗口里。
+
+        与 `_stage_observed` 的区别：那里看"此刻有哪些预警生效"，这里看"整个工期
+        覆盖了哪些预警窗口"。工期是否跨越降雨窗口，只能用区间重叠判断，用时刻
+        判断永远只能看到当下。
+        """
+        if district is None:
+            return "none", 0.0
+        windows: list[tuple[str, datetime, datetime | None]] = []
+        for obj in self.store.objects():
+            if obj.kind is not ObjectKind.WEATHER or self._district_of(obj) != district:
+                continue
+            level = str(obj.attributes.get("level") or "")
+            start = _time(obj.attributes.get("valid_from"))
+            end = _time(obj.attributes.get("valid_to"))
+            if level in WARNING_LEVEL_RANK and start is not None:
+                windows.append((level, start, end))
+
+        best = "none"
+        hours = 0.0
+        for pit in pits:
+            start = _time(pit.attributes.get("start_at"))
+            end = _time(pit.attributes.get("end_at"))
+            if start is None or end is None:
+                continue
+            for level, window_start, window_end in windows:
+                overlap_start = max(start, window_start)
+                overlap_end = min(end, window_end) if window_end else end
+                if overlap_end <= overlap_start:
+                    continue
+                hours += (overlap_end - overlap_start).total_seconds() / 3600
+                if WARNING_LEVEL_RANK[level] > WARNING_LEVEL_RANK.get(best, 0):
+                    best = level
+        return best, round(hours, 1)
 
     def _incident_within(
         self, other: TwinObject, incident: TwinObject, window: timedelta
@@ -1180,6 +1240,7 @@ class DeductionEngine:
             "lel_percent": "10",
             "backup_power_missing": "true" if no_backup else "false",
             "detour_under_construction": "true" if detour else "false",
+            "pit_exposed_warning_level": context.get("pit_exposed_warning_level", "none"),
         }
         risks: list[str] = []
         for rule in self.rules.by_stage("residual_risk"):

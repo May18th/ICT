@@ -445,7 +445,7 @@
       }
     },
     {
-      "asset_id": "AS-A-03-weather_alert-4a63cb03",
+      "asset_id": "AS-A-03-weather_alert-de042dd8",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "weather_alerts.csv",
@@ -454,11 +454,11 @@
       "version": "v2",
       "standard_refs": [],
       "locator": "A-03/weather_alert/v2",
-      "checksum_sha256": "4a63cb03a2ce9ccc572fcca0465c864da1d1681ff1ea508a8c16c1449c930172",
-      "byte_size": 619,
-      "summary": "表格资产：3 行 × 10 列，列名 alert_id、issued_at、valid_from、valid_to、level、rainfall_mm_3h 等",
+      "checksum_sha256": "de042dd890bec1b37de6061a0fbc11ea23dc65c82f21f63d4946ce608d80e9a5",
+      "byte_size": 822,
+      "summary": "表格资产：4 行 × 10 列，列名 alert_id、issued_at、valid_from、valid_to、level、rainfall_mm_3h 等",
       "structure": {
-        "rows": 3,
+        "rows": 4,
         "columns": 10,
         "headers": [
           "alert_id",
@@ -482,7 +482,7 @@
         "valid_from": "2026-10-29T07:30:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "4a63cb03a2ce9ccc572fcca0465c864da1d1681ff1ea508a8c16c1449c930172",
+        "content_hash": "de042dd890bec1b37de6061a0fbc11ea23dc65c82f21f63d4946ce608d80e9a5",
         "status": "published"
       }
     },

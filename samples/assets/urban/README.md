@@ -11,7 +11,7 @@
 | `drainage_facilities.csv` | drainage_facility | 表格 | 6 处泵站与雨水口；DF-PS-01 故障且 `owner_org` 为空（职责空白来源），DF-PS-03 为 B-01 正常泵站 |
 | `construction_plans.csv` | construction_plan | 表格 | 3 个在建项目；CP-2026-041 开挖 2.5m，CP-2026-038 占用 R-103 |
 | `work_orders.csv` | work_order | 表格 | 5 条工单：A-03 积水 30cm、B-01 积水 18cm、泵站故障、基坑沉陷、路面沉陷 |
-| `weather_alerts.csv` | weather_alert | 表格 | A-03 橙色 + B-01 黄色两条现行预警，另有一条已解除黄色预警（过期证据） |
+| `weather_alerts.csv` | weather_alert | 表格 | 4 条预警：A-03 橙色 + B-01 黄色两条现行、一条已解除（过期证据）、一条 10-30 红色预警（提前发布，有效期在未来，用于工期类反事实） |
 | `department_duties.csv` | duty_list | 表格 | 8 个部门职责；封路权限交叉、泵站职责缺失均在此 |
 | `resource_inventory.csv` | resource_inventory | 表格 | 9 条资源（按片区存放）；抽水泵 A-03 4 台 + B-01 2 台，是资源缺口与跨区调配的关键数 |
 | `plan_flood_emergency_v2.md` | emergency_plan | 文本 | 现行预案：封路 25cm、基坑停工、先隔离风险源 |

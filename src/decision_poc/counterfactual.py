@@ -114,6 +114,8 @@ class BranchSummary(StrictModel):
     inventory: int = 0  # 参与测算的抽水泵总量，缺口的分母
     required_total: int = 0
     available_total: int = 0
+    exposed_warning_level: str = "none"
+    exposed_hours: float = 0.0
     risks: list[str] = Field(default_factory=list)
     affected_count: int = 0
     affected_roads: list[str] = Field(default_factory=list)
@@ -165,6 +167,8 @@ class DistrictCase(StrictModel):
     action_count: int = 0
     required_total: int = 0
     available_total: int = 0
+    exposed_warning_level: str = "none"
+    exposed_hours: float = 0.0
     total_gap: int = 0
     publishable: bool = False
 
@@ -422,6 +426,8 @@ def _summarise(report: PipelineReport, runtime: SkillRuntime) -> BranchSummary:
         inventory=_pump_inventory(runtime),
         required_total=report.resources.required_total if report.resources else 0,
         available_total=report.resources.available_total if report.resources else 0,
+        exposed_warning_level=report.deduction.exposed_warning_level if report.deduction else "none",
+        exposed_hours=report.deduction.exposed_hours if report.deduction else 0.0,
         risks=list(deduction.residual_risks) if deduction else [],
         affected_count=len(scope.affected) if scope else 0,
         affected_roads=list(scope.roads) if scope else [],
@@ -746,15 +752,22 @@ def run_counterfactual(
             cases = _district_cases(patched, districts, moment, labels)
             priority = _priority(base_runtime, cases, closure_threshold_cm=25.0)
         elif case.case_id == "CF3":
-            missing = _missing_rule_field(base_runtime, DATE_FIELDS)
-            if missing:
+            # 能不能回答这个反事实，取决于规则里有没有"暴露期×预警窗口"的判据
+            exposure_rules = [
+                rule.rule_id
+                for rule in base_runtime.rules.rules
+                if "pit_exposed_warning_level" in rule.when
+            ]
+            if exposure_rules:
+                gap_notes.append("判定依据: " + ",".join(exposure_rules))
+            else:
                 gap_notes.append(
-                    "规则条件里没有任何工期字段（已检查 "
-                    + ",".join(missing)
-                    + "），工期变化不参与任何一跳判定"
+                    "规则集里没有以“开挖面暴露期预警等级”为条件的规则，工期变化不参与判定"
                 )
-                uncomputable.append("工期跨越降雨窗口的风险判定：缺“工期与预警窗口重叠”规则")
-            uncomputable.append("逐日降雨预报：气象数据为小时级单条预警，无法覆盖未来一天")
+                uncomputable.append("工期跨越降雨窗口的风险判定：缺“暴露期×预警重叠”规则")
+            uncomputable.append(
+                "超出预警发布时效的工期无法判断：气象侧只有到 10-30 12:00 的预警，更远期无数据"
+            )
 
         verdict = _verdict(case, baseline, intervened, diff, priority, gap_notes, road_states)
 
@@ -841,9 +854,18 @@ def _verdict(
         if not diff.changed:
             reason = gap_notes[0] if gap_notes else "规则未引用工期字段"
             return (
-                f"工期顺延一天未改变任何推演结论：{reason}。"
-                "该问题在当前知识下不可判定——需要补规则与逐日气象，而不是补一段结论。"
+                f"工期顺延未改变任何推演结论：{reason}。"
+                "该问题在当前知识下不可判定——需要补规则与气象数据，而不是补一段结论。"
             )
+        if before.exposed_warning_level != after.exposed_warning_level:
+            detail = (
+                f"开挖面暴露期与预警窗口的重叠等级由 {before.exposed_warning_level} 上调为 "
+                f"{after.exposed_warning_level}（重叠 {before.exposed_hours:g}h → {after.exposed_hours:g}h）"
+            )
+            if diff.risks_added:
+                # 只取风险标题（冒号前），整段规则文本放进 diff 里，不塞进一句话结论
+                detail += f"；新增二次风险：{diff.risks_added[0].split('：')[0]}"
+            return detail + "。"
         changes = len(diff.actions_added) + len(diff.actions_removed) + len(diff.actions_moved)
         return f"工期变更产生 {changes} 处结论变化。"
 
@@ -890,6 +912,12 @@ def _format(result: CounterfactualResult) -> str:
         lines.append(f"  + 风险: {item[:50]}")
     for item in diff.risks_removed:
         lines.append(f"  - 风险: {item[:50]}")
+    if result.baseline.exposed_warning_level != result.intervened.exposed_warning_level:
+        lines.append(
+            f"  暴露: {result.baseline.exposed_warning_level} "
+            f"{result.baseline.exposed_hours:g}h → {result.intervened.exposed_warning_level} "
+            f"{result.intervened.exposed_hours:g}h"
+        )
     if diff.conflicts_added or diff.conflicts_removed:
         lines.append(f"  冲突: +{len(diff.conflicts_added)} / -{len(diff.conflicts_removed)}")
     if diff.snapshot_changed and not diff.changed:

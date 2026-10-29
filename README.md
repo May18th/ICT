@@ -204,9 +204,28 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **338 项**测试通过；同时要求锁文件、Python 编译和依赖一致性检查通过。
+当前基线：`uv run --locked pytest -q` 共 **342 项**测试通过；同时要求锁文件、Python 编译和依赖一致性检查通过。
 P0-P6 的验收口径与实测数字见各阶段回传报告（`docs/reports/`）。
 
 ## 后续演进
 
 赛题主题确定后，仅替换领域 Schema、规则、工具和评测集；LangGraph 状态流、Pydantic AI 类型化输出、审批门禁、评测发布和回滚机制继续复用。真实 Nexent 接入应作为独立适配层，不直接破坏当前离线 PoC。
+
+## 城市内涝 Web Demo 与三维场景桥接
+
+启动无额外依赖的浏览器 Demo：
+
+```powershell
+$env:PYTHONPATH = "src"
+uv run --locked python -m decision_poc.web_demo --port 8787
+# 浏览器访问 http://127.0.0.1:8787
+```
+
+生成可供 Blender/Unreal 导入的引擎无关场景数据：
+
+```powershell
+$env:PYTHONPATH = "src"
+uv run --locked python -m decision_poc.scene_export --out samples/assets/urban/scene.json
+```
+
+场景文件只负责稳定的 `twin_id`、类型、状态、`geometry_ref` 和溯源信息；Blender/Unreal 的模型资产和坐标解析属于展示层，不参与推理结论生成。

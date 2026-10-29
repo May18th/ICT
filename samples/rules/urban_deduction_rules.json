@@ -473,6 +473,38 @@
       "confidence": 0.85,
       "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:32",
       "keyword": "绕行方案"
+    },
+    {
+      "rule_id": "RULE-RISK-PIT-EXPOSED-ORANGE",
+      "stage": "residual_risk",
+      "when": {
+        "pit_exposed_warning_level": [
+          "orange"
+        ]
+      },
+      "then": {
+        "risk": "开挖面暴露期与橙色预警窗口重叠：按预案 4.2 该期间应停止开挖并覆盖或围堰，工期顺延意味着该约束持续存在"
+      },
+      "priority": 60,
+      "confidence": 0.88,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:38",
+      "keyword": "停止开挖作业"
+    },
+    {
+      "rule_id": "RULE-RISK-PIT-EXPOSED-RED",
+      "stage": "residual_risk",
+      "when": {
+        "pit_exposed_warning_level": [
+          "red"
+        ]
+      },
+      "then": {
+        "risk": "开挖面暴露期与红色预警窗口重叠：按预案响应分级应启动全区响应，开挖作业须停工并撤离周边人员，二次风险等级上调"
+      },
+      "priority": 70,
+      "confidence": 0.92,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:25",
+      "keyword": "全区响应"
     }
   ]
 }
