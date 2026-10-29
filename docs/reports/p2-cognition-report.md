@@ -36,7 +36,7 @@
 | drainage_facilities.csv | drainage_facility | full | 0 | 6 | 0 |
 | construction_plans.csv | construction_plan | full | 0 | 3 | 0 |
 | work_orders.csv | work_order | full | 0 | 5 | 0 |
-| weather_alerts.csv | weather_alert | full | 0 | 3 | 0 |
+| weather_alerts.csv | weather_alert | full | 0 | 4 | 0 |
 | department_duties.csv | duty_list | full | 0 | 8 | 0 |
 | resource_inventory.csv | resource_inventory | full | 0 | 9 | 0 |
 | plan_flood_emergency_v2.md | emergency_plan | full | 8 | 0 | 0 |
@@ -47,7 +47,7 @@
 | notice_gas_construction.md | public_notice | full | 5 | 0 | 0 |
 | pipeline_map.png | schematic_map | partial | 0 | 0 | 5 |
 
-合计：15 资产、8 表 49 行、34 chunk、5 区域；`metadata_only` 为 0。
+合计：15 资产、8 表 50 行、34 chunk、5 区域；`metadata_only` 为 0。
 
 ## 4 候选抽取统计
 

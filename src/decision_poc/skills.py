@@ -199,6 +199,8 @@ class DeductionView(StrictModel):
     assumptions: list[str] = Field(default_factory=list)
     handoff_required: bool = False
     handoff_reasons: list[str] = Field(default_factory=list)
+    exposed_warning_level: str = "none"
+    exposed_hours: float = 0.0
     rules_version: str = ""
     snapshot_hash: str = ""
 
@@ -725,6 +727,8 @@ class DeduceSkill(Skill):
             assumptions=list(outcome.assumptions),
             handoff_required=outcome.handoff_required,
             handoff_reasons=list(outcome.handoff_reasons),
+            exposed_warning_level=outcome.exposed_warning_level,
+            exposed_hours=outcome.exposed_hours,
             rules_version=outcome.rules_version,
             snapshot_hash=outcome.snapshot_hash,
         )

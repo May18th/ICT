@@ -23,7 +23,7 @@ def test_entity_counts_per_type() -> None:
     assert counts["DrainageFacility"] == 6
     assert counts["ConstructionProject"] == 3
     assert counts["Incident"] == 5
-    assert counts["WeatherEvent"] == 3
+    assert counts["WeatherEvent"] == 4
     assert counts["Department"] == 8
     assert counts["Resource"] == 9
     assert counts["Area"] == 2

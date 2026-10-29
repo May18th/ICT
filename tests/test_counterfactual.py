@@ -127,21 +127,32 @@ def test_cf2_quotes_the_cross_district_cost_from_the_data(cf2) -> None:
 # --- CF3 -----------------------------------------------------------------
 
 
-def test_cf3_changes_the_data_but_not_the_conclusions(cf3) -> None:
-    """顺延完工后快照变了（内容寻址），但今天这个时点的结论一条都没变。"""
-    assert cf3.diff.snapshot_changed is True
-    assert cf3.diff.changed is False
-    assert cf3.baseline.actions == cf3.intervened.actions
+def test_cf3_upgrades_exposure_level_instead_of_adding_a_number(cf3) -> None:
+    """工期顺延后开挖面暴露期与更强的预警窗口重叠，风险等级上调——这是算出来的，不是写的。"""
+    assert cf3.baseline.exposed_warning_level == "orange"
+    assert cf3.intervened.exposed_warning_level == "red"
+    assert cf3.intervened.exposed_hours > cf3.baseline.exposed_hours
+    assert cf3.baseline.actions == cf3.intervened.actions, "工期变化不该改动处置动作"
     assert cf3.baseline.gaps == cf3.intervened.gaps
+    assert cf3.diff.risks_added and cf3.diff.risks_removed
+    assert "orange" in cf3.verdict and "red" in cf3.verdict
 
 
-def test_cf3_names_the_missing_rule_instead_of_inventing_a_risk(cf3) -> None:
-    assert "不可判定" in cf3.verdict
-    assert "工期字段" in cf3.verdict
+def test_cf3_still_states_the_blind_spot(cf3) -> None:
+    """有规则能答的部分答了，超出预警时效的部分仍然声明算不出来。"""
     joined = " ".join(cf3.uncomputable)
-    assert "工期与预警窗口重叠" in joined
-    assert "逐日降雨" in joined
-    assert not cf3.diff.risks_added, "不能凭空新增一条二次风险"
+    assert "超出预警发布时效" in joined
+    assert not any("缺“暴露期×预警重叠”规则" in item for item in cf3.uncomputable)
+
+
+def test_future_warning_never_leaks_into_todays_observation(runtime: SkillRuntime) -> None:
+    """10-30 的红色预警在今天 09:40 只是"未来窗口"，不能被当作现行预警。"""
+    from decision_poc.skills import SKILL_BY_NAME
+
+    result = SKILL_BY_NAME["event_understand"].invoke(
+        runtime, {"event_id": EVENT, "as_of": AS_OF, "caller_labels": LABELS}
+    )
+    assert result.data["payload"]["warning_level"] == "orange"
 
 
 # --- invariants ----------------------------------------------------------
@@ -252,3 +263,15 @@ def test_result_carries_evidence_and_iso_time(cf1) -> None:
     assert cf1.as_of == datetime.fromisoformat(AS_OF)
     assert cf1.evidence_refs
     assert all("#" in ref for ref in cf1.evidence_refs)
+
+
+def test_exposure_rules_point_at_real_plan_lines() -> None:
+    """补规则不能只写条件，出处必须仍能在预案里逐字对上。"""
+    from decision_poc.deduction import load_rules, verify_rules
+
+    rules = load_rules()
+    exposure = {r.rule_id for r in rules.rules if "pit_exposed_warning_level" in r.when}
+    assert exposure == {"RULE-RISK-PIT-EXPOSED-ORANGE", "RULE-RISK-PIT-EXPOSED-RED"}
+    refs = dict(verify_rules(rules, DEFAULT_DATASET_ROOT))
+    assert exposure <= set(refs)
+    assert all("emergency_plan" in refs[rule_id] for rule_id in exposure)
