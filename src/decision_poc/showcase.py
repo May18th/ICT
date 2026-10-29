@@ -30,12 +30,26 @@ def run_evolution_showcase() -> dict[str, object]:
         negative,
         lambda _: EvaluationReport(passed=False, metrics={"score": 0.1}, notes="fail"),
     )
+    second_positive = FeedbackRecord(
+        request_id="showcase-3",
+        outcome=FeedbackOutcome.POSITIVE,
+        note="temporary improvement",
+        proposed_updates={"threshold": 3},
+    )
+    evaluate_and_apply(
+        registry,
+        second_positive,
+        lambda _: EvaluationReport(passed=True, metrics={"score": 0.9}, notes="pass"),
+    )
+    rolled_back = registry.rollback("v2")
     return {
         "initial_version": initial,
         "promoted_version": "v2",
         "rejected_active_version": rejected.active.version_id,
+        "rolled_back_version": rolled_back.version_id,
         "history": [
             f"{entry.action}:{entry.version_id}"
+            + (f"->{entry.target_version_id}" if entry.target_version_id else "")
             for entry in registry.history
         ],
     }
