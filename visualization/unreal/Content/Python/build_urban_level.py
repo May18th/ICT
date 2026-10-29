@@ -33,11 +33,29 @@ def _spawn_box(label, location, scale, material=None):
     return actor
 
 
+def _spawn_lighting():
+    sun = unreal.EditorLevelLibrary.spawn_actor_from_class(
+        unreal.DirectionalLight, unreal.Vector(0, 0, 1200), unreal.Rotator(-45, -35, 0)
+    )
+    sun.set_actor_label("UrbanTwin_Sun")
+    sun.get_component_by_class(unreal.DirectionalLightComponent).set_editor_property("intensity", 5.0)
+    sky = unreal.EditorLevelLibrary.spawn_actor_from_class(
+        unreal.SkyLight, unreal.Vector(0, 0, 800), unreal.Rotator(0, 0, 0)
+    )
+    sky.set_actor_label("UrbanTwin_Sky")
+    sky.get_component_by_class(unreal.SkyLightComponent).set_editor_property("intensity", 1.5)
+
+
 def build():
     payload = json.loads(SCENE_PATH.read_text(encoding="utf-8"))
     unreal.EditorAssetLibrary.make_directory("/Game/UrbanTwin/Maps")
-    unreal.EditorLevelLibrary.new_level("/Game/UrbanTwin/Maps/UrbanTwinLevel")
+    level_path = "/Game/UrbanTwin/Maps/UrbanTwinLevel"
+    if unreal.EditorAssetLibrary.does_asset_exist(level_path):
+        unreal.EditorLoadingAndSavingUtils.load_map(level_path)
+    else:
+        unreal.EditorLevelLibrary.new_level(level_path)
     unreal.EditorLevelLibrary.select_nothing()
+    _spawn_lighting()
     road = _material("M_Road", (0.12, 0.16, 0.22))
     water = _material("M_FloodWater", (0.03, 0.35, 0.9))
     risk = _material("M_RiskNode", (1.0, 0.5, 0.03))
