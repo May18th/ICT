@@ -6,6 +6,7 @@ default while making a future Nexent integration explicit and testable.
 """
 
 from collections.abc import Callable
+from collections.abc import Mapping
 from typing import Any
 
 from .contracts import DecisionRequest
@@ -17,5 +18,8 @@ class NexentAdapter:
 
     def run(self, request: DecisionRequest) -> dict[str, Any]:
         payload = request.model_dump(mode="json")
-        return self._invoke(payload)
+        result = self._invoke(payload)
+        if not isinstance(result, Mapping):
+            raise TypeError("Nexent transport response must be a mapping")
+        return dict(result)
 
