@@ -154,13 +154,17 @@ class NexentHttpTransport:
 11. `NexentSettings.from_env()` 缺 Key / 缺 Agent 名 → `NexentConfigError`。
 12. `build_decision_query` / `parse_decision_output` 辅助函数。
 
+另有 `tests/test_nexent_smoke.py` 4 项：缺凭据退出码 2、注入传输成功退出码 0、
+传输失败退出码 1、`missing_env` 的空值识别。
+
 ## 6. 待确认事项
 
 1. ~~是否加 `httpx` 依赖~~ → 已加 `httpx==0.28.1`。
 2. ~~Agent 输出契约~~ → 已定为严格 JSON，失败降级为 `decision_error`。
 3. **真机联调**：需要提供 Nexent 部署地址 + 发布后生成的 API Key + 已发布 Agent 名称，
-   才能跑一次真实 smoke（`NEXENT_BASE_URL` / `NEXENT_API_KEY` / `NEXENT_AGENT_NAME`）。
-   在此之前只有 Mock 单测覆盖。
+   才能跑一次真实 smoke。在此之前只有 Mock 单测覆盖。
+   脚本已就位：`uv run --locked python -m decision_poc.nexent_smoke`；
+   缺凭据时列出缺失环境变量并返回 2，不发任何请求；调用失败返回 1；成功返回 0 并打印聚合结果。
 
 ## 7. 来源
 
