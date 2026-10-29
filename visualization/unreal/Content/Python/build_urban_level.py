@@ -38,12 +38,16 @@ def _spawn_lighting():
         unreal.DirectionalLight, unreal.Vector(0, 0, 1200), unreal.Rotator(-45, -35, 0)
     )
     sun.set_actor_label("UrbanTwin_Sun")
-    sun.get_component_by_class(unreal.DirectionalLightComponent).set_editor_property("intensity", 5.0)
+    sun_component = sun.get_component_by_class(unreal.DirectionalLightComponent)
+    sun_component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
+    sun_component.set_editor_property("intensity", 5.0)
     sky = unreal.EditorLevelLibrary.spawn_actor_from_class(
         unreal.SkyLight, unreal.Vector(0, 0, 800), unreal.Rotator(0, 0, 0)
     )
     sky.set_actor_label("UrbanTwin_Sky")
-    sky.get_component_by_class(unreal.SkyLightComponent).set_editor_property("intensity", 1.5)
+    sky_component = sky.get_component_by_class(unreal.SkyLightComponent)
+    sky_component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
+    sky_component.set_editor_property("intensity", 1.5)
 
 
 def build():
