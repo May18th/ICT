@@ -42,6 +42,8 @@
 - Nexent 北向传输层（SSE 聚合、幂等键、401/429/冲突错误映射，默认不联网）；
 - Nexent SDK 传输层（无平台环境时的内嵌路径，可选依赖）；
 - 北向链路真机验证（本机 Nexent v2.7.0，SSE → 结构化决策）；
+- 多模态数据资产标识（表格 / 文本 / 图片统一登记、结构摘要、标准引用、可引用定位）；
+- 本体半自动构建（种子本体 → 规则抽取 → 置信度分档 + 跨文档多跳证据 + 合并计划）；
 - 技术基线与风险记录。
 
 暂不做：
@@ -66,6 +68,78 @@ uv run --locked pytest -q
 $env:PYTHONPATH = "src"
 uv run --locked python -c "from decision_poc.baseline import run_technical_baseline; print(run_technical_baseline())"
 ```
+
+生成资产清单与本体候选（都不联网）：
+
+```powershell
+$env:PYTHONPATH = "src"
+uv run --locked python -m decision_poc.asset_manifest       # -> samples/assets/manifest.json
+uv run --locked python -m decision_poc.ontology_bootstrap   # -> samples/assets/ontology_candidates.json
+```
+
+导入城市内涝最小数据集（15 个合成资产，含治理字段与版本有效期）：
+
+```powershell
+$env:PYTHONPATH = "src"
+uv run --locked python -m decision_poc.urban_dataset        # -> samples/assets/urban/manifest.json
+uv run --locked python -m decision_poc.health --dataset samples/assets/urban
+```
+
+预期 `assets=15 types=12 modalities={'image': 1, 'table': 8, 'text': 6}`；健康检查全绿。
+数据集说明见 [samples/assets/urban/README.md](samples/assets/urban/README.md)，
+推演标准答案见 [核心事件 Ground Truth](docs/urban-scenario-ground-truth.md)。
+
+跑六跳跨部门推演（规则来自 `samples/rules/`，每条带原文行号并在加载时校验）：
+
+```powershell
+$env:PYTHONPATH = "src"
+uv run --locked python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00
+uv run --locked python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00 --record artifacts/ledger
+uv run --locked python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00 --json
+```
+
+预期：三类冲突 C1/C2/C3、资源缺口 1 台、`隔离风险源` 序位在 `抽排` 之前；`--record` 把结论写成 claim 落进溯源账本并打印 `verify=True`。
+
+跑五个 Skill 的编排（事件理解 → 影响分析 → 资源检查 → 跨部门推演 → 证据审计）：
+
+```powershell
+$env:PYTHONPATH = "src"
+uv run --locked python -m decision_poc.skills --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00 --caller-labels ORG-EMERG
+uv run --locked python -m decision_poc.skills --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00 --caller-labels ORG-ROAD   # 越权身份：推演被拒
+uv run --locked python -m decision_poc.skills --manifest > samples/nexent/skills.json                                          # 重新生成绑定表
+```
+
+预期：末行打印 `claim 14/14 通过  引用完整率 1.00`；换 `ORG-ROAD` 后状态变 `partial`、可发布为 `否`，终止原因写明依据不可见。
+Nexent 侧只需消费 `samples/nexent/skills.json`（顺序、请求 Schema、工具绑定、失败语义），说明见 [samples/nexent/README.md](samples/nexent/README.md)。
+
+跑反事实（CF1–CF3：改一个输入后重放同一套规则，取与基线的差异）：
+
+```powershell
+$env:PYTHONPATH = "src"
+uv run --locked python -m decision_poc.counterfactual --case all     # CF1 / CF2 / CF3
+uv run --locked python -m decision_poc.counterfactual --case CF2 --json
+```
+
+预期：CF2 库存 6→2 台、缺口 1→5 台、优先保障 A-03；CF3 **无差异**（规则不含工期字段，该问题当前不可判定）；越权身份退出码 2 且不返回空差异。
+
+跑 MCP Server（stdio，JSON-RPC 2.0，不依赖任何 MCP SDK）：
+
+```powershell
+$env:PYTHONPATH = "src"
+uv run --locked python -m decision_poc.mcp_server --list-tools     # 打印 8 个工具的参数结构
+uv run --locked python -m decision_poc.mcp_server                  # 进入 stdio 服务循环
+```
+
+一行请求做自检（Windows 下用单引号包 JSON，管道进进程）：
+
+```powershell
+'{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | uv run --locked python -m decision_poc.mcp_server
+```
+
+八个工具：`semantic_query`、`twin_neighbors`、`evidence_locate`、`claim_trace`、`provenance_verify`、
+`event_deduce`、`counterfactual_run`、`conflict_check`。全部返回既有 `ToolResult` 信封；失败返回 `status="error"` 且不返回伪造数据。
+推演与冲突工具需要 `caller_labels`：结论引用了调用方不可见的依据时返回 `PERMISSION_DENIED`，而不是删掉依据照给结论。
+调用日志用 `--log artifacts/mcp_calls.jsonl` 落盘，`trace_id` 随请求透传到 `context.trace_id` 并写进日志。
 
 测试使用 Pydantic AI 内置 `TestModel`，无需 API Key，不会连接真实模型、调用 Nexent 或执行生产动作。
 Nexent 传输层单测全部使用 `httpx.MockTransport` 回放 SSE，同样不触网。
@@ -102,9 +176,12 @@ uv run --locked python -c "from decision_poc.nexent_sdk_transport import NexentS
 
 ```text
 agent_poc/
-├─ src/decision_poc/       # 决策契约、图编排、工具、评测和版本注册表
+├─ src/decision_poc/       # 契约、治理、认知、语义层、推演、溯源、MCP、Skills
 ├─ tests/                  # 契约、工具、流程、评测、基线测试
-├─ docs/                   # 文档导航、技术基线、设计和实施计划
+├─ samples/assets/urban/   # 15 个合成资产（表格/文档/示意图）
+├─ samples/rules/          # 推演规则（每条带原文行号）
+├─ samples/nexent/         # Nexent 侧绑定表（由代码生成，不手改）
+├─ docs/                   # 文档导航、技术基线、回传报告
 ├─ pyproject.toml          # Python 与依赖约束
 ├─ uv.lock                 # 锁定后的完整依赖图
 ├─ AGENTS.md               # 项目级协作与验证约束
@@ -114,16 +191,21 @@ agent_poc/
 ## 文档入口
 
 - [文档导航](docs/README.md)
+- [赛题方案（三能力与证据口径）](docs/innovation-and-evidence.md)
+- [核心事件 Ground Truth](docs/urban-scenario-ground-truth.md)
 - [技术基线与风险](docs/technical-baseline.md)
 - [Nexent 集成边界](docs/nexent-integration-boundary.md)
 - [Nexent 北向传输层设计](docs/nexent-northbound-transport-design.md)
 - [演示运行手册](docs/demo-runbook.md)
+- [数据资产标识规范](docs/data-asset-spec.md)
+- [本体半自动构建方案](docs/ontology-bootstrap.md)
 - [通用内核设计](docs/superpowers/specs/2026-10-26-generic-evolution-kernel-design.md)
 - [实施计划](docs/superpowers/plans/2026-10-26-generic-evolution-kernel.md)
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 58 项测试通过；同时要求锁文件、Python 编译和依赖一致性检查通过。技术基线只衡量通用流程的技术行为，不替代赛题确定后的行业指标。
+当前基线：`uv run --locked pytest -q` 共 **338 项**测试通过；同时要求锁文件、Python 编译和依赖一致性检查通过。
+P0-P6 的验收口径与实测数字见各阶段回传报告（`docs/reports/`）。
 
 ## 后续演进
 

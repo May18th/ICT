@@ -1,0 +1,9 @@
+﻿pipeline_id,kind,road_id,depth_m,diameter_mm,material,install_year,owner_org,status,note
+PL-DRN-101,drainage,R-101,2.8,600,concrete,2009,ORG-DRAIN,in_service,按现行标准重现期不足，管径偏小
+PL-DRN-102,drainage,R-102,3.0,1000,concrete,2015,ORG-DRAIN,in_service,
+PL-GAS-101,gas,R-101,2.5,300,steel,2003,ORG-GAS,in_service,本次施工更换对象
+PL-PWR-101,power,R-101,1.2,150,PVC,1998,ORG-POWER,in_service,为 DF-PS-01 供电
+PL-TEL-103,telecom,R-103,1.0,100,PVC,2012,ORG-TELECOM,in_service,占道施工中
+PL-WTR-103,water,R-103,1.8,300,ductile_iron,2010,ORG-WATER,in_service,
+PL-DRN-201,drainage,R-201,2.6,800,concrete,2018,ORG-DRAIN,in_service,重现期达标
+PL-WTR-202,water,R-202,1.6,300,ductile_iron,2016,ORG-WATER,in_service,

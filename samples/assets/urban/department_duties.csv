@@ -1,0 +1,9 @@
+﻿org_id,org_name,scope_type,scope_ref,authority,contact,escalation_note
+ORG-DRAIN,区排水公司,pipeline_kind,drainage,雨水管网养护与雨水口清掏；移动泵车调用,021-1001,泵站运维主体未在本文件界定
+ORG-ROAD,区道路管理中心,road_class,次干路;支路,路面养护；占道施工审批；封闭道路实施,021-1002,封路需与交警联合发布
+ORG-TRAFFIC,交警支队一大队,district,A-03,交通管制；绕行组织；封路审批,021-1003,与道路管理中心存在封路权限交叉
+ORG-GAS,市燃气公司,pipeline_kind,gas,燃气管道抢修；停气与放散作业,021-1004,开挖前须报道路管理中心备案
+ORG-POWER,供电公司,pipeline_kind,power,供电保障；临时发电车调配,021-1006,泵站失电时优先保障
+ORG-WATER,自来水公司,pipeline_kind,water,供水管网抢修,021-1007,
+ORG-EMERG,区应急管理局,district,A-03,应急响应统筹；防汛物资调配；跨部门协调,021-1005,橙色及以上预警自动进入统筹
+ORG-METEO,市气象台,district,A-03,气象预警发布与解除,021-1008,

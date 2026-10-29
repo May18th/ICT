@@ -1,0 +1,478 @@
+{
+  "version": "urban-rules-1",
+  "note": "推演规则是数据，不是代码。source_ref = <file_name>#<locator>，加载时校验该行确实存在且包含 keyword；校验失败即拒绝加载。assumption=true 表示该数值没有原文依据，是演示假设，必须在输出里显式标注。",
+  "rules": [
+    {
+      "rule_id": "RULE-OBS-RESPONSE-YELLOW",
+      "stage": "observed",
+      "when": {
+        "min_depth_cm": [
+          "10"
+        ],
+        "max_depth_cm": [
+          "25"
+        ]
+      },
+      "then": {
+        "response_level": "yellow",
+        "trigger": "单点积水深度 10–25cm"
+      },
+      "priority": 30,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:23",
+      "keyword": "10–25cm"
+    },
+    {
+      "rule_id": "RULE-OBS-RESPONSE-ORANGE",
+      "stage": "observed",
+      "when": {
+        "min_depth_cm": [
+          "25"
+        ],
+        "warning_level": [
+          "orange",
+          "red"
+        ]
+      },
+      "then": {
+        "response_level": "orange",
+        "trigger": "单点积水深度 ≥ 25cm 或气象橙色预警"
+      },
+      "priority": 20,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:24",
+      "keyword": "≥ 25cm"
+    },
+    {
+      "rule_id": "RULE-AFF-CONCURRENT-INCIDENT",
+      "stage": "affected",
+      "when": {
+        "same_event_window": [
+          "true"
+        ]
+      },
+      "then": {
+        "include": "incident",
+        "reason": "同一响应窗口内其他片区未闭环工单，需纳入同一轮资源评估"
+      },
+      "priority": 50,
+      "confidence": 0.8,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:24",
+      "keyword": "同步到位"
+    },
+    {
+      "rule_id": "RULE-AFF-PIT-IN-SCOPE",
+      "stage": "affected",
+      "when": {
+        "min_excavation_depth_m": [
+          "2.0"
+        ],
+        "response_level": [
+          "orange",
+          "red"
+        ]
+      },
+      "then": {
+        "include": "work_site",
+        "reason": "橙色及以上预警期间的开挖基坑需纳入重点监控"
+      },
+      "priority": 20,
+      "confidence": 0.92,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:38",
+      "keyword": "停止开挖作业"
+    },
+    {
+      "rule_id": "RULE-AFF-ON-AFFECTED-ROAD",
+      "stage": "affected",
+      "when": {
+        "same_road_as_affected": [
+          "true"
+        ]
+      },
+      "then": {
+        "include": "facility,pipeline",
+        "reason": "位于受影响道路的地下管线与设施同在积水影响范围内"
+      },
+      "priority": 35,
+      "confidence": 0.88,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:44",
+      "keyword": "积水影响范围内的压力管线"
+    },
+    {
+      "rule_id": "RULE-AFF-DETOUR-UNDER-CONSTRUCTION",
+      "stage": "affected",
+      "when": {
+        "route_role": [
+          "detour"
+        ]
+      },
+      "then": {
+        "include": "road",
+        "reason": "被指定为绕行路线但本身占道施工，通行能力受限"
+      },
+      "priority": 40,
+      "confidence": 0.88,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:32",
+      "keyword": "绕行方案应避开正在占道施工的路段"
+    },
+    {
+      "rule_id": "RULE-OWNER-EMERG-AUTONOMY",
+      "stage": "owner",
+      "when": {
+        "response_level": [
+          "orange",
+          "red"
+        ]
+      },
+      "then": {
+        "coordinator": "ORG-EMERG",
+        "reason": "橙色响应由区应急管理局统筹"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:24",
+      "keyword": "区应急管理局统筹"
+    },
+    {
+      "rule_id": "RULE-OWNER-GAP-NO-MAINTAINER",
+      "stage": "owner",
+      "when": {
+        "require_maintainer": [
+          "true"
+        ]
+      },
+      "then": {
+        "on_missing": "conflict",
+        "reason": "预案未界定雨水泵站运维主体，不得默认指派"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:60",
+      "keyword": "本预案未界定雨水泵站的日常运维"
+    },
+    {
+      "rule_id": "RULE-CONF-CLOSURE-JOINT",
+      "stage": "conflict",
+      "when": {
+        "authority_keyword": [
+          "封路",
+          "封闭道路"
+        ],
+        "min_orgs": [
+          "2"
+        ]
+      },
+      "then": {
+        "conflict_kind": "overlap",
+        "resolution": "由 ORG-ROAD 与 ORG-TRAFFIC 联合发布"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:31",
+      "keyword": "联合发布"
+    },
+    {
+      "rule_id": "RULE-RES-MOBILE-PUMP-CAPACITY",
+      "stage": "resource",
+      "when": {
+        "unit": [
+          "m3/h"
+        ]
+      },
+      "then": {
+        "pump_capacity_m3h": "400",
+        "formula": "台数 = 目标抽排量 ÷ 400，向上取整"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "procedure_waterlogging.md#A-03/procedure/v1.2#line:20",
+      "keyword": "400 m³/h"
+    },
+    {
+      "rule_id": "RULE-RES-PUMP-DERATE",
+      "stage": "resource",
+      "when": {
+        "station_state": [
+          "fault_pending_repair",
+          "under_maintenance"
+        ]
+      },
+      "then": {
+        "derate_factor": "0.8",
+        "gap_filled_by": "mobile_pump"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "procedure_waterlogging.md#A-03/procedure/v1.2#line:21",
+      "keyword": "80% 折算"
+    },
+    {
+      "rule_id": "RULE-RES-PIT-PUMPS",
+      "stage": "resource",
+      "when": {
+        "min_excavation_depth_m": [
+          "2.0"
+        ]
+      },
+      "then": {
+        "pumps_per_pit": "2",
+        "basis": "基坑抽排需覆盖沟槽全长，按每处 2 台计"
+      },
+      "priority": 20,
+      "confidence": 0.7,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:38",
+      "keyword": "对基坑实施覆盖或围堰",
+      "assumption": true,
+      "assumption_note": "「每处 2 台」无原文数值，是演示假设；原文只要求基坑抽排并不得直排燃气沟槽"
+    },
+    {
+      "rule_id": "RULE-RES-LOWSPOT-PUMPS",
+      "stage": "resource",
+      "when": {
+        "next_district_required": [
+          "true"
+        ]
+      },
+      "then": {
+        "pumps_per_lowspot": "1",
+        "lowspot_count": "2"
+      },
+      "priority": 30,
+      "confidence": 0.65,
+      "source_ref": "procedure_waterlogging.md#A-03/procedure/v1.2#line:20",
+      "keyword": "所需台数",
+      "assumption": true,
+      "assumption_note": "B-01 两处低洼点与每处 1 台均为演示假设；台账只有「积水 18cm 未达阈值」这一事实"
+    },
+    {
+      "rule_id": "RULE-ACT-STOP-EXCAVATION",
+      "stage": "action",
+      "when": {
+        "min_excavation_depth_m": [
+          "2.0"
+        ],
+        "response_level": [
+          "orange",
+          "red"
+        ]
+      },
+      "then": {
+        "order": "1",
+        "action": "停止基坑开挖并覆盖或围堰，燃气浓度检测提升至每 2 小时一次"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:38",
+      "keyword": "每 2 小时一次"
+    },
+    {
+      "rule_id": "RULE-ACT-ISOLATE-FIRST",
+      "stage": "action",
+      "when": {
+        "hazard_source": [
+          "pressure_pipeline",
+          "power"
+        ]
+      },
+      "then": {
+        "order": "2",
+        "action": "隔离风险源：确认无泄漏后关阀或断电，未确认不得进入下一步"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:44",
+      "keyword": "先隔离风险源"
+    },
+    {
+      "rule_id": "RULE-ACT-CLOSE-ROAD",
+      "stage": "action",
+      "when": {
+        "or_min_depth_cm": [
+          "25"
+        ],
+        "or_min_area_m2": [
+          "200"
+        ]
+      },
+      "then": {
+        "order": "3",
+        "action": "封闭积水路段全幅（深度 ≥25cm 或面积 ≥200m²），范围覆盖积水区上下游各 50m"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:29",
+      "keyword": "应实施封闭"
+    },
+    {
+      "rule_id": "RULE-ACT-CLOSE-ROAD-JOINT",
+      "stage": "action",
+      "when": {
+        "overlap_detected": [
+          "true"
+        ]
+      },
+      "then": {
+        "order": "3",
+        "action": "封路由 ORG-ROAD 与 ORG-TRAFFIC 联合发布，单一部门发布无效"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:31",
+      "keyword": "单一部门不得自行发布"
+    },
+    {
+      "rule_id": "RULE-ACT-INTAKE-CLEAN-FIRST",
+      "stage": "action",
+      "when": {
+        "incident_type": [
+          "waterlogging",
+          "intake_backflow"
+        ]
+      },
+      "then": {
+        "order": "4",
+        "action": "先清掏反涌雨水口再抽排，避免无效抽排"
+      },
+      "priority": 10,
+      "confidence": 0.92,
+      "source_ref": "procedure_waterlogging.md#A-03/procedure/v1.2#line:26",
+      "keyword": "先清掏再抽排"
+    },
+    {
+      "rule_id": "RULE-ACT-PUMP-SECOND",
+      "stage": "action",
+      "when": {
+        "pump_gap": [
+          "true"
+        ]
+      },
+      "then": {
+        "order": "4",
+        "action": "启动泵站抽排；泵站不可用时按 400 m³/h 折算投入移动泵，缺口上报跨区调配"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:45",
+      "keyword": "再控制水势"
+    },
+    {
+      "rule_id": "RULE-ACT-DETOUR",
+      "stage": "action",
+      "when": {
+        "detour_under_construction": [
+          "true"
+        ]
+      },
+      "then": {
+        "order": "5",
+        "action": "绕行方案避开占道施工路段；无法避开时同步通知施工单位并增设现场疏导"
+      },
+      "priority": 10,
+      "confidence": 0.9,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:32",
+      "keyword": "无法避开时"
+    },
+    {
+      "rule_id": "RULE-ACT-TRAFFIC-SYNC",
+      "stage": "action",
+      "when": {
+        "response_level": [
+          "orange",
+          "red"
+        ]
+      },
+      "then": {
+        "order": "5",
+        "action": "全程同步交通管制与信息发布"
+      },
+      "priority": 20,
+      "confidence": 0.9,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:47",
+      "keyword": "全程同步交通管制"
+    },
+    {
+      "rule_id": "RULE-ACT-RESUME-AFTER-DRAWDOWN",
+      "stage": "action",
+      "when": {
+        "pit_deviation_below_bottom_m": [
+          "0.3"
+        ]
+      },
+      "then": {
+        "order": "6",
+        "action": "水位降至基坑底以下 0.3m 后复检管道悬空与泄漏，方可恢复作业"
+      },
+      "priority": 10,
+      "confidence": 0.93,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:46",
+      "keyword": "0.3m"
+    },
+    {
+      "rule_id": "RULE-RISK-SOIL-LOSS",
+      "stage": "residual_risk",
+      "when": {
+        "pit_flooded": [
+          "true"
+        ],
+        "pipeline_kind": [
+          "gas"
+        ]
+      },
+      "then": {
+        "risk": "基坑浸泡导致管周土体流失，燃气管悬空或泄漏"
+      },
+      "priority": 10,
+      "confidence": 0.92,
+      "source_ref": "procedure_gas_protection.md#A-03/procedure/v3.1#line:20",
+      "keyword": "管周土体流失"
+    },
+    {
+      "rule_id": "RULE-RISK-LEL-THRESHOLD",
+      "stage": "residual_risk",
+      "when": {
+        "lel_percent": [
+          "10"
+        ]
+      },
+      "then": {
+        "risk": "可燃气体浓度达到爆炸下限 10% 时必须停工、断电、撤离并上报"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "procedure_gas_protection.md#A-03/procedure/v3.1#line:21",
+      "keyword": "爆炸下限 10%"
+    },
+    {
+      "rule_id": "RULE-RISK-PUMP-POWER-LOSS",
+      "stage": "residual_risk",
+      "when": {
+        "backup_power_missing": [
+          "true"
+        ]
+      },
+      "then": {
+        "risk": "泵站无备用电源，上级电源浸水即失电，抽排中断"
+      },
+      "priority": 20,
+      "confidence": 0.85,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:45",
+      "keyword": "泵站不可用时调用移动泵车"
+    },
+    {
+      "rule_id": "RULE-RISK-DETOUR-CONGESTION",
+      "stage": "residual_risk",
+      "when": {
+        "detour_under_construction": [
+          "true"
+        ]
+      },
+      "then": {
+        "risk": "绕行路线自身占道施工，疏散能力低于设计值，易形成二次拥堵"
+      },
+      "priority": 20,
+      "confidence": 0.85,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:32",
+      "keyword": "绕行方案"
+    }
+  ]
+}
