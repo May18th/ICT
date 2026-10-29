@@ -82,12 +82,25 @@ def test_cf1_reports_the_road_set_after_the_closure(cf1) -> None:
     assert "可通行道路为 建设大道、环城北路" in cf1.verdict
 
 
-def test_cf1_says_what_it_cannot_compute(cf1) -> None:
-    """没有路网拓扑就算不得到场时间，宁可写"算不出来"也不写一个像样的数字。"""
+def test_cf1_computes_the_detour_instead_of_guessing(cf1) -> None:
+    """有了 from_node/to_node/speed_kmh，"慢多少"就是图上算出来的，不再是形容词。"""
+    travel = cf1.travel
+    assert travel is not None and travel.computable
+    assert travel.closed_road == "R-101"
+    assert travel.baseline is not None and travel.after_closure is not None
+    assert travel.baseline.roads == ["R-101"]
+    assert travel.after_closure.roads == ["R-102", "R-103", "R-104"], "绕行必须走外围"
+    assert travel.delta_meters == 3040
+    assert travel.delta_minutes is not None and 5.0 < travel.delta_minutes < 5.2
+    assert "绕行 +3040 m" in cf1.verdict
+    assert any("#row:" in ref for ref in travel.evidence_refs)
+
+
+def test_cf1_still_says_what_it_cannot_compute(cf1) -> None:
+    """能算路口之间，不等于能算门到门：剩下的照实说，不拿"通常会"去补。"""
     joined = " ".join(cf1.uncomputable)
-    assert "到场时间" in joined
-    assert "路网拓扑" in joined
-    assert "里程" in joined
+    assert "门到门到场时间" in joined
+    assert "跨区路径" in joined
     assert all(not any(ch.isdigit() for ch in line.split("：")[0]) for line in cf1.uncomputable)
 
 
@@ -122,6 +135,34 @@ def test_cf2_quotes_the_cross_district_cost_from_the_data(cf2) -> None:
     assert "40 分钟" in cf2.priority.cross_district_note
     assert cf2.priority.evidence_refs, "跨区代价必须有证据定位，不能是一句经验"
     assert "40 分钟" in cf2.verdict
+
+
+def test_cf2_compares_each_district_with_its_own_stock(cf2) -> None:
+    """口径统一：需求与本区库存都按片区算，不把别区库存算进自己的分母。"""
+    assert cf2.priority is not None
+    ranked = {case.district: case for case in cf2.priority.ranked}
+    assert ranked["A-03"].required_total == 5, "A-03 自己的需求：泵站 3 + 基坑 2"
+    assert ranked["B-01"].required_total == 2, "B-01 自己的需求：2 处低洼点 × 1 台"
+    assert ranked["A-03"].total_gap == max(0, 5 - ranked["A-03"].available_total)
+    assert ranked["B-01"].total_gap == max(0, 2 - ranked["B-01"].available_total)
+
+
+def test_district_demand_does_not_depend_on_which_district_is_primary(runtime: SkillRuntime) -> None:
+    """同一个 B-01，从 A-03 的视角和从 B-01 自己的视角推演，都得 2 台。"""
+    from_a03 = runtime.engine.deduce(EVENT, as_of=AS_OF)
+    from_b01 = runtime.engine.deduce("WO-20261029-011", as_of=AS_OF)
+    assert from_a03.demand_by_district["B-01"] == 2
+    assert from_b01.demand_by_district["B-01"] == 2
+    assert from_a03.demand_by_district["A-03"] == 5
+    assert sum(from_a03.demand_by_district.values()) == 7, "按片区归集后合计仍是 5+2"
+
+
+def test_lowspot_pumps_only_apply_below_the_closure_threshold(runtime: SkillRuntime) -> None:
+    """达到封路阈值的片区走泵站补位，不再叠加低洼点台数——否则 A-03 会被算两次。"""
+    result = runtime.engine.deduce(EVENT, as_of=AS_OF)
+    basis = result.stage("resource")[0].conclusion["basis"]
+    assert "A-03 积水 30cm ≥ 封路阈值 25cm" in basis
+    assert "B-01 积水 18cm < 封路阈值 25cm" in basis
 
 
 # --- CF3 -----------------------------------------------------------------

@@ -373,21 +373,21 @@
       }
     },
     {
-      "asset_id": "AS-A-03-road_network-7149cd0c",
+      "asset_id": "AS-A-03-road_network-6fbe05c1",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "road_network.csv",
       "doc_type": "road_network",
       "equipment_id": "A-03",
-      "version": "v1",
+      "version": "v1.1",
       "standard_refs": [],
-      "locator": "A-03/road_network/v1",
-      "checksum_sha256": "7149cd0c1e30a805864e98e2613691e633450293932df8a008bde3465a5b24f9",
-      "byte_size": 655,
-      "summary": "表格资产：7 行 × 10 列，列名 road_id、name、district、road_class、lanes、length_m 等",
+      "locator": "A-03/road_network/v1.1",
+      "checksum_sha256": "6fbe05c17fd1fc491bc967e417be72917d7b38de83339a43f1611ed6d5fdef47",
+      "byte_size": 858,
+      "summary": "表格资产：7 行 × 14 列，列名 road_id、name、district、road_class、lanes、length_m 等",
       "structure": {
         "rows": 7,
-        "columns": 10,
+        "columns": 14,
         "headers": [
           "road_id",
           "name",
@@ -398,6 +398,10 @@
           "elevation_m",
           "drainage_zone",
           "status",
+          "from_node",
+          "to_node",
+          "speed_kmh",
+          "work_zone_factor",
           "note"
         ]
       },
@@ -410,7 +414,7 @@
         "valid_from": "2026-01-15T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "7149cd0c1e30a805864e98e2613691e633450293932df8a008bde3465a5b24f9",
+        "content_hash": "6fbe05c17fd1fc491bc967e417be72917d7b38de83339a43f1611ed6d5fdef47",
         "status": "published"
       }
     },

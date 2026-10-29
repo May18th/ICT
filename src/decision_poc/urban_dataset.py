@@ -53,11 +53,11 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         asset_type="road_network",
         title="A-03 片区道路基础台账",
         source_org="区城建档案中心",
-        version="v1",
+        version="v1.1",
         published_at="2026-01-15T09:00:00+08:00",
         valid_from="2026-01-15T00:00:00+08:00",
         scope="A-03",
-        note="5 条道路，含高程与排水分区",
+        note="7 条道路（A-03/B-01），含高程、排水分区与路段连接（from_node/to_node/speed_kmh）",
     ),
     UrbanAssetSpec(
         file_name="pipeline_ledger.csv",

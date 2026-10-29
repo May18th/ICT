@@ -1,6 +1,6 @@
 {
   "schema_version": "urban-twin-scene-v1",
-  "snapshot_hash": "4c971db1befaae21c9fe61017ffbff89fa93461badd47d21240d7a6cbe0ab86c",
+  "snapshot_hash": "774d40f9f7c9b70e08800fd93403f7ffce71d1eebc245955343594db2734ab29",
   "objects": [
     {
       "twin_id": "TW-action-先组织抽排降低水位",
@@ -683,7 +683,7 @@
       "region_id": null,
       "asset_ids": [
         "AS-A-03-resource_inventory-8133c741",
-        "AS-A-03-road_network-7149cd0c",
+        "AS-A-03-road_network-6fbe05c1",
         "AS-A-03-weather_alert-de042dd8"
       ],
       "attributes": {}
@@ -697,7 +697,7 @@
       "region_id": null,
       "asset_ids": [
         "AS-A-03-resource_inventory-8133c741",
-        "AS-A-03-road_network-7149cd0c",
+        "AS-A-03-road_network-6fbe05c1",
         "AS-A-03-weather_alert-de042dd8"
       ],
       "attributes": {}
@@ -893,7 +893,7 @@
       "state": "in_service",
       "region_id": "A-03",
       "asset_ids": [
-        "AS-A-03-road_network-7149cd0c"
+        "AS-A-03-road_network-6fbe05c1"
       ],
       "attributes": {
         "name": "兴华路",
@@ -904,6 +904,10 @@
         "elevation_m": "3.2",
         "drainage_zone": "DZ-01",
         "status": "normal",
+        "from_node": "J-01",
+        "to_node": "J-02",
+        "speed_kmh": "40",
+        "work_zone_factor": "1.0",
         "note": "片区最低点，历史易涝"
       }
     },
@@ -915,7 +919,7 @@
       "state": "in_service",
       "region_id": "A-03",
       "asset_ids": [
-        "AS-A-03-road_network-7149cd0c"
+        "AS-A-03-road_network-6fbe05c1"
       ],
       "attributes": {
         "name": "建设大道",
@@ -926,6 +930,10 @@
         "elevation_m": "4.8",
         "drainage_zone": "DZ-01",
         "status": "normal",
+        "from_node": "J-01",
+        "to_node": "J-03",
+        "speed_kmh": "50",
+        "work_zone_factor": "1.0",
         "note": "排水主干通道"
       }
     },
@@ -937,7 +945,7 @@
       "state": "in_service",
       "region_id": "A-03",
       "asset_ids": [
-        "AS-A-03-road_network-7149cd0c"
+        "AS-A-03-road_network-6fbe05c1"
       ],
       "attributes": {
         "name": "民生街",
@@ -948,7 +956,11 @@
         "elevation_m": "5.6",
         "drainage_zone": "DZ-01",
         "status": "normal",
-        "note": "沿线有小学，高峰限速"
+        "from_node": "J-03",
+        "to_node": "J-04",
+        "speed_kmh": "30",
+        "work_zone_factor": "0.5",
+        "note": "沿线有小学，高峰限速；CP-2026-038 占道施工期间降速"
       }
     },
     {
@@ -959,7 +971,7 @@
       "state": "in_service",
       "region_id": "A-03",
       "asset_ids": [
-        "AS-A-03-road_network-7149cd0c"
+        "AS-A-03-road_network-6fbe05c1"
       ],
       "attributes": {
         "name": "环城北路",
@@ -970,6 +982,10 @@
         "elevation_m": "6.1",
         "drainage_zone": "DZ-02",
         "status": "normal",
+        "from_node": "J-02",
+        "to_node": "J-04",
+        "speed_kmh": "50",
+        "work_zone_factor": "1.0",
         "note": "北部绕行主通道"
       }
     },
@@ -981,7 +997,7 @@
       "state": "unknown",
       "region_id": "A-03",
       "asset_ids": [
-        "AS-A-03-road_network-7149cd0c"
+        "AS-A-03-road_network-6fbe05c1"
       ],
       "attributes": {
         "name": "兴华支路",
@@ -992,6 +1008,10 @@
         "elevation_m": "3.4",
         "drainage_zone": "DZ-01",
         "status": "under_construction",
+        "from_node": "J-01",
+        "to_node": "J-05",
+        "speed_kmh": "30",
+        "work_zone_factor": "1.0",
         "note": "与 R-101 平交"
       }
     },
@@ -1003,7 +1023,7 @@
       "state": "in_service",
       "region_id": "B-01",
       "asset_ids": [
-        "AS-A-03-road_network-7149cd0c"
+        "AS-A-03-road_network-6fbe05c1"
       ],
       "attributes": {
         "name": "滨河路",
@@ -1014,6 +1034,10 @@
         "elevation_m": "5.4",
         "drainage_zone": "DZ-02",
         "status": "normal",
+        "from_node": "K-01",
+        "to_node": "K-02",
+        "speed_kmh": "40",
+        "work_zone_factor": "1.0",
         "note": "片区改造中，路面加铺"
       }
     },
@@ -1025,7 +1049,7 @@
       "state": "in_service",
       "region_id": "B-01",
       "asset_ids": [
-        "AS-A-03-road_network-7149cd0c"
+        "AS-A-03-road_network-6fbe05c1"
       ],
       "attributes": {
         "name": "工业大道",
@@ -1036,6 +1060,10 @@
         "elevation_m": "6.0",
         "drainage_zone": "DZ-02",
         "status": "normal",
+        "from_node": "K-02",
+        "to_node": "K-03",
+        "speed_kmh": "50",
+        "work_zone_factor": "1.0",
         "note": "货运主通道"
       }
     },

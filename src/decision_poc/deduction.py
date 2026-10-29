@@ -75,6 +75,36 @@ DEPTH_PATTERN = re.compile(r"(\d+(?:\.\d+)?)\s*cm")
 WARNING_LEVEL_RANK: dict[str, int] = {"blue": 1, "yellow": 2, "orange": 3, "red": 4}
 
 
+def _incident_depth(obj: TwinObject) -> float | None:
+    """从工单描述里读积水深度；读不出就是 None，不按 0 处理。"""
+    match = DEPTH_PATTERN.search(obj.attributes.get("description", ""))
+    return float(match.group(1)) if match else None
+
+
+COUNT_SEPARATOR = "|"
+
+
+def _join_counts(counts: Mapping[str, int]) -> str:
+    """按片区计数在 step conclusion 里只能放字符串，这里定个可解析的编码。"""
+    return COUNT_SEPARATOR.join(f"{key}:{value}" for key, value in sorted(counts.items()))
+
+
+def parse_counts(text: str | None) -> dict[str, int]:
+    """把 `_join_counts` 的结果读回成字典；解析失败就当空，不猜。"""
+    counts: dict[str, int] = {}
+    if not text:
+        return counts
+    for item in str(text).split(COUNT_SEPARATOR):
+        key, _, value = item.rpartition(":")
+        if not key:
+            continue
+        try:
+            counts[key] = int(value)
+        except ValueError:
+            continue
+    return counts
+
+
 class StageStatus(StrEnum):
     SUPPORTED = "supported"
     INSUFFICIENT = "insufficient"
@@ -226,6 +256,9 @@ class DeductionResult(StrictModel):
     # 开挖面暴露期与同片区预警窗口的重叠结果：工期类反事实直接比这两个值
     exposed_warning_level: str = "none"
     exposed_hours: float = 0.0
+    # 需求与库存都按片区归集：同一片区在任一次推演里算出的数字都一样，可直接相加
+    demand_by_district: dict[str, int] = Field(default_factory=dict)
+    available_by_district: dict[str, int] = Field(default_factory=dict)
     rules_version: str = ""
     snapshot_hash: str = ""
 
@@ -460,6 +493,14 @@ class DeductionEngine:
             raise KeyError(f"{rule_id} has no parameter {key}")
         return rule.then[key]
 
+    def _when_param(self, rule_id: str, key: str) -> str:
+        """读 `when` 里的阈值（例如封路阈值 25cm），不从代码里写死。"""
+        rule = self.rules.get(rule_id)
+        values = rule.when.get(key)
+        if not values:
+            raise KeyError(f"{rule_id} has no condition {key}")
+        return str(values[0])
+
     # --- stages ----------------------------------------------------------
     def deduce(
         self,
@@ -521,6 +562,8 @@ class DeductionEngine:
             handoff_reasons=handoff,
             exposed_warning_level=exposed_level,
             exposed_hours=exposed_hours,
+            demand_by_district=dict(resource_plan.get("demand_by_district", {})),
+            available_by_district=dict(resource_plan.get("available_by_district", {})),
             rules_version=self.rules.version,
             snapshot_hash=self.store.snapshot_hash(),
         )
@@ -983,11 +1026,23 @@ class DeductionEngine:
 
     # 跳 5 ---------------------------------------------------------------
     def _resource_plan(self, affected: Sequence[TwinObject], context: Mapping[str, Any]) -> dict[str, Any]:
+        """需求按片区归集，再汇总。
+
+        原来的写法是"本片区 = 泵站补位 + 基坑，其他片区 = 低洼点台数 × 片区数"，
+        导致同一个 B-01 在两片区各自推演时口径不同：A-03 视角下 B-01 的 2 台是
+        "替 A-03 备的"，B-01 视角下又不算自己的低洼点。现在每个片区只按自己的
+        对象和证据算一次，`demand_by_district` 可以相加，也可以单独取用。
+
+        低洼点的适用条件也从"是不是本片区"改成"该片区积水是否达到封路阈值"：
+        达到阈值的片区走泵站补位 + 基坑排水，没达到的才配移动泵临时抽排。
+        阈值读规则 `RULE-ACT-CLOSE-ROAD`，不写死 25。
+        """
         capacity = int(self._param("RULE-RES-MOBILE-PUMP-CAPACITY", "pump_capacity_m3h"))
         derate = float(self._param("RULE-RES-PUMP-DERATE", "derate_factor"))
         pits_per = int(self._param("RULE-RES-PIT-PUMPS", "pumps_per_pit"))
         lowspot_each = int(self._param("RULE-RES-LOWSPOT-PUMPS", "pumps_per_lowspot"))
         lowspots = int(self._param("RULE-RES-LOWSPOT-PUMPS", "lowspot_count"))
+        closure_threshold = float(self._when_param("RULE-ACT-CLOSE-ROAD", "or_min_depth_cm"))
 
         basis: list[str] = []
         evidence: set[str] = set()
@@ -996,57 +1051,88 @@ class DeductionEngine:
             "RULE-RES-PUMP-DERATE",
             "RULE-RES-PIT-PUMPS",
             "RULE-RES-LOWSPOT-PUMPS",
+            "RULE-ACT-CLOSE-ROAD",
         }
         for rule_id in rule_ids:
             evidence.add(self._ref(rule_id))
 
-        primary = 0
-        stations = [
-            obj
-            for obj in affected
-            if obj.kind is ObjectKind.PUMP_STATION and self._district_of(obj) == context.get("district")
-        ]
+        demand: dict[str, int] = {}
+
+        def add(district: str, count: int) -> None:
+            if count:
+                demand[district] = demand.get(district, 0) + count
+
+        stations = [obj for obj in affected if obj.kind is ObjectKind.PUMP_STATION]
         for station in stations:
+            district = self._district_of(station) or "未标注片区"
             rated = _num(station.attributes.get("capacity_m3h")) or 0.0
             if station.lifecycle_state.value == "under_maintenance":
                 target = rated * derate
                 need = math.ceil(target / capacity)
                 basis.append(
-                    f"{station.name} 故障，按额定 {rated:g} × {derate:g} = {target:g} m³/h 折算，"
+                    f"{district} {station.name} 故障，按额定 {rated:g} × {derate:g} = {target:g} m³/h 折算，"
                     f"÷ {capacity} m³/h 向上取整 = {need} 台移动泵"
                 )
+                add(district, need)
             else:
-                need = 0
-                basis.append(f"{station.name} 运行正常，无需移动泵补位")
-            primary += need
+                basis.append(f"{district} {station.name} 运行正常，无需移动泵补位")
             evidence.update(self._refs_of(station.twin_id))
 
         pits = [obj for obj in affected if obj.kind is ObjectKind.WORK_SITE]
-        pit_need = pits_per * len(pits)
-        if pits:
-            basis.append(f"{len(pits)} 处开挖基坑 × {pits_per} 台 = {pit_need} 台")
-            for pit in pits:
-                evidence.update(self._refs_of(pit.twin_id))
+        pit_count: dict[str, int] = {}
+        for pit in pits:
+            district = self._district_of(pit) or "未标注片区"
+            pit_count[district] = pit_count.get(district, 0) + 1
+            evidence.update(self._refs_of(pit.twin_id))
+        for district, count in sorted(pit_count.items()):
+            need = pits_per * count
+            basis.append(f"{district} {count} 处开挖基坑 × {pits_per} 台 = {need} 台")
+            add(district, need)
 
-        secondary_districts = {
-            self._district_of(obj)
-            for obj in affected
-            if obj.kind is ObjectKind.INCIDENT
-            and self._district_of(obj) not in {None, context.get("district")}
-        }
-        secondary = lowspot_each * lowspots * len(secondary_districts or ())
-        if secondary:
-            basis.append(f"其他片区 {len(secondary_districts)} 个 × {lowspots} 处低洼点 × {lowspot_each} 台 = {secondary} 台")
+        incidents = [obj for obj in affected if obj.kind is ObjectKind.INCIDENT]
+        # 本片区的事件本身不在 affected 里（它是根），深度从跳 1 的 context 取；
+        # 其他片区的深度从落在影响范围内的工单读。缺深度就明说，不按 0 算。
+        depths: dict[str, float | None] = {}
+        own_district = context.get("district")
+        if own_district:
+            depths[str(own_district)] = _num(context.get("depth_cm"))
+        for incident in incidents:
+            district = self._district_of(incident) or "未标注片区"
+            if district in depths:
+                continue
+            depths[district] = _incident_depth(incident)
+        for district, depth in sorted(depths.items()):
+            if depth is None:
+                basis.append(
+                    f"{district} 积水深度未知，低洼点临时抽排需求不测算（不按 0 计）"
+                )
+                continue
+            if depth >= closure_threshold:
+                basis.append(
+                    f"{district} 积水 {depth:g}cm ≥ 封路阈值 {closure_threshold:g}cm，"
+                    "按泵站补位与基坑排水测算，不叠加低洼点台数"
+                )
+                continue
+            need = lowspot_each * lowspots
+            basis.append(
+                f"{district} 积水 {depth:g}cm < 封路阈值 {closure_threshold:g}cm，"
+                f"按 {lowspots} 处低洼点 × {lowspot_each} 台 = {need} 台临时抽排"
+            )
+            add(district, need)
 
-        required = primary + pit_need + secondary
+        required = sum(demand.values())
         pumps = [
             obj
             for obj in self.store.objects()
             if obj.kind is ObjectKind.RESOURCE and "抽水泵" in obj.attributes.get("name", "")
         ]
-        available = sum(int(_num(obj.attributes.get("qty_available")) or 0) for obj in pumps)
+        available_by_district: dict[str, int] = {}
         for pump in pumps:
+            district = self._district_of(pump) or "未标注片区"
+            qty = int(_num(pump.attributes.get("qty_available")) or 0)
+            available_by_district[district] = available_by_district.get(district, 0) + qty
             evidence.update(self._refs_of(pump.twin_id))
+        available = sum(available_by_district.values())
 
         gaps: list[ResourceGap] = []
         if required > available:
@@ -1065,6 +1151,8 @@ class DeductionEngine:
         return {
             "required": required,
             "available": available,
+            "demand_by_district": demand,
+            "available_by_district": available_by_district,
             "basis": basis,
             "gaps": gaps,
             "evidence": sorted(evidence),
@@ -1081,6 +1169,8 @@ class DeductionEngine:
             return {
                 "required": 0,
                 "available": 0,
+                "demand_by_district": {},
+                "available_by_district": {},
                 "basis": [],
                 "gaps": [],
                 "evidence": [],
@@ -1103,6 +1193,8 @@ class DeductionEngine:
             "required": str(plan["required"]),
             "available": str(plan["available"]),
             "gap": str(gaps[0].gap if gaps else 0),
+            "demand_by_district": _join_counts(plan.get("demand_by_district", {})),
+            "available_by_district": _join_counts(plan.get("available_by_district", {})),
             "basis": " | ".join(plan["basis"]),
         }
         return DeductionStep(
