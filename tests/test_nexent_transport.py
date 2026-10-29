@@ -118,7 +118,10 @@ def test_transport_sends_contract_headers_and_body():
     assert body["agent_name"] == "decision-agent"
     assert "决策目标：choose" in body["query"]
     assert "- safe" in body["query"]
-    assert body["metadata"]["decision_request_id"] == "req-1"
+    assert body["meta_data"]["decision_request_id"] == "req-1"
+    # `metadata` is gated by the agent's allow_chat_metadata flag; sending it
+    # against an agent with the flag off returns 400 on the live platform.
+    assert "metadata" not in body
 
 
 def test_auth_failure_is_not_retried():
@@ -275,7 +278,47 @@ def test_query_and_parser_helpers():
         {"goal": "choose", "context": {"team": "ict"}, "constraints": []}
     )
     assert "无" in query
-    assert "严格 JSON" in query
+    assert "严格" in query or "只输出" in query
+    assert '"selected_option_id"' in query
+    assert "req-" in query or "request_id" in query
 
     parsed = parse_decision_output(json.dumps(_decision()))
     assert parsed.selected_option_id == "a"
+
+
+def test_parser_extracts_json_from_noisy_agent_answer():
+    noisy = (
+        "我注意到这是一个决策任务。<|tool_call_start|>\n"
+        '[{"name": "knowledge_base_search"}]\n<|tool_call_end|>\n'
+        "结论如下：\n"
+        + json.dumps(_decision(), ensure_ascii=False)
+        + "\n以上。"
+    )
+
+    parsed = parse_decision_output(noisy)
+
+    assert parsed.request_id == "req-1"
+
+
+def test_parser_handles_nested_braces_inside_evidence():
+    payload = _decision()
+    payload["evidence"] = [
+        {"source": "ticket", "content": '{"nested": {"deep": "value"}}'}
+    ]
+
+    parsed = parse_decision_output("说明文本 " + json.dumps(payload, ensure_ascii=False))
+
+    assert parsed.evidence[0].content == '{"nested": {"deep": "value"}}'
+
+
+def test_parser_strips_leaked_reasoning_tags():
+    answer = "lysis.</think>" + json.dumps(_decision(), ensure_ascii=False)
+
+    parsed = parse_decision_output(answer)
+
+    assert parsed.request_id == "req-1"
+
+
+def test_parser_rejects_answer_without_json():
+    with pytest.raises(ValueError):
+        parse_decision_output("选 A，因为更稳")
