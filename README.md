@@ -6,6 +6,8 @@
 
 策略演进可通过 `evaluate_and_apply` 执行离线评测门禁：候选策略只有在 `EvaluationReport.passed` 为真时才会升为 active 版本，评测失败则保留当前版本并记录拒绝历史。
 
+运行 `run_evolution_showcase()` 可重复演示一次发布和一次拒绝路径，结果包含版本历史，便于后续接入 Nexent 或整理赛题材料。
+
 ## 项目目标
 
 - 用通用 Schema 表达决策请求、证据、选项、风险、审批和反馈。
