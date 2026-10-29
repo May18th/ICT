@@ -190,6 +190,11 @@ ALIASES: dict[str, tuple[str, ...]] = {
     "length_m": ("长度", "路段长度(m)"),
     "elevation_m": ("高程", "路面高程(m)"),
     "drainage_zone": ("排水分区", "雨水系统"),
+    # 拓扑字段：没有它们就只能说"算不出通行时间"，有它们才能算绕行
+    "from_node": ("from_node", "起点节点", "起点路口", "路段起点"),
+    "to_node": ("to_node", "终点节点", "终点路口", "路段终点"),
+    "speed_kmh": ("speed_kmh", "设计速度", "限速", "设计车速(km/h)"),
+    "work_zone_factor": ("work_zone_factor", "占道降速系数", "施工降速系数"),
     "pipeline_id": ("管线编号", "管段编号"),
     "kind": ("管线类型", "专业"),
     "depth_m": ("埋深", "埋深(m)"),
@@ -243,9 +248,17 @@ ALIASES: dict[str, tuple[str, ...]] = {
 }
 
 FLOAT_COLUMNS = frozenset(
-    {"length_m", "elevation_m", "depth_m", "excavation_depth_m", "capacity_m3h", "rainfall_mm_3h"}
+    {
+        "length_m",
+        "elevation_m",
+        "depth_m",
+        "excavation_depth_m",
+        "capacity_m3h",
+        "rainfall_mm_3h",
+        "work_zone_factor",
+    }
 )
-INT_COLUMNS = frozenset({"lanes", "diameter_mm", "install_year", "qty_available"})
+INT_COLUMNS = frozenset({"lanes", "diameter_mm", "install_year", "qty_available", "speed_kmh"})
 DATETIME_COLUMNS = frozenset(
     {"start_at", "end_at", "reported_at", "issued_at", "valid_from", "valid_to", "last_inspection"}
 )
@@ -257,6 +270,7 @@ UNITS: dict[str, str] = {
     "diameter_mm": "mm",
     "capacity_m3h": "m3/h",
     "rainfall_mm_3h": "mm/3h",
+    "speed_kmh": "km/h",
     "qty_available": "unit",
 }
 

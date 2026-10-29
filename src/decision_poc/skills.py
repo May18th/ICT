@@ -62,6 +62,7 @@ from .deduction import (
     decision_id_for,
     district_of,
     load_rules,
+    parse_counts,
     record,
     verify_rules,
 )
@@ -178,6 +179,9 @@ class ResourceAssessment(StrictModel):
     # 需求/库存总量即便"够用"也要给出：只报缺口会让"够用"变成一句没有数字的话
     required_total: int = 0
     available_total: int = 0
+    # 按片区归集后，同一个片区在不同推演里算出的数字一致，可直接比较或相加
+    demand_by_district: dict[str, int] = Field(default_factory=dict)
+    available_by_district: dict[str, int] = Field(default_factory=dict)
     enough: bool = True
     unavailable_reason: str | None = None
 
@@ -681,6 +685,8 @@ class ResourceSkill(Skill):
             total_gap=sum(line.gap for line in lines),
             required_total=int(_num(step.conclusion.get("required")) or 0),
             available_total=int(_num(step.conclusion.get("available")) or 0),
+            demand_by_district=parse_counts(step.conclusion.get("demand_by_district")),
+            available_by_district=parse_counts(step.conclusion.get("available_by_district")),
             enough=all(line.gap == 0 for line in lines),
         )
         return _Outcome(status="ok", payload=assessment)

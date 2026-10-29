@@ -42,6 +42,7 @@ from pydantic import Field
 from .contracts import StrictModel
 from .deduction import RuleSet
 from .governance import ErrorCode
+from .road_graph import RoadGraph, RoadGraphUnavailable, TravelImpact
 from .semantic import ObjectKind
 from .skills import PipelineReport, SkillPipeline, SkillRuntime
 
@@ -114,6 +115,9 @@ class BranchSummary(StrictModel):
     inventory: int = 0  # 参与测算的抽水泵总量，缺口的分母
     required_total: int = 0
     available_total: int = 0
+    # 按片区归集后，同一片区换一个视角推演也是同一个数
+    demand_by_district: dict[str, int] = Field(default_factory=dict)
+    available_by_district: dict[str, int] = Field(default_factory=dict)
     exposed_warning_level: str = "none"
     exposed_hours: float = 0.0
     risks: list[str] = Field(default_factory=list)
@@ -165,11 +169,13 @@ class DistrictCase(StrictModel):
     closure_required: bool = False
     has_hazard: bool = False
     action_count: int = 0
+    # 本片区自己的需求与本区库存：跨区调配是"下一步"，不是它的库存
     required_total: int = 0
     available_total: int = 0
+    total_gap: int = 0
+    world_required: int = 0  # 该次推演里所有片区合计需求，用于对照
     exposed_warning_level: str = "none"
     exposed_hours: float = 0.0
-    total_gap: int = 0
     publishable: bool = False
 
 
@@ -193,6 +199,7 @@ class CounterfactualResult(StrictModel):
     diff: CounterfactualDiff
     verdict: str = ""
     road_states: list[RoadState] = Field(default_factory=list)
+    travel: TravelImpact | None = None
     priority: PriorityFinding | None = None
     uncomputable: list[str] = Field(default_factory=list)
     evidence_refs: list[str] = Field(default_factory=list)
@@ -426,6 +433,10 @@ def _summarise(report: PipelineReport, runtime: SkillRuntime) -> BranchSummary:
         inventory=_pump_inventory(runtime),
         required_total=report.resources.required_total if report.resources else 0,
         available_total=report.resources.available_total if report.resources else 0,
+        demand_by_district=dict(report.resources.demand_by_district) if report.resources else {},
+        available_by_district=(
+            dict(report.resources.available_by_district) if report.resources else {}
+        ),
         exposed_warning_level=report.deduction.exposed_warning_level if report.deduction else "none",
         exposed_hours=report.deduction.exposed_hours if report.deduction else 0.0,
         risks=list(deduction.residual_risks) if deduction else [],
@@ -596,6 +607,10 @@ def _district_cases(
     for district, event_id in sorted(_pick_incidents(runtime, districts).items()):
         branch = SkillPipeline(runtime).run(event_id, as_of, caller_labels=labels, persist=False)
         summary = _summarise(branch, runtime)
+        # 只比较"这个片区自己要多少"和"这个片区有多少"：把别区的库存算进它的
+        # 分母，会让同一个片区换一个视角就换一个缺口，跨区结论也就没法复算。
+        own = summary.demand_by_district.get(district, 0)
+        local = summary.available_by_district.get(district, 0)
         cases.append(
             DistrictCase(
                 district=district,
@@ -604,9 +619,10 @@ def _district_cases(
                 closure_required=summary.closure_required,
                 has_hazard=summary.has_hazard,
                 action_count=len(summary.actions),
-                required_total=summary.required_total,
-                available_total=summary.available_total,
-                total_gap=summary.total_gap,
+                required_total=own,
+                available_total=local,
+                total_gap=max(0, own - local),
+                world_required=summary.required_total,
                 publishable=summary.publishable,
             )
         )
@@ -730,23 +746,30 @@ def run_counterfactual(
         diff = _diff(baseline, intervened)
 
         road_states: list[RoadState] = []
+        travel: TravelImpact | None = None
         priority: PriorityFinding | None = None
         uncomputable: list[str] = []
         gap_notes: list[str] = []
 
         if case.case_id == "CF1":
             district = baseline_report.facts.district if baseline_report.facts else None
+            closed_road = baseline_report.facts.road_id if baseline_report.facts else None
             if district:
                 road_states = _road_states(
                     base_runtime,
                     district,
-                    closed_road=(baseline_report.facts.road_id if baseline_report.facts else None),
+                    closed_road=closed_road,
                     as_of=moment,
                 )
-            uncomputable = [
-                "抢修到场时间：数据集不含路网拓扑与行驶速度字段，无法计算通行时间变化",
-                "绕行里程：road_network 只有单条长度，没有路段连接关系，无法算路径长度",
-            ]
+            if closed_road:
+                try:
+                    travel = RoadGraph.load(base_runtime.dataset_root).impact(closed_road)
+                except RoadGraphUnavailable as exc:
+                    uncomputable.append(f"通行时间与绕行里程：{exc}")
+            else:
+                uncomputable.append("通行时间与绕行里程：事件里没有封闭路段，无比较对象")
+            uncomputable.append("门到门到场时间：缺抢修驻地坐标与实时路况，只算到路口之间的通行时间")
+            uncomputable.append("跨区路径：A-03 与 B-01 的路段之间没有连接数据，跨区调配只有台账里的 40 分钟")
         elif case.case_id == "CF2":
             districts = sorted(_involved_districts(patched, intervened_report))
             cases = _district_cases(patched, districts, moment, labels)
@@ -769,13 +792,15 @@ def run_counterfactual(
                 "超出预警发布时效的工期无法判断：气象侧只有到 10-30 12:00 的预警，更远期无数据"
             )
 
-        verdict = _verdict(case, baseline, intervened, diff, priority, gap_notes, road_states)
+        verdict = _verdict(case, baseline, intervened, diff, priority, gap_notes, road_states, travel)
 
         evidence: set[str] = set()
         for step in intervened_report.deduction.stages if intervened_report.deduction else []:
             evidence.update(step.evidence_refs)
         if priority is not None:
             evidence.update(priority.evidence_refs)
+        if travel is not None:
+            evidence.update(travel.evidence_refs)
 
     return CounterfactualResult(
         case_id=case.case_id,
@@ -789,6 +814,7 @@ def run_counterfactual(
         diff=diff,
         verdict=verdict,
         road_states=road_states,
+        travel=travel,
         priority=priority,
         uncomputable=uncomputable,
         evidence_refs=sorted(evidence)[:40],
@@ -803,24 +829,28 @@ def _verdict(
     priority: PriorityFinding | None,
     gap_notes: Sequence[str],
     road_states: Sequence[RoadState],
+    travel: TravelImpact | None = None,
 ) -> str:
     """结论只由算出的数值拼装，不写任何算不出来的因果。
 
     "燃气抢修会慢 15 分钟"这类句子在这里永远不该出现：没有路网和车速，
-    这句话既不能算也不能验，答辩时一被追问就崩。
+    这句话既不能算也不能验，答辩时一被追问就崩。现在有了拓扑，慢多少是从
+    `TravelImpact` 里读的——它也只算到"路口到路口"，门到门仍然标算不出。
     """
     if case.case_id == "CF1":
-        if not diff.changed:
-            return "调整顺序后处置序列未发生变化，该干预在当前规则下无效。"
-        moved = {item.action: (item.before + 1, item.after + 1) for item in diff.actions_moved}
-        isolate = next((key for key in moved if "隔离风险源" in key), None)
-        closure = next((key for key in moved if "封闭积水路段" in key), None)
+        changed = diff.changed
         parts: list[str] = []
-        if closure and isolate:
-            parts.append(
-                f"封路由第 {moved[closure][0]} 位提前到第 {moved[closure][1]} 位，"
-                f"隔离风险源由第 {moved[isolate][0]} 位后移到第 {moved[isolate][1]} 位"
-            )
+        if changed:
+            moved = {item.action: (item.before + 1, item.after + 1) for item in diff.actions_moved}
+            isolate = next((key for key in moved if "隔离风险源" in key), None)
+            closure = next((key for key in moved if "封闭积水路段" in key), None)
+            if closure and isolate:
+                parts.append(
+                    f"封路由第 {moved[closure][0]} 位提前到第 {moved[closure][1]} 位，"
+                    f"隔离风险源由第 {moved[isolate][0]} 位后移到第 {moved[isolate][1]} 位"
+                )
+        else:
+            parts.append("调整顺序后处置序列未发生变化，该干预在当前规则下无效")
         passable = [road.name for road in road_states if road.passable]
         blocked = [
             f"{road.name}({'封闭' if road.closed else '施工'})"
@@ -831,6 +861,8 @@ def _verdict(
             parts.append(f"封路后可通行道路为 {'、'.join(passable)}")
         if blocked:
             parts.append(f"受限道路 {'、'.join(blocked)}")
+        if travel is not None:
+            parts.append(travel.describe())
         return "；".join(parts) + "。"
 
     if case.case_id == "CF2":
@@ -841,9 +873,17 @@ def _verdict(
         head = f"抽水泵 {pumps_before} 台 → {pumps_after} 台，缺口 {gap_before} 台 → {gap_after} 台"
         if priority and priority.recommended:
             demands = "、".join(
-                f"{case.district} 需 {case.required_total} 台" for case in priority.ranked
+                f"{case.district} 需 {case.required_total} 台（本区 {case.available_total} 台，缺 {case.total_gap}）"
+                for case in priority.ranked
             )
             head += f"；{demands}，优先保障 {priority.recommended}"
+            if priority.ranked and all(
+                case.required_total > after.available_total for case in priority.ranked
+            ):
+                head += (
+                    f"；可调合计 {after.available_total} 台低于任一片区单独需求，"
+                    "任何分配都不够，需请求市级或邻区增援"
+                )
             if priority.reasons:
                 head += f"：{priority.reasons[0]}"
             if priority.cross_district_note:
@@ -930,6 +970,15 @@ def _format(result: CounterfactualResult) -> str:
             mark = "可通行" if road.passable else ("封闭" if road.closed else "受施工影响")
             lines.append(f"  {road.road_id} {road.name}: {mark}")
 
+    if result.travel is not None:
+        lines.append("")
+        lines.append("通行代价（自由流，不含路口延误）:")
+        lines.append("  " + result.travel.describe())
+        if result.travel.baseline is not None:
+            lines.append("  基线路径: " + result.travel.baseline.describe())
+        if result.travel.after_closure is not None:
+            lines.append("  封路后路径: " + result.travel.after_closure.describe())
+
     if result.priority is not None:
         lines.append("")
         lines.append("片区优先级:")
@@ -937,7 +986,8 @@ def _format(result: CounterfactualResult) -> str:
             depth = f"{case.depth_cm:g}cm" if case.depth_cm is not None else "-"
             lines.append(
                 f"  {case.district} ({case.event_id}) 深度 {depth} 封路 {'是' if case.closure_required else '否'} "
-                f"危险源 {'有' if case.has_hazard else '无'} 需 {case.required_total} 台 / 缺口 {case.total_gap}"
+                f"危险源 {'有' if case.has_hazard else '无'} "
+                f"需 {case.required_total} 台 / 本区 {case.available_total} 台 / 缺口 {case.total_gap}"
             )
         for reason in result.priority.reasons:
             lines.append(f"  · {reason}")

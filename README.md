@@ -120,7 +120,7 @@ uv run --locked python -m decision_poc.counterfactual --case all     # CF1 / CF2
 uv run --locked python -m decision_poc.counterfactual --case CF2 --json
 ```
 
-预期：CF2 库存 6→2 台、缺口 1→5 台、优先保障 A-03；CF3 **无差异**（规则不含工期字段，该问题当前不可判定）；越权身份退出码 2 且不返回空差异。
+预期：CF1 封路使 J-01↔J-02 从 820 m/1.2 分钟变为 3860 m/6.3 分钟（绕行经 R-102/R-103/R-104）；CF2 库存 6→2 台、缺口 1→5 台、A-03 本片区需 5 台（缺 3）、B-01 需 2 台（缺 2），优先保障 A-03；CF3 开挖面暴露等级 orange→red、新增二次风险；越权身份退出码 2 且不返回空差异。
 
 跑 MCP Server（stdio，JSON-RPC 2.0，不依赖任何 MCP SDK）：
 
@@ -204,7 +204,7 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **342 项**测试通过；同时要求锁文件、Python 编译和依赖一致性检查通过。
+当前基线：`uv run --locked pytest -q` 共 **355 项**测试通过；同时要求锁文件、Python 编译和依赖一致性检查通过。
 P0-P6 的验收口径与实测数字见各阶段回传报告（`docs/reports/`）。
 
 ## 后续演进
