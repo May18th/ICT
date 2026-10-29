@@ -27,3 +27,19 @@ def test_adapter_wraps_decision_for_nexent_without_network_side_effects():
         }
     ]
 
+
+def test_adapter_rejects_non_mapping_transport_response():
+    request = DecisionRequest(
+        request_id="req-1", goal="choose", context={}, constraints=[]
+    )
+
+    def invoke(_payload):
+        return "accepted"
+
+    try:
+        NexentAdapter(invoke=invoke).run(request)
+    except TypeError as exc:
+        assert "mapping" in str(exc)
+    else:
+        raise AssertionError("expected TypeError")
+
