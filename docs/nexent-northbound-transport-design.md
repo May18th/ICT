@@ -208,8 +208,9 @@ NexentAdapter(invoke=transport).run(request)
    已有 `equipment_decision_agent`（设备故障决策智能体，`current_version_no=2`）与
    `workbench_main`。
 
-待办只有一步：在前端「智能体开发 → 发布 → 生成 API 密钥」拿到 Access Key，或者直接复用本机已建的
-测试 Key（`nexent.user_token_info_t.token_id=1`，本机自用，演示完可删）。
+待办只有一步：在前端「智能体开发 → 发布 → 生成 API 密钥」拿到 Access Key，或者用平台自身函数
+在容器内生成（`database.token_db.generate_access_key()` + `create_token()`，格式 `nexent-` + 24 hex，
+共 31 字符），当前本机测试 Key 为 `nexent.user_token_info_t.token_id=2`。
 
 ```powershell
 $env:NEXENT_BASE_URL   = "http://localhost:5013"
@@ -249,6 +250,24 @@ uv run --locked python -m decision_poc.nexent_smoke
 
 不改提示词也能演示：对外统一用 `workbench_main` 走决策契约，`equipment_decision_agent`
 保留原来的中文决策报告能力，两者各自成立。
+
+### 8.3 换 Key 后的回归（2026-10-29 10:45）
+
+撤掉 `token_id=1` 后，用平台自身的 `generate_access_key()` + `create_token()` 重建 Key
+（`token_id=2`，31 字符），回归结果：
+
+| 检查 | 结果 |
+| --- | --- |
+| `GET /nb/v1/agents` 带新 Key | `200` |
+| `python -m decision_poc.nexent_smoke` | `accepted`，`conversation_id=13`，退出码 0 |
+| `DecisionOutput` 校验 | 通过：3 选项、`selected_option_id=opt1`、`confidence=0.88`、`risk_level=medium` |
+| `answer` | 1431 字符，仍带 `ipment issue.</think>` 截断残留（解析器已容错） |
+
+**新发现：记忆污染**。这次三条 `evidence` 的来源全部是「Agent 记忆-历史处置经验 / 设备历史 /
+约束条件」，说明 `workbench_main` 开了长期记忆，把上一轮（`conversation_id=11`）的结论固化后
+直接复用。后果：同一 `request_id` 重放得到的不是独立推理，演示时答案会“背稿”。
+若要做可复现回归，需先清该 Agent 的记忆（`memory` 相关表或前端记忆管理），或换新 `agent_name`。
+
 
 ## 9. 来源
 
