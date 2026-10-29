@@ -8,6 +8,15 @@ def test_evolution_showcase_reports_publish_and_rejection_paths():
         "initial_version": "v1",
         "promoted_version": "v2",
         "rejected_active_version": "v2",
-        "history": ["proposed:v2", "promoted:v2", "proposed:v3", "rejected:v3"],
+        "rolled_back_version": "v2",
+        "history": [
+            "proposed:v2",
+            "promoted:v2",
+            "proposed:v3",
+            "rejected:v3",
+            "proposed:v4",
+            "promoted:v4",
+            "rollback:v4->v2",
+        ],
     }
 
