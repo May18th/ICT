@@ -1,5 +1,5 @@
 {
-  "version": "urban-rules-1",
+  "version": "urban-rules-1.1",
   "note": "推演规则是数据，不是代码。source_ref = <file_name>#<locator>，加载时校验该行确实存在且包含 keyword；校验失败即拒绝加载。assumption=true 表示该数值没有原文依据，是演示假设，必须在输出里显式标注。",
   "rules": [
     {
@@ -229,7 +229,7 @@
       "rule_id": "RULE-RES-LOWSPOT-PUMPS",
       "stage": "resource",
       "when": {
-        "next_district_required": [
+        "waterlogging_below_closure": [
           "true"
         ]
       },
