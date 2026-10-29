@@ -117,6 +117,7 @@ agent_poc/
 - [技术基线与风险](docs/technical-baseline.md)
 - [Nexent 集成边界](docs/nexent-integration-boundary.md)
 - [Nexent 北向传输层设计](docs/nexent-northbound-transport-design.md)
+- [演示运行手册](docs/demo-runbook.md)
 - [通用内核设计](docs/superpowers/specs/2026-10-26-generic-evolution-kernel-design.md)
 - [实施计划](docs/superpowers/plans/2026-10-26-generic-evolution-kernel.md)
 
