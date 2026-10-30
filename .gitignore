@@ -9,7 +9,22 @@ __pycache__/
 codex/
 
 # Unreal generated project state
+visualization/unreal/*.bak-mcp
 visualization/unreal/Saved/
 visualization/unreal/Intermediate/
 visualization/unreal/DerivedDataCache/
 visualization/unreal/Binaries/
+
+# test/eval local artifacts
+.pytest-report.xml
+.pytest-uv.xml
+pytest-of-*/
+.uecheck/
+
+# P10 渲染作业 / 快照 / 工具调用日志（本地运行时产物，可随时删）
+artifacts/
+.tmp/
+
+# Blender 自动备份与场景目录快照
+*.blend1
+visualization/blender/scenes.bak-*/
