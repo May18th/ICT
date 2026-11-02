@@ -15,11 +15,14 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from decision_poc.collab.blackboard import Blackboard
 from decision_poc.collab.contracts import (
     ActionCard,
     CardStatus,
     CollabResult,
+    ResourceBinding,
     RoleHandoff,
     kernel_fingerprint,
 )
@@ -64,24 +67,59 @@ def _owners_of(step) -> tuple[str, ...]:
     return tuple(owners)
 
 
+def _latest_execution_time(step) -> datetime | None:
+    """只接受内核明确给出的、带时区的执行时限，不从动作文本猜时间。"""
+
+    raw = step.conclusion.get("latest_execution_time") or step.conclusion.get("deadline")
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo is not None else None
+
+
+def _acceptance_criteria(step) -> list[str]:
+    """读取内核提供的验收口径；缺少来源时保持空，不复制动作文本冒充验收。"""
+
+    raw = step.conclusion.get("acceptance_criteria") or step.conclusion.get("acceptance")
+    if not raw:
+        return []
+    return [item.strip() for item in raw.split("|") if item.strip()]
+
+
 def build_cards(deduction: DeductionResult, board: Blackboard) -> None:
     """按"一跳 x 责任部门"出卡；多部门规则出多张卡并互相要求联合发布。"""
 
     claim_by_step = _claim_by_step_id(deduction)
-    for step in deduction.steps:
-        if step.status is StageStatus.INSUFFICIENT:
-            continue
-        claim_id = claim_by_step.get(step.step_id)
-        if claim_id is None:
-            continue
+    eligible_steps = [
+        step
+        for step in deduction.steps
+        if step.status is not StageStatus.INSUFFICIENT and step.step_id in claim_by_step
+    ]
+    card_ids_by_step = {
+        step.step_id: [f"AC-{step.step_id}-{owner}" for owner in _owners_of(step)]
+        for step in eligible_steps
+    }
+    for step in eligible_steps:
+        claim_id = claim_by_step[step.step_id]
         owners = _owners_of(step)
         action = _card_action(step)
+        depends_on = [
+            card_id
+            for premise_step_id in step.premise_step_ids
+            for card_id in card_ids_by_step.get(premise_step_id, [])
+        ]
         for owner in owners:
             card = ActionCard(
                 card_id=f"AC-{step.step_id}-{owner}",
                 agent_id=owner,
                 stage=step.stage,
                 action=action,
+                depends_on=depends_on,
+                latest_execution_time=_latest_execution_time(step),
+                acceptance_criteria=_acceptance_criteria(step),
                 evidence_refs=sorted(set(step.evidence_refs)),
                 claim_ids=[claim_id],
                 co_sign_required=[item for item in owners if item != owner],
@@ -105,6 +143,15 @@ def build_cards(deduction: DeductionResult, board: Blackboard) -> None:
                 stage="resource",
                 action="dispatch_pump",
                 quantity=gap.gap,
+                required_resources=[
+                    ResourceBinding(
+                        resource_id=gap.resource_id,
+                        quantity=gap.gap,
+                        unit=gap.unit,
+                    )
+                ]
+                if gap.gap > 0
+                else [],
                 evidence_refs=refs,
                 claim_ids=claim_ids,
             )

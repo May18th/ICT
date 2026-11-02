@@ -33,9 +33,9 @@
 | --- | --- | --- |
 | ① 多模态数据资产认知 | 16 个异构资产（9 表 / 6 文 / 1 图）统一登记为 `asset_id + sha256 + locator + 版本 + 有效期 + 可见性`；解析率 16/16、未识别列 0 | 强（图像仅登记尺寸/区域，未做 OCR，如实声明） |
 | ② 低资源 KG 本体半自动构建 | 种子本体 → 规则抽取 → 置信度分档（auto/review/drop）→ 人工确认 → 版本发布/回滚；改 1 格只产 2 条候选，回滚哈希逐位一致 | 强 |
-| ③ MCP / Skills 编排 | 12 个 MCP 工具（含推演、冲突、分配、渲染）+ 5 Skill 编排 + 2 个可上传的 SKILL.md；**Nexent 平台 Agent 已实调 MCP 工具并产出结论** | 强（工具编排真机已验证；2 个 SKILL.md 已上传平台技能仓库，未绑定 Agent） |
+| ③ MCP / Skills 编排 | 13 个 MCP 工具（含推演、冲突、分配、渲染）+ 5 Skill 编排 + 2 个可上传的 SKILL.md；**Nexent 平台 Agent 已实调 MCP 工具并产出结论** | 强（工具编排真机已验证；2 个 SKILL.md 已上传平台技能仓库，未绑定 Agent） |
 | ④ 跨文档多跳推理与可溯源 | 六跳推演 + 三类冲突 + 反事实重放 + 哈希链账本 + 变更传播影响分析；引用完整率 100%、篡改可定位 | 强 |
-| ⑤ 基于 Nexent 可运行 | **真机已跑通**：12 工具注册、Agent 发布 v3、conversation_id=21、结论与离线 8/8 一致、平台工具调用日志可查（见 [真机报告](../reports/nexent-live-integration-report.md)） | **强**（原高风险项已解除） |
+| ⑤ 基于 Nexent 可运行 | **真机已跑通**：13 工具注册、Agent 发布 v3、conversation_id=21、结论与离线 8/8 一致、平台工具调用日志可查（见 [真机报告](../reports/nexent-live-integration-report.md)） | **强**（原高风险项已解除） |
 
 ## 3 背景与问题
 
@@ -106,7 +106,7 @@
 | `deduction.py` | 六跳推演 | 规则数据化 + `source_ref` 原文行校验 + `insufficient` 不静默补全 |
 | `provenance.py` | 溯源 | claim 引用闸门、append-only 哈希链、verify 定位断点、replay 最小证据集 |
 | `skills.py` | 五 Skill 编排 | 单一信封、降级决策、审计即门禁 |
-| `mcp_server.py` / `mcp_sse.py` | MCP 工具与传输 | 12 工具、权限收口、stdio + SSE 双传输（SSE 供 Nexent 接入） |
+| `mcp_server.py` / `mcp_sse.py` | MCP 工具与传输 | 13 工具、权限收口、stdio + SSE 双传输（SSE 供 Nexent 接入） |
 | `allocation.py` / `policy_evolution.py` / `experience.py` | 决策与进化 | 策略版本、四维偏差、门禁、分层记忆、人工评审 |
 | `evidence_check.py` | 对外数字自检 | 106 项冻结期望，漂移即失败（退出码 1） |
 
@@ -125,7 +125,7 @@
 | 进化 | 训练/留出综合偏差 | 0.2264→0.0000 / 0.2182→0.0000 |
 | 进化 | 应调拨未调拨 / 关键片区未满足 | 4→0 次 / 15→6 台（6 为资源硬缺口下限） |
 | 进化 | 记忆 warm start / 评审约束 | 起点偏差 0.0000、轮次 3→1；评审偏差 0.1171→0 |
-| 工程 | 测试 / 对外数字自检 | 715 项通过；106/106 项一致 |
+| 工程 | 测试 / 对外数字自检 | 723 项通过；106/106 项一致 |
 | MCP | 工具数 / SSE 传输测试 | 12 个；10 项（握手、列工具、调工具、批量、错误路径） |
 
 ## 9 演示流程（现场 5–8 分钟）
@@ -140,7 +140,7 @@
 
 ## 10 与 Nexent 的集成状态（评委必问）——**已真机跑通**
 
-- **已完成（真机，Nexent v2.7.0）**：MCP 服务 `urban-twin-mcp`（12 工具，SSE）注册进平台；
+- **已完成（真机，Nexent v2.7.0）**：MCP 服务 `urban-twin-mcp`（13 工具，SSE）注册进平台；
   Agent `urban_deduction_agent`（openPangu-2.0-Pro）创建并发布 v3；真机对话 **conversation_id=21**，
   六跳结论与离线推演 **8/8 项一致**；平台侧调用日志含 `event_deduce`（29ms）/ `allocation_plan`（28ms）/
   `scene_render`（88ms），三条快照哈希一致。证据：`samples/nexent/live/`。
@@ -154,7 +154,7 @@
 
 ```powershell
 uv sync --locked
-uv run --locked pytest -q                                  # 715 passed
+uv run --locked pytest -q                                  # 723 passed
 uv run --locked python -m decision_poc.evidence_check      # 106/106 项一致
 uv run --locked python -m decision_poc.urban_eval          # 22/22
 uv run --locked python -m decision_poc.policy_evolution --report docs/reports/p9-policy-evolution-report.md
@@ -190,7 +190,7 @@ uv run --locked python -m decision_poc.web_demo --port 8787 # 推演面板 + /ev
 ## 附：答辩 5 分钟提纲（供 PPT 使用）
 
 1. **痛点**（30 秒）：三份预案、两张台账，结论却说不清依据；冲突在汇报里消失；同类事件每次都从头推。
-2. **做法**（60 秒）：一条链——语义层看懂、六跳推得演、溯源信得过、进化越推越准；Nexent 上编排 12 个工具 + 2 个 Skill。
+2. **做法**（60 秒）：一条链——语义层看懂、六跳推得演、溯源信得过、进化越推越准；Nexent 上编排 13 个工具 + 2 个 Skill。
 3. **硬证据**（120 秒）：22/22 用例、引用完整率 100%、六跳 100%；进化 0.2264→0、留出同向下降；真实事件分配 A-03 4→5。
 4. **现场演示**（120 秒）：推演面板 → 证据追问 → 反事实 → 进化面板 → 一条命令自检（现场改期望值让它失败）。
 5. **边界与下一步**（30 秒）：合成数据、受控反馈、记忆离线同构都如实说；下一步 Nexent 真机 + 真实用户评分。

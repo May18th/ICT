@@ -56,7 +56,22 @@ TOOL_GROUPS: dict[str, tuple[str, ...]] = {
     ),
     "presentation": ("scene_render", "scene_compare"),
     "bootstrap": ("asset_lookup",),
+    # 多智能体协同：总控一次调用拿到 6 个角色的动作卡、联合发布对与裁决后的处置顺序
+    "collaboration": ("collab_run",),
 }
+
+#: 部门 Agent 的工具白名单。与 `TOOL_GROUPS` 分开维护：前者是**互斥分区**
+#: （一个工具只属于一个分组，tools.json 与分区一致性测试依赖这一点），
+#: 后者是**运行期视图**（同一工具可以出现在多个部门视角里），两者语义不同。
+ROLE_TOOL_GROUPS: dict[str, tuple[str, ...]] = {
+    "role_drain": ("twin_neighbors", "event_deduce", "allocation_plan"),
+    "role_road": ("twin_neighbors", "evidence_locate"),
+    "role_traffic": ("twin_neighbors", "evidence_locate"),
+    "role_gas": ("twin_neighbors", "claim_trace"),
+    "role_power": ("twin_neighbors", "allocation_plan"),
+}
+
+ALL_TOOL_GROUPS: dict[str, tuple[str, ...]] = {**TOOL_GROUPS, **ROLE_TOOL_GROUPS}
 
 
 # --- JSON-RPC error codes (spec) ----------------------------------------
@@ -373,12 +388,27 @@ class UrbanToolkit:
                     "required": ["scenario"],
                 },
             },
+            {
+                "name": "collab_run",
+                "description": "多智能体协同：1 总控 + 5 专业部门在协同板上出动作卡，"
+                "按规则完成联合发布判定与处置顺序编排，返回卡片、冲突、交接与内核指纹。"
+                "结论仍由六跳推演产出，Agent 只出动作不出断言。",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "event_id": {"type": "string", "description": "工单编号，如 WO-20261029-007"},
+                        "as_of": {"type": "string", "description": "ISO 8601 带时区"},
+                        "caller_labels": {"type": "array", "items": {"type": "string"}},
+                    },
+                    "required": ["event_id", "as_of", "caller_labels"],
+                },
+            },
         ]
 
         selected = self._selected_groups(groups)
         if selected is None:
             return tools
-        allowed = {name for group in selected for name in TOOL_GROUPS[group]}
+        allowed = {name for group in selected for name in ALL_TOOL_GROUPS[group]}
         return [tool for tool in tools if tool["name"] in allowed]
 
     def _selected_groups(
@@ -387,9 +417,9 @@ class UrbanToolkit:
         selected = tuple(groups) if groups else self.groups
         if not selected:
             return None
-        unknown = [group for group in selected if group not in TOOL_GROUPS]
+        unknown = [group for group in selected if group not in ALL_TOOL_GROUPS]
         if unknown:
-            raise KeyError(f"未知工具分组: {unknown}，可选 {sorted(TOOL_GROUPS)}")
+            raise KeyError(f"未知工具分组: {unknown}，可选 {sorted(ALL_TOOL_GROUPS)}")
         return selected
 
     # --- dispatch --------------------------------------------------------
@@ -409,6 +439,7 @@ class UrbanToolkit:
             "scene_render": self._scene_render,
             "scene_compare": self._scene_compare,
             "asset_lookup": self._asset_lookup,
+            "collab_run": self._collab_run,
         }
         handler = handlers.get(name)
         if handler is None:
@@ -679,6 +710,31 @@ class UrbanToolkit:
                 self.version,
             )
         return _ok("event_deduce", outcome.model_dump(mode="json"), self.version)
+
+    def _collab_run(self, args: Mapping[str, Any]) -> ToolResult:
+        caller_labels = [str(item) for item in args.get("caller_labels", [])]
+        event_id = str(args["event_id"])
+        try:
+            outcome = self._deduction_engine().deduce(
+                event_id, as_of=args["as_of"], caller_labels=caller_labels
+            )
+        except KeyError:
+            return _error(
+                "collab_run", {"event_id": event_id}, ErrorCode.NOT_FOUND, f"未知事件: {event_id}", self.version
+            )
+        except Exception as exc:
+            return _error(
+                "collab_run",
+                {"event_id": event_id},
+                ErrorCode.EVIDENCE_INSUFFICIENT,
+                f"推演依据不可用: {exc}",
+                self.version,
+            )
+
+        from .collab import orchestrate
+
+        collab = orchestrate(outcome)
+        return _ok("collab_run", collab.model_dump(mode="json"), self.version)
 
     def _conflict_check(self, args: Mapping[str, Any]) -> ToolResult:
         caller_labels = [str(item) for item in args.get("caller_labels", [])]

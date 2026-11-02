@@ -395,7 +395,7 @@ P11 五档（Rules → DT → 单 Agent → **多 Agent** → 全量）中的第
 - 范围：新增 `src/decision_poc/collab/`（`contracts.py` / `roles.py` / `blackboard.py` / `orchestrator.py` / `runtime.py`）+ 测试。
 - 测试：构造期校验四条硬约束；拓扑冲突转人工；离线用确定性桩跑通全流程（不依赖真实 LLM）；
   结论一致性 8/8；单 Agent 驱动与多 Agent 驱动 `kernel_fingerprint` 相等。
-- 禁止改动：内核 12 工具签名；`conflict_check` 判定逻辑。
+- 禁止改动：内核 13 工具签名；`conflict_check` 判定逻辑。
 - 回传：`CollabResult` 样例 + `trace.jsonl` 样例。
 
 ### T5 MCP 分组与平台装配

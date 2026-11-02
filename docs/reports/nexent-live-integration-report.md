@@ -20,7 +20,7 @@
 | MCP 服务 | `urban-twin-mcp`（mcp_id=2），URL `http://urban-twin-mcp:8000/sse`，status=True，enabled=True |
 | MCP 工具 | 12 个（平台 tool_id 41–52）：semantic_query / twin_neighbors / evidence_locate / claim_trace / provenance_verify / event_deduce / counterfactual_run / conflict_check / allocation_plan / scene_render / scene_compare / asset_lookup |
 | Agent | `urban_deduction_agent`（agent_id=3），模型 openPangu-2.0-Pro，已发布 **v3（urban-mcp-v3）** |
-| Agent 工具 | 12 个 MCP 工具全部挂在草稿与已发布版本上（`ag_tool_instance_t` v0/v1 各 12 条） |
+| Agent 工具 | 13 个 MCP 工具全部挂在草稿与已发布版本上（`ag_tool_instance_t` v0/v1 各 12 条） |
 | 协议修复 | `enable_protocol_repair_retry=true`（openPangu 工具调用文本需要修复重试） |
 | 北向 Key | 平台函数生成（`token_id=3`，密钥不落仓） |
 
@@ -80,7 +80,7 @@ Agent 回答（节选，完整见 `samples/nexent/live/conversation_21.json`）�
 
 | 步骤 | 实现 | 产物 |
 | --- | --- | --- |
-| MCP 服务容器化 | `deploy/mcp_sse/Dockerfile` + `docker run --network nexent_network` | `urban-twin-mcp` 容器，`/health` 返回 12 工具 |
+| MCP 服务容器化 | `deploy/mcp_sse/Dockerfile` + `docker run --network nexent_network` | `urban-twin-mcp` 容器，`/health` 返回 13 工具 |
 | 平台注册 | `deploy/nexent/setup_nexent.py register-mcp`（`/api/mcp/add`，JWT 由容器环境签） | `mcp_record_t` 记录（mcp_id=2） |
 | 工具同步 | `sync-tools`（`/api/tool/scan_tool`）+ 逐个 `/api/tool/update` 挂到 Agent 草稿 | tool_id 41–52 |
 | Agent 创建/发布 | `create-agent`（`/api/agent/update` → `/api/agent/{id}/publish`） | agent_id=3，v3 |
@@ -113,5 +113,5 @@ Agent 回答（节选，完整见 `samples/nexent/live/conversation_21.json`）�
 
 ## 8 一句话答辩口径
 
-「同一套推理内核，离线可复算、平台上可运行：Nexent 的 Agent 调我们 12 个 MCP 工具做六跳推演，
+「同一套推理内核，离线可复算、平台上可运行：Nexent 的 Agent 调我们 13 个 MCP 工具做六跳推演，
 结论与本仓库离线引擎 8/8 一致（conversation_id 可查）；策略进化与回滚在面板上可当场演示。」

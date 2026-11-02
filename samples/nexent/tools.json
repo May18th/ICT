@@ -23,6 +23,9 @@
     ],
     "bootstrap": [
       "asset_lookup"
+    ],
+    "collaboration": [
+      "collab_run"
     ]
   },
   "tools": [
@@ -74,6 +77,7 @@
                 "power",
                 "telecom",
                 "pump_station",
+                "underpass",
                 "region",
                 "work_site",
                 "incident",
@@ -116,6 +120,7 @@
                 "power",
                 "telecom",
                 "pump_station",
+                "underpass",
                 "region",
                 "work_site",
                 "incident",
@@ -170,6 +175,7 @@
                 "power",
                 "telecom",
                 "pump_station",
+                "underpass",
                 "region",
                 "work_site",
                 "incident",
@@ -482,6 +488,34 @@
         },
         "required": [
           "scenario"
+        ]
+      }
+    },
+    {
+      "name": "collab_run",
+      "description": "多智能体协同：1 总控 + 5 专业部门在协同板上出动作卡，按规则完成联合发布判定与处置顺序编排，返回卡片、冲突、交接与内核指纹。结论仍由六跳推演产出，Agent 只出动作不出断言。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "工单编号，如 WO-20261029-007"
+          },
+          "as_of": {
+            "type": "string",
+            "description": "ISO 8601 带时区"
+          },
+          "caller_labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "event_id",
+          "as_of",
+          "caller_labels"
         ]
       }
     }

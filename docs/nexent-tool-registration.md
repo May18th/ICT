@@ -3,7 +3,7 @@
 ## 结论：**已真机注册并跑通**（2026-10-30 更新）
 
 > 历史：本文档较早版本记录的是"Docker 起不来、未真机注册"的阻塞状态。该阻塞已解除：
-> Docker Desktop 恢复后，MCP 服务以 SSE 方式跑在 `nexent_network` 容器里，12 个工具已注册进平台
+> Docker Desktop 恢复后，MCP 服务以 SSE 方式跑在 `nexent_network` 容器里，13 个工具已注册进平台
 > （tool_id 41–52）、挂到 Agent `urban_deduction_agent`（agent_id=3）并发布 v3；
 > 真机对话 **conversation_id=21**，六跳结论与离线 **8/8 一致**，平台调用日志含
 > `event_deduce` / `allocation_plan` / `scene_render`。
@@ -15,7 +15,7 @@
 
 | 产物 | 状态 | 用途 |
 | --- | --- | --- |
-| `samples/nexent/tools.json` | 已生成 | 12 个工具的 schema、serverInfo、3 个分组。**生成物，勿手改** |
+| `samples/nexent/tools.json` | 已生成 | 13 个工具的 schema、serverInfo、4 个分组。**生成物，勿手改** |
 | `samples/nexent/skills.json` (1.2) | 已重新生成 | 新增 `scene_render` / `scene_compare` / `asset_lookup` 三个独立工具绑定（改的是 `skills.py` 的 `skill_manifest()`，不是手改 JSON） |
 | `tests/test_nexent_tools.py` | 已通过 | 锁住"注册清单与代码同源"，防止走了散 |
 | `docs/nexent-integration-boundary.md` | 既有 | 适配层职责边界，仍然有效 |
@@ -49,7 +49,7 @@ Docker 不可用（见文首）是当下的阻塞，但即使 Docker 恢复，
 Set-Location D:/华为ICT/agent_poc
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.mcp_server --export-tools samples/nexent/tools.json
-# 已写出 samples\nexent\tools.json（12 个工具 / 3 个分组）
+# 已写出 samples\nexent\tools.json（13 个工具 / 4 个分组）
 ```
 
 `tests/test_nexent_tools.py` 会比对 `tools.json` 与 `UrbanToolkit().tools()`，
@@ -108,8 +108,8 @@ $env:PYTHONPATH = "src"
 
 ## 表述边界（答辩时不要越界）
 
-- ✅ 可以说：12 个 MCP 工具已实现并可被任意 MCP 客户端调用；注册清单由代码生成并有一致性测试。
-- ✅ 可以说：已在本机 Nexent v2.7.0 真机注册 12 个工具并跑通内涝主链路（conversation_id=21，8/8 一致）。
+- ✅ 可以说：13 个 MCP 工具已实现并可被任意 MCP 客户端调用；注册清单由代码生成并有一致性测试。
+- ✅ 可以说：已在本机 Nexent v2.7.0 真机注册 13 个工具并跑通内涝主链路（conversation_id=21，8/8 一致）。
 - ✅ 可以说：2 个 SKILL.md 已上传到本机 Nexent 技能仓库（skill_id=2/3，正文逐位一致，见 `samples/nexent/live/skills.json`）。
 
 真机证据已留档：`samples/nexent/live/`（Agent 列表、会话、MCP 调用日志、汇总 JSON）+

@@ -9,14 +9,33 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 from decision_poc.collab import AGENT_IDS, orchestrate
 from decision_poc.collab.contracts import CardStatus, kernel_fingerprint
+from decision_poc.collab.orchestrator import _acceptance_criteria, _latest_execution_time
 from decision_poc.deduction import DeductionEngine, claims_from
 
 AS_OF = "2026-10-29T09:40:00+08:00"
 EVENT = "WO-20261029-007"
+
+
+def test_execution_contract_extractors_only_use_explicit_kernel_values() -> None:
+    step = SimpleNamespace(
+        conclusion={
+            "latest_execution_time": "2026-10-29T10:00:00+08:00",
+            "acceptance_criteria": "条件 A | 条件 B",
+        }
+    )
+    assert _latest_execution_time(step) is not None
+    assert _latest_execution_time(step).isoformat() == "2026-10-29T10:00:00+08:00"
+    assert _acceptance_criteria(step) == ["条件 A", "条件 B"]
+
+    missing = SimpleNamespace(conclusion={"action": "从动作文本不能推导时限"})
+    assert _latest_execution_time(missing) is None
+    assert _acceptance_criteria(missing) == []
 
 
 @pytest.fixture(scope="module")
@@ -117,6 +136,18 @@ def test_resource_gap_card_carries_quantity(deduction, collab) -> None:
     assert gaps
     assert deduction.resource_gaps
     assert gaps[0].quantity == deduction.resource_gaps[0].gap
+    assert gaps[0].required_resources
+    assert gaps[0].required_resources[0].resource_id == deduction.resource_gaps[0].resource_id
+    assert gaps[0].required_resources[0].quantity == deduction.resource_gaps[0].gap
+
+
+def test_cards_expose_kernel_prerequisite_card_ids(collab) -> None:
+    known = {card.card_id for card in collab.cards}
+    action_cards = [card for card in collab.cards if card.stage == "action"]
+    assert action_cards
+    assert any(card.depends_on for card in action_cards)
+    for card in action_cards:
+        assert set(card.depends_on) <= known
 
 
 def test_no_action_cards_explain_themselves(collab) -> None:
