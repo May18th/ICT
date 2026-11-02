@@ -27,8 +27,10 @@
 - [图像语义抽取](image-semantics.md)：PNG 像素级抽取（频谱峰值/示意色块/积水范围），输出 RegionSpec 区域候选；明确不做 OCR、不用视觉模型。
 - [P9 进化闭环报告](reports/p9-policy-evolution-report.md)：分配策略的逐轮偏差归因、评测门禁采纳/拒绝、留出集泛化、分层记忆 warm start、人工评审第二信号、语义化版本标签与回滚验证（由 `decision_poc.policy_evolution` 生成，勿手改）。
 - [P9 决策进化闭环设计](superpowers/specs/2026-10-30-p9-decision-evolution-design.md)：为什么选资源分配、决策输入/策略/偏差口径、进化循环、分层记忆与人工反馈（第 11–14 节）、浏览器对比面板（第 15 节）与验收标准。
-- [P11 消融阶梯报告](reports/p11-ablation-report.md)：五档配置 × 22 用例的同口径指标、bootstrap 运行级统计与配对置换检验；首段写清"确定性内核下不伪造独立随机种子"的口径（由 `decision_poc.ablation` 生成，勿手改）。
-- [P11 消融与锚定设计](superpowers/specs/2026-11-02-p11-ablation-and-anchoring-design.md)：五档能力子集、指标分母与运行级统计口径，以及 `H(o),H(Z),H(a*),meta` 锚定包与链下原文复核边界。
+- [P11 消融阶梯报告](reports/p11-ablation-report.md)：五档配置 × 22 用例的同口径指标、leave-one-out（逐例剔除）稳健性与精确符号翻转检验（2²² 全枚举、零随机）；首段写清"不引入任何随机数、不伪造独立随机种子"的口径（由 `decision_poc.ablation` 生成，勿手改）。
+- [P11 消融与锚定设计](superpowers/specs/2026-11-02-p11-ablation-and-anchoring-design.md)：五档能力子集、指标分母与确定性统计口径（leave-one-out + 精确符号翻转），以及 `H(o),H(Z),H(a*),meta` 锚定包与链下原文复核边界。
+- [P12 多智能体协同 + 场景 v2 设计](superpowers/specs/2026-11-02-p12-multi-agent-collaboration-and-scenario-v2-design.md)：1 总控 + 5 专业 Agent 的分层架构（多 Agent 管协同、单内核管断言）、三个现实问题→三项能力的映射、地下通道倒灌入六跳、泵站负荷缺口公式与对外数字重算计划。
+- [P12 定量层落地报告](reports/p12-quant-layer-report.md)：水文/水力/不确定性内核的公式-出处对照、与稳态校核报告的手算对拍、本阶段未做项与测试数口径变更说明。
 - [相关工作定位表](competition/related-work-positioning.md)：与已发表的 Agentic AI + 数字孪生 + 审计框架逐维度对照（真实执行 / 审计层 / 评测口径 / 可核验性）、三条答辩口径、引用格式与"不能怎么做"边界。
 - [对外数字自检报告](reports/evidence-check-report.md)：106 项对外宣称数字的期望/实际逐项对照（含漂移检测，由 `decision_poc.evidence_check` 生成，勿手改）。
 - [P10 可视化工具层设计](p10-visualization-tools-design.md)：决策快照 → UE 渲染作业 → 引擎 ack 的异步闭环、3 个 MCP 工具（`scene_render`/`scene_compare`/`asset_lookup`）、工具分组 allowlist 与演示时序；说明为什么不宣称做成实时闭环、Blender 为什么只在离线跑。
