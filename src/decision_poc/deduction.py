@@ -1166,9 +1166,15 @@ class DeductionEngine:
                 demand[district] = demand.get(district, 0) + count
 
         stations = [obj for obj in affected if obj.kind is ObjectKind.PUMP_STATION]
+        from .scenario_v2 import pump_load
+
+        load_notes: list[str] = []
         for station in stations:
             district = self._district_of(station) or "未标注片区"
             rated = _num(station.attributes.get("capacity_m3h")) or 0.0
+            units = _num(station.attributes.get("pump_units")) or 0.0
+            failed_units = _num(station.attributes.get("failed_units")) or 0.0
+            failed_unit_m3h = rated * failed_units / units if units > 0 else 0.0
             if station.lifecycle_state.value == "under_maintenance":
                 target = rated * derate
                 need = math.ceil(target / capacity)
@@ -1179,6 +1185,21 @@ class DeductionEngine:
                 add(district, need)
             else:
                 basis.append(f"{district} {station.name} 运行正常，无需移动泵补位")
+            if rated > 0 and units > 0:
+                load = pump_load(
+                    station_id=station.name,
+                    rated_m3h=rated,
+                    failed_unit_m3h=failed_unit_m3h,
+                    design_inflow_m3h=rated,
+                )
+                load_notes.append(
+                    f"{district} {station.name}:{load.state}（负荷率 {load.load_ratio:.2f}，"
+                    f"可用 {load.capacity_avail_m3h:g} m³/h）"
+                )
+                basis.append(
+                    f"{district} {station.name} 负荷率 {load.load_ratio:.2f} → {load.state}；"
+                    "设计来水按额定取（保守假设）"
+                )
             evidence.update(self._refs_of(station.twin_id))
 
         # 下穿隧道抽排需求：按"积水体积 ÷ 目标排空时间"反算，参数来自规则
@@ -1314,6 +1335,7 @@ class DeductionEngine:
             "available_by_district": available_by_district,
             "decision_inputs": signals,
             "basis": basis,
+            "load_notes": load_notes,
             "gaps": gaps,
             "evidence": sorted(evidence),
             "rule_ids": sorted(rule_ids),
@@ -1357,6 +1379,7 @@ class DeductionEngine:
             "demand_by_district": _join_counts(plan.get("demand_by_district", {})),
             "available_by_district": _join_counts(plan.get("available_by_district", {})),
             "basis": " | ".join(plan["basis"]),
+            "pump_load": " | ".join(plan.get("load_notes", [])),
         }
         return DeductionStep(
             step_id="S5-resource",

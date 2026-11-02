@@ -212,6 +212,8 @@ ALIASES: dict[str, tuple[str, ...]] = {
     "owner_org": ("权属单位", "运维单位", "责任单位"),
     "facility_id": ("设施编号", "泵站编号"),
     "facility_type": ("设施类型",),
+    "pump_units": ("泵组台数",),
+    "failed_units": ("故障泵组台数",),
     "capacity_m3h": ("能力", "抽排能力(m3/h)", "额定流量"),
     "backup_power": ("备用电源",),
     "last_inspection": ("最近巡检", "上次巡检"),
@@ -281,7 +283,7 @@ FLOAT_COLUMNS = frozenset(
         "close_threshold_m",
     }
 )
-INT_COLUMNS = frozenset({"lanes", "diameter_mm", "install_year", "qty_available", "speed_kmh"})
+INT_COLUMNS = frozenset({"lanes", "diameter_mm", "install_year", "qty_available", "speed_kmh", "pump_units", "failed_units"})
 DATETIME_COLUMNS = frozenset(
     {"start_at", "end_at", "reported_at", "issued_at", "valid_from", "valid_to", "last_inspection"}
 )
