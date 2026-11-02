@@ -63,7 +63,7 @@
 - 平台界面取证：`deploy/nexent/capture_platform_ui.py` 一命令出 3 张可核对截图（技能仓库 / 智能体 / MCP 连通性校验），
   每页"必须出现的文字"写成断言，图被换过 `evidence_check` 立刻失败；
 - 对外数字自检：一条命令核对 106 项宣称证据（含漂移检测，改坏即退出码 1）；
-- P11 消融阶梯：五档配置 × 22 用例的同口径指标、固定种子 bootstrap 运行级统计与配对置换检验（`decision_poc.ablation`，报告 `docs/reports/p11-ablation-report.md`）；
+- P11 消融阶梯：五档配置 × 22 用例的同口径指标、leave-one-out（逐例剔除）稳健性与**精确符号翻转检验**（2²² 全枚举、零随机、无种子）（`decision_poc.ablation`，报告 `docs/reports/p11-ablation-report.md`）；
 - P11 决策锚定包：`H(o),H(Z),H(a*),meta` 哈希链提交 + 链下原文复核，改一个字节即检出（`decision_poc.anchoring`，表述仍是哈希链审计日志，不宣称区块链）；
 - 技术基线与风险记录。
 
@@ -99,7 +99,7 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望：对外数字自检：106/106 项一致（期望指纹 c816e79a8daaa703）
+# 期望：对外数字自检：106/106 项一致（期望指纹 d7d55f5e800d5ff2）
 ```
 
 期望值冻结在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/答辩口径，
@@ -421,7 +421,7 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **600 项**测试通过；`python -m decision_poc.evidence_check` 106/106 项一致；
+当前基线：`uv run --locked pytest -q` 共 **639 项**测试通过；`python -m decision_poc.evidence_check` 106/106 项一致；
 城市内涝主链路 Nexent 真机校验 8/8（`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。
 P0-P10 的验收口径与实测数字见各阶段回传报告（`docs/reports/`）。
