@@ -142,3 +142,29 @@ tag 与 `visualization/unreal/Content/Python/build_urban_level.py` 逐字对齐�
 | `TW-pump_station-DF-PS-01/02/03` | Actor tag 已有 `TW-pump_station-*` | 状态枚举由 `fault / normal` 扩为 `fault / normal / high_load / overload`，与推演 `pump_load` 字段对齐 |
 
 几何资产与 UE 关卡在 `blender-ue-scene`，绑定表更新必须两侧同一批做；本轮只落口径与映射计划，不动几何。
+
+## 2026-11-02 真机执行结果（UE 5.8 + 低显存启动配置）
+
+- **启动**：本机显存吃紧，D3D12 曾在 2048² 纹理分配时驱动崩溃；在 `Config/DefaultEngine.ini` 增加
+  低显存渲染设置（关虚拟阴影/Lumen/Nanite、`r.Shadow.MaxResolution=1024`、`r.Streaming.PoolSize=512`）后，
+  D3D12 正常起、`-windowed -ResX=1024 -ResY=576` 可稳定运行；
+- **语义代理**：在 `/Game/UrbanTwin/Maps/VD02Only` 生成两个带标签的 Mesh 代理并保存：
+  `twin:TW-underpass-UP-XH-101` + `kind:underpass` + `state:backflow_high`（1 个）、
+  `twin:TW-pump_station-DF-PS-01` + `kind:pump_station` + `state:overload`（1 个）；`find_actors` 反查各命中 1；
+- **绑定代码真机执行**：用 `-ExecCmds="py .../bind_check.py"` 在编辑器内跑 `apply_scenario("flood")` 与
+  `highlight([...])`，日志实测
+  `{"tags_added": [], "scenario": {"pump_alerts": 1, "underpass_alerts": 1}, "highlight_hits": 2}`
+  —— 通道倒灌与泵站过载两条新状态在真机命中，高亮 2 个目标；
+- **截图**：`docs/reports/captures/S33-binding-v2.png`（视口 1546×538）；
+- **仍未做**：`M_Underpass` / `M_Underpass_Alert` 材质不存在，倒灌状态暂用回退材质；UE 关卡里的
+  `TN-TIANFU → TW-underpass-UP-XH-101` 只做了锚点改绑，真实隧道几何体的材质换绑待资产重导入。
+
+复跑命令：
+
+```powershell
+Set-Location D:/华为ICT/agent_poc/visualization/unreal
+& "D:\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe" `
+  "D:/华为ICT/agent_poc/visualization/unreal/UrbanTwinDemo.uproject" `
+  -log -windowed -ResX=1024 -ResY=576 `
+  -ExecCmds="py D:/华为ICT/agent_poc/visualization/unreal/Content/Python/bind_check.py"
+```
