@@ -1,0 +1,3 @@
+alert_id,issued_at,valid_from,valid_to,level,rainfall_mm_3h,district,source_org,status,description
+WA-V2-20261101-01,2026-11-01T07:30:00+08:00,2026-11-01T08:00:00+08:00,2026-11-01T14:00:00+08:00,orange,60,V2-A,ORG-METEO,active,暴雨橙色预警，未来两小时局地雨量可达 80mm
+WA-V2-20261031-07,2026-10-31T14:00:00+08:00,2026-10-31T14:00:00+08:00,2026-10-31T20:00:00+08:00,yellow,20,V2-A,ORG-METEO,expired,暴雨黄色预警，已解除
