@@ -12,6 +12,7 @@ from decision_poc.collab.contracts import (
     ActionCard,
     CardStatus,
     CollabResult,
+    ResourceBinding,
     RoleHandoff,
     kernel_fingerprint,
 )
@@ -36,6 +37,7 @@ __all__ = [
     "Blackboard",
     "CardStatus",
     "CollabResult",
+    "ResourceBinding",
     "RoleHandoff",
     "RoleSpec",
     "kernel_fingerprint",

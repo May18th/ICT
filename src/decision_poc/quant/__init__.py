@@ -34,11 +34,13 @@ from decision_poc.quant.optimize import (
     compare_with_policy,
     optimal_allocation,
 )
+from decision_poc.quant.graphopt import ClosurePlan, minimum_closure_set
 from decision_poc.quant.reliability import FaultTreeResult, pump_station_unavailable
 
 __all__ = [
     "MM_PER_H_TO_LPS_HA",
     "RAINFALL_SCENARIOS_MM_2H",
+    "ClosurePlan",
     "FaultTreeResult",
     "OptimalAllocation",
     "OptimalityGap",
@@ -48,6 +50,7 @@ __all__ = [
     "compare_with_policy",
     "intensity_from_depth",
     "manning_full_flow",
+    "minimum_closure_set",
     "manning_velocity",
     "monte_carlo",
     "optimal_allocation",
