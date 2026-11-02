@@ -52,10 +52,11 @@
 | MCP `quant` 工具组（T7 工具注册） | 会让 `mcp.tools_count` 从 12 变 13，属于对外数字变更，并入 T5 一次改全 |
 | 非恒定流 / 2D 浅水 | 需 EPA SWMM 级模型与率定数据，设计规格已列为"不做" |
 
-## 5 对外数字变化（唯一一处）
+## 5 对外数字变化
 
-本阶段唯一变动的对外数字是**测试数**：600 → 639（新增 39 项），自检指纹随之由
-`c816e79a8daaa703` 变为 `d7d55f5e800d5ff2`。已按 `AGENTS.md`「单一 owner + 一次性同步」执行：
+本阶段新增 39 项测试（600 → 639），自检指纹随之变更；随后协同层再增至 671（见
+[协同层报告](p12-collab-layer-report.md)），**当前口径以 `pytest -q` 与 `evidence_check` 实跑为准**。
+已按 `AGENTS.md`「单一 owner + 一次性同步」执行：
 
 - `samples/eval/evidence_expectations.json`：`test_baseline.collected`、`checks.test_suite.docs_declared`；
 - 三份文档测试数：`README.md`、`docs/competition-gap-audit.md`、`docs/competition/preliminary-submission-draft.md`；
@@ -70,8 +71,8 @@
 ## 6 验证命令与结果
 
 ```powershell
-uv run --locked pytest -q                                   # 639 passed
-uv run --locked python -m decision_poc.evidence_check        # 106/106（指纹 d7d55f5e800d5ff2）
+uv run --locked pytest -q                                   # 671 passed（含协同层 32 项）
+uv run --locked python -m decision_poc.evidence_check        # 106/106（指纹 73b104597a9c2318）
 uv lock --check                                             # 通过
 uv run --locked python -m compileall -q src tests            # 通过
 uv pip check --python .venv\Scripts\python.exe              # 通过
