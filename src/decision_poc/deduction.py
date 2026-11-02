@@ -814,6 +814,30 @@ class DeductionEngine:
             if obj.attributes.get("road_id") in affected_roads:
                 take(obj, "位于受影响道路，同处积水影响范围", on_road.rule_id)
 
+        # 下穿隧道：位于受影响道路且外部积水可能漫过入口挡水槛
+        underpass_rule = self.rules.get("RULE-AFF-UNDERPASS-IN-SCOPE")
+        surface_depth_m = (_num(context.get("depth_cm")) or 0.0) / 100.0
+        for obj in self.store.objects():
+            if obj.kind is not ObjectKind.UNDERPASS:
+                continue
+            if obj.attributes.get("road_id") not in affected_roads:
+                continue
+            sill = _num(obj.attributes.get("entry_sill_height_m"))
+            if sill is None:
+                take(
+                    obj,
+                    "下穿隧道位于受影响道路，入口挡水槛未知，按受影响纳入并转人工",
+                    underpass_rule.rule_id,
+                )
+                continue
+            overtopped = surface_depth_m >= sill
+            take(
+                obj,
+                f"下穿隧道位于受影响道路：外部积水 {surface_depth_m * 100:.0f}cm vs "
+                f"入口挡水槛 {sill * 100:.0f}cm（{'已漫槛，倒灌' if overtopped else '未漫槛'}）",
+                underpass_rule.rule_id,
+            )
+
         # 在施工的路段（含被指定为绕行的路段）
         for obj in self.store.objects():
             if obj.kind is not ObjectKind.ROAD:
@@ -1157,6 +1181,33 @@ class DeductionEngine:
                 basis.append(f"{district} {station.name} 运行正常，无需移动泵补位")
             evidence.update(self._refs_of(station.twin_id))
 
+        # 下穿隧道抽排需求：按"积水体积 ÷ 目标排空时间"反算，参数来自规则
+        underpass_rule = self.rules.get("RULE-RES-UNDERPASS-PUMPS")
+        underpasses = [obj for obj in affected if obj.kind is ObjectKind.UNDERPASS]
+        if underpasses:
+            from .scenario_v2 import underpass_demand_from_numbers
+
+            unit_capacity = float(underpass_rule.then["unit_capacity_m3h"])
+            drain_hours = float(underpass_rule.then["drain_hours"])
+            rule_ids.add(underpass_rule.rule_id)
+            for underpass in underpasses:
+                district = self._district_of(underpass) or "未标注片区"
+                demand_result = underpass_demand_from_numbers(
+                    underpass_id=underpass.twin_id,
+                    name=underpass.name,
+                    open_water_area_m2=_num(underpass.attributes.get("open_water_area_m2")) or 0.0,
+                    lowest_point_z_m=_num(underpass.attributes.get("lowest_point_z_m")) or 0.0,
+                    sill_height_m=_num(underpass.attributes.get("entry_sill_height_m")) or 0.0,
+                    has_pump_room=str(underpass.attributes.get("has_pump_room", "no")).strip().lower()
+                    in {"yes", "true", "1"},
+                    unit_capacity_m3h=unit_capacity,
+                    drain_hours=drain_hours,
+                )
+                basis.extend(f"{district} {item}" for item in demand_result.basis)
+                if demand_result.pumps:
+                    add(district, demand_result.pumps)
+                evidence.update(self._refs_of(underpass.twin_id))
+
         pits = [obj for obj in affected if obj.kind is ObjectKind.WORK_SITE]
         pit_count: dict[str, int] = {}
         for pit in pits:
@@ -1346,6 +1397,13 @@ class DeductionEngine:
             default=0.0,
         )
         ctx = dict(context)
+        underpasses = [obj for obj in affected if obj.kind is ObjectKind.UNDERPASS]
+        surface_depth_m = (_num(context.get("depth_cm")) or 0.0) / 100.0
+        underpass_flooded = any(
+            (sill := _num(obj.attributes.get("entry_sill_height_m"))) is not None
+            and surface_depth_m >= sill
+            for obj in underpasses
+        )
         ctx.update(
             {
                 "excavation_depth_m": max_depth,
@@ -1354,6 +1412,7 @@ class DeductionEngine:
                 "pump_gap": "true" if gaps else "false",
                 "detour_under_construction": "true" if detour else "false",
                 "pit_deviation_below_bottom_m": "0.3",
+                "underpass_flooded": "true" if underpass_flooded else "false",
                 "overlap_detected": "true"
                 if any(conflict.kind is ConflictKind.OVERLAP for conflict in conflicts)
                 else "false",
@@ -1385,7 +1444,12 @@ class DeductionEngine:
                     evidence_refs=[self._ref(rule.rule_id)]
                     + sorted(
                         ref
-                        for obj in list(pits) + [item for item in affected if item.kind is ObjectKind.INCIDENT]
+                        for obj in list(pits)
+                        + [
+                            item
+                            for item in affected
+                            if item.kind in {ObjectKind.INCIDENT, ObjectKind.UNDERPASS}
+                        ]
                         for ref in self._refs_of(obj.twin_id)
                     )[:4],
                     confidence=rule.confidence,
@@ -1426,6 +1490,27 @@ class DeductionEngine:
         return steps
 
     # 二次风险 -----------------------------------------------------------
+    def _backflow_risk_level(
+        self, affected: Sequence[TwinObject], context: Mapping[str, Any]
+    ) -> str:
+        """下穿隧道倒灌等级：外部积水与入口挡水槛、设防比例的比值判定。"""
+
+        underpasses = [obj for obj in affected if obj.kind is ObjectKind.UNDERPASS]
+        if not underpasses:
+            return "none"
+        surface_depth_m = (_num(context.get("depth_cm")) or 0.0) / 100.0
+        level = "none"
+        for obj in underpasses:
+            sill = _num(obj.attributes.get("entry_sill_height_m"))
+            if sill is None or sill <= 0:
+                level = max(level, "medium", key=lambda item: {"none": 0, "medium": 1, "high": 2}[item])
+                continue
+            if surface_depth_m >= sill:
+                return "high"
+            if surface_depth_m >= sill * 0.6:
+                level = "medium"
+        return level
+
     def _residual_risks(self, affected: Sequence[TwinObject], context: Mapping[str, Any]) -> list[str]:
         pits = [obj for obj in affected if obj.kind is ObjectKind.WORK_SITE]
         gas = any("燃气" in obj.attributes.get("project_name", "") for obj in pits)
@@ -1443,6 +1528,7 @@ class DeductionEngine:
             "backup_power_missing": "true" if no_backup else "false",
             "detour_under_construction": "true" if detour else "false",
             "pit_exposed_warning_level": context.get("pit_exposed_warning_level", "none"),
+            "backflow_risk": self._backflow_risk_level(affected, context),
         }
         risks: list[str] = []
         for rule in self.rules.by_stage("residual_risk"):

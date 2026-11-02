@@ -22,8 +22,8 @@
         "gap",
         "overlap"
       ],
-      "resource_gap": 1,
-      "action_count": 9,
+      "resource_gap": 2,
+      "action_count": 10,
       "isolate_before_drain": true,
       "handoff_required": true,
       "snapshot_hash_len": 64
@@ -105,19 +105,19 @@
           "B-01": 2
         },
         "evolved_allocation": {
-          "A-03": 5,
-          "B-01": 1
+          "A-03": 6,
+          "B-01": 0
         },
         "evolved_unmet": {
           "A-03": 0,
-          "B-01": 1
+          "B-01": 2
         },
         "evolved_transfer_count": 1
       }
     },
     "test_suite": {
       "docs_declared": [
-        712
+        715
       ]
     },
     "p11_ablation": {
@@ -193,7 +193,7 @@
     }
   },
   "test_baseline": {
-    "collected": 712,
+    "collected": 715,
     "command": "python -m pytest -q",
     "verified_at": "2026-11-02"
   }

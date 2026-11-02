@@ -55,8 +55,8 @@ def test_payload_shows_real_event_before_and_after(payload: dict) -> None:
     evolved = payload["real_event"]["evolved"]
     assert baseline is not None and evolved is not None
     assert baseline["allocation_by_district"] == {"A-03": 4, "B-01": 2}
-    assert evolved["allocation_by_district"] == {"A-03": 5, "B-01": 1}
-    assert evolved["unmet_by_district"] == {"A-03": 0, "B-01": 1}
+    assert evolved["allocation_by_district"] == {"A-03": 6, "B-01": 0}
+    assert evolved["unmet_by_district"] == {"A-03": 0, "B-01": 2}
     assert any("B-01->A-03" in item and "40" in item for item in evolved["transfers"])
 
 

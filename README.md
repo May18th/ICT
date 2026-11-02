@@ -99,7 +99,7 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望：对外数字自检：106/106 项一致（期望指纹 46f8e1c371d32216）
+# 期望：对外数字自检：106/106 项一致（期望指纹 7d959b164973f5ce）
 ```
 
 期望值冻结在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/答辩口径，
@@ -141,7 +141,7 @@ uv run --locked python -m decision_poc.deduction --event WO-20261029-007 --as-of
 uv run --locked python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00 --json
 ```
 
-预期：三类冲突 C1/C2/C3、资源缺口 1 台、`隔离风险源` 序位在 `抽排` 之前；`--record` 把结论写成 claim 落进溯源账本并打印 `verify=True`。
+预期：三类冲突 C1/C2/C3、资源缺口 2 台、`隔离风险源` 序位在 `抽排` 之前；`--record` 把结论写成 claim 落进溯源账本并打印 `verify=True`。
 
 跑五个 Skill 的编排（事件理解 → 影响分析 → 资源检查 → 跨部门推演 → 证据审计）：
 
@@ -163,7 +163,7 @@ uv run --locked python -m decision_poc.counterfactual --case all     # CF1 / CF2
 uv run --locked python -m decision_poc.counterfactual --case CF2 --json
 ```
 
-预期：CF1 封路使 J-01↔J-02 从 820 m/1.2 分钟变为 3860 m/6.3 分钟（绕行经 R-102/R-103/R-104）；CF2 库存 6→2 台、缺口 1→5 台、A-03 本片区需 5 台（缺 3）、B-01 需 2 台（缺 2），优先保障 A-03；CF3 开挖面暴露等级 orange→red、新增二次风险；越权身份退出码 2 且不返回空差异。
+预期：CF1 封路使 J-01↔J-02 从 820 m/1.2 分钟变为 3860 m/6.3 分钟（绕行经 R-102/R-103/R-104）；CF2 库存 6→2 台、缺口 2→6 台、A-03 本片区需 6 台（缺 3）、B-01 需 2 台（缺 2），优先保障 A-03；CF3 开挖面暴露等级 orange→red、新增二次风险；越权身份退出码 2 且不返回空差异。
 
 跑 MCP Server（stdio，JSON-RPC 2.0，不依赖任何 MCP SDK）：
 
@@ -314,7 +314,7 @@ uv run --locked python -m decision_poc.policy_evolution --report docs/reports/p9
 ```
 
 关键片区未满足 `15 → 6` 的 6 是 ground truth 自身也解决不了、必须上报增援的下限；真实事件的
-`A-03 5 台 / B-01 1 台` 对应 40 分钟跨区时延（台账字段，不是叙事）。记忆落盘在
+`A-03 6 台 / B-01 0 台` 对应 40 分钟跨区时延（台账字段，不是叙事）。记忆落盘在
 `samples/eval/decision_memory.json`，加 `--reuse-memory` 可演示真正跨进程沉淀。
 
 反馈信号来自 `samples/eval/allocation_cases.json`（8 训练 + 4 留出，逐例标注依据条款）的**冻结 ground truth**
@@ -421,7 +421,7 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **712 项**测试通过；`python -m decision_poc.evidence_check` 106/106 项一致；
+当前基线：`uv run --locked pytest -q` 共 **715 项**测试通过；`python -m decision_poc.evidence_check` 106/106 项一致；
 城市内涝主链路 Nexent 真机校验 8/8（`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。
 P0-P10 的验收口径与实测数字见各阶段回传报告（`docs/reports/`）。

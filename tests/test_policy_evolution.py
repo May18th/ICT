@@ -92,9 +92,9 @@ def test_real_event_gets_a_different_plan_after_evolution(report: EvolutionRepor
     before, after = report.real_event_baseline, report.real_event_evolved
     assert before is not None and after is not None
     assert before.allocation_by_district == {"A-03": 4, "B-01": 2}
-    assert after.allocation_by_district == {"A-03": 5, "B-01": 1}
-    assert before.unmet_by_district == {"A-03": 1, "B-01": 0}
-    assert after.unmet_by_district == {"A-03": 0, "B-01": 1}
+    assert after.allocation_by_district == {"A-03": 6, "B-01": 0}
+    assert before.unmet_by_district == {"A-03": 2, "B-01": 0}
+    assert after.unmet_by_district == {"A-03": 0, "B-01": 2}
     assert after.transfers and "B-01->A-03" in after.transfers[0]
     assert "40" in after.transfers[0]
     # 让位后的 B-01 缺口必须被显式上报，不能悄悄消失

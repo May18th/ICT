@@ -290,7 +290,7 @@ def test_web_submit_with_suggestion_marks_gate_candidate(store, gate_dir) -> Non
             "reviewer_id": "web-u2",
             "phase": "after",
             "scores": {"accuracy": 5, "timeliness": 4, "safety": 5, "explainability": 5},
-            "suggested_allocation": "A-03=5,B-01=1",
+            "suggested_allocation": "A-03=6,B-01=0",
         }
     )
     assert status == 201

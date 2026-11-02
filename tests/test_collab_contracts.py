@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pytest
 from pydantic import ValidationError
 
@@ -9,6 +11,7 @@ from decision_poc.collab.contracts import (
     ActionCard,
     CardStatus,
     CollabResult,
+    ResourceBinding,
     RoleHandoff,
     kernel_fingerprint,
 )
@@ -31,6 +34,37 @@ def test_card_defaults_to_proposed() -> None:
     card = _card()
     assert card.status is CardStatus.PROPOSED
     assert card.quantity is None
+    assert card.latest_execution_time is None
+    assert card.required_resources == []
+    assert card.acceptance_criteria == []
+
+
+def test_card_carries_execution_contract_fields() -> None:
+    deadline = datetime(2026, 10, 29, 10, 0, tzinfo=timezone.utc)
+    card = _card(
+        latest_execution_time=deadline,
+        required_resources=[{"resource_id": "RES-PUMP-M", "quantity": 1, "unit": "台"}],
+        acceptance_criteria=["动作完成后复核积水深度"],
+    )
+
+    assert card.latest_execution_time == deadline
+    assert card.required_resources == [
+        ResourceBinding(resource_id="RES-PUMP-M", quantity=1, unit="台")
+    ]
+    assert card.acceptance_criteria == ["动作完成后复核积水深度"]
+
+
+def test_card_rejects_blank_execution_contract_items() -> None:
+    with pytest.raises(ValidationError):
+        _card(acceptance_criteria=[" "])
+
+    with pytest.raises(ValidationError):
+        _card(required_resources=[{"resource_id": " ", "quantity": 1, "unit": "台"}])
+
+
+def test_card_rejects_naive_latest_execution_time() -> None:
+    with pytest.raises(ValidationError):
+        _card(latest_execution_time=datetime(2026, 10, 29, 10, 0))
 
 
 def test_card_requires_claim() -> None:
