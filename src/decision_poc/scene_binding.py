@@ -283,6 +283,20 @@ def _tag_list(*tags: str) -> list[str]:
     return [tag for tag in tags if tag]
 
 
+def _required_twin_id(section: str, item_id: str, payload: Mapping[str, Any]) -> str:
+    """取"必需"的 twin_id：键缺失抛 KeyError，值缺失（None/空串）抛 ValueError。
+
+    为什么单独写：`str(None)` 会得到字符串 "None" 并被当成合法 ID —— 这正是 P3-D
+    边界回归抓到的漏洞；缺 ID 必须显式失败，不能静默生成一个假实体。
+    """
+    if "twin_id" not in payload:
+        raise KeyError("twin_id")
+    twin_id = payload["twin_id"]
+    if twin_id is None or str(twin_id).strip() == "":
+        raise ValueError(f"{section}:{item_id}: 布局对象没有 twin_id")
+    return str(twin_id)
+
+
 def layout_geometry_index(layout: Mapping[str, Any]) -> dict[str, EntityGeometry]:
     """布局四段 → `geometry_ref` 索引（P3-D）。
 
@@ -299,9 +313,7 @@ def layout_geometry_index(layout: Mapping[str, Any]) -> dict[str, EntityGeometry
         index[ref] = geometry
 
     for road in layout.get("roads", []):
-        twin_id = str(road["twin_id"])
-        if not twin_id:
-            raise ValueError(f"roads:{road['road_id']}: 布局对象没有 twin_id")
+        twin_id = _required_twin_id("roads", str(road.get("road_id", "")), road)
         evidence = str(road.get("evidence", ""))
         register(EntityGeometry(
             layout_ref=f"roads:{road['road_id']}",
@@ -353,9 +365,7 @@ def layout_geometry_index(layout: Mapping[str, Any]) -> dict[str, EntityGeometry
         ))
 
     for facility in layout.get("facilities", []):
-        twin_id = str(facility["twin_id"])
-        if not twin_id:
-            raise ValueError(f"facilities:{facility['facility_id']}: 布局对象没有 twin_id")
+        twin_id = _required_twin_id("facilities", str(facility.get("facility_id", "")), facility)
         evidence = str(facility.get("evidence", ""))
         register(EntityGeometry(
             layout_ref=f"facilities:{facility['facility_id']}",
@@ -376,9 +386,7 @@ def layout_geometry_index(layout: Mapping[str, Any]) -> dict[str, EntityGeometry
         ))
 
     for patch in layout.get("water", []):
-        twin_id = str(patch["twin_id"])
-        if not twin_id:
-            raise ValueError(f"water:{patch['incident_id']}: 布局对象没有 twin_id")
+        twin_id = _required_twin_id("water", str(patch.get("incident_id", "")), patch)
         evidence = str(patch.get("evidence", ""))
         depth = patch.get("depth_cm")
         register(EntityGeometry(

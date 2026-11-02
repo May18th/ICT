@@ -286,3 +286,18 @@ def test_twin_less_road_is_still_an_error() -> None:
     layout["roads"][0].pop("twin_id")
     with pytest.raises(KeyError):
         build_projection(layout=layout)
+
+def test_required_twin_id_none_is_missing_not_string_none() -> None:
+    """边界：road/facility/water 的 twin_id 显式 None 必须当缺失，不能变成字符串 "None"。
+
+    P3-D 独立核验抓到的洞：`str(None)` == "None" 会被当成合法 ID，静默生成一个假实体。
+    """
+    for section, key in (("roads", "road_id"), ("facilities", "facility_id"),
+                         ("water", "incident_id")):
+        layout = copy.deepcopy(dict(load_layout()))
+        assert layout[section], f"{section} 为空，无法覆盖该边界"
+        layout[section][0]["twin_id"] = None
+        with pytest.raises(ValueError):
+            scene_binding.layout_geometry(layout)
+        with pytest.raises(ValueError):
+            build_projection(layout=layout)
