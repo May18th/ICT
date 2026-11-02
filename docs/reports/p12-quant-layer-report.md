@@ -72,7 +72,7 @@
 
 ```powershell
 uv run --locked pytest -q                                   # 671 passed（含协同层 32 项）
-uv run --locked python -m decision_poc.evidence_check        # 106/106（指纹 73b104597a9c2318）
+uv run --locked python -m decision_poc.evidence_check        # 106/106（指纹随测试数变化，当前口径以实跑为准）
 uv lock --check                                             # 通过
 uv run --locked python -m compileall -q src tests            # 通过
 uv pip check --python .venv\Scripts\python.exe              # 通过

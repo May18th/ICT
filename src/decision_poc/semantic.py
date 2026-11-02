@@ -54,6 +54,7 @@ class ObjectKind(StrEnum):
     POWER = "power"
     TELECOM = "telecom"
     PUMP_STATION = "pump_station"
+    UNDERPASS = "underpass"
     REGION = "region"
     WORK_SITE = "work_site"
     INCIDENT = "incident"
@@ -112,6 +113,7 @@ class EmptyReason(StrEnum):
 ENTITY_KIND_MAP: dict[str, ObjectKind] = {
     "Road": ObjectKind.ROAD,
     "DrainageFacility": ObjectKind.DRAINAGE,  # refined to PUMP_STATION below
+    "Underpass": ObjectKind.UNDERPASS,
     "Area": ObjectKind.REGION,
     "ConstructionProject": ObjectKind.WORK_SITE,
     "Incident": ObjectKind.INCIDENT,
