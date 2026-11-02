@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -52,8 +53,12 @@ def main() -> None:
     twin.ensure_level(twin._level_path())
     added = _ensure_tags()
     counts = twin.apply_scenario("flood")
-    hits = twin.highlight(["TW-underpass-UP-XH-101", "TW-pump_station-DF-PS-01"])
-    payload = {"tags_added": added, "scenario": counts, "highlight_hits": hits}
+    # BIND_CHECK_HIGHLIGHT=1 时才覆盖高亮材质；默认保留告警材质，便于截图核对颜色。
+    if os.environ.get("BIND_CHECK_HIGHLIGHT", "0") == "1":
+        hits = twin.highlight([twin_id for twin_id in TARGETS])
+        payload = {"tags_added": added, "scenario": counts, "highlight_hits": hits}
+    else:
+        payload = {"tags_added": added, "scenario": counts, "highlight": "skipped"}
     unreal.log("[bind_check] " + json.dumps(payload, ensure_ascii=False))
 
 
