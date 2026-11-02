@@ -1,0 +1,16 @@
+{
+  "action_hash": "99ccbe9a7303ae1b",
+  "actions": 9,
+  "anchor_hash": "5fa35d70b11e2b4b",
+  "anchor_id": "AN-0001-2f06efe1",
+  "claims": 14,
+  "decision_id": "DEC-WO-20261029-007-20261029T0940",
+  "evidence_hash": "0ff5bb70bf669438",
+  "observation_hash": "c07ddaed34ba1099",
+  "offchain_ok": true,
+  "tamper_detected": true,
+  "tamper_reasons": [
+    "OFFCHAIN_MISMATCH:AN-0001-2f06efe1:action:5ed285c6b437"
+  ],
+  "verify_ok": true
+}
