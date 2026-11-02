@@ -40,6 +40,7 @@ OUR_TOOLS = {
     "semantic_query", "twin_neighbors", "evidence_locate", "claim_trace", "provenance_verify",
     "event_deduce", "counterfactual_run", "conflict_check", "allocation_plan",
     "scene_render", "scene_compare", "asset_lookup",
+    "collab_run",
 }
 
 DUTY_PROMPT = """你是城市内涝跨部门决策智能体。用户给出事件编号与时点后，严格按两步执行：
@@ -62,6 +63,38 @@ DUTY_PROMPT = """你是城市内涝跨部门决策智能体。用户给出事件
 不要 Markdown 代码块。"""
 
 CONSTRAINT_PROMPT = "第二步只输出 JSON 对象本身；不要在最终回答里发起工具调用。"
+
+# --- 多智能体协同 Agent（路径 B：总控 Agent 调 collab_run） ----------------
+#
+# 为什么单独建一个 Agent 而不是改原 Agent 的提示词：
+# 原 Agent 的 8 项结论一致性校验（nexent_urban）依赖固定 JSON 结构，
+# 把协同输出塞进同一份回答会让"六跳结论"和"部门动作卡"两种产出互相污染。
+COLLAB_AGENT_NAME = os.getenv("NEXENT_COLLAB_AGENT", "urban_collab_agent")
+COLLAB_TOOLS = {
+    "event_deduce", "conflict_check", "allocation_plan", "collab_run",
+    "twin_neighbors", "evidence_locate",
+}
+
+COLLAB_PROMPT = """你是城市内涝应急协同总控。用户给出事件编号与时点后，严格按两步执行：
+
+第一步：调用工具 collab_run，参数为 {"event_id": "<用户给的事件编号>", "as_of": "<用户给的时点>",
+"caller_labels": ["ORG-EMERG"]}。收到结果后不要再调用其他工具。
+
+第二步：只根据 collab_run 的返回结果，输出一个 JSON 对象，字段如下（不得增删字段）：
+{"event_id": "...", "as_of": "...",
+ "covered_agents": ["<已出卡角色>"],
+ "cards": [{"card_id": "...", "agent_id": "...", "stage": "...", "action": "...",
+           "status": "...", "co_sign_required": ["..."], "depends_on": ["..."]}],
+ "co_sign_pairs": [["<部门甲>", "<部门乙>"]],
+ "merge_order": ["<card_id，按处置顺序>"],
+ "conflicts": [{"conflict_id": "C1", "kind": "overlap"}],
+ "constraint_violations": ["<顺序硬约束违规，无则空>"],
+ "kernel_fingerprint": "<16 位内核指纹>"}
+
+要求：只转述工具返回，不得新增动作卡或改写冲突；kernel_fingerprint 必须与工具返回逐字一致，
+它是"这份协同方案对应哪一次推演"的唯一凭据。JSON 前不要加解释，不要 Markdown 代码块。"""
+
+COLLAB_CONSTRAINT_PROMPT = "第二步只输出 JSON；不得编造 card_id、动作或指纹；不要在最终回答里发起工具调用。"
 
 
 class Platform(PlatformClient):
@@ -153,6 +186,69 @@ class Platform(PlatformClient):
         print(f"[agent] id={agent_id} name={agent.get('name')} version={agent.get('current_version_no')}")
         return agent_id
 
+    def find_collab_agent(self):
+        status, agents = self.call("/api/agent/list")
+        if status != 200 or not isinstance(agents, list):
+            return None
+        for item in agents:
+            if item.get("name") == COLLAB_AGENT_NAME:
+                return item
+        return None
+
+    def create_collab_agent(self) -> int | None:
+        agent = self.find_collab_agent()
+        if agent is None:
+            status, body = self.call(
+                "/api/agent/update",
+                method="POST",
+                payload={
+                    "name": COLLAB_AGENT_NAME,
+                    "display_name": "城市内涝应急协同总控",
+                    "description": "把六跳推演拆成 1 总控 + 5 专业部门的动作卡，编排联合发布与处置顺序",
+                    "business_description": "面向城市运行管理中心的跨部门任务分派",
+                    "author": "UrbanEvolve",
+                    "model_ids": MODEL_IDS,
+                    "max_steps": 20,
+                    "duty_prompt": COLLAB_PROMPT,
+                    "constraint_prompt": COLLAB_CONSTRAINT_PROMPT,
+                    "enable_context_manager": False,
+                    "enable_protocol_repair_retry": True,
+                },
+            )
+            print(f"[collab] create: {status} {str(body)[:200]}")
+            agent = self.find_collab_agent()
+        if agent is None:
+            print("[collab] 创建失败")
+            return None
+        agent_id = int(agent["agent_id"])
+        print(f"[collab] id={agent_id} name={agent.get('name')} version={agent.get('current_version_no')}")
+        return agent_id
+
+    def attach_tools_for(self, agent_id: int, names: set[str]) -> None:
+        tools = self.tools_by_name()
+        for name in sorted(names):
+            item = tools.get(name)
+            if not item:
+                print(f"[tools] 缺少 {name}，跳过挂载")
+                continue
+            status, _ = self.call(
+                "/api/tool/update",
+                method="POST",
+                payload={"tool_id": item["tool_id"], "agent_id": agent_id, "params": {}, "enabled": True, "version_no": 0},
+            )
+            print(f"[tools] attach {name}({item['tool_id']}) -> {agent_id}: {status}")
+
+    def attach_collab_tools(self, agent_id: int) -> None:
+        self.attach_tools_for(agent_id, COLLAB_TOOLS)
+
+    def publish_collab(self, agent_id: int) -> None:
+        status, body = self.call(
+            f"/api/agent/{agent_id}/publish",
+            method="POST",
+            payload={"version_name": "urban-collab-v1", "release_note": "两步式提示词：先 collab_run 再转述动作卡"},
+        )
+        print(f"[collab] publish: {status} {str(body)[:200]}")
+
     def attach_tools(self, agent_id: int) -> None:
         tools = self.tools_by_name()
         for name in sorted(OUR_TOOLS):
@@ -190,11 +286,11 @@ def main(argv: list[str]) -> int:
     platform = Platform()
     command = argv[1] if len(argv) > 1 else "status"
 
-    if command in {"all", "register-mcp", "sync-tools", "create-agent"}:
+    if command in {"all", "register-mcp", "sync-tools", "create-agent", "create-collab-agent"}:
         mcp_id = platform.register_mcp()
         if mcp_id is None:
             return 1
-        if command in {"all", "sync-tools", "create-agent"}:
+        if command in {"all", "sync-tools", "create-agent", "create-collab-agent"}:
             platform.sync_tools()
         if command in {"all", "create-agent"}:
             agent_id = platform.create_agent()
@@ -202,6 +298,12 @@ def main(argv: list[str]) -> int:
                 return 1
             platform.attach_tools(agent_id)
             platform.publish(agent_id)
+        if command in {"all", "create-collab-agent"}:
+            collab_id = platform.create_collab_agent()
+            if collab_id is None:
+                return 1
+            platform.attach_collab_tools(collab_id)
+            platform.publish_collab(collab_id)
         if command == "all":
             platform.mint_api_key()
         return 0
@@ -217,6 +319,8 @@ def main(argv: list[str]) -> int:
         print("[tools] 命中:", sorted(OUR_TOOLS & set(tools)))
         agent = platform.find_agent()
         print("[agent]", json.dumps(agent, ensure_ascii=False)[:400] if agent else "未创建")
+        collab = platform.find_collab_agent()
+        print("[collab-agent]", json.dumps(collab, ensure_ascii=False)[:400] if collab else "未创建")
         return 0
 
     print(__doc__)

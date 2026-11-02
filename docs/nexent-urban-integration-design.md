@@ -172,3 +172,14 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 3. 宿主机 `python -m decision_poc.nexent_urban` 做结论级校验；
 4. `deploy/nexent/capture_evidence.py` 固化证据。
    详见 [deploy/nexent/README.md](../deploy/nexent/README.md)。
+
+## 9 多智能体协同 Agent（P12 / T5，路径 B）
+
+- 工具：13 个（新增 `collab_run`，分组 `collaboration`）；`tools.json` 由代码导出，4 个互斥分组。
+- 新增 Agent `urban_collab_agent`（`deploy/nexent/setup_nexent.py create-collab-agent`）：
+  挂 `collab_run` + `event_deduce` + `conflict_check` + `allocation_plan` + `twin_neighbors` + `evidence_locate`。
+- 提示词两步式：先 `collab_run`，再转述 `cards / co_sign_pairs / merge_order / conflicts / kernel_fingerprint`。
+- 为什么单开一个 Agent：主 Agent 的 8 项结论一致性校验依赖固定 JSON 结构，
+  把"部门动作卡"塞进同一份回答会让两种产出互相污染。
+- 未验证项：Nexent v2.7 的 Agent-as-Tool（路径 A，5 个部门 Agent 真机互调）**没有证据**，
+  规格里已标"无法确认"，因此只交付路径 B。
