@@ -10,6 +10,7 @@ codex/
 
 # Unreal generated project state
 visualization/unreal/*.bak-mcp
+visualization/unreal/*.bak-*
 visualization/unreal/Saved/
 visualization/unreal/Intermediate/
 visualization/unreal/DerivedDataCache/
@@ -28,3 +29,12 @@ artifacts/
 # Blender 自动备份与场景目录快照
 *.blend1
 visualization/blender/scenes.bak-*/
+
+# 真实模型凭据只走环境变量；本地 .env 不入库
+.env
+.env.*
+!.env.example
+
+# real user review records contain personal data; keep them out of git (or point URBAN_TWIN_REVIEWS elsewhere)
+samples/eval/review_submissions.jsonl
+samples/eval/review_gate_reviews.json
