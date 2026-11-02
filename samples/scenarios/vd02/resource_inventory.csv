@@ -1,0 +1,7 @@
+resource_id,name,category,qty_available,unit,owner_org,district,storage_site,capacity_note
+RES-PUMP-M,移动抽水泵,equipment,2,台,ORG-DRAIN,V2-A,A 区养护站,单台 400 m3/h
+RES-PUMP-M-C,移动抽水泵,equipment,2,台,ORG-DRAIN,V2-C,C 区基坑作业面,单台 400 m3/h
+RES-PUMP-TEAM,排水泵车,equipment,3,辆,ORG-DRAIN,V2-A,D 区周转场地,川A·00003/4/5，整车带泵 800 m3/h
+RES-BARRIER,封路围挡,equipment,32,米,ORG-ROAD,V2-A,道路中心库,2m/段
+RES-SIGN,绕行指示牌,equipment,6,块,ORG-TRAFFIC,V2-A,交警仓库,
+RES-GEN,发电机,equipment,1,台,ORG-DRAIN,V2-D,D 区仓库,

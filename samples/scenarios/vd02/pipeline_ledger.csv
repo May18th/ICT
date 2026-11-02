@@ -1,0 +1,8 @@
+pipeline_id,kind,road_id,depth_m,diameter_mm,material,install_year,owner_org,status,note
+PL-V2-DRN-MAIN,drainage,V2-R-MAIN,4.9,1400,concrete,2012,ORG-DRAIN,in_service,雨水主干 DN1400，埋深 −4.2→−5.6（下层）
+PL-V2-DRN-SEC,drainage,V2-R-SEC,5.2,1000,concrete,2014,ORG-DRAIN,in_service,雨水次干 DN1000（下层）
+PL-V2-PRE-MAIN,pressure,V2-R-MAIN,3.6,800,steel,2013,ORG-DRAIN,in_service,泵站出水压力管 DN800（下层）
+PL-V2-SEW-MAIN,sewage,V2-R-MAIN,2.15,400,concrete,2010,ORG-DRAIN,in_service,污水干管 DN400（上层）
+PL-V2-GAS-MAIN,gas,V2-R-MAIN,1.55,300,steel,2016,ORG-GAS,in_service,燃气主干 DN300（上层，与占道施工交叉）
+PL-V2-PWR-MAIN,power,V2-R-MAIN,1.0,150,pvc,2018,ORG-POWER,in_service,电力 DN150（上层）
+PL-V2-WAT-MAIN,water,V2-R-MAIN,1.85,300,ductile,2011,ORG-WATER,in_service,给水 DN300（上层）

@@ -1,0 +1,3 @@
+plan_id,project_name,road_id,pipeline_id,work_type,excavation_depth_m,start_at,end_at,permit_org,contractor,closure_scope,status
+CP-V2-001,C 区在建基坑开挖,V2-R-SEC,,excavation,8.0,2026-10-20T08:00:00+08:00,2026-11-20T18:00:00+08:00,ORG-ROAD,C-9001,全封闭,approved
+CP-V2-002,次干道通信管道敷设,V2-R-SEC,PL-V2-PWR-MAIN,trenching,1.2,2026-10-28T08:00:00+08:00,2026-11-12T18:00:00+08:00,ORG-ROAD,C-9002,半幅封闭,approved

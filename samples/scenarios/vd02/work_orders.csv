@@ -1,0 +1,4 @@
+order_id,road_id,facility_id,pipeline_id,order_type,reported_at,reporter_org,severity,status,description
+V2-IN-A1,V2-R-MAIN,DF-IN-A1,,waterlogging,2026-11-01T08:40:00+08:00,ORG-ROAD,high,open,主干道北半幅低洼点积水深约 30cm，雨水口反涌，已封路
+WO-V2-PS01,V2-R-MAIN,DF-PS-01,,pump_fault,2026-10-26T15:40:00+08:00,ORG-DRAIN,high,open,DF-PS-01 1# 泵组电机故障停运，无备用电源，等待备件
+WO-V2-PIT,V2-R-SEC,,,pit_subsidence,2026-10-30T10:00:00+08:00,ORG-ROAD,medium,open,C 区在建基坑钢板桩渗水，坑内积水

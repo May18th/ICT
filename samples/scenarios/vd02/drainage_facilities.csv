@@ -1,0 +1,6 @@
+facility_id,name,facility_type,road_id,drainage_zone,capacity_m3h,backup_power,last_inspection,state,owner_org,note,pump_units,failed_units
+DF-PS-01,DF-PS-01 兴华路雨水泵站,pump_station,V2-R-MAIN,DZ-V2,1200,no,2026-10-20,fault_pending_repair,,1# 泵组电机故障待修，无备用电源，运维主体未明确,3,1
+DF-PS-02,DF-PS-02 建设大道泵站,pump_station,V2-R-MAIN,DZ-V2,2400,yes,2026-10-18,normal,ORG-DRAIN,备电正常，兼支援 B 区,6,0
+DF-PS-03,DF-PS-03 滨河路雨水泵站,pump_station,V2-R-MAIN,DZ-V2,1800,yes,2026-10-19,normal,ORG-DRAIN,备电正常，靠河直排,4,0
+DF-IN-A1,A 区低洼点雨水口组,intake,V2-R-MAIN,DZ-V2,,,2026-10-25,clogged,ORG-DRAIN,落叶淤积，积水时反涌,,
+DF-IN-B5,B 区下沉广场雨水口组,intake,V2-R-MAIN,DZ-V2,,,2026-09-30,clogged,ORG-DRAIN,下沉广场无独立排水,,

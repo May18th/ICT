@@ -1,0 +1,3 @@
+road_id,name,district,road_class,lanes,length_m,elevation_m,drainage_zone,status,from_node,to_node,speed_kmh,work_zone_factor,note
+V2-R-MAIN,建设大道,V2-A,主干路,8,1000,0.6,DZ-V2,normal,J-V2-0,J-V2-1,50,1.0,东西向主干道，路面 −0.6m；A 区低洼点在 x30–60
+V2-R-SEC,兴华路,V2-A,次干路,4,1000,0.5,DZ-V2,normal,J-V2-1,J-V2-2,40,1.0,南北向次干道，路面 −0.5m

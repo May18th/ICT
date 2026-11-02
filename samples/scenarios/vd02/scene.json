@@ -1,0 +1,85 @@
+{
+  "schema_version": "urban-twin-scene-v1",
+  "snapshot_hash": "",
+  "objects": [
+    {
+      "twin_id": "TW-road-V2-R-MAIN",
+      "kind": "road",
+      "name": "建设大道（东西向主干道）",
+      "position": "",
+      "state": "normal",
+      "region_id": null,
+      "asset_ids": [],
+      "attributes": {
+        "road_id": "V2-R-MAIN",
+        "width_m": 50.0
+      }
+    },
+    {
+      "twin_id": "TW-road-V2-R-SEC",
+      "kind": "road",
+      "name": "兴华路（南北向次干道）",
+      "position": "",
+      "state": "normal",
+      "region_id": null,
+      "asset_ids": [],
+      "attributes": {
+        "road_id": "V2-R-SEC",
+        "width_m": 40.0
+      }
+    },
+    {
+      "twin_id": "TW-drainage-DF-PS-01",
+      "kind": "pump_station",
+      "name": "DF-PS-01 兴华路雨水泵站",
+      "position": "",
+      "state": "fault",
+      "region_id": null,
+      "asset_ids": [],
+      "attributes": {
+        "facility_id": "DF-PS-01",
+        "capacity_m3h": 1200
+      }
+    },
+    {
+      "twin_id": "TW-drainage-DF-PS-03",
+      "kind": "pump_station",
+      "name": "DF-PS-03 滨河路雨水泵站",
+      "position": "",
+      "state": "normal",
+      "region_id": null,
+      "asset_ids": [],
+      "attributes": {
+        "facility_id": "DF-PS-03",
+        "capacity_m3h": 1800
+      }
+    },
+    {
+      "twin_id": "TW-drainage-DF-PS-02",
+      "kind": "pump_station",
+      "name": "DF-PS-02 建设大道泵站",
+      "position": "",
+      "state": "normal",
+      "region_id": null,
+      "asset_ids": [],
+      "attributes": {
+        "facility_id": "DF-PS-02",
+        "capacity_m3h": 2400
+      }
+    },
+    {
+      "twin_id": "TW-incident-V2-IN-A1",
+      "kind": "incident",
+      "name": "V2-IN-A1（A 区低洼点积水）",
+      "position": "",
+      "state": "flooded",
+      "region_id": "V2-A",
+      "asset_ids": [],
+      "attributes": {
+        "incident_id": "V2-IN-A1",
+        "depth_cm": 30.0
+      }
+    }
+  ],
+  "notes": "VD-20261101-002 四区语义真源（与 scene_layout_vd02.json 同源生成）。position 留空：几何由 layout 提供，坐标由 UE 侧 Actor 变换提供。"
+}
