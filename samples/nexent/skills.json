@@ -70,6 +70,15 @@
         "asset_lookup"
       ],
       "failure_mode": "资产未生成 -> available=false + 离线生成命令；本工具不启动 Blender（生成是分钟级离线动作）"
+    },
+    {
+      "name": "collab_run",
+      "group": "collaboration",
+      "when": "已有可发布推演结论，需要把结论拆成 5 个专业部门各自可执行的动作卡并编排联合发布顺序",
+      "mcp_tools": [
+        "collab_run"
+      ],
+      "failure_mode": "推演依据不可用或事件未知 -> EVIDENCE_INSUFFICIENT / NOT_FOUND；不产出空卡片集"
     }
   ],
   "skills": [

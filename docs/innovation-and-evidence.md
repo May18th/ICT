@@ -221,7 +221,7 @@ P9.1 追加证据：
 | 记忆持久化 | `samples/eval/decision_memory.json` 跨进程可召回；`--reuse-memory` 立即 warm start |
 | 确定性 | 两次 `run_showcase()` 输出逐位一致 |
 | 对外数字自检 | `python -m decision_poc.evidence_check` → 106/106 项一致；改动任一数字即失败（退出码 1） |
-| Nexent 真机 | 平台 Agent 调 12 个 MCP 工具，六跳结论与离线 **8/8 一致**（conversation_id=21）；3 次工具调用日志快照哈希一致 |
+| Nexent 真机 | 平台 Agent 调 13 个 MCP 工具，六跳结论与离线 **8/8 一致**（conversation_id=21）；3 次工具调用日志快照哈希一致 |
 
 - 训练/留出同向下降 → 不是对评测集过拟合；
 - 关键片区未满足降到 6/4 台 = ground truth 自身也解决不了的下限（资源确实不够，必须上报增援）；

@@ -29,7 +29,7 @@
       "snapshot_hash_len": 64
     },
     "mcp": {
-      "tools_count": 12,
+      "tools_count": 13,
       "has_allocation_plan": true
     },
     "p8_eval": {
@@ -117,7 +117,7 @@
     },
     "test_suite": {
       "docs_declared": [
-        715
+        723
       ]
     },
     "p11_ablation": {
@@ -193,7 +193,7 @@
     }
   },
   "test_baseline": {
-    "collected": 715,
+    "collected": 723,
     "command": "python -m pytest -q",
     "verified_at": "2026-11-02"
   }

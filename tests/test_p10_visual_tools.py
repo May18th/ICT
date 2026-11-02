@@ -227,7 +227,7 @@ def test_tool_groups_filter() -> None:
     assert bootstrap == ["asset_lookup"]
     # 推演循环里看不见渲染工具：这是分组的全部意义
     assert "scene_render" not in decision
-    assert len(toolkit.tools()) == 12
+    assert len(toolkit.tools()) == 13
 
 
 def test_unknown_group_raises() -> None:

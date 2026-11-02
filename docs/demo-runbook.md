@@ -69,7 +69,7 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py --out docs/
 ```
 
 期望：技能末行 `缺失 []；正文逐位一致=True`；截图三行 `OK`，产物在 `docs/reports/captures/nexent/`。
-答辩时直接打开 `skill-space.png`（两个技能在平台技能仓库里）与 `mcp-space.png`（连通性校验成功 + 12 个工具）。
+答辩时直接打开 `skill-space.png`（两个技能在平台技能仓库里）与 `mcp-space.png`（连通性校验成功 + 13 个工具）。
 
 ## 3. 跑一次决策（约 60–90 秒）
 
@@ -288,7 +288,7 @@ uv run --locked python -m decision_poc.scene_layout      # 布局变了才需要
 Set-Location D:/华为ICT/agent_poc
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 对外数字自检：106/106 项一致（期望指纹 7d959b164973f5ce）
+# 对外数字自检：106/106 项一致（期望指纹 8dd1bcdee40ac40e）
 echo "exit=$LASTEXITCODE"
 ```
 

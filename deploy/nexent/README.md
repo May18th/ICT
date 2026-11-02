@@ -22,7 +22,7 @@ docker build -t urban-twin-mcp:dev -f deploy/mcp_sse/Dockerfile .
 docker rm -f urban-twin-mcp 2>$null
 docker run -d --name urban-twin-mcp --network nexent_network --restart unless-stopped urban-twin-mcp:dev
 
-# 健康检查：应返回 12 个工具
+# 健康检查：应返回 13 个工具
 docker exec urban-twin-mcp python -c "import urllib.request;print(urllib.request.urlopen('http://127.0.0.1:8000/health').read().decode()[:160])"
 ```
 
@@ -45,8 +45,8 @@ docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_
 | 步骤 | 作用 | 幂等策略 |
 | --- | --- | --- |
 | `register-mcp` | 注册 MCP 服务 `urban-twin-mcp`（URL `http://urban-twin-mcp:8000/sse`） | 同名已存在则复用 |
-| `sync-tools` | `scan_tool` 把 12 个 MCP 工具同步进平台工具库 | 已存在则覆盖状态 |
-| `create-agent` | 创建/复用 `urban_deduction_agent`，挂 12 个工具，发布版本 | 同名 Agent 复用；工具重复挂载无害 |
+| `sync-tools` | `scan_tool` 把 13 个 MCP 工具同步进平台工具库 | 已存在则覆盖状态 |
+| `create-agent` | 创建/复用 `urban_deduction_agent`，挂 13 个工具，发布版本 | 同名 Agent 复用；工具重复挂载无害 |
 | `mint-key` | 生成北向 API Key | 每次生成新 Key（旧 Key 可继续用） |
 
 输出里记下：
@@ -140,7 +140,7 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py `
 ```text
 [ui] skill-space: OK     # 平台 Skill 仓库里能看到 urban-six-hop-deduction / scarcity-allocation-evolution
 [ui] agents: OK          # 平台智能体列表里能看到 城市内涝跨部门决策智能体（V3 已发布）
-[ui] mcp-space: OK       # 「我的MCP」里 urban-twin-mcp 连通性校验成功、12 个工具
+[ui] mcp-space: OK       # 「我的MCP」里 urban-twin-mcp 连通性校验成功、13 个工具
 [ui] 证据：docs\reports\captures\nexent\platform_ui.json
 ```
 
@@ -177,7 +177,7 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py `
 
 - 本目录脚本面向**本机 Docker 演示环境**，管理员用户与 JWT 由容器环境提供；生产环境要换成正式账号与权限体系。
 - 真机结论只覆盖 `WO-20261029-007` 一个事件与 8 项一致性检查；扩事件需要扩数据集与评测用例。
-- 不宣称"多 Agent 协同"；当前是单 Agent + 12 个 MCP 工具。
+- 不宣称"多 Agent 协同"；当前是单 Agent + 13 个 MCP 工具。
 - 两个 SKILL.md 已进平台技能仓库，但**未绑定到已发布 Agent**（平台要求草稿态才能建技能实例）；
   因此只说"技能已上传到平台技能仓库"，不说"平台 Agent 会调用这两个技能"。
 - 平台界面截图/录屏都来自本机 Nexent v2.7.0 前端；换环境必须重跑并重新生成证据，

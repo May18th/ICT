@@ -31,9 +31,9 @@
 | --- | --- | --- | --- |
 | ① 多模态数据资产认知 | 16 个合成资产（表格/文本/管线示意图）统一登记：`asset_id`、sha256、locator、版本、有效期、权限；P8 资产解析 16/16、未识别列 0；**图像已做像素级语义抽取**（`decision_poc.image_semantics`：频谱峰值 120/240/360/480Hz、示意色块走向、积水范围 bbox，可转 RegionSpec 引用）`[已核实]` | 仍**没有 OCR / 视觉模型**：图例文字含义需调用方映射，频率轴范围来自生成器契约 | 低（原中） |
 | ② 低资源 KG 本体半自动构建 | 种子本体 → 规则抽取 → 置信度分档 → 人工确认 → 版本发布/回滚；P3 报告实测（改 1 格 → 2 条候选、回滚哈希逐位一致）`[已核实]` | 候选抽取是**规则+词典基线**，没有与 LLM 抽取对比的"低资源"量化（少样本 vs 全监督） | 低 |
-| ③ MCP / Skills 编排 | 12 个 MCP 工具（9 决策语义含 `allocation_plan`，3 可视化 `scene_render`/`scene_compare`/`asset_lookup`）+ 5 Skill 编排 + 绑定表；**Nexent 真机已由平台 Agent 调用 MCP 工具**（`event_deduce`/`allocation_plan`/`scene_render`，见真机报告）；**2 个 SKILL.md 已上传平台技能仓库**（skill_id=2/3，正文逐位一致，见 `samples/nexent/live/skills.json` + `captures/nexent/skill-space.png`）`[已核实]` | 技能只在仓库里可浏览，**未绑定到已发布 Agent**（平台要求草稿态建技能实例）；编排仍以单 Agent 调工具为主 | 中（原"高"已降） |
+| ③ MCP / Skills 编排 | 13 个 MCP 工具（9 决策语义含 `allocation_plan`，3 可视化 `scene_render`/`scene_compare`/`asset_lookup`）+ 5 Skill 编排 + 绑定表；**Nexent 真机已由平台 Agent 调用 MCP 工具**（`event_deduce`/`allocation_plan`/`scene_render`，见真机报告）；**2 个 SKILL.md 已上传平台技能仓库**（skill_id=2/3，正文逐位一致，见 `samples/nexent/live/skills.json` + `captures/nexent/skill-space.png`）`[已核实]` | 技能只在仓库里可浏览，**未绑定到已发布 Agent**（平台要求草稿态建技能实例）；编排仍以单 Agent 调工具为主 | 中（原"高"已降） |
 | ④ 跨文档多跳推理与可溯源 | 六跳推演 + 三类冲突 + 反事实 + 哈希链账本 + 变更传播影响分析；引用完整率 100%、篡改可定位 `[已核实]` | 跨部门只覆盖 A-03/B-01 两片区，场景宽度偏窄 | 低 |
-| ⑤ **基于 Nexent 可运行** | **已补齐**：Nexent v2.7.0 上注册 12 个 MCP 工具（tool_id 41–52），创建并发布 Agent `urban_deduction_agent`（agent_id=3，v3），真机对话**六跳结论与离线 8/8 一致**（conversation_id=21），平台调用日志含 3 次工具调用；2 个技能已上传技能仓库；平台界面截图三张（技能/智能体/MCP 连通性校验）`[已核实：`samples/nexent/live/` + `docs/reports/captures/nexent/`]` | 仅本机 Docker 单环境、单事件；技能未绑定 Agent；真实问答录屏仍待补 | 低（原"最高"已解除） |
+| ⑤ **基于 Nexent 可运行** | **已补齐**：Nexent v2.7.0 上注册 13 个 MCP 工具（tool_id 41–52），创建并发布 Agent `urban_deduction_agent`（agent_id=3，v3），真机对话**六跳结论与离线 8/8 一致**（conversation_id=21），平台调用日志含 3 次工具调用；2 个技能已上传技能仓库；平台界面截图三张（技能/智能体/MCP 连通性校验）`[已核实：`samples/nexent/live/` + `docs/reports/captures/nexent/`]` | 仅本机 Docker 单环境、单事件；技能未绑定 Agent；真实问答录屏仍待补 | 低（原"最高"已解除） |
 
 结论：原"唯一可能一票否决"的考点⑤已补齐（真机 8/8 + 工具调用日志 + conversation_id）。
 剩余高风险项转移到**参赛形态**：模板 1 未按官方版式产出、开源截图/复现材料未整备、真实用户评分与 PPT/视频缺失。
@@ -57,8 +57,8 @@
 | 项 | 实测结果 |
 | --- | --- |
 | Docker / Nexent | **可用**：Docker Desktop 启动后 Nexent v2.7.0 全栈在线（`/nb/v1/health` healthy）；MCP 服务以 `urban-twin-mcp` 容器跑在 `nexent_network` |
-| Nexent 真机 | **已跑通**：12 工具注册、Agent `urban_deduction_agent` 发布 v3、conversation_id=21、8/8 一致；证据 `samples/nexent/live/` |
-| 测试与自检 | 715 项测试通过；对外数字自检 106/106；`uv lock --check`、`compileall`、`uv pip check` 通过 |
+| Nexent 真机 | **已跑通**：13 工具注册、Agent `urban_deduction_agent` 发布 v3、conversation_id=21、8/8 一致；证据 `samples/nexent/live/` |
+| 测试与自检 | 723 项测试通过；对外数字自检 106/106；`uv lock --check`、`compileall`、`uv pip check` 通过 |
 | Git | `main` 与 `origin/main` 同步在 `6f7c559`（2026-11-02 推送 12 个提交）；工作区干净；每轮结束由 `scripts/git_sync.ps1` 自动提交推送 |
 | 开源合规 | 无 `LICENSE`；`samples/` 为合成数据、来源已标注，未发现真实私有数据；真机证据不含 API Key |
 

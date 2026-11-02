@@ -78,8 +78,9 @@ def test_tools_list_shape(server: McpServer) -> None:
         "scene_render",
         "scene_compare",
         "asset_lookup",
+        "collab_run",
     ]
-    assert len(names) == 12, "P5 的 7 个 + P6 反事实 1 个 + P9 分配 1 个 + P10 可视化 3 个"
+    assert len(names) == 13, "P5 的 7 个 + P6 反事实 1 个 + P9 分配 1 个 + P10 可视化 3 个"
     for tool in tools:
         assert tool["description"]
         schema = tool["inputSchema"]
@@ -407,7 +408,7 @@ def test_server_runs_as_subprocess(tmp_path) -> None:
     lines = [json.loads(line) for line in completed.stdout.splitlines() if line.strip()]
     assert [item["id"] for item in lines] == [1, 2, 3]
     assert lines[0]["result"]["serverInfo"]["name"] == SERVER_NAME
-    assert len(lines[1]["result"]["tools"]) == 12
+    assert len(lines[1]["result"]["tools"]) == 13
     payload = json.loads(lines[2]["result"]["content"][0]["text"])
     assert payload["status"] == "ok"
     assert payload["data"]["triple_count"] > 0
