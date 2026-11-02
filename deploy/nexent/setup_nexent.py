@@ -43,6 +43,10 @@ OUR_TOOLS = {
     "collab_run",
 }
 
+#: 主 Agent 只挂"结论类"工具：协同入口 `collab_run` 挂在专用协同 Agent 上。
+#: 否则主 Agent 可能绕过 `event_deduce` 直接调 `collab_run`，8 项结论一致性校验就会失守。
+MAIN_TOOLS = OUR_TOOLS - {"collab_run"}
+
 DUTY_PROMPT = """你是城市内涝跨部门决策智能体。用户给出事件编号与时点后，严格按两步执行：
 
 第一步：调用工具 event_deduce，参数为 {"event_id": "<用户给的事件编号>", "as_of": "<用户给的时点>",
@@ -237,6 +241,17 @@ class Platform(PlatformClient):
                 payload={"tool_id": item["tool_id"], "agent_id": agent_id, "params": {}, "enabled": True, "version_no": 0},
             )
             print(f"[tools] attach {name}({item['tool_id']}) -> {agent_id}: {status}")
+        # 反向清理：不属于本 Agent 的工具显式禁用，避免历史挂载残留
+        for name in sorted(OUR_TOOLS - names):
+            item = tools.get(name)
+            if not item:
+                continue
+            status, _ = self.call(
+                "/api/tool/update",
+                method="POST",
+                payload={"tool_id": item["tool_id"], "agent_id": agent_id, "params": {}, "enabled": False, "version_no": 0},
+            )
+            print(f"[tools] detach {name}({item['tool_id']}) from {agent_id}: {status}")
 
     def attach_collab_tools(self, agent_id: int) -> None:
         self.attach_tools_for(agent_id, COLLAB_TOOLS)
@@ -250,18 +265,7 @@ class Platform(PlatformClient):
         print(f"[collab] publish: {status} {str(body)[:200]}")
 
     def attach_tools(self, agent_id: int) -> None:
-        tools = self.tools_by_name()
-        for name in sorted(OUR_TOOLS):
-            item = tools.get(name)
-            if not item:
-                print(f"[tools] 缺少 {name}，跳过挂载")
-                continue
-            status, _ = self.call(
-                "/api/tool/update",
-                method="POST",
-                payload={"tool_id": item["tool_id"], "agent_id": agent_id, "params": {}, "enabled": True, "version_no": 0},
-            )
-            print(f"[tools] attach {name}({item['tool_id']}): {status}")
+        self.attach_tools_for(agent_id, MAIN_TOOLS)
 
     def publish(self, agent_id: int) -> None:
         status, body = self.call(
