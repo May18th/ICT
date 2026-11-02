@@ -233,10 +233,13 @@ class NexentHttpTransport:
         backoff_seconds: float = 0.5,
         client: httpx.Client | None = None,
         sleep: Callable[[float], None] = time.sleep,
+        query_builder: Callable[[Mapping[str, Any]], str] | None = None,
     ) -> None:
         if max_attempts < 1:
             raise ValueError("max_attempts must be >= 1")
         self._settings = settings
+        # 决策契约与城市内涝场景的输出结构不同，查询渲染因此可注入；缺省行为不变
+        self._query_builder = query_builder or build_decision_query
         self._timeout = httpx.Timeout(
             connect=connect_timeout, read=idle_timeout, write=10.0, pool=connect_timeout
         )
@@ -244,7 +247,12 @@ class NexentHttpTransport:
         self._backoff = backoff_seconds
         self._sleep = sleep
         self._client = client or httpx.Client(
-            timeout=self._timeout, follow_redirects=False
+            timeout=self._timeout,
+            follow_redirects=False,
+            # 不读系统代理环境变量：Nexent 常部署在本机/localhost，而 Windows 上
+            # 的 NO_PROXY 通配格式（如 ":1;*.cn;..."）会让 httpx 在构造代理规则时
+            # 抛 InvalidURL，表现为"服务活着却连不上"。代理应由调用方显式传入。
+            trust_env=False,
         )
 
     @property
@@ -286,7 +294,7 @@ class NexentHttpTransport:
         # accepted, so the decision id travels there instead of the agent context.
         body: dict[str, Any] = {
             "agent_name": self._settings.agent_name,
-            "query": build_decision_query(payload),
+            "query": self._query_builder(payload),
             "meta_data": {
                 "decision_request_id": str(payload.get("request_id") or ""),
             },
@@ -386,8 +394,9 @@ class NexentHttpTransport:
             if event_type == "conversation_created" and isinstance(content, dict):
                 conversation_id = _int_or_none(content.get("conversation_id"))
             elif event_type == "final_answer":
+                # 带工具调用的一轮会有多段 final_answer：先出现的是 tool_call 文本，
+                # 工具执行完再出真正的答案。取最后一段，不能看到第一段就收工。
                 final_answer = _text(content)
-                break
             elif event_type == "error":
                 raise NexentStreamError(
                     f"Nexent reported an error event: {_text(content)[:200]}"

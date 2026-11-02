@@ -1,0 +1,489 @@
+{
+  "schema_version": "urban-twin-mcp-tools-v1",
+  "server": {
+    "name": "urban-twin-mcp",
+    "version": "0.6.0",
+    "protocolVersion": "2025-06-18"
+  },
+  "groups": {
+    "decision": [
+      "semantic_query",
+      "twin_neighbors",
+      "evidence_locate",
+      "claim_trace",
+      "provenance_verify",
+      "event_deduce",
+      "counterfactual_run",
+      "conflict_check",
+      "allocation_plan"
+    ],
+    "presentation": [
+      "scene_render",
+      "scene_compare"
+    ],
+    "bootstrap": [
+      "asset_lookup"
+    ]
+  },
+  "tools": [
+    {
+      "name": "semantic_query",
+      "description": "按时间点查询孪生对象与语义关系，返回三元组、对象与 snapshot_hash。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query_id": {
+            "type": "string"
+          },
+          "as_of": {
+            "type": "string",
+            "description": "ISO 8601 带时区"
+          },
+          "seed_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "predicates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "serves",
+                "depends_on",
+                "located_in",
+                "maintained_by",
+                "affects",
+                "regulated_by",
+                "conflicts_with",
+                "under_construction",
+                "precedes"
+              ]
+            }
+          },
+          "kind_filter": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "road",
+                "drainage",
+                "water",
+                "gas",
+                "power",
+                "telecom",
+                "pump_station",
+                "region",
+                "work_site",
+                "incident",
+                "weather",
+                "department",
+                "resource",
+                "plan",
+                "action"
+              ]
+            }
+          },
+          "max_hops": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6
+          },
+          "min_confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "caller_labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "include_candidates": {
+            "type": "boolean"
+          },
+          "block_expansion_through": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "road",
+                "drainage",
+                "water",
+                "gas",
+                "power",
+                "telecom",
+                "pump_station",
+                "region",
+                "work_site",
+                "incident",
+                "weather",
+                "department",
+                "resource",
+                "plan",
+                "action"
+              ]
+            }
+          }
+        },
+        "required": [
+          "query_id",
+          "as_of",
+          "seed_ids"
+        ]
+      }
+    },
+    {
+      "name": "twin_neighbors",
+      "description": "从一个孪生对象出发取邻接关系，可选屏蔽某些类型作为中转（如片区）。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "twin_id": {
+            "type": "string"
+          },
+          "as_of": {
+            "type": "string"
+          },
+          "max_hops": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6
+          },
+          "caller_labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "block_expansion_through": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "road",
+                "drainage",
+                "water",
+                "gas",
+                "power",
+                "telecom",
+                "pump_station",
+                "region",
+                "work_site",
+                "incident",
+                "weather",
+                "department",
+                "resource",
+                "plan",
+                "action"
+              ]
+            }
+          }
+        },
+        "required": [
+          "twin_id",
+          "as_of"
+        ]
+      }
+    },
+    {
+      "name": "evidence_locate",
+      "description": "按 evidence_ref（asset_id#locator）取回原始片段：表格行、文段行号或图片标注区域。受限资产需调用方标签匹配。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "evidence_ref": {
+            "type": "string"
+          },
+          "caller_labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "evidence_ref"
+        ]
+      }
+    },
+    {
+      "name": "claim_trace",
+      "description": "追溯一条 claim：来源资产、定位、指纹、规则出处、所属记录与决策。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "claim_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "claim_id"
+        ]
+      }
+    },
+    {
+      "name": "provenance_verify",
+      "description": "校验溯源哈希链；给 decision_id 时返回该结论的最小重放证据集。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "decision_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "event_deduce",
+      "description": "跨部门六跳推演：现象→受影响对象→责任部门→职责冲突→资源需求→处置动作。依据受限时返回 PERMISSION_DENIED。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "工单编号，如 WO-20261029-007"
+          },
+          "as_of": {
+            "type": "string",
+            "description": "ISO 8601 带时区"
+          },
+          "caller_labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "event_id",
+          "as_of",
+          "caller_labels"
+        ]
+      }
+    },
+    {
+      "name": "counterfactual_run",
+      "description": "反事实分支：改一个输入（库存/工期/处置顺序）后重放同一套规则与语义层，返回与基线的差异；算不出来的部分显式列出。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "enum": [
+              "CF1",
+              "CF2",
+              "CF3"
+            ]
+          },
+          "event_id": {
+            "type": "string"
+          },
+          "as_of": {
+            "type": "string",
+            "description": "ISO 8601 带时区"
+          },
+          "caller_labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "case_id",
+          "event_id",
+          "as_of",
+          "caller_labels"
+        ]
+      }
+    },
+    {
+      "name": "conflict_check",
+      "description": "只取冲突视图：职责重叠、职责空白、资源争用，附建议主责。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string"
+          },
+          "as_of": {
+            "type": "string"
+          },
+          "caller_labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "event_id",
+          "as_of",
+          "caller_labels"
+        ]
+      }
+    },
+    {
+      "name": "allocation_plan",
+      "description": "稀缺抽排资源分配：取推演的片区决策输入，按可版本化策略给出各片区分配、跨区调拨与需上报增援的缺口。策略参数可选，便于编排层使用进化后的版本。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "工单编号，如 WO-20261029-007"
+          },
+          "as_of": {
+            "type": "string",
+            "description": "ISO 8601 带时区"
+          },
+          "caller_labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "policy": {
+            "type": "object",
+            "description": "可选策略参数（P9 进化后的版本）；缺省为 v1 各片区用本区库存",
+            "properties": {
+              "policy_version": {
+                "type": "string"
+              },
+              "weight_closure": {
+                "type": "number",
+                "minimum": 0
+              },
+              "weight_hazard": {
+                "type": "number",
+                "minimum": 0
+              },
+              "weight_depth": {
+                "type": "number",
+                "minimum": 0
+              },
+              "depth_scale_cm": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "transfer_penalty": {
+                "type": "number",
+                "minimum": 0
+              },
+              "allow_transfer_from_critical": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "required": [
+          "event_id",
+          "as_of",
+          "caller_labels"
+        ]
+      }
+    },
+    {
+      "name": "scene_render",
+      "description": "把一次决策渲染成三维推演作业（UE 拉取后演）。给 snapshot_id 直接渲已有快照；给 event_id/as_of/policy 则先跑决策再渲。只接受快照与策略，不接受位姿/材质/镜头。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "snapshot_id": {
+            "type": "string",
+            "description": "已导出的快照 id；给了它就不再重算决策"
+          },
+          "event_id": {
+            "type": "string",
+            "description": "工单编号，缺省 WO-20261029-007"
+          },
+          "as_of": {
+            "type": "string",
+            "description": "ISO 8601 带时区"
+          },
+          "caller_labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "policy": {
+            "type": "object",
+            "description": "可选策略参数（P9 进化后的版本）；换策略即换 snapshot_id",
+            "properties": {
+              "policy_version": {
+                "type": "string"
+              },
+              "weight_closure": {
+                "type": "number",
+                "minimum": 0
+              },
+              "weight_hazard": {
+                "type": "number",
+                "minimum": 0
+              },
+              "weight_depth": {
+                "type": "number",
+                "minimum": 0
+              },
+              "depth_scale_cm": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "transfer_penalty": {
+                "type": "number",
+                "minimum": 0
+              },
+              "allow_transfer_from_critical": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "scene_compare",
+      "description": "对比两份推演快照（基线 vs 进化后策略）：策略改了哪些参数、各片区分配怎么变、调拨与未满足怎么变，给一句可直接讲给评委的结论。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "baseline_id": {
+            "type": "string"
+          },
+          "candidate_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "baseline_id",
+          "candidate_id"
+        ]
+      }
+    },
+    {
+      "name": "asset_lookup",
+      "description": "核对 Blender 侧是否已有该场景的可导入资产（glb/blend/对象计数）。只核对不生成：资产生成是离线动作，缺失时返回可执行的离线命令。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "flood",
+              "closure",
+              "construction"
+            ]
+          }
+        },
+        "required": [
+          "scenario"
+        ]
+      }
+    }
+  ]
+}

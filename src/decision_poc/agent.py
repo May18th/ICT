@@ -5,6 +5,13 @@ from pydantic_ai import Agent
 from pydantic_ai.models.test import TestModel
 
 from .contracts import DecisionOutput, DecisionRequest
+from .model_provider import (
+    PROVIDER_ENV,
+    ModelProviderError,
+    ModelSettings,
+    build_model,
+    settings_from_env,
+)
 
 
 def _build_agent() -> Agent:
@@ -38,3 +45,31 @@ async def generate_decision_async(
         model=TestModel(custom_output_args=model_output),
     )
     return result.output
+
+
+async def generate_decision_with_model(
+    request: DecisionRequest,
+    evidence: list[dict[str, Any]],
+    model: Any,
+) -> DecisionOutput:
+    """Run the typed agent with an explicitly supplied pydantic-ai model."""
+
+    result = await _build_agent().run(_prompt(request, evidence), model=model)
+    return result.output
+
+
+async def generate_decision_live(
+    request: DecisionRequest,
+    evidence: list[dict[str, Any]],
+    settings: ModelSettings | None = None,
+) -> DecisionOutput:
+    """Run the typed agent with the configured real provider (offline by default)."""
+
+    resolved = settings if settings is not None else settings_from_env()
+    model = build_model(resolved)
+    if model is None:
+        raise ModelProviderError(
+            f"{PROVIDER_ENV} is not set to a real provider; use "
+            "generate_decision_async for the offline TestModel path"
+        )
+    return await generate_decision_with_model(request, evidence, model)

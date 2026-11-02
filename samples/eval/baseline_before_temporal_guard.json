@@ -11,11 +11,13 @@
     "triples": 101,
     "relation_kinds": 8,
     "locator_hit_rate": 1.0,
-    "six_hop_rate": 0.8636,
+    "six_hop_cases": 19,
+    "eligible_cases": 19,
+    "six_hop_rate": 1.0,
     "citation_completeness": 1.0,
     "unsupported_claims": 0,
-    "p50_ms": 5.7,
-    "p95_ms": 6.2,
+    "p50_ms": 6.1,
+    "p95_ms": 6.9,
     "safety_by_kind": {
       "conflict": "3/3",
       "expired": "4/4",
@@ -59,7 +61,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 2,
       "locator_expected": 2,
-      "elapsed_ms": 6.6
+      "refused": false,
+      "elapsed_ms": 7.6
     },
     {
       "case_id": "N02",
@@ -95,7 +98,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 6.1
+      "refused": false,
+      "elapsed_ms": 6.9
     },
     {
       "case_id": "N03",
@@ -127,7 +131,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 6.3
+      "refused": false,
+      "elapsed_ms": 6.5
     },
     {
       "case_id": "N04",
@@ -162,7 +167,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 6.2
+      "refused": false,
+      "elapsed_ms": 6.4
     },
     {
       "case_id": "N05",
@@ -191,7 +197,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 5.7
+      "refused": false,
+      "elapsed_ms": 5.9
     },
     {
       "case_id": "N06",
@@ -221,7 +228,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 5.5
+      "refused": false,
+      "elapsed_ms": 6.2
     },
     {
       "case_id": "N07",
@@ -257,7 +265,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 6.0
+      "refused": false,
+      "elapsed_ms": 6.6
     },
     {
       "case_id": "C01",
@@ -293,7 +302,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 3.2
+      "refused": false,
+      "elapsed_ms": 3.5
     },
     {
       "case_id": "C02",
@@ -323,7 +333,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 2.6
+      "refused": false,
+      "elapsed_ms": 3.4
     },
     {
       "case_id": "C03",
@@ -352,7 +363,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 3.2
+      "refused": false,
+      "elapsed_ms": 3.1
     },
     {
       "case_id": "I01",
@@ -369,7 +381,8 @@
       "citation_completeness": 0.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 0.9
+      "refused": false,
+      "elapsed_ms": 1.0
     },
     {
       "case_id": "I02",
@@ -407,6 +420,7 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
+      "refused": false,
       "elapsed_ms": 5.9
     },
     {
@@ -438,7 +452,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 5.8
+      "refused": false,
+      "elapsed_ms": 5.7
     },
     {
       "case_id": "I04",
@@ -475,7 +490,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 5.9
+      "refused": false,
+      "elapsed_ms": 5.6
     },
     {
       "case_id": "I05",
@@ -507,7 +523,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 5.2
+      "refused": false,
+      "elapsed_ms": 5.4
     },
     {
       "case_id": "I06",
@@ -538,7 +555,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 5.4
+      "refused": false,
+      "elapsed_ms": 6.7
     },
     {
       "case_id": "P01",
@@ -555,7 +573,8 @@
       "citation_completeness": 0.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 6.2
+      "refused": false,
+      "elapsed_ms": 7.0
     },
     {
       "case_id": "P02",
@@ -572,7 +591,8 @@
       "citation_completeness": 0.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 5.0
+      "refused": false,
+      "elapsed_ms": 6.3
     },
     {
       "case_id": "E01",
@@ -604,7 +624,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 5.7
+      "refused": false,
+      "elapsed_ms": 5.8
     },
     {
       "case_id": "E02",
@@ -636,7 +657,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 5.6
+      "refused": false,
+      "elapsed_ms": 6.3
     },
     {
       "case_id": "E03",
@@ -668,7 +690,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 5.8
+      "refused": false,
+      "elapsed_ms": 6.2
     },
     {
       "case_id": "E04",
@@ -697,7 +720,8 @@
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
-      "elapsed_ms": 5.4
+      "refused": false,
+      "elapsed_ms": 5.6
     }
   ]
 }

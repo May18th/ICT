@@ -54,6 +54,7 @@ from .deduction import (
     DeductionEngine,
     DeductionResult,
     DepartmentConflict,
+    DistrictSignal,
     ResourceGap,
     RuleSet,
     StageStatus,
@@ -70,7 +71,7 @@ from .governance import ErrorCode, blocked_by_visibility, make_tool_error
 from .provenance import ProvenanceLedger
 from .semantic import ObjectKind, SemanticQuery, TwinObject, TwinSemanticStore
 
-SKILL_MANIFEST_VERSION = "1.1"
+SKILL_MANIFEST_VERSION = "1.2"
 
 # 编排顺序即验收口径：先弄清事件，再谈影响，最后才允许出结论。
 SKILL_ORDER: tuple[str, ...] = ("understand", "impact", "resource", "deduce", "audit")
@@ -207,6 +208,8 @@ class DeductionView(StrictModel):
     exposed_hours: float = 0.0
     rules_version: str = ""
     snapshot_hash: str = ""
+    # 策略层（P9）的决策输入：编排层直接用，不必回读推演结论字符串
+    decision_inputs: dict[str, DistrictSignal] = Field(default_factory=dict)
 
 
 class ClaimAudit(StrictModel):
@@ -737,6 +740,7 @@ class DeduceSkill(Skill):
             exposed_hours=outcome.exposed_hours,
             rules_version=outcome.rules_version,
             snapshot_hash=outcome.snapshot_hash,
+            decision_inputs=dict(outcome.decision_inputs),
         )
         insufficient = [
             step.stage for step in outcome.steps if step.status is StageStatus.INSUFFICIENT
@@ -892,10 +896,29 @@ class SkillPipeline:
     | audit rejects a claim | stop, `publishable=False` |
 
     `publishable` is the single flag the Demo layer is allowed to trust.
+
+    `stages` 只用于消融评测（P11）：传入技能 stage 子集时，缺席的技能不执行，但顺序仍按
+    `SKILLS` 的固定编排顺序，调用方不能靠传参改变编排顺序。默认全量，生产路径不受影响。
     """
 
-    def __init__(self, runtime: SkillRuntime | None = None) -> None:
+    def __init__(
+        self,
+        runtime: SkillRuntime | None = None,
+        *,
+        stages: Sequence[str] | None = None,
+    ) -> None:
         self.runtime = runtime or SkillRuntime()
+        known = [skill.stage for skill in SKILLS]
+        if stages is None:
+            self.stages: tuple[str, ...] = tuple(known)
+        else:
+            unknown = sorted({stage for stage in stages if stage not in known})
+            if unknown:
+                raise ValueError(f"unknown skill stage(s): {unknown}; known stages: {known}")
+            wanted = set(stages)
+            # 顺序是契约的一部分：只在子集里选，不重排
+            self.stages = tuple(stage for stage in known if stage in wanted)
+        self._skills = tuple(skill for skill in SKILLS if skill.stage in self.stages)
 
     def run(
         self,
@@ -917,7 +940,7 @@ class SkillPipeline:
         )
         collected: dict[str, ToolResult] = {}
 
-        for skill in SKILLS:
+        for skill in self._skills:
             payload_request: SkillRequest = request
             if skill.name == "impact_analysis":
                 payload_request = ImpactRequest(**request.model_dump())
@@ -1033,7 +1056,36 @@ def skill_manifest() -> dict[str, Any]:
                 "mcp_tools": ["counterfactual_run"],
                 "cases": ["CF1", "CF2", "CF3"],
                 "failure_mode": "基线越权或不可计算 -> PERMISSION_DENIED / EVIDENCE_INSUFFICIENT，不给空差异",
-            }
+            },
+            {
+                "name": "allocation_plan",
+                "when": "已有可发布推演结论，且存在跨片区资源缺口，需要给出“这几台先给谁”",
+                "mcp_tools": ["allocation_plan"],
+                "failure_mode": "无决策输入或依据不可见 -> EVIDENCE_INSUFFICIENT / PERMISSION_DENIED，不给分配方案",
+            },
+            # P10 可视化三件套：同样不是链路中的一跳。`group` 字段与 mcp_server 的
+            # TOOL_GROUPS 对齐，平台侧按阶段挂载（推演时不挂渲染工具）。
+            {
+                "name": "scene_render",
+                "group": "presentation",
+                "when": "一次决策已定稿（含分配方案），需要把这份结论演成三维推演作业供 UE 拉取",
+                "mcp_tools": ["scene_render"],
+                "failure_mode": "作业落盘失败 -> UPSTREAM_UNAVAILABLE；引擎未认领只体现为 delivery=pending，不算失败，决策照出",
+            },
+            {
+                "name": "scene_compare",
+                "group": "presentation",
+                "when": "已各自渲染过基线快照与进化后策略快照，需要给出“策略改了、分配怎么变”的差异结论",
+                "mcp_tools": ["scene_compare"],
+                "failure_mode": "任一侧快照不存在 -> NOT_FOUND；禁止给“空差异”（空差异会被读成没有影响）",
+            },
+            {
+                "name": "asset_lookup",
+                "group": "bootstrap",
+                "when": "初始化或场景类型变化时，核对 Blender 侧是否已有该场景的可导入资产",
+                "mcp_tools": ["asset_lookup"],
+                "failure_mode": "资产未生成 -> available=false + 离线生成命令；本工具不启动 Blender（生成是分钟级离线动作）",
+            },
         ],
         "skills": [
             {

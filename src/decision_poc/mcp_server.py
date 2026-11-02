@@ -37,8 +37,26 @@ from .semantic import (
 )
 
 SERVER_NAME = "urban-twin-mcp"
-SERVER_VERSION = "0.5.0"
+SERVER_VERSION = "0.6.0"
 PROTOCOL_VERSION = "2025-06-18"
+
+# 工具分组（allowlist）。目的：智能体在推演循环里看不见渲染工具，就不会把推理预算
+# 花在"要不要换个镜头"上。`presentation` 只在决策定稿后启用，`bootstrap` 只在初始化启用。
+TOOL_GROUPS: dict[str, tuple[str, ...]] = {
+    "decision": (
+        "semantic_query",
+        "twin_neighbors",
+        "evidence_locate",
+        "claim_trace",
+        "provenance_verify",
+        "event_deduce",
+        "counterfactual_run",
+        "conflict_check",
+        "allocation_plan",
+    ),
+    "presentation": ("scene_render", "scene_compare"),
+    "bootstrap": ("asset_lookup",),
+}
 
 
 # --- JSON-RPC error codes (spec) ----------------------------------------
@@ -118,9 +136,15 @@ class UrbanToolkit:
         ledger: ProvenanceLedger | None = None,
         log_path: str | None = None,
         rules_path: str | None = None,
+        visual_root: str | None = None,
+        groups: Sequence[str] | None = None,
     ) -> None:
         self.logs: list[dict[str, Any]] = []
         self.log_path = Path(log_path) if log_path else None
+        # 渲染作业根目录：None 表示走 visualize 的默认值（可用环境变量覆盖）
+        self.visual_root = Path(visual_root) if visual_root else None
+        # 工具分组：None = 全量暴露，保持向后兼容
+        self.groups = tuple(groups) if groups else None
         self._deduction: Any = None
         self._skills: Any = None
         self.rules_path = Path(rules_path) if rules_path else _default_rules_path()
@@ -150,8 +174,8 @@ class UrbanToolkit:
     def version(self) -> str:
         return self.knowledge_version
 
-    def tools(self) -> list[dict[str, Any]]:
-        return [
+    def tools(self, groups: Sequence[str] | None = None) -> list[dict[str, Any]]:
+        tools = [
             {
                 "name": "semantic_query",
                 "description": "按时间点查询孪生对象与语义关系，返回三元组、对象与 snapshot_hash。",
@@ -268,7 +292,105 @@ class UrbanToolkit:
                     "required": ["event_id", "as_of", "caller_labels"],
                 },
             },
+            {
+                "name": "allocation_plan",
+                "description": "稀缺抽排资源分配：取推演的片区决策输入，按可版本化策略给出各片区分配、跨区调拨与需上报增援的缺口。策略参数可选，便于编排层使用进化后的版本。",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "event_id": {"type": "string", "description": "工单编号，如 WO-20261029-007"},
+                        "as_of": {"type": "string", "description": "ISO 8601 带时区"},
+                        "caller_labels": {"type": "array", "items": {"type": "string"}},
+                        "policy": {
+                            "type": "object",
+                            "description": "可选策略参数（P9 进化后的版本）；缺省为 v1 各片区用本区库存",
+                            "properties": {
+                                "policy_version": {"type": "string"},
+                                "weight_closure": {"type": "number", "minimum": 0},
+                                "weight_hazard": {"type": "number", "minimum": 0},
+                                "weight_depth": {"type": "number", "minimum": 0},
+                                "depth_scale_cm": {"type": "number", "exclusiveMinimum": 0},
+                                "transfer_penalty": {"type": "number", "minimum": 0},
+                                "allow_transfer_from_critical": {"type": "boolean"},
+                            },
+                        },
+                    },
+                    "required": ["event_id", "as_of", "caller_labels"],
+                },
+            },
+            {
+                "name": "scene_render",
+                "description": "把一次决策渲染成三维推演作业（UE 拉取后演）。给 snapshot_id 直接渲已有快照；给 event_id/as_of/policy 则先跑决策再渲。只接受快照与策略，不接受位姿/材质/镜头。",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "snapshot_id": {
+                            "type": "string",
+                            "description": "已导出的快照 id；给了它就不再重算决策",
+                        },
+                        "event_id": {"type": "string", "description": "工单编号，缺省 WO-20261029-007"},
+                        "as_of": {"type": "string", "description": "ISO 8601 带时区"},
+                        "caller_labels": {"type": "array", "items": {"type": "string"}},
+                        "policy": {
+                            "type": "object",
+                            "description": "可选策略参数（P9 进化后的版本）；换策略即换 snapshot_id",
+                            "properties": {
+                                "policy_version": {"type": "string"},
+                                "weight_closure": {"type": "number", "minimum": 0},
+                                "weight_hazard": {"type": "number", "minimum": 0},
+                                "weight_depth": {"type": "number", "minimum": 0},
+                                "depth_scale_cm": {"type": "number", "exclusiveMinimum": 0},
+                                "transfer_penalty": {"type": "number", "minimum": 0},
+                                "allow_transfer_from_critical": {"type": "boolean"},
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                "name": "scene_compare",
+                "description": "对比两份推演快照（基线 vs 进化后策略）：策略改了哪些参数、各片区分配怎么变、调拨与未满足怎么变，给一句可直接讲给评委的结论。",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "baseline_id": {"type": "string"},
+                        "candidate_id": {"type": "string"},
+                    },
+                    "required": ["baseline_id", "candidate_id"],
+                },
+            },
+            {
+                "name": "asset_lookup",
+                "description": "核对 Blender 侧是否已有该场景的可导入资产（glb/blend/对象计数）。只核对不生成：资产生成是离线动作，缺失时返回可执行的离线命令。",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "scenario": {
+                            "type": "string",
+                            "enum": ["normal", "flood", "closure", "construction"],
+                        },
+                    },
+                    "required": ["scenario"],
+                },
+            },
         ]
+
+        selected = self._selected_groups(groups)
+        if selected is None:
+            return tools
+        allowed = {name for group in selected for name in TOOL_GROUPS[group]}
+        return [tool for tool in tools if tool["name"] in allowed]
+
+    def _selected_groups(
+        self, groups: Sequence[str] | None = None
+    ) -> tuple[str, ...] | None:
+        selected = tuple(groups) if groups else self.groups
+        if not selected:
+            return None
+        unknown = [group for group in selected if group not in TOOL_GROUPS]
+        if unknown:
+            raise KeyError(f"未知工具分组: {unknown}，可选 {sorted(TOOL_GROUPS)}")
+        return selected
 
     # --- dispatch --------------------------------------------------------
     def call(
@@ -283,6 +405,10 @@ class UrbanToolkit:
             "event_deduce": self._event_deduce,
             "conflict_check": self._conflict_check,
             "counterfactual_run": self._counterfactual_run,
+            "allocation_plan": self._allocation_plan,
+            "scene_render": self._scene_render,
+            "scene_compare": self._scene_compare,
+            "asset_lookup": self._asset_lookup,
         }
         handler = handlers.get(name)
         if handler is None:
@@ -313,6 +439,8 @@ class UrbanToolkit:
     def _log(self, name: str, trace_id: str | None, result: ToolResult) -> None:
         entry = {
             "tool": name,
+            # 演示现场要能区分"智能体调的"和"人手动点的"，所以带来源
+            "origin": "mcp",
             "trace_id": trace_id,
             "status": result.status,
             "error_code": result.error.code if result.error else None,
@@ -659,6 +787,222 @@ class UrbanToolkit:
             )
         return _ok("counterfactual_run", result.model_dump(mode="json"), self.version)
 
+    def _allocation_plan(self, args: Mapping[str, Any]) -> ToolResult:
+        """稀缺抽排资源分配（P9 决策层）。
+
+        只做"怎么分"，不改推演：决策输入来自 `DeductionResult.decision_inputs`。
+        依据对调用方不可见时直接拒——分配方案会隐含引用片区风险事实，
+        不能"删掉依据只给方案"。
+        """
+        from .allocation import AllocationPolicy, AllocationUnavailable, decide
+
+        caller_labels = [str(item) for item in args.get("caller_labels", [])]
+        event_id = str(args["event_id"])
+        raw_policy = args.get("policy") or {}
+        if not isinstance(raw_policy, Mapping):
+            raise ValueError("policy 必须是对象")
+        # 默认 v1（各片区用本区库存）；编排层可传入进化后的参数
+        policy = AllocationPolicy.model_validate({"policy_version": "v1", **dict(raw_policy)})
+
+        try:
+            outcome = self._deduction_engine().deduce(
+                event_id, as_of=args["as_of"], caller_labels=caller_labels
+            )
+        except KeyError:
+            return _error(
+                "allocation_plan",
+                {"event_id": event_id},
+                ErrorCode.NOT_FOUND,
+                f"未知事件: {event_id}",
+                self.version,
+            )
+        except Exception as exc:  # 规则来源校验失败等
+            return _error(
+                "allocation_plan",
+                {"event_id": event_id},
+                ErrorCode.EVIDENCE_INSUFFICIENT,
+                f"推演依据不可用: {exc}",
+                self.version,
+            )
+
+        cited = sorted({ref for step in outcome.steps for ref in step.evidence_refs})
+        blocked = self._visibility_blocked(cited, caller_labels)
+        if blocked:
+            return _error(
+                "allocation_plan",
+                {"event_id": event_id, "blocked_assets": blocked},
+                ErrorCode.PERMISSION_DENIED,
+                "分配会隐含引用对当前调用方不可见的依据，不能只给方案不给依据",
+                self.version,
+            )
+        if not outcome.decision_inputs:
+            return _error(
+                "allocation_plan",
+                {"event_id": event_id},
+                ErrorCode.EVIDENCE_INSUFFICIENT,
+                "推演未产出片区决策输入（资源测算未跑通），拒绝出分配方案",
+                self.version,
+            )
+        try:
+            decision = decide(
+                outcome.decision_inputs, policy, snapshot_hash=outcome.snapshot_hash
+            )
+        except AllocationUnavailable as exc:
+            return _error(
+                "allocation_plan",
+                {"event_id": event_id},
+                ErrorCode.EVIDENCE_INSUFFICIENT,
+                str(exc),
+                self.version,
+            )
+        data = {
+            "event_id": event_id,
+            "as_of": outcome.root.as_of.isoformat(),
+            "policy": policy.model_dump(mode="json"),
+            "allocation": decision.model_dump(mode="json"),
+            "rules_version": outcome.rules_version,
+            "snapshot_hash": outcome.snapshot_hash,
+        }
+        return _ok("allocation_plan", data, self.version)
+
+
+    # --- 可视化（P10） -----------------------------------------------------
+
+    def _visual(self):
+        """延迟导入：可视化层要读布局文件，不该压在纯语义查询的冷启动路径上。"""
+        from . import visualize
+
+        return visualize
+
+    def _scene_render(self, args: Mapping[str, Any]) -> ToolResult:
+        """把一次决策变成 UE 能演的渲染作业。
+
+        三条约束落在实现里：只接受快照 id 与策略（不接受位姿/材质/镜头）；作业落盘
+        即返回，不等引擎认领；引擎没起只体现为 delivery=pending，不算失败——渲染不得
+        进决策主循环的强依赖路径。
+        """
+        viz = self._visual()
+        snapshot_id = args.get("snapshot_id")
+        if snapshot_id:
+            try:
+                snapshot = viz.load_snapshot(str(snapshot_id), self.visual_root)
+            except KeyError:
+                return _error(
+                    "scene_render",
+                    {"snapshot_id": str(snapshot_id)},
+                    ErrorCode.NOT_FOUND,
+                    f"未知快照: {snapshot_id}，请先用 event_id/policy 生成",
+                    self.version,
+                )
+        else:
+            raw_policy = args.get("policy")
+            if raw_policy is not None and not isinstance(raw_policy, Mapping):
+                return _error(
+                    "scene_render",
+                    {"policy": raw_policy},
+                    ErrorCode.VALIDATION_FAILED,
+                    "policy 必须是对象",
+                    self.version,
+                )
+            labels = [str(item) for item in args.get("caller_labels", [])] or ["ORG-EMERG"]
+            try:
+                snapshot = viz.build_visual_snapshot(
+                    str(args.get("event_id") or viz.DEFAULT_EVENT_ID),
+                    str(args.get("as_of") or viz.DEFAULT_AS_OF),
+                    caller_labels=labels,
+                    policy=raw_policy,
+                    runtime=self._skill_runtime(),
+                )
+            except Exception as exc:  # 规则来源校验失败等：渲染失败不能把决策层拖挂
+                return _error(
+                    "scene_render",
+                    {"event_id": args.get("event_id")},
+                    ErrorCode.EVIDENCE_INSUFFICIENT,
+                    f"快照构建失败: {type(exc).__name__}: {exc}",
+                    self.version,
+                )
+            viz.save_snapshot(snapshot, self.visual_root)
+
+        job = viz.build_render_job(snapshot)
+        try:
+            job_file = viz.save_job(job, self.visual_root)
+        except OSError as exc:
+            return _error(
+                "scene_render",
+                {"snapshot_id": snapshot.snapshot_id},
+                ErrorCode.UPSTREAM_UNAVAILABLE,
+                f"渲染作业落盘失败: {exc}",
+                self.version,
+            )
+        allocation = snapshot.allocation or {}
+        data = {
+            "snapshot_id": snapshot.snapshot_id,
+            "job_id": job.job_id,
+            "scene_hash": snapshot.scene_hash,
+            "snapshot_hash": snapshot.snapshot_hash,
+            "scenario": snapshot.scenario,
+            "policy_version": snapshot.policy_version,
+            "step_count": len(snapshot.steps),
+            "highlight_count": len(snapshot.highlight_union),
+            "allocation": {
+                "allocated": allocation.get("total_allocated"),
+                "demand": allocation.get("total_demand"),
+                "unmet": allocation.get("total_unmet"),
+                "transfers": len(allocation.get("transfers", [])),
+            },
+            # 只有 pending / acked 两档：本工具不持有渲染器连接，不谎报"已渲染"
+            "delivery": viz.delivery_state(snapshot.snapshot_id, self.visual_root),
+            "job_path": str(job_file),
+            "fetch_url": f"/api/scene/{snapshot.snapshot_id}",
+            "warnings": list(snapshot.warnings),
+        }
+        return _ok("scene_render", data, self.version)
+
+    def _scene_compare(self, args: Mapping[str, Any]) -> ToolResult:
+        """基线 vs 进化后策略的差异。两份快照必须都已落盘。"""
+        viz = self._visual()
+        baseline_id = str(args["baseline_id"])
+        candidate_id = str(args["candidate_id"])
+        try:
+            baseline = viz.load_snapshot(baseline_id, self.visual_root)
+            candidate = viz.load_snapshot(candidate_id, self.visual_root)
+        except KeyError as exc:
+            return _error(
+                "scene_compare",
+                {"baseline_id": baseline_id, "candidate_id": candidate_id},
+                ErrorCode.NOT_FOUND,
+                str(exc),
+                self.version,
+            )
+        result = viz.compare_snapshots(baseline, candidate)
+        return _ok("scene_compare", result.model_dump(mode="json"), self.version)
+
+    def _asset_lookup(self, args: Mapping[str, Any]) -> ToolResult:
+        """核对 Blender 资产是否就绪。不启动 Blender：生成是分钟级离线动作。"""
+        viz = self._visual()
+        scenario = str(args["scenario"])
+        try:
+            data = viz.asset_lookup(scenario)
+        except KeyError as exc:
+            return _error(
+                "asset_lookup",
+                {"scenario": scenario, "known": list(viz.SCENARIOS)},
+                ErrorCode.NOT_FOUND,
+                str(exc),
+                self.version,
+            )
+        except FileNotFoundError as exc:
+            return _error(
+                "asset_lookup",
+                {"scenario": scenario},
+                ErrorCode.UPSTREAM_UNAVAILABLE,
+                str(exc),
+                self.version,
+            )
+        if not data["glb_exists"]:
+            data["detail"] = "资产未生成，先离线跑 regenerate_command 再重试"
+        return _ok("asset_lookup", data, self.version)
+
 
 def _default_rules_path() -> Path:
     from .deduction import DEFAULT_RULES_PATH
@@ -780,19 +1124,62 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="strict")
     import argparse
 
+    from .visualize import tool_log_path
+
     parser = argparse.ArgumentParser(description="urban twin MCP server (stdio)")
     parser.add_argument("--dataset", default=None, help="dataset directory")
     parser.add_argument("--ledger", default=None, help="persisted provenance directory")
     parser.add_argument("--version", default="kb-v1.0.0", help="knowledge version to serve")
-    parser.add_argument("--log", default=None, help="append tool-call log to this jsonl file")
+    parser.add_argument(
+        "--log",
+        default=None,
+        help=f"append tool-call log to this jsonl file（缺省 {tool_log_path()}）",
+    )
+    parser.add_argument("--visual-root", default=None, help="render job / snapshot root")
+    parser.add_argument(
+        "--groups",
+        default=None,
+        help=f"只暴露指定工具分组，逗号分隔（可选 {','.join(sorted(TOOL_GROUPS))}）",
+    )
     parser.add_argument("--list-tools", action="store_true", help="print tool schemas and exit")
+    parser.add_argument(
+        "--export-tools",
+        default=None,
+        help="把工具清单写成 JSON（供 Nexent 等平台注册，避免手抄 schema）",
+    )
     args = parser.parse_args(argv)
 
     toolkit = UrbanToolkit(
-        args.dataset, knowledge_version=args.version, ledger_dir=args.ledger, log_path=args.log
+        args.dataset,
+        knowledge_version=args.version,
+        ledger_dir=args.ledger,
+        # 缺省就记到可视化层同一份日志：演示时"谁触发了渲染"要和 MCP 调用日志对得上
+        log_path=args.log or str(tool_log_path()),
+        rules_path=None,
+        visual_root=args.visual_root,
+        groups=[item for item in (args.groups or "").split(",") if item] or None,
     )
     if args.list_tools:
         print(json.dumps({"tools": toolkit.tools()}, ensure_ascii=False, indent=2))
+        return 0
+    if args.export_tools:
+        payload = {
+            "schema_version": "urban-twin-mcp-tools-v1",
+            "server": {
+                "name": SERVER_NAME,
+                "version": SERVER_VERSION,
+                "protocolVersion": PROTOCOL_VERSION,
+            },
+            # 分组一并导出：平台侧可以按阶段只挂一部分工具
+            "groups": {name: list(members) for name, members in TOOL_GROUPS.items()},
+            "tools": toolkit.tools(),
+        }
+        target = Path(args.export_tools)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        print(f"已写出 {target}（{len(payload['tools'])} 个工具 / {len(payload['groups'])} 个分组）")
         return 0
     return serve_stdio(toolkit)
 
