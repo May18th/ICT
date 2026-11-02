@@ -27,18 +27,33 @@ from decision_poc.quant.hydrology import (
     runoff_from_rainfall,
 )
 from decision_poc.quant.uncertainty import monte_carlo, range_from_bounds
+from decision_poc.quant.optimize import (
+    OptimalAllocation,
+    OptimalityGap,
+    TransferPlan,
+    compare_with_policy,
+    optimal_allocation,
+)
+from decision_poc.quant.reliability import FaultTreeResult, pump_station_unavailable
 
 __all__ = [
     "MM_PER_H_TO_LPS_HA",
     "RAINFALL_SCENARIOS_MM_2H",
+    "FaultTreeResult",
+    "OptimalAllocation",
+    "OptimalityGap",
     "QuantResult",
     "SpreadResult",
+    "TransferPlan",
+    "compare_with_policy",
     "intensity_from_depth",
     "manning_full_flow",
     "manning_velocity",
     "monte_carlo",
+    "optimal_allocation",
     "orifice_inflow",
     "ponding_forecast",
+    "pump_station_unavailable",
     "range_from_bounds",
     "rational_runoff",
     "runoff_from_rainfall",
