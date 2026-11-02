@@ -8,10 +8,10 @@ P8 回答的是"这套系统现在对不对"，P11 回答的是**"是哪一层�
    → `full_audited`，同一 22 例用例集、同一判据；
 2. **同口径指标**：每一档都用同一套指标算，分母写清（谁是 22、谁是 8、谁是 3），
    不让"分母不同"伪装成"能力强弱"；
-3. **运行级统计**：本仓库内核是确定性的（同一输入逐位一致），所以**不伪造独立随机
-   种子**。这里的"运行"= 在固定用例集上做固定种子的 bootstrap 重采样 30 次，给指标
-   抽样波动与配对置换检验 p 值。它度量的是"这套用例上差异是否一致"，不是对总体的
-   推断；报告里必须原样写明这一点。
+3. **确定性统计**：本仓库内核是确定性的（同一输入逐位一致），所以这里**不引入任何随机数、
+   不伪造独立随机种子**。稳健性用 leave-one-out（逐例剔除后指标怎么变），差异显著性用
+   **精确符号翻转检验**（22 例的全部 2^22 种符号组合穷举，p 值精确到 1/2^22）。它度量的是
+   "这套用例上差异是否一致"，不是对总体的推断；报告里必须原样写明这一点。
 
 `rules_only` 刻意写成"阈值规则直出"：从 `scene.json` 的工单属性与描述里正则抽深度，
 按预案 v2 的 25cm 阈值输出固定动作，不看时点、身份、过期与证据。它代表的是论文里
@@ -21,9 +21,9 @@ Rules-only 那一档的能力水平，不是本仓库的历史版本。
 from __future__ import annotations
 
 import json
-import random
 import re
 import statistics
+from bisect import bisect_left, bisect_right
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -35,12 +35,11 @@ from .urban_dataset import DEFAULT_DATASET_ROOT
 from .urban_eval import SIX_HOPS, EvalCase, load_cases
 
 SCENE_PATH = DEFAULT_DATASET_ROOT / "scene.json"
-ABLATION_SCHEMA = "p11-ablation-1"
+ABLATION_SCHEMA = "p11-ablation-2"
 
-# 冻结的统计口径：换种子等于换一套抽样，必须同步改期望并说明原因
-BOOTSTRAP_RUNS = 30
-BOOTSTRAP_SEED = 20261102
-PERMUTATION_ROUNDS = 10_000
+# 精确符号翻转检验的规模上限：meet-in-the-middle 复杂度 O(2^(n/2))，n=40 仍是秒级。
+# 超过上限就报错而不是偷偷退回随机近似——"用了什么方法"必须能从报告里读出来。
+MAX_EXACT_CASES = 40
 
 # 指标名 -> (中文名, 分母口径)。分母写在这里而不是散在代码里，报告直接引用。
 METRIC_SPECS: dict[str, tuple[str, str]] = {
@@ -150,9 +149,17 @@ class ConfigReport(StrictModel):
 
 
 class StatBlock(StrictModel):
+    """单档单指标的确定性统计：全量值 + 逐例剔除（leave-one-out）范围。
+
+    不用标准差/置信区间：本内核没有随机性，样本量就是分母 n，报"逐例剔除后指标会落在哪"
+    比报一个模拟出来的 CI 更诚实，也更容易被当场复算。
+    """
+
     mean: float = 0.0
-    sd: float = 0.0
-    ci95: list[float] = Field(default_factory=list)
+    loo_min: float = 0.0
+    loo_max: float = 0.0
+    dropped_case: str = ""
+    n: int = 0
 
 
 class PairwiseTest(StrictModel):
@@ -166,8 +173,8 @@ class PairwiseTest(StrictModel):
 class AblationReport(StrictModel):
     schema_version: str = ABLATION_SCHEMA
     dataset_snapshot: str = ""
-    bootstrap_runs: int = BOOTSTRAP_RUNS
-    bootstrap_seed: int = BOOTSTRAP_SEED
+    stats_mode: str = "leave-one-out"
+    pairwise_mode: str = "exact-sign-flip"
     configs: list[ConfigReport] = Field(default_factory=list)
     stats: dict[str, dict[str, StatBlock]] = Field(default_factory=dict)
     pairwise: list[PairwiseTest] = Field(default_factory=list)
@@ -371,17 +378,53 @@ def compute_metrics(rows: Sequence[CaseRow]) -> tuple[dict[str, float], dict[str
     return metrics, counts
 
 
-# --- 运行级统计 -----------------------------------------------------------
+# --- 确定性统计 -----------------------------------------------------------
 
 
-def _bootstrap(
-    rows_by_config: dict[str, list[CaseRow]],
-    *,
-    runs: int = BOOTSTRAP_RUNS,
-    seed: int = BOOTSTRAP_SEED,
-) -> dict[str, dict[str, StatBlock]]:
-    """固定种子 bootstrap：只有"用例抽样"这一层随机，不引入新的仿真参数。"""
-    rng = random.Random(seed)
+def _signed_sums(values: Sequence[float]) -> list[float]:
+    """返回全部 ±value 组合的和（共 2^n 个）。n 由 MAX_EXACT_CASES 限住。"""
+    sums = [0.0]
+    for value in values:
+        sums = [current + value for current in sums] + [current - value for current in sums]
+    return sums
+
+
+def _exact_sign_flip_p(deltas: Sequence[float]) -> float:
+    """精确符号翻转检验（两侧）：零随机，穷举全部 2^n 种符号组合。
+
+    零假设：两档在本用例集上无差异，即每个逐例差值的正负号是等概率的。
+    统计量取"符号翻转后差值和"的绝对值，p = |S| ≥ |观测 S| 的组合占比。
+    用 meet-in-the-middle 把 2^n 拆成两个 2^(n/2) 和集再二分计数，
+    22 例（2^22 = 4,194,304）毫秒级算完，p 值是精确有理数 k/2^n。
+    """
+    n = len(deltas)
+    if n == 0:
+        return 1.0
+    if n > MAX_EXACT_CASES:
+        raise ValueError(
+            f"精确符号翻转最多支持 {MAX_EXACT_CASES} 例，当前 {n} 例；"
+            "不要偷偷退回随机近似，先把用例设计讲清楚"
+        )
+    observed = abs(sum(deltas))
+    half = n // 2
+    left = _signed_sums(deltas[:half])
+    right = sorted(_signed_sums(deltas[half:]))
+    total = 1 << n
+    # 严格落在 (-|observed|, |observed|) 内的组合数，用补集避免边界重叠。
+    eps = 1e-12
+    inside = 0
+    for value in left:
+        low = -observed + eps - value
+        high = observed - eps - value
+        if high <= low:
+            continue
+        inside += max(0, bisect_left(right, high) - bisect_right(right, low))
+    # 不四舍五入：p 是精确有理数 k/2^n，舍入会让"精确"这两个字站不住
+    return (total - inside) / total
+
+
+def _leave_one_out(rows_by_config: dict[str, list[CaseRow]]) -> dict[str, dict[str, StatBlock]]:
+    """leave-one-out：每次剔除一个用例重算指标，给出确定性的取值范围。"""
     stats: dict[str, dict[str, StatBlock]] = {}
     for config in CONFIG_NAMES:
         rows = rows_by_config[config]
@@ -389,51 +432,43 @@ def _bootstrap(
         for metric in FROZEN_METRICS:
             group = _subset(rows, metric)
             values = [case_value(row, metric) for row in group]
-            if not values:
-                per_metric[metric] = StatBlock(mean=0.0, sd=0.0, ci95=[0.0, 0.0])
+            n = len(values)
+            mean = statistics.fmean(values) if values else 0.0
+            if n <= 1:
+                per_metric[metric] = StatBlock(
+                    mean=round(mean, 4), loo_min=round(mean, 4),
+                    loo_max=round(mean, 4), n=n,
+                )
                 continue
-            samples: list[float] = []
-            for _ in range(runs):
-                draw = [rng.choice(values) for _ in values]
-                samples.append(statistics.fmean(draw))
-            ordered = sorted(samples)
-            low = ordered[int(0.025 * (runs - 1))]
-            high = ordered[int(0.975 * (runs - 1))]
+            loo: list[float] = []
+            dropped_case = ""
+            max_shift = -1.0
+            for index, row in enumerate(group):
+                rest_mean = statistics.fmean(values[:index] + values[index + 1:])
+                loo.append(rest_mean)
+                shift = abs(rest_mean - mean)
+                if shift > max_shift + 1e-12:
+                    max_shift, dropped_case = shift, row.case_id
             per_metric[metric] = StatBlock(
-                mean=round(statistics.fmean(samples), 4),
-                sd=round(statistics.pstdev(samples), 4),
-                ci95=[round(low, 4), round(high, 4)],
+                mean=round(mean, 4),
+                loo_min=round(min(loo), 4),
+                loo_max=round(max(loo), 4),
+                dropped_case=dropped_case,
+                n=n,
             )
         stats[config] = per_metric
     return stats
 
 
-def _permutation(
-    left: Sequence[float],
-    right: Sequence[float],
-    *,
-    rounds: int = PERMUTATION_ROUNDS,
-    seed: int = BOOTSTRAP_SEED,
-) -> tuple[float, float]:
-    """配对置换检验：返回 (观测差值, p 值)。零假设是"两档在本用例集上无差异"。"""
+def _exact_sign_flip(left: Sequence[float], right: Sequence[float]) -> tuple[float, float]:
+    """配对检验：返回 (观测逐例差值均值, 精确两侧 p 值)。零假设是"两档在本用例集上无差异"。"""
     if len(left) != len(right) or not left:
         return 0.0, 1.0
     deltas = [a - b for a, b in zip(left, right)]
-    observed = statistics.fmean(deltas)
-    rng = random.Random(seed)
-    hits = 0
-    for _ in range(rounds):
-        flipped = [delta if rng.random() < 0.5 else -delta for delta in deltas]
-        if abs(statistics.fmean(flipped)) >= abs(observed) - 1e-12:
-            hits += 1
-    return round(observed, 4), round(hits / rounds, 5)
+    return round(statistics.fmean(deltas), 4), _exact_sign_flip_p(deltas)
 
 
-def _pairwise(
-    rows_by_config: dict[str, list[CaseRow]],
-    *,
-    seed: int = BOOTSTRAP_SEED,
-) -> list[PairwiseTest]:
+def _pairwise(rows_by_config: dict[str, list[CaseRow]]) -> list[PairwiseTest]:
     tests: list[PairwiseTest] = []
     for previous, current in zip(CONFIG_NAMES, CONFIG_NAMES[1:]):
         for metric in FROZEN_METRICS:
@@ -443,7 +478,7 @@ def _pairwise(
                 continue
             values_left = [case_value(row, metric) for row in left]
             values_right = [case_value(row, metric) for row in right]
-            delta, p_value = _permutation(values_left, values_right, seed=seed)
+            delta, p_value = _exact_sign_flip(values_left, values_right)
             tests.append(
                 PairwiseTest(
                     left=previous,
@@ -463,8 +498,6 @@ def evaluate(
     cases: Sequence[EvalCase] | None = None,
     *,
     runtime: SkillRuntime | None = None,
-    runs: int = BOOTSTRAP_RUNS,
-    seed: int = BOOTSTRAP_SEED,
 ) -> AblationReport:
     cases = list(cases) if cases is not None else load_cases()
     runtime = runtime or SkillRuntime()
@@ -505,11 +538,9 @@ def evaluate(
 
     return AblationReport(
         dataset_snapshot=runtime.store.snapshot_hash(),
-        bootstrap_runs=runs,
-        bootstrap_seed=seed,
         configs=configs,
-        stats=_bootstrap(rows_by_config, runs=runs, seed=seed),
-        pairwise=_pairwise(rows_by_config, seed=seed),
+        stats=_leave_one_out(rows_by_config),
+        pairwise=_pairwise(rows_by_config),
         rows=all_rows,
     )
 
@@ -525,12 +556,12 @@ def to_markdown(report: AblationReport) -> str:
         "",
         f"- 数据集快照：`{report.dataset_snapshot[:16]}`",
         f"- 用例：{report.configs[0].cases if report.configs else 0} 例 × {len(report.configs)} 档配置",
-        f"- 运行级统计：bootstrap {report.bootstrap_runs} 次，种子 {report.bootstrap_seed}",
+        f"- 统计口径：{report.stats_mode}（逐例剔除）+ {report.pairwise_mode}（全部符号组合穷举，零随机）",
         "",
-        "> **口径说明**：本仓库内核是确定性的（同一输入逐位一致），因此这里的\"运行级\"不是",
-        "> 独立随机种子重复实验，而是**固定用例集上的固定种子 bootstrap 重采样**。它给出指标",
-        "> 的抽样波动量级与配对置换检验 p 值，只说明\"这套用例上差异是否一致\"，不外推到总体。",
-        "> 这一点与纯仿真研究（合成 30 个独立随机种子）不同，不要混写。",
+        "> **口径说明**：本仓库内核是确定性的（同一输入逐位一致），所以这里**不引入任何随机数、",
+        "> 也不伪造独立随机种子**：稳健性用 leave-one-out（逐例剔除后指标怎么变），差异显著性用",
+        "> **精确符号翻转检验**（穷举全部正负号组合，p 值精确到 1/2^n）。两者都只说明",
+        "> \"这套用例上差异是否一致\"，不外推到总体；与纯仿真研究（合成多个独立随机种子）不同，不要混写。",
         "",
         "## 1 五档配置",
         "",
@@ -568,13 +599,13 @@ def to_markdown(report: AblationReport) -> str:
 
     lines += [
         "",
-        "## 4 运行级统计（bootstrap）",
+        "## 4 稳健性：逐例剔除（leave-one-out，确定性）",
         "",
-        f"固定种子 {report.bootstrap_seed}，有放回抽 22 例，重复 {report.bootstrap_runs} 次；"
-        "给出均值 ± 标准差与 95% 分位区间。",
+        "每次剔除 1 个用例重算指标，给出该档该指标的取值范围与"
+        "\"剔除哪个用例影响最大\"；样本量就是分母 n，不模拟随机抽样。",
         "",
-        "| 配置 | 指标 | 均值 | 标准差 | 95% CI |",
-        "| --- | --- | --- | --- | --- |",
+        "| 配置 | 指标 | 全量 | 剔除后最小 | 剔除后最大 | 影响最大用例 | n |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
     ]
     for item in report.configs:
         block = report.stats.get(item.config, {})
@@ -582,25 +613,26 @@ def to_markdown(report: AblationReport) -> str:
             stat = block.get(metric)
             if stat is None:
                 continue
-            ci = f"[{stat.ci95[0]:.2%}, {stat.ci95[1]:.2%}]" if stat.ci95 else "—"
             lines.append(
-                f"| {item.label} | {METRIC_SPECS[metric][0]} | {stat.mean:.2%} | {stat.sd:.2%} | {ci} |"
+                f"| {item.label} | {METRIC_SPECS[metric][0]} | {stat.mean:.2%} | "
+                f"{stat.loo_min:.2%} | {stat.loo_max:.2%} | {stat.dropped_case or '—'} | {stat.n} |"
             )
 
     lines += [
         "",
-        "## 5 相邻档位配对置换检验",
+        "## 5 相邻档位精确符号翻转检验",
         "",
-        f"逐例 0/1 结果做符号翻转置换（{PERMUTATION_ROUNDS} 次，固定种子），"
-        "p 值是\"本用例集上两档无差异\"的概率，不是总体显著性。",
+        "对每对相邻档位做**精确符号翻转检验**：把逐例差值的正负号全部 2^n 种组合穷举"
+        "（n 为该指标分母），p = |S| ≥ 观测 |S| 的比例。p 值是精确有理数 k/2^n，"
+        "不是抽样估计；它只说明\"本用例集上两档无差异\"的可能性，不是总体显著性。",
         "",
-        "| 对比 | 指标 | Δ | p |",
+        "| 对比 | 指标 | Δ | 精确 p |",
         "| --- | --- | --- | --- |",
     ]
     for test in report.pairwise:
         lines.append(
             f"| `{test.left}` → `{test.right}` | {METRIC_SPECS[test.metric][0]} | "
-            f"{test.delta:+.2%} | {test.p_value:.4f} |"
+            f"{test.delta:+.2%} | {_format_p(test.p_value)} |"
         )
 
     lines += [
@@ -615,11 +647,22 @@ def to_markdown(report: AblationReport) -> str:
         "",
         "- 本报告是**受控评测环境**下的组件归因，不是真实市政部署测量；",
         "- `rules_only` 是阈值规则基线（不含语义层/推演/审计），不代表本仓库的历史版本；",
+        "- 统计量**全部确定性**：没有随机种子、没有多次重复实验，p 值与 leave-one-out 范围"
+        "换机器重跑逐位一致；不宣称\"多运行重复实验\"；",
         "- 引用外部论文的消融结论时，只借方法（五档阶梯、同口径指标、威胁到有效性自省），",
         "  不引用其效果量——其数字来自合成蒙特卡洛仿真；",
         "- 本仓库不宣称区块链：审计层是 append-only 哈希链日志，见 P4 设计红线。",
     ]
     return "\n".join(lines) + "\n"
+
+
+def _format_p(p_value: float) -> str:
+    """p 值显示：精确到 1/2^n 的小值用科学计数法，不写成虚假的 0.0000。"""
+    if p_value >= 1.0 - 1e-9:
+        return "1.0000"
+    if p_value < 1e-4:
+        return f"{p_value:.2e}"
+    return f"{p_value:.4f}"
 
 
 def _conclusions(report: AblationReport) -> list[str]:
@@ -667,15 +710,13 @@ def main(argv: list[str] | None = None) -> int:
 
     parser = argparse.ArgumentParser(description="P11 ablation ladder evaluation")
     parser.add_argument("--cases", default=None, help="用例文件（默认 samples/eval/urban_cases.json）")
-    parser.add_argument("--runs", type=int, default=BOOTSTRAP_RUNS, help="bootstrap 次数")
-    parser.add_argument("--seed", type=int, default=BOOTSTRAP_SEED, help="bootstrap / 置换种子")
     parser.add_argument("--json", dest="json_path", default=None, help="写出机器可读结果")
     parser.add_argument("--report", dest="report_path", default=None, help="写出 Markdown 报告")
     parser.add_argument("--check", action="store_true", help="只跑一次并打印指纹（自检用）")
     args = parser.parse_args(argv)
 
     cases = load_cases(args.cases) if args.cases else load_cases()
-    report = evaluate(cases, runs=args.runs, seed=args.seed)
+    report = evaluate(cases)
     for item in report.configs:
         summary = "，".join(
             f"{METRIC_SPECS[name][0]} {item.metrics[name]:.0%}" for name in FROZEN_METRICS
@@ -684,11 +725,16 @@ def main(argv: list[str] | None = None) -> int:
     print(f"指纹 {report.fingerprint()[:16]}")
 
     if args.check:
-        again = evaluate(cases, runs=args.runs, seed=args.seed)
+        again = evaluate(cases)
         if again.fingerprint() != report.fingerprint():
             print("! 两次运行不一致：消融结果不确定")
             return 1
-        print("两次运行逐位一致")
+        if [(t.left, t.right, t.metric, t.p_value) for t in again.pairwise] != [
+            (t.left, t.right, t.metric, t.p_value) for t in report.pairwise
+        ]:
+            print("! 两次运行的精确 p 值不一致")
+            return 1
+        print("两次运行逐位一致（含精确 p 值）")
 
     if args.json_path:
         target = Path(args.json_path)
