@@ -208,3 +208,75 @@ def test_legacy_namespace_is_retired_not_remapped(projection) -> None:
         assert entity.twin_id in markdown
     for item in projection.unrepresented:
         assert item.twin_id in markdown
+
+# --- P3-D：管线几何与决策语义解耦 --------------------------------------------
+
+
+def _layout_with_first_pipeline(twin_id: str | None):
+    """复制真源布局，改写第一条管线的 twin_id（None = 决策层还没有官方 ID）。"""
+    layout = copy.deepcopy(dict(load_layout()))
+    pipe = layout["pipelines"][0]
+    if twin_id is None:
+        pipe.pop("twin_id", None)
+    else:
+        pipe["twin_id"] = twin_id
+    return layout, pipe
+
+
+def test_pipeline_with_twin_id_still_projects_as_entity(projection) -> None:
+    """有官方 twin_id 的管线：行为与 P3-D 之前一致（进 entities，几何带 geometry_ref）。"""
+    layout = copy.deepcopy(dict(load_layout()))
+    pipe = layout["pipelines"][0]
+    twin_id = pipe["twin_id"]
+    rebuilt = build_projection(layout=layout)
+    entity = next(e for e in rebuilt.entities if e.twin_id == twin_id)
+    assert entity.geometry is not None
+    assert entity.geometry.geometry_ref == f"pipeline:{pipe['pipeline_id']}"
+    assert entity.geometry.pipeline_id == pipe["pipeline_id"]
+    assert entity.geometry.twin_id == twin_id
+    assert rebuilt.geometry_index == []
+
+
+def test_pipeline_without_twin_id_enters_geometry_index() -> None:
+    """没有官方 twin_id 的管线：不报错、不进 entities、进 geometry_index，且 geometry_ref 稳定。"""
+    layout, pipe = _layout_with_first_pipeline(None)
+    rebuilt = build_projection(layout=layout)
+
+    entity_ids = {e.twin_id for e in rebuilt.entities}
+    assert pipe["pipeline_id"] not in entity_ids
+    item = next(i for i in rebuilt.geometry_index if i.pipeline_id == pipe["pipeline_id"])
+    assert item.geometry_ref == f"pipeline:{pipe['pipeline_id']}"
+    assert item.twin_id is None
+    assert item.layout_section == "pipelines"
+    assert len(item.points) >= 2
+    # 以后补官方 ID 时只填 twin_id，几何不用重建
+    assert all(not tag.startswith("twin:") for tag in item.actor_tags)
+
+
+def test_geometry_index_is_not_serialized(projection) -> None:
+    """几何索引默认不进 JSON 产物与指纹：老产物/老指纹必须逐位不变。"""
+    dumped = projection.model_dump(mode="json")
+    assert "geometry_index" not in dumped
+    assert projection.model_dump(mode="json") == load_projection().model_dump(mode="json")
+
+
+def test_geometry_index_can_be_written(tmp_path) -> None:
+    """geometry_index 可单独落盘，供 UE/关卡侧按 pipeline_id 取几何。"""
+    layout, pipe = _layout_with_first_pipeline(None)
+    rebuilt = build_projection(layout=layout)
+    target = scene_binding.write_geometry_index(tmp_path / "geometry_index.json", rebuilt)
+    import json as _json
+
+    payload = _json.loads(target.read_text(encoding="utf-8"))
+    assert payload["count"] == len(rebuilt.geometry_index) == 1
+    assert payload["items"][0]["pipeline_id"] == pipe["pipeline_id"]
+    assert payload["items"][0]["twin_id"] is None
+    assert payload["schema_version"].endswith("+geometry-index")
+
+
+def test_twin_less_road_is_still_an_error() -> None:
+    """解耦只放宽管线；道路/设施/水面没有 twin_id 仍然报错，不静默补 ID。"""
+    layout = copy.deepcopy(dict(load_layout()))
+    layout["roads"][0].pop("twin_id")
+    with pytest.raises(KeyError):
+        build_projection(layout=layout)
