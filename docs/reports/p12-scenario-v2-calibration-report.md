@@ -18,7 +18,7 @@
 
 改资产目录里任何一份 CSV 都会变它的 `sha256`，进而冲掉"15 个资产全部解析 / 未识别列 0 / 资产指纹"这些冻结口径；
 新增一个资产则会把 `assets_total` 从 15 变成 16。两者都属于对外数字变更，**必须与 T3 一次性重算同批做**。
-所以本阶段把 v2 台账放在独立目录，等 T3 再迁入并同步。
+所以本阶段把 v2 台账放在独立目录；**已在 T2 轮迁入 `samples/assets/urban/underpasses.csv`，资产数 15 → 16、三元组 101 → 102 已同步**。
 
 ## 3 倒灌口径（可直接落地）
 
@@ -99,5 +99,5 @@
 
 ```powershell
 uv run --locked pytest -q                            # 696 passed
-uv run --locked python -m decision_poc.evidence_check # 106/106（指纹 ff0b41f7b14f1eb5）
+uv run --locked python -m decision_poc.evidence_check # 106/106（指纹 46f8e1c371d32216）
 ```

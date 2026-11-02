@@ -1,6 +1,6 @@
 {
   "manifest_version": "urban-1",
-  "asset_count": 15,
+  "asset_count": 16,
   "type_counts": {
     "construction_plan": 1,
     "drainage_facility": 1,
@@ -12,16 +12,17 @@
     "resource_inventory": 1,
     "road_network": 1,
     "schematic_map": 1,
+    "underpass": 1,
     "weather_alert": 1,
     "work_order": 1
   },
   "modality_counts": {
     "image": 1,
-    "table": 8,
+    "table": 9,
     "text": 6
   },
   "source_org_counts": {
-    "区城建档案中心": 3,
+    "区城建档案中心": 4,
     "区应急管理局": 4,
     "区排水公司": 2,
     "区道路管理中心": 3,
@@ -445,6 +446,51 @@
         "valid_to": null,
         "visibility": [],
         "content_hash": "68ff291d5b28c7a8341d68e8e4754000505378daaff3cad1e938b1b65f6fddea",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-A-03-underpass-0684ecae",
+      "modality": "table",
+      "parse_status": "parsed",
+      "file_name": "underpasses.csv",
+      "doc_type": "underpass",
+      "equipment_id": "A-03",
+      "version": "v1",
+      "standard_refs": [],
+      "locator": "A-03/underpass/v1",
+      "checksum_sha256": "0684ecae4f062fb944da2358226f34c5f225e6f1f372d2f207edb91fd231b714",
+      "byte_size": 429,
+      "summary": "表格资产：1 行 × 13 列，列名 underpass_id、name、road_id、district、entry_sill_height_m、lowest_point_z_m 等",
+      "structure": {
+        "rows": 1,
+        "columns": 13,
+        "headers": [
+          "underpass_id",
+          "name",
+          "road_id",
+          "district",
+          "entry_sill_height_m",
+          "lowest_point_z_m",
+          "ramp_length_m",
+          "opening_width_m",
+          "open_water_area_m2",
+          "has_pump_room",
+          "close_threshold_m",
+          "owner_org",
+          "note"
+        ]
+      },
+      "governance": {
+        "asset_type": "underpass",
+        "title": "A-03 片区下穿隧道台账",
+        "source_uri": "demo://urban/underpasses.csv",
+        "source_org": "区城建档案中心",
+        "published_at": "2026-10-29T07:00:00+08:00",
+        "valid_from": "2026-10-29T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "0684ecae4f062fb944da2358226f34c5f225e6f1f372d2f207edb91fd231b714",
         "status": "published"
       }
     },

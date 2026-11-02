@@ -225,6 +225,17 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         scope="A-03",
         note="示意图非地理配准；道路/管线台账为其结构化替代",
     ),
+    UrbanAssetSpec(
+        file_name="underpasses.csv",
+        asset_type="underpass",
+        title="A-03 片区下穿隧道台账",
+        source_org="区城建档案中心",
+        version="v1",
+        published_at="2026-10-29T07:00:00+08:00",
+        valid_from="2026-10-29T00:00:00+08:00",
+        scope="A-03",
+        note="含入口挡水槛、最低点标高、洞口宽与敞口汇水面积；封控阈值为假设值，运维主体空白（触发职责空白）",
+    ),
 )
 
 
