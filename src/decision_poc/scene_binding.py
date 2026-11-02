@@ -81,7 +81,12 @@ class Point(StrictModel):
 
 
 class EntityGeometry(StrictModel):
-    """布局里的一段几何 + 关卡会挂在 Actor 上的 tag。"""
+    """布局里的一段几何 + 关卡会挂在 Actor 上的 tag。
+
+    P3-D：几何与语义解耦。`geometry_ref` 是几何真源里的稳定 ID（如 `pipeline:ST-TRUNK`），
+    `twin_id` 是决策语义层的官方 ID，**可以为空**（管线在决策层还没有官方 ID 时就是空）。
+    这三个字段 `exclude=True`：不参与序列化与投影指纹，保证既有产物逐位不变。
+    """
 
     layout_ref: str = Field(min_length=1)
     layout_section: str = Field(min_length=1)
@@ -91,6 +96,11 @@ class EntityGeometry(StrictModel):
     depth_cm: float | None = None
     evidence: str = ""
     actor_tags: list[str] = Field(min_length=1)
+    # P3-D 新增（默认值 + exclude，老数据 dump 结果不变）
+    geometry_ref: str = Field(default="", exclude=True)
+    twin_id: str | None = Field(default=None, exclude=True)
+    pipeline_id: str | None = Field(default=None, exclude=True)
+    kind: str = Field(default="", exclude=True)
 
     @model_validator(mode="after")
     def shape_matches_points(self) -> "EntityGeometry":
@@ -103,6 +113,24 @@ class EntityGeometry(StrictModel):
         else:
             raise ValueError(f"unknown geometry shape {self.shape!r}")
         return self
+
+
+class GeometryBinding(StrictModel):
+    """只有几何、没有官方 twin_id 的绑定项（P3-D 解耦产物）。
+
+    `geometry_ref` 恒等于 `pipeline:<pipeline_id>` 这类几何真源 ID；
+    以后决策层给出官方 ID 时，只需把 `twin_id` 填上，几何不用动。
+    """
+
+    geometry_ref: str = Field(min_length=1)
+    pipeline_id: str = Field(min_length=1)
+    twin_id: str | None = None
+    kind: str = ""
+    layout_section: str = Field(min_length=1)
+    points: list[Point] = Field(min_length=1)
+    z: float
+    evidence: str = ""
+    actor_tags: list[str] = Field(default_factory=list)
 
 
 class SemanticEntity(StrictModel):
@@ -203,6 +231,10 @@ class SemanticProjection(StrictModel):
     frame: CoordinateFrame = Field(default_factory=CoordinateFrame)
     base_layer: BaseLayer = Field(default_factory=BaseLayer)
     entities: list[SemanticEntity] = Field(default_factory=list)
+    # P3-D：只有几何、没有官方 twin_id 的布局对象（当前是 VD02 的 122 条管线）。
+    # exclude=True 让它不进入 JSON 产物与指纹（既有产物保持逐位一致），
+    # 需要落盘时用 write_geometry_index() 单独导出。
+    geometry_index: list["GeometryBinding"] = Field(default_factory=list, exclude=True)
     unrepresented: list[Unrepresented] = Field(default_factory=list)
     excluded_twin_ids: list[str] = Field(default_factory=list)
     legacy_osm: list[LegacyBinding] = Field(default_factory=list)
@@ -251,98 +283,134 @@ def _tag_list(*tags: str) -> list[str]:
     return [tag for tag in tags if tag]
 
 
-def layout_geometry(layout: Mapping[str, Any]) -> dict[str, EntityGeometry]:
-    """布局四段 → twin_id 索引。twin_id 缺一个都不补，直接漏出 KeyError。"""
+def layout_geometry_index(layout: Mapping[str, Any]) -> dict[str, EntityGeometry]:
+    """布局四段 → `geometry_ref` 索引（P3-D）。
+
+    与 `layout_geometry()` 的区别：**允许没有 twin_id 的对象**（当前只有管线会这样）。
+    管线的 `geometry_ref = pipeline:<pipeline_id>`；`twin_id` 有就带、没有就 None。
+    其余三段（道路/设施/水面）仍要求 twin_id，缺了照旧报错 —— 不静默补 ID。
+    """
     index: dict[str, EntityGeometry] = {}
 
-    def register(twin_id: str, geometry: EntityGeometry) -> None:
-        if not twin_id:
-            raise ValueError(f"{geometry.layout_ref}: 布局对象没有 twin_id")
-        if twin_id in index:
-            raise ValueError(f"{twin_id}: 布局里出现两次几何")
-        index[twin_id] = geometry
+    def register(geometry: EntityGeometry) -> None:
+        ref = geometry.geometry_ref or geometry.layout_ref
+        if ref in index:
+            raise ValueError(f"{ref}: 布局里出现两次几何")
+        index[ref] = geometry
 
     for road in layout.get("roads", []):
+        twin_id = str(road["twin_id"])
+        if not twin_id:
+            raise ValueError(f"roads:{road['road_id']}: 布局对象没有 twin_id")
         evidence = str(road.get("evidence", ""))
-        register(
-            str(road["twin_id"]),
-            EntityGeometry(
-                layout_ref=f"roads:{road['road_id']}",
-                layout_section="roads",
-                shape="polyline",
-                points=[_point(item) for item in road["polyline"]],
-                z=float(road["z"]),
-                evidence=evidence,
-                actor_tags=_tag_list(
-                    f"twin:{road['twin_id']}",
-                    "kind:road",
-                    f"state:{road['state']}",
-                    f"evidence:{evidence}",
-                ),
+        register(EntityGeometry(
+            layout_ref=f"roads:{road['road_id']}",
+            layout_section="roads",
+            shape="polyline",
+            points=[_point(item) for item in road["polyline"]],
+            z=float(road["z"]),
+            evidence=evidence,
+            actor_tags=_tag_list(
+                f"twin:{twin_id}",
+                "kind:road",
+                f"state:{road['state']}",
+                f"evidence:{evidence}",
             ),
-        )
+            geometry_ref=f"road:{road['road_id']}",
+            twin_id=twin_id,
+            kind="road",
+        ))
 
     for pipe in layout.get("pipelines", []):
+        pipeline_id = str(pipe.get("pipeline_id") or "")
+        if not pipeline_id:
+            raise ValueError("布局管线缺 pipeline_id（几何真源 ID 不能为空）")
+        twin_id = pipe.get("twin_id")
+        twin_id = str(twin_id) if twin_id else None
+        kind = str(pipe.get("kind") or "pipeline")
         evidence = str(pipe.get("evidence", ""))
-        register(
-            str(pipe["twin_id"]),
-            EntityGeometry(
-                layout_ref=f"pipelines:{pipe['pipeline_id']}",
-                layout_section="pipelines",
-                shape="polyline",
-                points=[_point(item) for item in pipe["polyline"]],
-                z=float(pipe["z"]),
-                evidence=evidence,
-                actor_tags=_tag_list(
-                    f"twin:{pipe['twin_id']}",
-                    f"kind:{pipe['kind']}",
-                    f"evidence:{evidence}",
-                ),
-            ),
-        )
+        actor_tags = _tag_list(f"twin:{twin_id}" if twin_id else "",
+                               f"kind:{kind}", f"evidence:{evidence}")
+        if not actor_tags:  # 无 twin_id 时至少保留几何 ID，便于 UE 侧选 Actor
+            actor_tags = [f"geometry:pipeline:{pipeline_id}"]
+        register(EntityGeometry(
+            layout_ref=f"pipelines:{pipeline_id}",
+            layout_section="pipelines",
+            shape="polyline",
+            points=[_point(item) for item in pipe["polyline"]],
+            z=float(pipe["z"]),
+            evidence=evidence,
+            actor_tags=actor_tags,
+            geometry_ref=f"pipeline:{pipeline_id}",
+            twin_id=twin_id,
+            pipeline_id=pipeline_id,
+            kind=kind,
+        ))
 
     for facility in layout.get("facilities", []):
+        twin_id = str(facility["twin_id"])
+        if not twin_id:
+            raise ValueError(f"facilities:{facility['facility_id']}: 布局对象没有 twin_id")
         evidence = str(facility.get("evidence", ""))
-        register(
-            str(facility["twin_id"]),
-            EntityGeometry(
-                layout_ref=f"facilities:{facility['facility_id']}",
-                layout_section="facilities",
-                shape="point",
-                points=[_point(facility["xy"])],
-                z=float(facility["z"]),
-                evidence=evidence,
-                actor_tags=_tag_list(
-                    f"twin:{facility['twin_id']}",
-                    f"kind:{facility['facility_type']}",
-                    f"state:{facility['state']}",
-                    f"evidence:{evidence}",
-                ),
+        register(EntityGeometry(
+            layout_ref=f"facilities:{facility['facility_id']}",
+            layout_section="facilities",
+            shape="point",
+            points=[_point(facility["xy"])],
+            z=float(facility["z"]),
+            evidence=evidence,
+            actor_tags=_tag_list(
+                f"twin:{twin_id}",
+                f"kind:{facility['facility_type']}",
+                f"state:{facility['state']}",
+                f"evidence:{evidence}",
             ),
-        )
+            geometry_ref=f"facility:{facility['facility_id']}",
+            twin_id=twin_id,
+            kind=str(facility["facility_type"]),
+        ))
 
     for patch in layout.get("water", []):
+        twin_id = str(patch["twin_id"])
+        if not twin_id:
+            raise ValueError(f"water:{patch['incident_id']}: 布局对象没有 twin_id")
         evidence = str(patch.get("evidence", ""))
         depth = patch.get("depth_cm")
-        register(
-            str(patch["twin_id"]),
-            EntityGeometry(
-                layout_ref=f"water:{patch['incident_id']}",
-                layout_section="water",
-                shape="polygon",
-                points=[_point(item) for item in patch["polygon"]],
-                z=float(patch["z"]),
-                depth_cm=float(depth) if depth is not None else None,
-                evidence=evidence,
-                actor_tags=_tag_list(
-                    f"twin:{patch['twin_id']}",
-                    "kind:water",
-                    f"state:{depth:g}cm" if isinstance(depth, (int, float)) else "",
-                    f"evidence:{evidence}",
-                ),
+        register(EntityGeometry(
+            layout_ref=f"water:{patch['incident_id']}",
+            layout_section="water",
+            shape="polygon",
+            points=[_point(item) for item in patch["polygon"]],
+            z=float(patch["z"]),
+            depth_cm=float(depth) if depth is not None else None,
+            evidence=evidence,
+            actor_tags=_tag_list(
+                f"twin:{twin_id}",
+                "kind:water",
+                f"state:{depth:g}cm" if isinstance(depth, (int, float)) else "",
+                f"evidence:{evidence}",
             ),
-        )
+            geometry_ref=f"water:{patch['incident_id']}",
+            twin_id=twin_id,
+            kind="water",
+        ))
 
+    return index
+
+
+def layout_geometry(layout: Mapping[str, Any]) -> dict[str, EntityGeometry]:
+    """布局四段 → twin_id 索引（P3-D 起只返回**有官方 twin_id** 的对象）。
+
+    没有 twin_id 的管线不再抛错，而是进 `layout_geometry_index()` 的几何索引，
+    由 `build_projection()` 收进 `projection.geometry_index`。
+    """
+    index: dict[str, EntityGeometry] = {}
+    for geometry in layout_geometry_index(layout).values():
+        if not geometry.twin_id:
+            continue
+        if geometry.twin_id in index:
+            raise ValueError(f"{geometry.twin_id}: 布局里出现两次几何")
+        index[geometry.twin_id] = geometry
     return index
 
 
@@ -455,6 +523,23 @@ def build_projection(
         raise ValueError("scene.json 里没有 objects，无法投影")
 
     geometries = layout_geometry(layout)
+    # P3-D：没有官方 twin_id 的几何（当前是 VD02 的 122 条管线）单独收进几何索引。
+    # 它们不进 entities（entities 必须有 twin_id），也不影响 summary 与指纹。
+    geometry_index = [
+        GeometryBinding(
+            geometry_ref=geometry.geometry_ref or geometry.layout_ref,
+            pipeline_id=str(geometry.pipeline_id),
+            twin_id=None,
+            kind=geometry.kind,
+            layout_section=geometry.layout_section,
+            points=geometry.points,
+            z=geometry.z,
+            evidence=geometry.evidence,
+            actor_tags=geometry.actor_tags,
+        )
+        for geometry in layout_geometry_index(layout).values()
+        if not geometry.twin_id and geometry.layout_section == "pipelines"
+    ]
     steps_by_twin, hops_by_twin = highlight_index(replay)
     highlight_ids = set(steps_by_twin)
 
@@ -538,6 +623,7 @@ def build_projection(
         layout_snapshot_hash=str(layout.get("snapshot_hash", "")),
         replay_snapshot_hash=str(replay.get("snapshot_hash", "")),
         hop_order=list(HOP_ORDER),
+        geometry_index=geometry_index,
         frame=CoordinateFrame(
             name="layout_local_meters",
             units="m",
@@ -574,6 +660,27 @@ def write_projection(path: Path | str, projection: SemanticProjection) -> Path:
         json.dumps(projection.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    return target
+
+
+def write_geometry_index(path: Path | str, projection: SemanticProjection) -> Path:
+    """把"只有几何、没有官方 twin_id"的绑定项单独落盘（P3-D）。
+
+    与 `write_projection` 分开写，是为了让主产物（语义实体表）的格式与指纹
+    在补齐管线几何之前保持逐位一致，避免任何下游 diff 噪声。
+    """
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "schema_version": f"{SCHEMA_VERSION}+geometry-index",
+        "projection_hash": projection.projection_hash,
+        "event_id": projection.event_id,
+        "as_of": projection.as_of,
+        "note": "geometry_ref 是几何真源 ID；twin_id 为 null 表示决策层尚未给出官方 ID。",
+        "count": len(projection.geometry_index),
+        "items": [item.model_dump(mode="json") for item in projection.geometry_index],
+    }
+    target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return target
 
 
@@ -726,6 +833,8 @@ __all__ = [
     "Unrepresented",
     "build_projection",
     "layout_geometry",
+    "layout_geometry_index",
+    "write_geometry_index",
     "highlight_index",
     "primary_hop",
     "projection_hash",
