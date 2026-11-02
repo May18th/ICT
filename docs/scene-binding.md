@@ -133,3 +133,12 @@ tag 与 `visualization/unreal/Content/Python/build_urban_level.py` 逐字对齐�
 1. **UE 现场演出**：在真实编辑器里跑一次 `sync_from_files()` → 高亮命中数 > 0 →
    `scene_render` 返回 `acked`（下一步）；
 2. **两条负例**：证据不足时不亮任何对象；账本被篡改时画面切"结论不可信"而不是继续演。
+
+## 通道与泵站状态的绑定计划（未落几何）
+
+| 决策侧 | 三维侧现状 | 计划 |
+| --- | --- | --- |
+| `TW-underpass-UP-XH-101`（第 16 资产） | UE 侧有"天府广场下穿隧道"几何载体（S9），语义锚点仍是旧 id `TN-TIANFU` | 建立 twin_id ↔ 锚点映射，高亮按推演 id 命中；倒灌状态扩枚举 `backflow_high / backflow_medium` |
+| `TW-pump_station-DF-PS-01/02/03` | Actor tag 已有 `TW-pump_station-*` | 状态枚举由 `fault / normal` 扩为 `fault / normal / high_load / overload`，与推演 `pump_load` 字段对齐 |
+
+几何资产与 UE 关卡在 `blender-ue-scene`，绑定表更新必须两侧同一批做；本轮只落口径与映射计划，不动几何。

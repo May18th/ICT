@@ -182,3 +182,22 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py `
   因此只说"技能已上传到平台技能仓库"，不说"平台 Agent 会调用这两个技能"。
 - 平台界面截图/录屏都来自本机 Nexent v2.7.0 前端；换环境必须重跑并重新生成证据，
   `evidence_check` 会用图片 sha256 卡住"图换了证据没换"。
+
+## 多智能体协同 Agent（`collab_run`，路径 B）
+
+MCP 工具数已到 **13**（新增 `collab_run`，分组 `collaboration`）。平台侧两条装配线：
+
+| 命令 | 作用 |
+| --- | --- |
+| `python /tmp/setup_nexent.py all` | 注册 MCP → 同步 13 工具 → 建主 Agent（挂决策/呈现工具）→ 建协同 Agent → 签发 Key |
+| `python /tmp/setup_nexent.py create-collab-agent` | 只建/更新协同 Agent `urban_collab_agent` 并挂 `collab_run` 等 6 个工具 |
+
+协同 Agent 的提示词是"两步式"：先 `collab_run`，再**逐字转述**动作卡、联合发布对、处置顺序与
+`kernel_fingerprint`；不得新增卡片、不得改写冲突，指纹必须与工具返回逐位一致。
+
+角色白名单 `ROLE_TOOL_GROUPS` 是**运行期视图**，不导出到 `tools.json`；部门 Agent 若单独建（路径 A），
+只能看到本组工具。Nexent v2.7 是否支持 Agent-as-Tool **未验证**，故默认走路径 B。
+
+> **真机状态**：本轮 Docker Desktop 未运行（`docker version` 连不上 daemon），13 工具与协同 Agent
+> **未在 Nexent v2.7 复跑**。脚本与提示词已就绪；Docker 起来后按本文件 §2 复跑，
+> 并用 `python -m decision_poc.nexent_urban` 复核主链路 8/8 一致。
