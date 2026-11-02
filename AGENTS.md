@@ -31,10 +31,10 @@
 
 - **用户已在 2026-11-02 明确授权本仓库直接提交并推送**，覆盖此前"未经要求不推送"的默认限制；
   仍然不建 PR、不改远程分支历史、不强推。
-- 一轮对话/工作结束时执行：
+- 一轮对话/工作结束时执行（本机只有 Windows PowerShell 5.1，没有 pwsh 7）：
 
   ```powershell
-  pwsh scripts/git_sync.ps1 -Message "<type(scope): 中文摘要>"
+  powershell -NoProfile -ExecutionPolicy Bypass -File scripts/git_sync.ps1 -Message "<type>(scope): 中文摘要>"
   ```
 
   脚本行为：无改动直接退出 0（不产生空提交）→ 有改动则 `git add -A` + 提交 → 推送到 `origin`
