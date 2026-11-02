@@ -348,7 +348,7 @@ def build() -> Path:
         ["指标", "结果", "核对方式"],
         [
             ["单元测试", "639 项通过", "uv run --locked pytest -q"],
-            ["对外数字自检", "106/106 项一致（期望指纹 d7d55f5e800d5ff2）", "python -m decision_poc.evidence_check"],
+            ["对外数字自检", "106/106 项一致（期望指纹 73b104597a9c2318）", "python -m decision_poc.evidence_check"],
             ["P8 事件评测", "22/22 通过（改进前基线 17/22）", "python -m decision_poc.urban_eval"],
             ["六跳完整率 / 引用完整率 / 检索命中率", "100% / 100% / 100%", "docs/reports/p8-evaluation-report.md"],
             ["数据资产解析", "15/15，未识别列 0", "python -m decision_poc.health"],
