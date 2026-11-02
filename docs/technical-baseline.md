@@ -20,7 +20,7 @@ The scenarios are intentionally generic and local. They do not connect to Nexent
 ## Recorded risks
 
 - The current version registry is in-memory; process restart loses candidate and history state.
-- The Pydantic AI model is `TestModel`; real provider latency, quality, and failure modes are not measured.
+- The Pydantic AI model is `TestModel` by default; the optional DeepSeek provider (`DECISION_LLM_PROVIDER=deepseek`, see `docs/real-model-provider-design.md`) is off by default, so real provider latency, quality, and failure modes are still not measured in the baseline.
 - Simulated execution has no external side effect, so permission, idempotency, and rollback of a real action remain unverified.
 - LangGraph checkpoint persistence and interruption/resume are not yet configured.
 - No final industry metric is defined until the competition scenario is selected.
