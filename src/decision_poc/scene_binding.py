@@ -329,6 +329,11 @@ def layout_geometry_index(layout: Mapping[str, Any]) -> dict[str, EntityGeometry
         twin_id = str(twin_id) if twin_id else None
         kind = str(pipe.get("kind") or "pipeline")
         evidence = str(pipe.get("evidence", ""))
+        # 逐节点 z 的管线（VD02 的两层管网）没有顶层 z：取首节点 z 作为代表值，
+        # 几何仍按 polyline 逐点保留，不做平均。
+        z_value = pipe.get("z")
+        if z_value is None:
+            z_value = pipe["polyline"][0]["z"]
         actor_tags = _tag_list(f"twin:{twin_id}" if twin_id else "",
                                f"kind:{kind}", f"evidence:{evidence}")
         if not actor_tags:  # 无 twin_id 时至少保留几何 ID，便于 UE 侧选 Actor
@@ -338,7 +343,7 @@ def layout_geometry_index(layout: Mapping[str, Any]) -> dict[str, EntityGeometry
             layout_section="pipelines",
             shape="polyline",
             points=[_point(item) for item in pipe["polyline"]],
-            z=float(pipe["z"]),
+            z=float(z_value),
             evidence=evidence,
             actor_tags=actor_tags,
             geometry_ref=f"pipeline:{pipeline_id}",
