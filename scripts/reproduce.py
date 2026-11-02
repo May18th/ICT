@@ -1,11 +1,11 @@
-"""一条命令生成并核对全部对外材料。
+﻿"""一条命令生成并核对全部对外材料。
 
 设计原则与仓库一致：**对外宣称的数字都由命令产生，脚本只比对，不改数字**。
 任一期望不成立即退出码 1，并把失败步骤的原始输出完整打出来。
 
 用法：
 
-    uv run --locked python scripts/reproduce.py              # 全量（含 739 项测试，约 3-6 分钟）
+    uv run --locked python scripts/reproduce.py              # 全量（含 740 项测试，约 3-6 分钟）
     uv run --locked python scripts/reproduce.py --fast       # 跳过 pytest，约 30 秒
     uv run --locked python scripts/reproduce.py --list       # 只列步骤
     uv run --locked python scripts/reproduce.py --keep-going # 出错也继续跑完，最后统一汇报
