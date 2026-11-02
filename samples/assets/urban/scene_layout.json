@@ -52,6 +52,7 @@
   "roads": [
     {
       "road_id": "R-101",
+      "twin_id": "TW-road-R-101",
       "name": "兴华路",
       "district": "A-03",
       "road_class": "次干路",
@@ -75,6 +76,7 @@
     },
     {
       "road_id": "R-102",
+      "twin_id": "TW-road-R-102",
       "name": "建设大道",
       "district": "A-03",
       "road_class": "主干路",
@@ -98,6 +100,7 @@
     },
     {
       "road_id": "R-103",
+      "twin_id": "TW-road-R-103",
       "name": "民生街",
       "district": "A-03",
       "road_class": "支路",
@@ -121,6 +124,7 @@
     },
     {
       "road_id": "R-104",
+      "twin_id": "TW-road-R-104",
       "name": "环城北路",
       "district": "A-03",
       "road_class": "主干路",
@@ -144,6 +148,7 @@
     },
     {
       "road_id": "R-105",
+      "twin_id": "TW-road-R-105",
       "name": "兴华支路",
       "district": "A-03",
       "road_class": "支路",
@@ -167,6 +172,7 @@
     },
     {
       "road_id": "R-201",
+      "twin_id": "TW-road-R-201",
       "name": "滨河路",
       "district": "B-01",
       "road_class": "次干路",
@@ -190,6 +196,7 @@
     },
     {
       "road_id": "R-202",
+      "twin_id": "TW-road-R-202",
       "name": "工业大道",
       "district": "B-01",
       "road_class": "主干路",
@@ -215,11 +222,15 @@
   "pipelines": [
     {
       "pipeline_id": "PL-DRN-101",
+      "twin_id": "TW-drainage-PL-DRN-101",
       "kind": "drainage",
       "road_id": "R-101",
       "diameter_mm": 600,
-      "depth_m": 2.8,
-      "z": -2.8,
+      "depth_m": 4.2,
+      "z": -4.2,
+      "layer": "lower",
+      "z_start": -4.2,
+      "z_end": -5.33,
       "polyline": [
         {
           "x": -162.2,
@@ -234,11 +245,15 @@
     },
     {
       "pipeline_id": "PL-GAS-101",
+      "twin_id": "TW-gas-PL-GAS-101",
       "kind": "gas",
       "road_id": "R-101",
       "diameter_mm": 300,
-      "depth_m": 2.5,
-      "z": -2.5,
+      "depth_m": 1.55,
+      "z": -1.55,
+      "layer": "upper",
+      "z_start": -1.55,
+      "z_end": -1.55,
       "polyline": [
         {
           "x": -163.8,
@@ -253,11 +268,15 @@
     },
     {
       "pipeline_id": "PL-PWR-101",
+      "twin_id": "TW-power-PL-PWR-101",
       "kind": "power",
       "road_id": "R-101",
       "diameter_mm": 150,
-      "depth_m": 1.2,
-      "z": -1.2,
+      "depth_m": 1.0,
+      "z": -1.0,
+      "layer": "upper",
+      "z_start": -1.0,
+      "z_end": -1.0,
       "polyline": [
         {
           "x": -165.4,
@@ -272,11 +291,15 @@
     },
     {
       "pipeline_id": "PL-DRN-102",
+      "twin_id": "TW-drainage-PL-DRN-102",
       "kind": "drainage",
       "road_id": "R-102",
       "diameter_mm": 1000,
-      "depth_m": 3.0,
-      "z": -3.0,
+      "depth_m": 4.2,
+      "z": -4.2,
+      "layer": "lower",
+      "z_start": -4.2,
+      "z_end": -5.69,
       "polyline": [
         {
           "x": -163.8,
@@ -291,11 +314,15 @@
     },
     {
       "pipeline_id": "PL-TEL-103",
+      "twin_id": "TW-telecom-PL-TEL-103",
       "kind": "telecom",
       "road_id": "R-103",
       "diameter_mm": 100,
-      "depth_m": 1.0,
-      "z": -1.0,
+      "depth_m": 1.25,
+      "z": -1.25,
+      "layer": "upper",
+      "z_start": -1.25,
+      "z_end": -1.25,
       "polyline": [
         {
           "x": -1159.2,
@@ -310,11 +337,15 @@
     },
     {
       "pipeline_id": "PL-WTR-103",
+      "twin_id": "TW-water-PL-WTR-103",
       "kind": "water",
       "road_id": "R-103",
       "diameter_mm": 300,
-      "depth_m": 1.8,
-      "z": -1.8,
+      "depth_m": 1.85,
+      "z": -1.85,
+      "layer": "upper",
+      "z_start": -1.85,
+      "z_end": -1.85,
       "polyline": [
         {
           "x": -1160.8,
@@ -329,11 +360,15 @@
     },
     {
       "pipeline_id": "PL-DRN-201",
+      "twin_id": "TW-drainage-PL-DRN-201",
       "kind": "drainage",
       "road_id": "R-201",
       "diameter_mm": 800,
-      "depth_m": 2.6,
-      "z": -2.6,
+      "depth_m": 4.2,
+      "z": -4.2,
+      "layer": "lower",
+      "z_start": -4.2,
+      "z_end": -4.86,
       "polyline": [
         {
           "x": 1429.5,
@@ -348,11 +383,15 @@
     },
     {
       "pipeline_id": "PL-WTR-202",
+      "twin_id": "TW-water-PL-WTR-202",
       "kind": "water",
       "road_id": "R-202",
       "diameter_mm": 300,
-      "depth_m": 1.6,
-      "z": -1.6,
+      "depth_m": 1.85,
+      "z": -1.85,
+      "layer": "upper",
+      "z_start": -1.85,
+      "z_end": -1.85,
       "polyline": [
         {
           "x": 1033.9,
@@ -369,6 +408,7 @@
   "facilities": [
     {
       "facility_id": "DF-IN-101",
+      "twin_id": "TW-drainage-DF-IN-101",
       "name": "兴华路雨水口组",
       "facility_type": "intake",
       "road_id": "R-101",
@@ -384,6 +424,7 @@
     },
     {
       "facility_id": "DF-IN-103",
+      "twin_id": "TW-drainage-DF-IN-103",
       "name": "民生街雨水口组",
       "facility_type": "intake",
       "road_id": "R-103",
@@ -399,6 +440,7 @@
     },
     {
       "facility_id": "DF-IN-201",
+      "twin_id": "TW-drainage-DF-IN-201",
       "name": "滨河路雨水口组",
       "facility_type": "intake",
       "road_id": "R-201",
@@ -414,6 +456,7 @@
     },
     {
       "facility_id": "DF-PS-01",
+      "twin_id": "TW-pump_station-DF-PS-01",
       "name": "兴华路雨水泵站",
       "facility_type": "pump_station",
       "road_id": "R-101",
@@ -429,6 +472,7 @@
     },
     {
       "facility_id": "DF-PS-02",
+      "twin_id": "TW-pump_station-DF-PS-02",
       "name": "建设大道泵站",
       "facility_type": "pump_station",
       "road_id": "R-102",
@@ -444,6 +488,7 @@
     },
     {
       "facility_id": "DF-PS-03",
+      "twin_id": "TW-pump_station-DF-PS-03",
       "name": "滨河路雨水泵站",
       "facility_type": "pump_station",
       "road_id": "R-201",
@@ -3223,6 +3268,7 @@
   "water": [
     {
       "incident_id": "WO-20261029-007",
+      "twin_id": "TW-incident-WO-20261029-007",
       "district": "A-03",
       "road_id": "R-101",
       "depth_cm": 30.0,
@@ -3249,6 +3295,7 @@
     },
     {
       "incident_id": "WO-20261029-011",
+      "twin_id": "TW-incident-WO-20261029-011",
       "district": "B-01",
       "road_id": "R-201",
       "depth_cm": 18.0,

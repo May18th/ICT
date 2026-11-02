@@ -1,0 +1,1335 @@
+{
+  "schema_version": "urban-twin-semantic-entities-v1",
+  "projection_hash": "proj-25e51a6bcbba448a",
+  "event_id": "WO-20261029-007",
+  "as_of": "2026-10-29T09:40:00+08:00",
+  "district": "A-03",
+  "scene_snapshot_hash": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db",
+  "layout_snapshot_hash": "3791062782309aff172b4cf8ccff6fe020cdfef816e291700a0d58bafb929712",
+  "replay_snapshot_hash": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db",
+  "hop_order": [
+    "observed",
+    "affected",
+    "owner",
+    "conflict",
+    "resource",
+    "action"
+  ],
+  "frame": {
+    "name": "layout_local_meters",
+    "units": "m",
+    "origin": "scene_layout.json 的布局原点（示意图布局，非测绘坐标）",
+    "note": "事件层与关卡都在布局本地米制坐标里；OSM 投影（lat0/lon0/k_lat/k_lon）属于底图，不参与事件实体定位"
+  },
+  "base_layer": {
+    "osm_file": "osm_chengdu_centre.json",
+    "osm_sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5",
+    "role": "backdrop",
+    "note": "OSM 真实几何只作背景底图：不声称某条真实道路发生了本事件，事件实体的坐标一律来自 scene_layout.json（示意图布局，非测绘坐标）"
+  },
+  "entities": [
+    {
+      "twin_id": "TW-drainage-DF-IN-101",
+      "kind": "drainage",
+      "name": "DF-IN-101",
+      "region_id": null,
+      "scene_state": "unknown",
+      "layout_state": "clogged",
+      "primary_hop": "resource",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "resource"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "facilities:DF-IN-101",
+        "layout_section": "facilities",
+        "shape": "point",
+        "points": [
+          {
+            "x": -386.5,
+            "y": 212.6
+          }
+        ],
+        "z": 3.2,
+        "depth_cm": null,
+        "evidence": "A-03/drainage_facility/v1#row:3",
+        "actor_tags": [
+          "twin:TW-drainage-DF-IN-101",
+          "kind:intake",
+          "state:clogged",
+          "evidence:A-03/drainage_facility/v1#row:3"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "twin_id": "TW-drainage-DF-IN-103",
+      "kind": "drainage",
+      "name": "DF-IN-103",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "in_service",
+      "primary_hop": "resource",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "resource"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "facilities:DF-IN-103",
+        "layout_section": "facilities",
+        "shape": "point",
+        "points": [
+          {
+            "x": -1334.7,
+            "y": 119.2
+          }
+        ],
+        "z": 5.6,
+        "depth_cm": null,
+        "evidence": "A-03/drainage_facility/v1#row:5",
+        "actor_tags": [
+          "twin:TW-drainage-DF-IN-103",
+          "kind:intake",
+          "state:in_service",
+          "evidence:A-03/drainage_facility/v1#row:5"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "twin_id": "TW-drainage-DF-IN-201",
+      "kind": "drainage",
+      "name": "DF-IN-201",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "in_service",
+      "primary_hop": "resource",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "resource"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "facilities:DF-IN-201",
+        "layout_section": "facilities",
+        "shape": "point",
+        "points": [
+          {
+            "x": 1189.6,
+            "y": 88.1
+          }
+        ],
+        "z": 5.4,
+        "depth_cm": null,
+        "evidence": "A-03/drainage_facility/v1#row:7",
+        "actor_tags": [
+          "twin:TW-drainage-DF-IN-201",
+          "kind:intake",
+          "state:in_service",
+          "evidence:A-03/drainage_facility/v1#row:7"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "twin_id": "TW-drainage-PL-DRN-101",
+      "kind": "drainage",
+      "name": "PL-DRN-101",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "",
+      "primary_hop": "resource",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "resource"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "pipelines:PL-DRN-101",
+        "layout_section": "pipelines",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": -162.2,
+            "y": -195.7
+          },
+          {
+            "x": -504.1,
+            "y": 472.9
+          }
+        ],
+        "z": -4.2,
+        "depth_cm": null,
+        "evidence": "A-03/pipeline_ledger/v1#row:2",
+        "actor_tags": [
+          "twin:TW-drainage-PL-DRN-101",
+          "kind:drainage",
+          "evidence:A-03/pipeline_ledger/v1#row:2"
+        ]
+      },
+      "note": "布局管线没有事件状态字段，state 只存在于语义层"
+    },
+    {
+      "twin_id": "TW-drainage-PL-DRN-102",
+      "kind": "drainage",
+      "name": "PL-DRN-102",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "",
+      "primary_hop": "resource",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "resource"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "pipelines:PL-DRN-102",
+        "layout_section": "pipelines",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": -163.8,
+            "y": -196.5
+          },
+          {
+            "x": -1160.0,
+            "y": -212.0
+          }
+        ],
+        "z": -4.2,
+        "depth_cm": null,
+        "evidence": "A-03/pipeline_ledger/v1#row:3",
+        "actor_tags": [
+          "twin:TW-drainage-PL-DRN-102",
+          "kind:drainage",
+          "evidence:A-03/pipeline_ledger/v1#row:3"
+        ]
+      },
+      "note": "布局管线没有事件状态字段，state 只存在于语义层"
+    },
+    {
+      "twin_id": "TW-drainage-PL-DRN-201",
+      "kind": "drainage",
+      "name": "PL-DRN-201",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "",
+      "primary_hop": "resource",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "resource"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "pipelines:PL-DRN-201",
+        "layout_section": "pipelines",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": 1429.5,
+            "y": 222.7
+          },
+          {
+            "x": 1033.9,
+            "y": 22.9
+          }
+        ],
+        "z": -4.2,
+        "depth_cm": null,
+        "evidence": "A-03/pipeline_ledger/v1#row:8",
+        "actor_tags": [
+          "twin:TW-drainage-PL-DRN-201",
+          "kind:drainage",
+          "evidence:A-03/pipeline_ledger/v1#row:8"
+        ]
+      },
+      "note": "布局管线没有事件状态字段，state 只存在于语义层"
+    },
+    {
+      "twin_id": "TW-gas-PL-GAS-101",
+      "kind": "gas",
+      "name": "PL-GAS-101",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "",
+      "primary_hop": "conflict",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "pipelines:PL-GAS-101",
+        "layout_section": "pipelines",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": -163.8,
+            "y": -196.5
+          },
+          {
+            "x": -505.7,
+            "y": 472.1
+          }
+        ],
+        "z": -1.55,
+        "depth_cm": null,
+        "evidence": "A-03/pipeline_ledger/v1#row:4",
+        "actor_tags": [
+          "twin:TW-gas-PL-GAS-101",
+          "kind:gas",
+          "evidence:A-03/pipeline_ledger/v1#row:4"
+        ]
+      },
+      "note": "布局管线没有事件状态字段，state 只存在于语义层"
+    },
+    {
+      "twin_id": "TW-incident-WO-20261029-007",
+      "kind": "incident",
+      "name": "WO-20261029-007",
+      "region_id": null,
+      "scene_state": "unknown",
+      "layout_state": "30cm",
+      "primary_hop": "observed",
+      "hops": [
+        "observed"
+      ],
+      "highlight_steps": [
+        0
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "water:WO-20261029-007",
+        "layout_section": "water",
+        "shape": "polygon",
+        "points": [
+          {
+            "x": -250.0,
+            "y": -12.5
+          },
+          {
+            "x": -332.0,
+            "y": 147.7
+          },
+          {
+            "x": -344.4,
+            "y": 141.4
+          },
+          {
+            "x": -262.5,
+            "y": -18.9
+          }
+        ],
+        "z": 3.25,
+        "depth_cm": 30.0,
+        "evidence": "A-03/work_order/v1#row:2",
+        "actor_tags": [
+          "twin:TW-incident-WO-20261029-007",
+          "kind:water",
+          "state:30cm",
+          "evidence:A-03/work_order/v1#row:2"
+        ]
+      },
+      "note": "水面 Actor 的渲染 tag 是 kind:water；语义 kind 仍是 incident"
+    },
+    {
+      "twin_id": "TW-incident-WO-20261029-011",
+      "kind": "incident",
+      "name": "WO-20261029-011",
+      "region_id": null,
+      "scene_state": "unknown",
+      "layout_state": "18cm",
+      "primary_hop": null,
+      "hops": [],
+      "highlight_steps": [],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "water:WO-20261029-011",
+        "layout_section": "water",
+        "shape": "polygon",
+        "points": [
+          {
+            "x": 1150.6,
+            "y": 89.7
+          },
+          {
+            "x": 990.0,
+            "y": 8.6
+          },
+          {
+            "x": 996.3,
+            "y": -3.9
+          },
+          {
+            "x": 1157.0,
+            "y": 77.2
+          }
+        ],
+        "z": 5.45,
+        "depth_cm": 18.0,
+        "evidence": "A-03/work_order/v1#row:6",
+        "actor_tags": [
+          "twin:TW-incident-WO-20261029-011",
+          "kind:water",
+          "state:18cm",
+          "evidence:A-03/work_order/v1#row:6"
+        ]
+      },
+      "note": "水面 Actor 的渲染 tag 是 kind:water；语义 kind 仍是 incident"
+    },
+    {
+      "twin_id": "TW-power-PL-PWR-101",
+      "kind": "power",
+      "name": "PL-PWR-101",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "",
+      "primary_hop": "conflict",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "pipelines:PL-PWR-101",
+        "layout_section": "pipelines",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": -165.4,
+            "y": -197.3
+          },
+          {
+            "x": -507.3,
+            "y": 471.3
+          }
+        ],
+        "z": -1.0,
+        "depth_cm": null,
+        "evidence": "A-03/pipeline_ledger/v1#row:5",
+        "actor_tags": [
+          "twin:TW-power-PL-PWR-101",
+          "kind:power",
+          "evidence:A-03/pipeline_ledger/v1#row:5"
+        ]
+      },
+      "note": "布局管线没有事件状态字段，state 只存在于语义层"
+    },
+    {
+      "twin_id": "TW-pump_station-DF-PS-01",
+      "kind": "pump_station",
+      "name": "DF-PS-01",
+      "region_id": null,
+      "scene_state": "under_maintenance",
+      "layout_state": "fault_pending_repair",
+      "primary_hop": "resource",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "resource"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "facilities:DF-PS-01",
+        "layout_section": "facilities",
+        "shape": "point",
+        "points": [
+          {
+            "x": -272.8,
+            "y": 43.0
+          }
+        ],
+        "z": 3.2,
+        "depth_cm": null,
+        "evidence": "A-03/drainage_facility/v1#row:2",
+        "actor_tags": [
+          "twin:TW-pump_station-DF-PS-01",
+          "kind:pump_station",
+          "state:fault_pending_repair",
+          "evidence:A-03/drainage_facility/v1#row:2"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "twin_id": "TW-pump_station-DF-PS-02",
+      "kind": "pump_station",
+      "name": "DF-PS-02",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "in_service",
+      "primary_hop": "resource",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "resource"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "facilities:DF-PS-02",
+        "layout_section": "facilities",
+        "shape": "point",
+        "points": [
+          {
+            "x": -512.7,
+            "y": -186.4
+          }
+        ],
+        "z": 4.8,
+        "depth_cm": null,
+        "evidence": "A-03/drainage_facility/v1#row:4",
+        "actor_tags": [
+          "twin:TW-pump_station-DF-PS-02",
+          "kind:pump_station",
+          "state:in_service",
+          "evidence:A-03/drainage_facility/v1#row:4"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "twin_id": "TW-pump_station-DF-PS-03",
+      "kind": "pump_station",
+      "name": "DF-PS-03",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "in_service",
+      "primary_hop": "resource",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "resource"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "facilities:DF-PS-03",
+        "layout_section": "facilities",
+        "shape": "point",
+        "points": [
+          {
+            "x": 1285.6,
+            "y": 163.5
+          }
+        ],
+        "z": 5.4,
+        "depth_cm": null,
+        "evidence": "A-03/drainage_facility/v1#row:6",
+        "actor_tags": [
+          "twin:TW-pump_station-DF-PS-03",
+          "kind:pump_station",
+          "state:in_service",
+          "evidence:A-03/drainage_facility/v1#row:6"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "twin_id": "TW-road-R-101",
+      "kind": "road",
+      "name": "R-101",
+      "region_id": "A-03",
+      "scene_state": "in_service",
+      "layout_state": "closed",
+      "primary_hop": "action",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "action"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "roads:R-101",
+        "layout_section": "roads",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": -163.8,
+            "y": -196.5
+          },
+          {
+            "x": -505.7,
+            "y": 472.1
+          }
+        ],
+        "z": 3.2,
+        "depth_cm": null,
+        "evidence": "A-03/road_network/v1.1#row:2",
+        "actor_tags": [
+          "twin:TW-road-R-101",
+          "kind:road",
+          "state:closed",
+          "evidence:A-03/road_network/v1.1#row:2"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "twin_id": "TW-road-R-102",
+      "kind": "road",
+      "name": "R-102",
+      "region_id": "A-03",
+      "scene_state": "in_service",
+      "layout_state": "normal",
+      "primary_hop": null,
+      "hops": [],
+      "highlight_steps": [],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "roads:R-102",
+        "layout_section": "roads",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": -163.8,
+            "y": -196.5
+          },
+          {
+            "x": -1160.0,
+            "y": -212.0
+          }
+        ],
+        "z": 4.8,
+        "depth_cm": null,
+        "evidence": "A-03/road_network/v1.1#row:3",
+        "actor_tags": [
+          "twin:TW-road-R-102",
+          "kind:road",
+          "state:normal",
+          "evidence:A-03/road_network/v1.1#row:3"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "twin_id": "TW-road-R-103",
+      "kind": "road",
+      "name": "R-103",
+      "region_id": "A-03",
+      "scene_state": "in_service",
+      "layout_state": "under_construction",
+      "primary_hop": "action",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "action"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "roads:R-103",
+        "layout_section": "roads",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": -1160.0,
+            "y": -212.0
+          },
+          {
+            "x": -1429.5,
+            "y": 328.3
+          }
+        ],
+        "z": 5.6,
+        "depth_cm": null,
+        "evidence": "A-03/road_network/v1.1#row:4",
+        "actor_tags": [
+          "twin:TW-road-R-103",
+          "kind:road",
+          "state:under_construction",
+          "evidence:A-03/road_network/v1.1#row:4"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "twin_id": "TW-road-R-104",
+      "kind": "road",
+      "name": "R-104",
+      "region_id": "A-03",
+      "scene_state": "in_service",
+      "layout_state": "normal",
+      "primary_hop": null,
+      "hops": [],
+      "highlight_steps": [],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "roads:R-104",
+        "layout_section": "roads",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": -505.7,
+            "y": 472.1
+          },
+          {
+            "x": -1429.5,
+            "y": 328.3
+          }
+        ],
+        "z": 6.1,
+        "depth_cm": null,
+        "evidence": "A-03/road_network/v1.1#row:5",
+        "actor_tags": [
+          "twin:TW-road-R-104",
+          "kind:road",
+          "state:normal",
+          "evidence:A-03/road_network/v1.1#row:5"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "twin_id": "TW-road-R-105",
+      "kind": "road",
+      "name": "R-105",
+      "region_id": "A-03",
+      "scene_state": "unknown",
+      "layout_state": "under_construction",
+      "primary_hop": "action",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "action"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "roads:R-105",
+        "layout_section": "roads",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": -163.8,
+            "y": -196.5
+          },
+          {
+            "x": 327.5,
+            "y": -472.1
+          }
+        ],
+        "z": 3.4,
+        "depth_cm": null,
+        "evidence": "A-03/road_network/v1.1#row:6",
+        "actor_tags": [
+          "twin:TW-road-R-105",
+          "kind:road",
+          "state:under_construction",
+          "evidence:A-03/road_network/v1.1#row:6"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "twin_id": "TW-road-R-201",
+      "kind": "road",
+      "name": "R-201",
+      "region_id": "B-01",
+      "scene_state": "in_service",
+      "layout_state": "normal",
+      "primary_hop": "action",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "action"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "roads:R-201",
+        "layout_section": "roads",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": 1429.5,
+            "y": 222.7
+          },
+          {
+            "x": 1033.9,
+            "y": 22.9
+          }
+        ],
+        "z": 5.4,
+        "depth_cm": null,
+        "evidence": "A-03/road_network/v1.1#row:7",
+        "actor_tags": [
+          "twin:TW-road-R-201",
+          "kind:road",
+          "state:normal",
+          "evidence:A-03/road_network/v1.1#row:7"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "twin_id": "TW-road-R-202",
+      "kind": "road",
+      "name": "R-202",
+      "region_id": "B-01",
+      "scene_state": "in_service",
+      "layout_state": "normal",
+      "primary_hop": null,
+      "hops": [],
+      "highlight_steps": [],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "roads:R-202",
+        "layout_section": "roads",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": 1033.9,
+            "y": 22.9
+          },
+          {
+            "x": 547.5,
+            "y": -222.7
+          }
+        ],
+        "z": 6.0,
+        "depth_cm": null,
+        "evidence": "A-03/road_network/v1.1#row:8",
+        "actor_tags": [
+          "twin:TW-road-R-202",
+          "kind:road",
+          "state:normal",
+          "evidence:A-03/road_network/v1.1#row:8"
+        ]
+      },
+      "note": ""
+    },
+    {
+      "twin_id": "TW-telecom-PL-TEL-103",
+      "kind": "telecom",
+      "name": "PL-TEL-103",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "",
+      "primary_hop": null,
+      "hops": [],
+      "highlight_steps": [],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "pipelines:PL-TEL-103",
+        "layout_section": "pipelines",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": -1159.2,
+            "y": -211.6
+          },
+          {
+            "x": -1428.7,
+            "y": 328.7
+          }
+        ],
+        "z": -1.25,
+        "depth_cm": null,
+        "evidence": "A-03/pipeline_ledger/v1#row:6",
+        "actor_tags": [
+          "twin:TW-telecom-PL-TEL-103",
+          "kind:telecom",
+          "evidence:A-03/pipeline_ledger/v1#row:6"
+        ]
+      },
+      "note": "布局管线没有事件状态字段，state 只存在于语义层"
+    },
+    {
+      "twin_id": "TW-water-PL-WTR-103",
+      "kind": "water",
+      "name": "PL-WTR-103",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "",
+      "primary_hop": null,
+      "hops": [],
+      "highlight_steps": [],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "pipelines:PL-WTR-103",
+        "layout_section": "pipelines",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": -1160.8,
+            "y": -212.4
+          },
+          {
+            "x": -1430.3,
+            "y": 327.9
+          }
+        ],
+        "z": -1.85,
+        "depth_cm": null,
+        "evidence": "A-03/pipeline_ledger/v1#row:7",
+        "actor_tags": [
+          "twin:TW-water-PL-WTR-103",
+          "kind:water",
+          "evidence:A-03/pipeline_ledger/v1#row:7"
+        ]
+      },
+      "note": "布局管线没有事件状态字段，state 只存在于语义层"
+    },
+    {
+      "twin_id": "TW-water-PL-WTR-202",
+      "kind": "water",
+      "name": "PL-WTR-202",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "",
+      "primary_hop": null,
+      "hops": [],
+      "highlight_steps": [],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "pipelines:PL-WTR-202",
+        "layout_section": "pipelines",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": 1033.9,
+            "y": 22.9
+          },
+          {
+            "x": 547.5,
+            "y": -222.7
+          }
+        ],
+        "z": -1.85,
+        "depth_cm": null,
+        "evidence": "A-03/pipeline_ledger/v1#row:9",
+        "actor_tags": [
+          "twin:TW-water-PL-WTR-202",
+          "kind:water",
+          "evidence:A-03/pipeline_ledger/v1#row:9"
+        ]
+      },
+      "note": "布局管线没有事件状态字段，state 只存在于语义层"
+    }
+  ],
+  "unrepresented": [
+    {
+      "twin_id": "TW-incident-WO-20261026-013",
+      "kind": "incident",
+      "name": "WO-20261026-013",
+      "highlight_steps": [
+        1,
+        2,
+        3
+      ],
+      "reason": "scene_layout.json 的 water 段只导出本事件水面，历史事件无几何可绑"
+    },
+    {
+      "twin_id": "TW-incident-WO-20261029-009",
+      "kind": "incident",
+      "name": "WO-20261029-009",
+      "highlight_steps": [
+        1,
+        2,
+        3
+      ],
+      "reason": "scene_layout.json 的 water 段只导出本事件水面，历史事件无几何可绑"
+    },
+    {
+      "twin_id": "TW-work_site-CP-2026-041",
+      "kind": "work_site",
+      "name": "CP-2026-041",
+      "highlight_steps": [
+        1,
+        2,
+        3
+      ],
+      "reason": "scene_layout.json 没有 work_sites 段，施工面没有几何可绑"
+    }
+  ],
+  "excluded_twin_ids": [
+    "TW-action-先组织抽排降低水位",
+    "TW-action-先隔离风险源-对积水影响范围内的压力管线-燃气",
+    "TW-action-全程同步交通管制与信息发布",
+    "TW-action-再控制水势-启动泵站抽排-泵站不可用时调用移动泵",
+    "TW-action-后实施开挖与回填-水位降至基坑底以下-0-3m",
+    "TW-action-抽排与交通疏导可并行开展",
+    "TW-action-水位下降后再排查地下管线-发现泄漏另行处置",
+    "TW-department-ORG-DRAIN",
+    "TW-department-ORG-EMERG",
+    "TW-department-ORG-GAS",
+    "TW-department-ORG-METEO",
+    "TW-department-ORG-POWER",
+    "TW-department-ORG-ROAD",
+    "TW-department-ORG-TRAFFIC",
+    "TW-department-ORG-WATER",
+    "TW-incident-WO-20261020-002",
+    "TW-plan-地下燃气管道施工保护规程",
+    "TW-plan-城区防汛排涝应急预案-2021-年版-已废止",
+    "TW-plan-城区防汛排涝应急预案-2025-年修订",
+    "TW-plan-道路积水处置作业指引",
+    "TW-region-A-03",
+    "TW-region-B-01",
+    "TW-resource-RES-BARRIER",
+    "TW-resource-RES-GAS-DETECT",
+    "TW-resource-RES-GAS-VALVE",
+    "TW-resource-RES-GEN",
+    "TW-resource-RES-PUMP-M",
+    "TW-resource-RES-PUMP-M-B01",
+    "TW-resource-RES-SAND",
+    "TW-resource-RES-SAND-B01",
+    "TW-resource-RES-SIGN",
+    "TW-weather-WA-20261028-07",
+    "TW-weather-WA-20261029-01",
+    "TW-weather-WA-20261029-02",
+    "TW-weather-WA-20261030-01",
+    "TW-work_site-CP-2026-035",
+    "TW-work_site-CP-2026-038"
+  ],
+  "legacy_osm": [
+    {
+      "legacy_id": "ACT-CLOSE-ROAD",
+      "kind": "action",
+      "osm_ref": "",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "AREA-DONGTUO",
+      "kind": "heritage",
+      "osm_ref": "osm:way/1204383950",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "AREA-HOUZIMEN",
+      "kind": "park",
+      "osm_ref": "osm:way/239424751",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "AREA-MOHECHI",
+      "kind": "park",
+      "osm_ref": "osm:way/993208555",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "AREA-RENMIN",
+      "kind": "park",
+      "osm_ref": "osm:way/103295076",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "BLD-A03",
+      "kind": "district",
+      "osm_ref": "",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "BLD-ART",
+      "kind": "building",
+      "osm_ref": "osm:way/430059676",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "BLD-MUSEUM",
+      "kind": "building",
+      "osm_ref": "osm:way/929666443",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "BLD-THEATRE",
+      "kind": "building",
+      "osm_ref": "osm:way/815834575",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "BLK-PORTAL",
+      "kind": "obstruction",
+      "osm_ref": "",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "CF-ROADCTRL",
+      "kind": "conflict_point",
+      "osm_ref": "",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "DEPT-EMERG",
+      "kind": "department",
+      "osm_ref": "",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "FAC-PS-01",
+      "kind": "pump_station",
+      "osm_ref": "",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "OBS-FLOOD",
+      "kind": "observation",
+      "osm_ref": "",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "RD-DONGHUAMEN",
+      "kind": "road",
+      "osm_ref": "osm:way/115625961",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "RD-DONGYU",
+      "kind": "road",
+      "osm_ref": "osm:way/837186660",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "RD-RENMINZHONG",
+      "kind": "road",
+      "osm_ref": "osm:way/459057751",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "RD-SHUNCHENG",
+      "kind": "road",
+      "osm_ref": "osm:way/1369175166",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "RD-XIYU",
+      "kind": "road",
+      "osm_ref": "osm:way/672331734",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "RES-AMB",
+      "kind": "resource",
+      "osm_ref": "",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "RES-FIRE",
+      "kind": "resource",
+      "osm_ref": "",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "RES-PUMP-TEAM",
+      "kind": "resource",
+      "osm_ref": "",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "TN-TIANFU",
+      "kind": "tunnel",
+      "osm_ref": "osm:way/211820797",
+      "twin_id": null,
+      "disposition": "retired"
+    },
+    {
+      "legacy_id": "WTR-FLOOD",
+      "kind": "flood_water",
+      "osm_ref": "",
+      "twin_id": null,
+      "disposition": "retired"
+    }
+  ],
+  "summary": {
+    "entities": 23,
+    "drawable": 23,
+    "unrepresented": 3,
+    "excluded": 37,
+    "event_entities": 16,
+    "highlight_ids": 19,
+    "highlight_ids_drawable": 16,
+    "by_hop": {
+      "observed": 1,
+      "conflict": 2,
+      "resource": 9,
+      "action": 4
+    },
+    "by_kind": {
+      "drainage": 6,
+      "gas": 1,
+      "incident": 2,
+      "power": 1,
+      "pump_station": 3,
+      "road": 7,
+      "telecom": 1,
+      "water": 2
+    },
+    "excluded_by_kind": {
+      "action": 7,
+      "department": 8,
+      "incident": 1,
+      "plan": 4,
+      "region": 2,
+      "resource": 9,
+      "weather": 4,
+      "work_site": 2
+    }
+  },
+  "disclaimers": [
+    "底图为真实 OSM 几何，只作背景；事件层（积水、封路、施工、设施状态）为合成内容。",
+    "场景布局是示意图坐标，不是测绘坐标：实体位置只能用于本场景的可视化，不能用于距离测量。",
+    "被高亮但无几何的对象列在 unrepresented 里，渲染时应当显示为'画面上没有'，而不是假装亮过。",
+    "片区（region）在关卡里是地面 Actor，只有 district: 标签、没有 twin: 标签，不参与高亮。",
+    "本表不含时间戳：同一份 scene/layout/replay 重跑逐位一致，projection_hash 可当场核对。"
+  ]
+}
