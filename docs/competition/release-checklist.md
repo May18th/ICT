@@ -12,7 +12,7 @@
 | 平台侧证据 | 2 个 SKILL.md 上传 Nexent 技能仓库（skill_id=2/3、幂等、正文逐位一致）；平台界面 3 张截图 + `platform_ui.json`（sha256 进自检） | `evidence_check` 的 `platform_skills` / `platform_ui` 两组；报告 [平台侧证据报告](../reports/platform-evidence-report.md) |
 | UE 场景可被智能体驱动 | `UrbanTwinDemo.uproject` 启用 `ModelContextProtocol` / `ToolsetRegistry` / `EditorToolset`，`Config/DefaultEditorPerProjectUserSettings.ini` 写入 8000 端口自动启动 | 启动编辑器后 `http://127.0.0.1:8000/mcp` 可初始化 |
 
-## 2. 待提交改动分组（本轮设计，尚未提交、未推送）
+## 2. 已推送的提交分组（2026-11-02，`main` = `6f7c559`）
 
 按"一次提交一个可解释的单元"分组，顺序即建议提交顺序：
 
@@ -47,16 +47,27 @@ uv pip check --python .venv\Scripts\python.exe
 3. **`visualization/unreal/Content/UrbanTwin/Maps/UrbanTwinDemo.umap`** 是编辑器生成内容，确认是否要作为
    可复现材料提交；若提交，README 需说明首次打卡即可，不需要评委自己建关卡。
 
-## 4. 推送（待用户明确授权）
+## 4. 推送（用户已授权，2026-11-02 已推送）
 
-`AGENTS.md` 规定：未经用户明确要求不推送、不提交 PR、不改远程仓库。当前 `main` 与 `origin/main` 都在
-`11dc8ce`，工作区有 80+ 改动待提交。授权后建议：
+`AGENTS.md` 新增"进度上传"一节：用户已授权直接提交并推送，**每轮工作结束执行**
+`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/git_sync.ps1 -Message "<type>(scope): 摘要>"`；
+脚本无改动不空提交、失败不强推、打印分支与提交号。
 
-```powershell
-git add -A
-git commit -m "<按第 2 节分组逐条提交>"
-git push origin main
+本轮实测（2026-11-02）：12 个分组提交，`main` 与 `origin/main` 同步在 `6f7c559`，工作区干净：
+
+```text
+9339179 feat(nexent): 上传 SKILL.md 到平台技能仓库并固化平台界面证据
+2a884ee feat(p9): 决策进化闭环、分层记忆与真实用户评分通道
+6a121fc feat(p10): 可视化工具层、实体重投影与回放数据
+322b4e9 feat(p11): 消融阶梯与决策锚定包
+1e49200 feat(eval): 图像语义抽取与真实模型 A/B 评测
+8748dcd feat(nexent): 北向传输、MCP-over-SSE 与真机集成
+06f30bb feat(ue): 关卡、真实资产与按 RenderJob 高亮驱动
+2471361 chore(repo): 一键复现脚本、MIT 许可与依赖锁更新
+40dbbf2 docs: 对外材料与数字口径同步
+f0c9c2c chore(repo): 每轮工作结束自动提交推送规则
+7494e44 chore(repo): 修正自动上传命令为 Windows PowerShell 5.1 可执行形式
+6f7c559 chore(repo): 让 git 同步脚本在 PowerShell 5.1 下不把警告当异常
 ```
 
-推送完成后在 `docs/competition-gap-audit.md` 第 3 节把"完整代码 + 数据集"一行改为"已推送 <新 commit>"，
-并附上干净 clone 复现的实测记录。
+`docs/competition-gap-audit.md` 第 3 节"完整代码 + 数据集"与第 4 节 Git 行已同步为 `6f7c559`。

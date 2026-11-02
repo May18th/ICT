@@ -46,7 +46,7 @@
 | 项目 PPT（初赛） | 覆盖背景价值、创新性、数据集处理、关键代码、量化指标 | **没有** | 高 |
 | 模板 2 答辩 PPT（决赛） | 答辩 + 演示 | **没有** | 若进决赛 |
 | Demo 地址 | 可访问的演示地址 | 仅 `localhost:8787`（本机启动）；无公网/云上地址 | 中高 |
-| 完整代码 + 数据集 | 可复现 | 代码在本地；**GitHub origin 已推到 `11dc8ce`，工作区 80+ 改动仍未提交**；本轮已补 `LICENSE`（MIT）与一键复现脚本 `scripts/reproduce.py`（17 步全过，实测 30 秒内） | 高（复现核验会按 README 跑，跑到旧 commit 数字全对不上）；分组与推送步骤见[开源与提交清单](competition/release-checklist.md) |
+| 完整代码 + 数据集 | 可复现 | **GitHub origin/main 已推到 `6f7c559`（2026-11-02，12 个分组提交、工作区干净）**；本轮已补 `LICENSE`（MIT）与一键复现脚本 `scripts/reproduce.py`（17 步全过，实测 30 秒内） | 高（复现核验会按 README 跑，跑到旧 commit 数字全对不上）；分组与推送步骤见[开源与提交清单](competition/release-checklist.md) |
 | README / 部署说明 | 一键复现 | README 有本地快速开始；**Nexent 部署说明没有**（只有本机 docker 手工步骤） | 中 |
 | 复现脚本 | 从干净环境复现 | `pytest` / 各 CLI / `evidence_check` 已有；缺"一条命令生成全部材料"的编排脚本 | 低 |
 | 开源截图 | 决赛材料 | `LICENSE`（MIT）已补；仓库公开状态与开源截图待确认 | 中 |
@@ -59,7 +59,7 @@
 | Docker / Nexent | **可用**：Docker Desktop 启动后 Nexent v2.7.0 全栈在线（`/nb/v1/health` healthy）；MCP 服务以 `urban-twin-mcp` 容器跑在 `nexent_network` |
 | Nexent 真机 | **已跑通**：12 工具注册、Agent `urban_deduction_agent` 发布 v3、conversation_id=21、8/8 一致；证据 `samples/nexent/live/` |
 | 测试与自检 | 600 项测试通过；对外数字自检 106/106；`uv lock --check`、`compileall`、`uv pip check` 通过 |
-| Git | `main` 与 `origin/main` 同步在 `11dc8ce`；工作区有大量未提交改动（P9/P9.1/P9.2/自检/面板/P10/真机脚本） |
+| Git | `main` 与 `origin/main` 同步在 `6f7c559`（2026-11-02 推送 12 个提交）；工作区干净；每轮结束由 `scripts/git_sync.ps1` 自动提交推送 |
 | 开源合规 | 无 `LICENSE`；`samples/` 为合成数据、来源已标注，未发现真实私有数据；真机证据不含 API Key |
 
 ## 5 反馈来源与"用户评分"
@@ -86,7 +86,7 @@
 | P0 | ~~Nexent 真机跑通城市内涝主链路~~ | 六跳 + 分配 + 证据链，与离线可核对 | **已完成**：8/8 + conversation_id=21 + 3 次工具调用日志（[真机报告](reports/nexent-live-integration-report.md)） |
 | P0 | **拿到官方模板 1/模板 2 与报名通知原文**，确认时间线与提交格式 | 官方文件落库到 `docs/competition/` | 阻塞在用户侧（用户称已拿到，需放入工作区） |
 | P1 | 按模板 1 写初赛作品 Word（数据集处理/关键代码/量化指标/演示截图） | 可提交的 PDF/Word | 内容草稿已备：`docs/competition/preliminary-submission-draft.md`，待套版 |
-| P1 | 提交并推送当前全部工作；补 LICENSE、部署说明、一键复现脚本 | 干净 clone 后按 README 可复现 106/106 自检 | LICENSE 与 `scripts/reproduce.py`（17/17 步）已完成，提交分组见[清单](competition/release-checklist.md)；推送待用户授权 |
+| P1 | 提交并推送当前全部工作；补 LICENSE、部署说明、一键复现脚本 | 干净 clone 后按 README 可复现 106/106 自检 | LICENSE 与 `scripts/reproduce.py`（17/17 步）已完成；**2026-11-02 已推送到 `origin/main` = `6f7c559`（12 个分组提交）**，每轮结束由 `scripts/git_sync.ps1` 自动提交推送 |
 | P1 | SKILL.md 上传到 Nexent 技能仓库 | 平台技能列表出现 2 个技能 | **已完成**：skill_id=2/3，正文逐位一致（`samples/nexent/live/skills.json`），平台截图 `captures/nexent/skill-space.png` |
 | P2 | 真实用户评分（3–5 人，进化前后各一次） | 采集通道已就绪（`/evolution` 表单 + `python -m decision_poc.review_collect`）；样本待组织（≥3 人且前后各有），汇总与导出命令见 [真实评分通道](real-feedback-channel.md) | 通道就绪，样本待填 |
 | P2 | 应用价值量化（三组对照数据） | 一页指标表，进 PPT | 待做 |
