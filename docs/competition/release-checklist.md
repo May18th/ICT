@@ -53,7 +53,7 @@ uv pip check --python .venv\Scripts\python.exe
 `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/git_sync.ps1 -Message "<type>(scope): 摘要>"`；
 脚本无改动不空提交、失败不强推、打印分支与提交号。
 
-本轮实测（2026-11-02）：12 个分组提交，`main` 与 `origin/main` 同步在 `6f7c559`，工作区干净：
+本轮实测（2026-11-02）：12 个分组提交推到 `origin/main` = `6f7c559`，此后仅一条文档状态提交；`main` 与 `origin/main` 保持同步，工作区干净。当前 HEAD 以 `git log -1 --oneline` 为准，下面只列分组内容：
 
 ```text
 9339179 feat(nexent): 上传 SKILL.md 到平台技能仓库并固化平台界面证据

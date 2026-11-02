@@ -86,7 +86,7 @@
 | P0 | ~~Nexent 真机跑通城市内涝主链路~~ | 六跳 + 分配 + 证据链，与离线可核对 | **已完成**：8/8 + conversation_id=21 + 3 次工具调用日志（[真机报告](reports/nexent-live-integration-report.md)） |
 | P0 | **拿到官方模板 1/模板 2 与报名通知原文**，确认时间线与提交格式 | 官方文件落库到 `docs/competition/` | 阻塞在用户侧（用户称已拿到，需放入工作区） |
 | P1 | 按模板 1 写初赛作品 Word（数据集处理/关键代码/量化指标/演示截图） | 可提交的 PDF/Word | 内容草稿已备：`docs/competition/preliminary-submission-draft.md`，待套版 |
-| P1 | 提交并推送当前全部工作；补 LICENSE、部署说明、一键复现脚本 | 干净 clone 后按 README 可复现 106/106 自检 | LICENSE 与 `scripts/reproduce.py`（17/17 步）已完成；**2026-11-02 已推送到 `origin/main` = `6f7c559`（12 个分组提交）**，每轮结束由 `scripts/git_sync.ps1` 自动提交推送 |
+| P1 | 提交并推送当前全部工作；补 LICENSE、部署说明、一键复现脚本 | 干净 clone 后按 README 可复现 106/106 自检 | LICENSE 与 `scripts/reproduce.py`（17/17 步）已完成；**2026-11-02 已推送 12 个分组提交到 `origin/main`（起始点 `6f7c559`）**，每轮结束由 `scripts/git_sync.ps1` 自动提交推送；HEAD 以 `git log -1` 为准 |
 | P1 | SKILL.md 上传到 Nexent 技能仓库 | 平台技能列表出现 2 个技能 | **已完成**：skill_id=2/3，正文逐位一致（`samples/nexent/live/skills.json`），平台截图 `captures/nexent/skill-space.png` |
 | P2 | 真实用户评分（3–5 人，进化前后各一次） | 采集通道已就绪（`/evolution` 表单 + `python -m decision_poc.review_collect`）；样本待组织（≥3 人且前后各有），汇总与导出命令见 [真实评分通道](real-feedback-channel.md) | 通道就绪，样本待填 |
 | P2 | 应用价值量化（三组对照数据） | 一页指标表，进 PPT | 待做 |
