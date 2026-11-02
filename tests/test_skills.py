@@ -117,7 +117,7 @@ def test_resource_gap_matches_ground_truth(report: PipelineReport) -> None:
     assert resources is not None
     assert resources.unavailable_reason is None
     [line] = resources.lines
-    assert (line.required, line.available, line.gap) == (7, 6, 1)
+    assert (line.required, line.available, line.gap) == (8, 6, 2)
     assert any("960" in item for item in line.basis), "折算过程必须写在依据里"
 
 
@@ -150,7 +150,7 @@ def test_report_renders_the_five_sections(report: PipelineReport) -> None:
     text = render_report(report)
     for heading in ("[1 事件理解]", "[2 影响分析]", "[3 资源检查]", "[4 跨部门推演]", "[5 证据审计]"):
         assert heading in text
-    assert "缺口 1 台" in text
+    assert "缺口 2 台" in text
 
 
 # --- degradations and refusals -----------------------------------------

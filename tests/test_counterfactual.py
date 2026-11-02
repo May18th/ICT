@@ -66,10 +66,10 @@ def test_cf1_moves_the_closure_ahead_without_inventing_actions(cf1) -> None:
     moves = {item.action: (item.before, item.after) for item in cf1.diff.actions_moved}
     closure = next(key for key in moves if "封闭积水路段" in key)
     isolate = next(key for key in moves if "隔离风险源" in key)
-    assert moves[closure] == (2, 1), "封路应从第 3 位（0 基 2）提前到第 2 位"
-    assert moves[isolate] == (1, 3), "隔离风险源应后移到第 4 位（0 基 3）"
+    assert moves[closure] == (3, 2), "封路应从第 3 位（0 基 2）提前到第 2 位"
+    assert moves[isolate] == (2, 4), "隔离风险源应后移到第 4 位（0 基 3）"
     assert not cf1.diff.actions_added and not cf1.diff.actions_removed, "顺序干预不该增减动作"
-    assert "第 3 位提前到第 2 位" in cf1.verdict
+    assert "第 4 位提前到第 3 位" in cf1.verdict
 
 
 def test_cf1_reports_the_road_set_after_the_closure(cf1) -> None:
@@ -111,8 +111,8 @@ def test_cf1_still_says_what_it_cannot_compute(cf1) -> None:
 def test_cf2_shrinks_inventory_and_widens_the_gap(cf2) -> None:
     assert cf2.baseline.inventory == 6
     assert cf2.intervened.inventory == 2
-    assert cf2.baseline.gaps["RES-PUMP-M"] == 1
-    assert cf2.intervened.gaps["RES-PUMP-M"] == 5
+    assert cf2.baseline.gaps["RES-PUMP-M"] == 2
+    assert cf2.intervened.gaps["RES-PUMP-M"] == 6
     assert cf2.diff.gaps_delta["RES-PUMP-M"] == 4
     assert cf2.diff.changed is True
     assert "6 台 → 2 台" in cf2.verdict
@@ -142,9 +142,9 @@ def test_cf2_compares_each_district_with_its_own_stock(cf2) -> None:
     """口径统一：需求与本区库存都按片区算，不把别区库存算进自己的分母。"""
     assert cf2.priority is not None
     ranked = {case.district: case for case in cf2.priority.ranked}
-    assert ranked["A-03"].required_total == 5, "A-03 自己的需求：泵站 3 + 基坑 2"
+    assert ranked["A-03"].required_total == 6, "A-03 自己的需求：泵站 3 + 基坑 2"
     assert ranked["B-01"].required_total == 2, "B-01 自己的需求：2 处低洼点 × 1 台"
-    assert ranked["A-03"].total_gap == max(0, 5 - ranked["A-03"].available_total)
+    assert ranked["A-03"].total_gap == max(0, 6 - ranked["A-03"].available_total)
     assert ranked["B-01"].total_gap == max(0, 2 - ranked["B-01"].available_total)
 
 
@@ -154,8 +154,8 @@ def test_district_demand_does_not_depend_on_which_district_is_primary(runtime: S
     from_b01 = runtime.engine.deduce("WO-20261029-011", as_of=AS_OF)
     assert from_a03.demand_by_district["B-01"] == 2
     assert from_b01.demand_by_district["B-01"] == 2
-    assert from_a03.demand_by_district["A-03"] == 5
-    assert sum(from_a03.demand_by_district.values()) == 7, "按片区归集后合计仍是 5+2"
+    assert from_a03.demand_by_district["A-03"] == 6
+    assert sum(from_a03.demand_by_district.values()) == 8, "按片区归集后合计仍是 5+2"
 
 
 def test_lowspot_rule_condition_is_evaluated_not_decorative(tmp_path: Path) -> None:
@@ -177,7 +177,7 @@ def test_lowspot_rule_condition_is_evaluated_not_decorative(tmp_path: Path) -> N
     # 条件翻成 "未达阈值 = false" 之后，命中者从 B-01 变成 A-03：
     # B-01 那 2 台消失、A-03 多出 2 台。结论是谁变了，但"条件真的被求值"这件事被证明了。
     assert result.demand_by_district.get("B-01", 0) == 0, "条件不命中就不该再产出低洼点台数"
-    assert result.demand_by_district == {"A-03": 7}
+    assert result.demand_by_district == {"A-03": 8}
 
 
 def test_lowspot_pumps_only_apply_below_the_closure_threshold(runtime: SkillRuntime) -> None:

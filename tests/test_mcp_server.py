@@ -323,7 +323,7 @@ def test_event_deduce_returns_six_hops(server: McpServer) -> None:
     data = payload["data"]
     assert [step["stage"] for step in data["steps"][:3]] == ["observed", "affected", "owner"]
     assert {conflict["kind"] for conflict in data["conflicts"]} == {"overlap", "gap", "contention"}
-    assert data["resource_gaps"][0]["gap"] == 1
+    assert data["resource_gaps"][0]["gap"] == 2
     assert data["snapshot_hash"] == payload["data"]["root"]["snapshot_hash"]
 
 
@@ -548,7 +548,7 @@ def test_allocation_plan_default_policy_keeps_local_stock(server: McpServer) -> 
     allocation = payload["data"]["allocation"]
     assert allocation["policy_version"] == "v1"
     assert allocation["allocation_by_district"] == {"A-03": 4, "B-01": 2}
-    assert allocation["unmet_by_district"] == {"A-03": 1, "B-01": 0}
+    assert allocation["unmet_by_district"] == {"A-03": 2, "B-01": 0}
     assert allocation["transfers"] == []
 
 
@@ -570,10 +570,10 @@ def test_allocation_plan_accepts_evolved_policy(server: McpServer) -> None:
     )
     assert payload["status"] == "ok"
     allocation = payload["data"]["allocation"]
-    assert allocation["allocation_by_district"] == {"A-03": 5, "B-01": 1}
-    assert allocation["unmet_by_district"] == {"A-03": 0, "B-01": 1}
+    assert allocation["allocation_by_district"] == {"A-03": 6, "B-01": 0}
+    assert allocation["unmet_by_district"] == {"A-03": 0, "B-01": 2}
     [transfer] = allocation["transfers"]
-    assert (transfer["from_district"], transfer["to_district"], transfer["qty"]) == ("B-01", "A-03", 1)
+    assert (transfer["from_district"], transfer["to_district"], transfer["qty"]) == ("B-01", "A-03", 2)
     assert transfer["delay_min"] == 40
     assert any("B-01" in item for item in allocation["escalation"])
 

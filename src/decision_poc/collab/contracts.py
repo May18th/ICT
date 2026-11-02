@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import datetime
 from enum import StrEnum
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from decision_poc.contracts import StrictModel
 from decision_poc.deduction import DEDUCTION_STAGES, DepartmentConflict
@@ -26,6 +27,25 @@ class CardStatus(StrEnum):
     ACCEPTED = "accepted"
     REJECTED = "rejected"
     NO_ACTION = "no_action"
+
+
+class ResourceBinding(StrictModel):
+    """动作卡占用的资源：资源 id + 数量 + 单位。
+
+    这是"任务分配"能落到部门手里的最小单位：一张卡要几台泵、几块围挡，
+    写清楚才能在分配层与库存对账。
+    """
+
+    resource_id: str = Field(min_length=1)
+    quantity: int = Field(gt=0)
+    unit: str = Field(min_length=1)
+
+    @field_validator("resource_id", "unit")
+    @classmethod
+    def _not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("资源绑定字段不得为空白")
+        return value
 
 
 class ActionCard(StrictModel):
@@ -48,6 +68,24 @@ class ActionCard(StrictModel):
     status: CardStatus = CardStatus.PROPOSED
     no_action_reason: str = ""
     rejection_reason: str = ""
+    # 执行契约：时限、占用的资源、验收标准。缺省为空 = 还没排到执行层
+    latest_execution_time: datetime | None = None
+    required_resources: list[ResourceBinding] = Field(default_factory=list)
+    acceptance_criteria: list[str] = Field(default_factory=list)
+
+    @field_validator("latest_execution_time")
+    @classmethod
+    def _deadline_must_be_aware(cls, value: datetime | None) -> datetime | None:
+        if value is not None and value.tzinfo is None:
+            raise ValueError("执行时限必须带时区，否则跨部门对齐会错位")
+        return value
+
+    @field_validator("acceptance_criteria")
+    @classmethod
+    def _criteria_not_blank(cls, value: list[str]) -> list[str]:
+        if any(not item.strip() for item in value):
+            raise ValueError("验收标准不得出现空条目")
+        return value
 
     @model_validator(mode="after")
     def _check_invariants(self) -> ActionCard:

@@ -183,8 +183,8 @@ def test_allocation_plan_is_callable_from_sse(server: SseMcpServer) -> None:
         envelope = json.loads(client.next_message()["result"]["content"][0]["text"])
         assert envelope["status"] == "ok"
         allocation = envelope["data"]["allocation"]
-        assert allocation["allocation_by_district"] == {"A-03": 5, "B-01": 1}
-        assert allocation["transfers"][0]["qty"] == 1
+        assert allocation["allocation_by_district"] == {"A-03": 6, "B-01": 0}
+        assert allocation["transfers"][0]["qty"] == 2
 
 
 def test_batch_messages_share_one_sse_stream(server: SseMcpServer) -> None:

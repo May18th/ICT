@@ -1,5 +1,5 @@
 {
-  "version": "urban-rules-1.1",
+  "version": "urban-rules-1.2",
   "note": "推演规则是数据，不是代码。source_ref = <file_name>#<locator>，加载时校验该行确实存在且包含 keyword；校验失败即拒绝加载。assumption=true 表示该数值没有原文依据，是演示假设，必须在输出里显式标注。",
   "rules": [
     {
@@ -505,6 +505,76 @@
       "confidence": 0.92,
       "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:25",
       "keyword": "全区响应"
+    },
+    {
+      "rule_id": "RULE-AFF-UNDERPASS-IN-SCOPE",
+      "stage": "affected",
+      "when": {
+        "underpass_in_scope": [
+          "true"
+        ]
+      },
+      "then": {
+        "include": "underpass",
+        "reason": "下穿隧道位于受影响道路，外部积水可能漫过入口挡水槛形成倒灌"
+      },
+      "priority": 25,
+      "confidence": 0.9,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:16",
+      "keyword": "下穿隧道倒灌"
+    },
+    {
+      "rule_id": "RULE-ACT-CLOSE-UNDERPASS",
+      "stage": "action",
+      "when": {
+        "underpass_flooded": [
+          "true"
+        ]
+      },
+      "then": {
+        "order": "2",
+        "action": "封闭下穿隧道洞口全幅（外部积水漫过入口挡水槛或洞内积水达封控阈值），由 ORG-ROAD 与 ORG-TRAFFIC 联合发布；封控水深阈值沿用道路 25cm（假设值，待核实）"
+      },
+      "priority": 5,
+      "confidence": 0.9,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:16",
+      "keyword": "下穿隧道倒灌"
+    },
+    {
+      "rule_id": "RULE-RES-UNDERPASS-PUMPS",
+      "stage": "resource",
+      "when": {
+        "underpass_flooded": [
+          "true"
+        ]
+      },
+      "then": {
+        "unit_capacity_m3h": "400",
+        "drain_hours": "10",
+        "formula": "台数 = ceil(敞口面积 × 平均水深 ÷ 排空时间 ÷ 400)"
+      },
+      "priority": 15,
+      "confidence": 0.7,
+      "source_ref": "procedure_waterlogging.md#A-03/procedure/v1.2#line:20",
+      "keyword": "400 m³/h",
+      "assumption": true,
+      "assumption_note": "平均水深取最低点到入口地面高差的 0.5（楔形积水近似）、排空时间 10 h 均为量级假设；台账无通道汇水过程线与泵房参数"
+    },
+    {
+      "rule_id": "RULE-RISK-BACKFLOW-UNDERPASS",
+      "stage": "residual_risk",
+      "when": {
+        "backflow_risk": [
+          "high"
+        ]
+      },
+      "then": {
+        "risk": "外部积水漫过下穿隧道入口挡水槛存在倒灌：洞内水位与外部同步上涨，须封闭洞口并投入移动泵抽排，禁止车辆驶入"
+      },
+      "priority": 15,
+      "confidence": 0.88,
+      "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:16",
+      "keyword": "下穿隧道倒灌"
     }
   ]
 }

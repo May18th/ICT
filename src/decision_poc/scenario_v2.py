@@ -310,13 +310,18 @@ def _ceil_div(value: float, divisor: float) -> int:
     return int(math.ceil(value / divisor - 1e-12))
 
 
-def underpass_pump_demand(
-    spec: UnderpassSpec,
+def underpass_demand_from_numbers(
     *,
+    underpass_id: str,
+    open_water_area_m2: float,
+    lowest_point_z_m: float,
+    sill_height_m: float,
+    has_pump_room: bool,
     unit_capacity_m3h: float = 400.0,
     drain_hours: float = UNDERPASS_DRAIN_HOURS,
+    name: str = "",
 ) -> UnderpassPumpDemand:
-    """通道抽排需求：先估积水体积，再按目标排空时间反算台数。
+    """不依赖台账对象的抽排需求计算（推演引擎按 twin 属性直接调用）。
 
     体积口径：`敞口汇水面积 × 平均水深`，平均水深取"最低点到入口地面高差"的
     `UNDERPASS_PROFILE_FACTOR`（楔形积水近似半深）。两个系数都是**量级假设**，
@@ -326,30 +331,31 @@ def underpass_pump_demand(
 
     if drain_hours <= 0:
         raise ValueError("目标排空时间必须为正")
-    if spec.has_pump_room:
+    label = name or underpass_id
+    if has_pump_room:
         return UnderpassPumpDemand(
-            underpass_id=spec.underpass_id,
+            underpass_id=underpass_id,
             drain_volume_m3=0.0,
             drain_hours=drain_hours,
             demand_flow_m3h=0.0,
             unit_capacity_m3h=unit_capacity_m3h,
             pumps=0,
-            basis=[f"{spec.name} 自带泵房，不占移动泵"],
+            basis=[f"{label} 自带泵房，不占移动泵"],
             assumption_note="自带泵房时按不占用移动泵处理；泵房能力未在台账给出，需现场核实",
         )
-    depth_m = abs(spec.lowest_point_z_m) + spec.entry_sill_height_m
+    depth_m = abs(lowest_point_z_m) + sill_height_m
     mean_depth_m = depth_m * UNDERPASS_PROFILE_FACTOR
-    volume_m3 = spec.open_water_area_m2 * mean_depth_m
+    volume_m3 = open_water_area_m2 * mean_depth_m
     flow_m3h = volume_m3 / drain_hours
     pumps = _ceil_div(flow_m3h, unit_capacity_m3h)
     basis = [
-        f"{spec.name} 敞口 {spec.open_water_area_m2:g} m² × 平均水深 {mean_depth_m:.2f} m "
+        f"{label} 敞口 {open_water_area_m2:g} m² × 平均水深 {mean_depth_m:.2f} m "
         f"≈ 积水 {volume_m3:.0f} m³",
         f"按 {drain_hours:g} h 排空 → 需 {flow_m3h:.0f} m³/h，÷ 单台 {unit_capacity_m3h:g} m³/h "
         f"向上取整 = {pumps} 台",
     ]
     return UnderpassPumpDemand(
-        underpass_id=spec.underpass_id,
+        underpass_id=underpass_id,
         drain_volume_m3=volume_m3,
         drain_hours=drain_hours,
         demand_flow_m3h=flow_m3h,
@@ -360,4 +366,24 @@ def underpass_pump_demand(
             "平均水深取'最低点到入口地面高差 × 0.5'（楔形积水近似），排空时间 10 h 为量级假设；"
             "台账无通道汇水过程线与泵房参数，接入推演时按假设规则显式标注"
         ),
+    )
+
+
+def underpass_pump_demand(
+    spec: UnderpassSpec,
+    *,
+    unit_capacity_m3h: float = 400.0,
+    drain_hours: float = UNDERPASS_DRAIN_HOURS,
+) -> UnderpassPumpDemand:
+    """台账对象版本：把 `UnderpassSpec` 拆成数值后交给 `underpass_demand_from_numbers`。"""
+
+    return underpass_demand_from_numbers(
+        underpass_id=spec.underpass_id,
+        name=spec.name,
+        open_water_area_m2=spec.open_water_area_m2,
+        lowest_point_z_m=spec.lowest_point_z_m,
+        sill_height_m=spec.entry_sill_height_m,
+        has_pump_room=spec.has_pump_room,
+        unit_capacity_m3h=unit_capacity_m3h,
+        drain_hours=drain_hours,
     )

@@ -49,7 +49,7 @@
         "publishable": true,
         "six_hops": true,
         "gap": {
-          "RES-PUMP-M": 1
+          "RES-PUMP-M": 2
         },
         "warning_level": "orange"
       }
@@ -93,7 +93,7 @@
           "contention"
         ],
         "gap": {
-          "RES-PUMP-M": 1
+          "RES-PUMP-M": 2
         },
         "warning_level": "orange"
       }
@@ -156,7 +156,7 @@
         "publishable": true,
         "six_hops": true,
         "gap": {
-          "RES-PUMP-M": 1
+          "RES-PUMP-M": 2
         }
       }
     },
@@ -184,7 +184,7 @@
           "contention"
         ],
         "gap": {
-          "RES-PUMP-M": 1
+          "RES-PUMP-M": 2
         }
       }
     },

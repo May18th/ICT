@@ -140,7 +140,7 @@ class CollabResult(StrictModel):
 
 **任务分配落在总控，不落在部门之间**：分配由总控依据内核 `conflict_check` / `allocation_plan` 的输出生成，
 专业 Agent 只能 `accept` / `reject + reason`，不得互相派活。Agent 之间互派任务等于把编排逻辑交给 LLM，
-既不可复现，也会让"资源缺口 1 台"这类可核数字变成协商产物。
+既不可复现，也会让"资源缺口 2 台"这类可核数字变成协商产物。
 
 ### 3.4 为什么是 1 总控 + 5 专业，而不是 1 个或 N 个平级
 
@@ -376,7 +376,7 @@ P11 五档（Rules → DT → 单 Agent → **多 Agent** → 全量）中的第
   `docs/urban-scenario-ground-truth.md` 升 v2。
 - 输入：§5、§6。
 - 测试：新增空台账时不崩（返回 `insufficient`）；`h_ext` 恰好等于阈值的边界；规则 `source_ref` 必须能定位原文行。
-- 禁止改动：现有 28 条规则的 `rule_id` 与 `source_ref`。
+- 禁止改动：现有 32 条规则的 `rule_id` 与 `source_ref`。
 - 回传：v1/v2 数值对照表 + ground truth v2 全文。
 
 ### T2 推演层扩展

@@ -43,7 +43,7 @@ def _answer(**overrides: Any) -> dict[str, Any]:
             {"conflict_id": "C2", "kind": "gap", "subject": "DF-PS-01"},
             {"conflict_id": "C3", "kind": "contention", "subject": "RES-PUMP-M"},
         ],
-        "resource_gap": 1,
+        "resource_gap": 2,
         "action_order": [
             "停止基坑开挖并覆盖或围堰",
             "隔离风险源：确认无泄漏后关阀或断电",
@@ -105,7 +105,7 @@ def test_parse_tolerates_think_tags_and_fences() -> None:
     noisy = "分析完成。</think>\n```json\n" + json.dumps(_answer(), ensure_ascii=False) + "\n```"
     answer = parse_urban_answer(noisy)
     assert answer.event_id == DEFAULT_EVENT_ID
-    assert answer.resource_gap == 1
+    assert answer.resource_gap == 2
 
 
 def test_parse_rejects_natural_language() -> None:
@@ -118,7 +118,7 @@ def test_parse_rejects_natural_language() -> None:
 def test_offline_baseline_matches_ground_truth() -> None:
     baseline = offline_baseline(DEFAULT_EVENT_ID, DEFAULT_AS_OF)
     assert baseline["conflict_ids"] == ["C1", "C2", "C3"]
-    assert baseline["resource_gap"] == 1
+    assert baseline["resource_gap"] == 2
     assert baseline["isolate_before_drain"] is True
     assert baseline["action_count"] >= 6
 

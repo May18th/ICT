@@ -77,7 +77,7 @@ def test_rule_with_out_of_range_locator_is_refused() -> None:
 
 def test_assumptions_are_declared_not_hidden() -> None:
     assumptions = {rule.rule_id for rule in RULES.assumptions}
-    assert assumptions == {"RULE-RES-PIT-PUMPS", "RULE-RES-LOWSPOT-PUMPS"}
+    assert assumptions == {"RULE-RES-PIT-PUMPS", "RULE-RES-LOWSPOT-PUMPS", "RULE-RES-UNDERPASS-PUMPS"}
     for rule in RULES.assumptions:
         assert rule.assumption_note, "假设必须自己说明"
 
@@ -184,7 +184,7 @@ def test_hop4_conflict_ids_are_unique_and_ordered(result) -> None:
 def test_hop5_gap_is_exactly_one_pump(result) -> None:
     assert result.resource_gaps, "必须有资源缺口"
     gap = result.resource_gaps[0]
-    assert (gap.required, gap.available, gap.gap) == (7, 6, 1)
+    assert (gap.required, gap.available, gap.gap) == (8, 6, 2)
 
 
 def test_hop5_basis_shows_the_arithmetic(result) -> None:
@@ -308,7 +308,7 @@ def test_every_stage_appears_in_output(result) -> None:
 
 
 def test_assumptions_surface_on_the_result(result) -> None:
-    assert len(result.assumptions) == 2
+    assert len(result.assumptions) == 3
     assert all("演示假设" in text or "假设" in text for text in result.assumptions)
 
 
