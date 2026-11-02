@@ -101,3 +101,7 @@
 uv run --locked pytest -q                            # 696 passed
 uv run --locked python -m decision_poc.evidence_check # 106/106（指纹 df6e48a10232d54f）
 ```
+
+> **2026-11-02 落地**：方案 A 已实施——资源跳产出 `pump_load` 结论字段，实测
+> `A-03 DF-PS-01:overload（负荷率 1.50，可用 800 m³/h）`，需求折算保持 v1，缺口仍为 2 台。
+> 泵组台数与故障台数已入台账（`pump_units` / `failed_units`），可用能力由 `rated × (1 − 故障/总台数)` 得出。

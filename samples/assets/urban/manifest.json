@@ -75,7 +75,7 @@
       }
     },
     {
-      "asset_id": "AS-A-03-drainage_facility-cd569425",
+      "asset_id": "AS-A-03-drainage_facility-4e6c1308",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "drainage_facilities.csv",
@@ -84,12 +84,12 @@
       "version": "v1",
       "standard_refs": [],
       "locator": "A-03/drainage_facility/v1",
-      "checksum_sha256": "cd5694259697fcdb11c74a23007329cd11b260a334774ab177506376ea25d394",
-      "byte_size": 766,
-      "summary": "表格资产：6 行 × 11 列，列名 facility_id、name、facility_type、road_id、drainage_zone、capacity_m3h 等",
+      "checksum_sha256": "4e6c13087fbd8a32b783840dba277b70497ab1db29bb0c09f9929355737f630f",
+      "byte_size": 808,
+      "summary": "表格资产：6 行 × 13 列，列名 facility_id、name、facility_type、road_id、drainage_zone、capacity_m3h 等",
       "structure": {
         "rows": 6,
-        "columns": 11,
+        "columns": 13,
         "headers": [
           "facility_id",
           "name",
@@ -101,7 +101,9 @@
           "last_inspection",
           "state",
           "owner_org",
-          "note"
+          "note",
+          "pump_units",
+          "failed_units"
         ]
       },
       "governance": {
@@ -113,7 +115,7 @@
         "valid_from": "2026-09-10T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "cd5694259697fcdb11c74a23007329cd11b260a334774ab177506376ea25d394",
+        "content_hash": "4e6c13087fbd8a32b783840dba277b70497ab1db29bb0c09f9929355737f630f",
         "status": "published"
       }
     },
