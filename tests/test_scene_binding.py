@@ -238,8 +238,13 @@ def test_pipeline_with_twin_id_still_projects_as_entity(projection) -> None:
 
 
 def test_pipeline_without_twin_id_enters_geometry_index() -> None:
-    """没有官方 twin_id 的管线：不报错、不进 entities、进 geometry_index，且 geometry_ref 稳定。"""
+    """没有官方 twin_id 的管线：不报错、不进 entities、进 geometry_index，且 geometry_ref 稳定。
+
+    同时覆盖"逐节点 z"契约：VD02 的两层管网只在 polyline 每个节点上带 z，没有顶层 z。
+    """
     layout, pipe = _layout_with_first_pipeline(None)
+    pipe.pop("z", None)  # 逐节点 z 管线（如 VD02 scene_layout 的 pipelines）
+    pipe["polyline"] = [{**point, "z": -2.5} for point in pipe["polyline"]]
     rebuilt = build_projection(layout=layout)
 
     entity_ids = {e.twin_id for e in rebuilt.entities}
@@ -249,6 +254,7 @@ def test_pipeline_without_twin_id_enters_geometry_index() -> None:
     assert item.twin_id is None
     assert item.layout_section == "pipelines"
     assert len(item.points) >= 2
+    assert item.z == float(pipe["polyline"][0]["z"])  # 代表值取首节点，不做平均
     # 以后补官方 ID 时只填 twin_id，几何不用重建
     assert all(not tag.startswith("twin:") for tag in item.actor_tags)
 
