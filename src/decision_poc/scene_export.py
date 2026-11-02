@@ -2,11 +2,15 @@
 from __future__ import annotations
 
 from typing import Any
-from .semantic import build_urban_semantic_store
+
+from .semantic import TwinSemanticStore, build_urban_semantic_store
 
 
-def build_scene_payload() -> dict[str, Any]:
-    store = build_urban_semantic_store()
+def build_scene_payload(store: TwinSemanticStore | None = None) -> dict[str, Any]:
+    """`store` 可传入复用：可视化层要保证 scene_hash 与推演用的是同一份快照，
+    不能这边重新建一个 store 再算哈希。
+    """
+    store = store or build_urban_semantic_store()
     objects = []
     for item in store.objects():
         objects.append({

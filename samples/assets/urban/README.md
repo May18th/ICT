@@ -21,6 +21,10 @@
 | `notice_road_closure.md` | public_notice | 文本 | 封路公告：绕行建议指向正在施工的 R-103 |
 | `notice_gas_construction.md` | public_notice | 文本 | 燃气施工公告：开挖 2.5m、检测 2 小时/次 |
 | `pipeline_map.png` | schematic_map | 图片 | 800×520 管线示意图，标注积水区与泵站位置 |
+| `scene.json` | — | — | 语义真源（63 个 twin），由 `decision_poc.scene_export` 生成，勿手改 |
+| `scene_layout.json` | — | — | 引擎中立布局（几何 + 事件状态 + 证据行号），由 `decision_poc.scene_layout` 生成，勿手改 |
+| `semantic_entities.json` | — | — | P10.1 实体投影（`TW-*` ↔ 布局几何 ↔ Actor tag），由 `decision_poc.scene_binding` 生成，勿手改；说明见 [实体重投影与绑定表](../../../docs/scene-binding.md) |
+| `semantic_entities_legacy_osm.json` | — | — | 旧 3D 命名空间（`RD-`/`TN-`/`FAC-`）归档，只作退役清单输入，不参与渲染 |
 | `manifest.json` | — | — | 由导入脚本生成，勿手改 |
 
 关于"3 张地图/管线示意图或结构化替代数据"：本数据集提供 1 张示意图 + 2 份结构化替代（`road_network.csv`、`pipeline_ledger.csv`），后两者是可查询、可引用的事实来源，示意图只用于展示。
@@ -44,6 +48,10 @@ python samples/generate_urban_map.py
 # 重新登记资产并生成 manifest.json
 $env:PYTHONPATH = "src"
 python -m decision_poc.urban_dataset
+
+# 重新生成实体投影（决策层 TW-* → 场景实体与 Actor tag）
+python -m decision_poc.scene_binding
+python -m decision_poc.scene_binding --check
 
 # 核对
 python -m decision_poc.health --dataset samples/assets/urban

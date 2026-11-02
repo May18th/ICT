@@ -44,6 +44,25 @@ BUILDING_MIN_CLEARANCE_M = 14.0
 MAX_BUILDINGS_PER_DISTRICT = 60
 CLOSURE_THRESHOLD_CM = 25.0  # 与 RULE-ACT-CLOSE-ROAD 的 or_min_depth_cm 一致
 
+# --- 管网竖向分层（GB 50289 原则：压力让重力、小管让大管、浅埋让深埋） ---
+# 上层浅埋：电力/通信/燃气/给水（0.9–2.2 m 覆土）
+# 下层深埋：雨水主干（3.0–6.0 m 覆土，按 i=0.15% 沿程加深）
+PIPE_LAYER_OF: dict[str, str] = {
+    "drainage": "lower",
+    "gas": "upper",
+    "power": "upper",
+    "telecom": "upper",
+    "water": "upper",
+}
+UPPER_PIPE_Z: dict[str, float] = {
+    "power": -1.00,
+    "telecom": -1.25,
+    "gas": -1.55,
+    "water": -1.85,
+}
+LOWER_PIPE_Z_START = -4.20
+LOWER_PIPE_SLOPE = 0.0015   # 设计坡度 i = 0.15%
+
 
 class LayoutPoint(StrictModel):
     x: float
@@ -52,6 +71,7 @@ class LayoutPoint(StrictModel):
 
 class LayoutRoad(StrictModel):
     road_id: str
+    twin_id: str = ""  # 与 scene.json 真源一致的 twin id（UE/Blender 只认这个）
     name: str
     district: str
     road_class: str
@@ -67,17 +87,24 @@ class LayoutRoad(StrictModel):
 
 class LayoutPipeline(StrictModel):
     pipeline_id: str
+    twin_id: str = ""
     kind: str
     road_id: str
     diameter_mm: int
     depth_m: float
     z: float
+    # 竖向分层：upper=浅埋市政（燃气/电力/通信/给水），lower=深埋雨水主干
+    layer: str = ""
+    # 管底标高沿程变化（重力流按设计坡度加深；压力/浅埋管 z_start == z_end）
+    z_start: float = 0.0
+    z_end: float = 0.0
     polyline: list[LayoutPoint]
     evidence: str = ""
 
 
 class LayoutFacility(StrictModel):
     facility_id: str
+    twin_id: str = ""
     name: str
     facility_type: str
     road_id: str
@@ -98,6 +125,7 @@ class LayoutBuilding(StrictModel):
 
 class LayoutWater(StrictModel):
     incident_id: str
+    twin_id: str = ""
     district: str
     road_id: str
     depth_cm: float
@@ -146,6 +174,15 @@ def _num(value: Any, default: float = 0.0) -> float:
 def _state_of(row: dict[str, str]) -> str:
     status = (row.get("status") or "normal").strip()
     return "under_construction" if status == "under_construction" else status or "normal"
+
+
+def _pipe_z(kind: str, a: tuple[float, float], b: tuple[float, float]) -> tuple[float, float]:
+    """管底起止标高：浅埋管恒定；雨水主干按设计坡度沿流向加深。"""
+    if PIPE_LAYER_OF.get(kind) == "lower":
+        length = math.hypot(b[0] - a[0], b[1] - a[1])
+        return LOWER_PIPE_Z_START, LOWER_PIPE_Z_START - LOWER_PIPE_SLOPE * length
+    z = UPPER_PIPE_Z.get(kind, -1.2)
+    return z, z
 
 
 # --- 节点布局 -----------------------------------------------------------
@@ -334,6 +371,7 @@ def build_layout(dataset_root: Path | str | None = None) -> SceneLayout:
         layout_roads.append(
             LayoutRoad(
                 road_id=row["road_id"],
+                twin_id=f"TW-road-{row['road_id']}",
                 name=row["name"],
                 district=row["district"],
                 road_class=row["road_class"],
@@ -364,14 +402,21 @@ def build_layout(dataset_root: Path | str | None = None) -> SceneLayout:
         span = len(group)
         for position, row in enumerate(sorted(group, key=lambda item: item["pipeline_id"])):
             offset = (position - (span - 1) / 2) * 1.8
+            kind = row["kind"]
+            layer = PIPE_LAYER_OF.get(kind, "upper")
+            z_start, z_end = _pipe_z(kind, a, b)
             layout_pipelines.append(
                 LayoutPipeline(
                     pipeline_id=row["pipeline_id"],
-                    kind=row["kind"],
+                    twin_id=f"TW-{kind}-{row['pipeline_id']}",
+                    kind=kind,
                     road_id=road_id,
                     diameter_mm=int(_num(row.get("diameter_mm"), 100)),
-                    depth_m=round(_num(row.get("depth_m"), 1.0), 2),
-                    z=round(-_num(row.get("depth_m"), 1.0), 2),
+                    depth_m=round(-z_start, 2),
+                    z=round(z_start, 2),
+                    layer=layer,
+                    z_start=round(z_start, 2),
+                    z_end=round(z_end, 2),
                     polyline=_offset_polyline(a, b, offset),
                     evidence=f"A-03/pipeline_ledger/v1#row:{_line_of(root, 'pipeline_ledger.csv', row['pipeline_id'])}",
                 )
@@ -393,6 +438,12 @@ def build_layout(dataset_root: Path | str | None = None) -> SceneLayout:
         layout_facilities.append(
             LayoutFacility(
                 facility_id=row["facility_id"],
+                # intake（雨水口）在 scene.json 里归到 drainage 类，twin id 前缀必须随真源
+                twin_id=(
+                    f"TW-pump_station-{row['facility_id']}"
+                    if row["facility_type"] == "pump_station"
+                    else f"TW-drainage-{row['facility_id']}"
+                ),
                 name=row["name"],
                 facility_type=row["facility_type"],
                 road_id=row["road_id"],
@@ -482,6 +533,8 @@ def build_layout(dataset_root: Path | str | None = None) -> SceneLayout:
         layout_water.append(
             LayoutWater(
                 incident_id=order["order_id"],
+                # 水面是事件的可见现象，绑定到 incident twin（真源里没有独立的 water patch twin）
+                twin_id=f"TW-incident-{order['order_id']}",
                 district=road.district,
                 road_id=road.road_id,
                 depth_cm=depth,
