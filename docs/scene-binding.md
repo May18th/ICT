@@ -168,3 +168,22 @@ Set-Location D:/华为ICT/agent_poc/visualization/unreal
   -log -windowed -ResX=1024 -ResY=576 `
   -ExecCmds="py D:/华为ICT/agent_poc/visualization/unreal/Content/Python/bind_check.py"
 ```
+
+### 2026-11-02 追加：告警材质与真机颜色核对
+
+新建三张材质（`/Game/UrbanTwin/Materials/`，BaseColor 常量，已编译并保存）：
+
+| 材质 | 用途 | BaseColor |
+| --- | --- | --- |
+| `M_Underpass` | 通道常态（回退用） | 0.28 / 0.30 / 0.33 |
+| `M_Underpass_Alert` | 通道倒灌 `backflow_high/medium` | 0.95 / 0.25 / 0.05 |
+| `M_PumpStation_Alert` | 泵站 `overload/high_load` | 1.00 / 0.55 / 0.05 |
+
+真机核对（`-ExecCmds="py .../bind_check.py"`，`BIND_CHECK_HIGHLIGHT=0` 保留告警材质）：
+
+- 日志：`{"tags_added": [], "scenario": {"pump_alerts": 1, "underpass_alerts": 1}, "highlight": "skipped"}`
+- 截图：`docs/reports/captures/S33-binding-pump.png`（泵站代理 = 琥珀色 = `M_PumpStation_Alert`）、
+  `docs/reports/captures/S33-binding-underpass.png`（通道代理 = 橙红色 = `M_Underpass_Alert`）
+- 设 `BIND_CHECK_HIGHLIGHT=1` 时恢复"六跳高亮"行为（`highlight_hits` 会记 2）
+
+遗留：关卡里有两个 DirectionalLight（启动会提示 ForwardShadingPriority 竞争），不影响绑定，清场景时可删一个。
