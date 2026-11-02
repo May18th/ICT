@@ -1,0 +1,56 @@
+{
+  "schema_version": "decision-memory-1",
+  "entries": [
+    {
+      "entry_id": "M-3979c3901de5",
+      "scope": "agent",
+      "signature": {
+        "districts": [
+          "A-03",
+          "B-01"
+        ],
+        "shortage_ratio": 0.666667,
+        "critical_mix": [
+          "closure+hazard|closure+hazard",
+          "closure+hazard|hazard",
+          "closure+hazard|none",
+          "closure|hazard",
+          "hazard|none",
+          "none|none"
+        ],
+        "cases": 12
+      },
+      "label": "flood-response-v1.2",
+      "policy_version": "v3",
+      "params": {
+        "weight_closure": 1.0,
+        "weight_hazard": 0.25,
+        "weight_depth": 0.0,
+        "depth_scale_cm": 25.0,
+        "transfer_penalty": 0.1,
+        "allow_transfer_from_critical": false
+      },
+      "outcome": {
+        "deviation": 0.0,
+        "allocation_l1_units": 0.0,
+        "critical_unmet_units": 6.0,
+        "missed_transfers": 0.0
+      },
+      "feedback_digest": "c2c7666eb0bd1bf8725a3af9c31b7be5c6c71ad553cd0cbbe477d71885df2a18",
+      "event_ids": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7",
+        "T8"
+      ],
+      "review_ids": [
+        "REV-001"
+      ],
+      "note": "由 flood-response-v1.2 进化结果沉淀；训练偏差 0.0000"
+    }
+  ]
+}

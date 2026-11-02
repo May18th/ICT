@@ -1,0 +1,2160 @@
+{
+  "schema_version": "p9-showcase-1",
+  "cases_digest": "c2c7666eb0bd1bf8725a3af9c31b7be5c6c71ad553cd0cbbe477d71885df2a18",
+  "reviews": [
+    {
+      "review_id": "REV-001",
+      "reviewer_role": "水务调度负责人（角色扮演）",
+      "reviewer_note": "角色扮演，用于演示人工反馈通道，非真实部门批复",
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-10-29T09:40:00+08:00",
+      "policy_version_reviewed": "v1",
+      "decision": "modify",
+      "reason": "不能只按本区库存各管各的：A-03 已过封路阈值且有燃气基坑，B-01 未达阈值且无危险源，应从 B-01 调 1 台给 A-03；B-01 保留 1 台做民生兜底，缺口上报增援。",
+      "signals": [
+        {
+          "district": "A-03",
+          "depth_cm": 30.0,
+          "closure_required": true,
+          "has_hazard": true,
+          "demand": 5,
+          "local_available": 4,
+          "world_required": 7
+        },
+        {
+          "district": "B-01",
+          "depth_cm": 18.0,
+          "closure_required": false,
+          "has_hazard": false,
+          "demand": 2,
+          "local_available": 2,
+          "world_required": 7
+        }
+      ],
+      "expected_allocation": {
+        "A-03": 5,
+        "B-01": 1
+      },
+      "basis": [
+        "Ground Truth 跳 5：A-03 需 5 台、本区 4 台；B-01 需 2 台、本区 2 台",
+        "CF2：只能保一处时优先保障 A-03",
+        "跳 5：B-01 泵站到 A-03 跨区调用需 40 分钟，高峰期可接受"
+      ]
+    }
+  ],
+  "first": {
+    "schema_version": "p9-evolution-1",
+    "case_digest": "c2c7666eb0bd1bf8725a3af9c31b7be5c6c71ad553cd0cbbe477d71885df2a18",
+    "feedback_verified": true,
+    "train_cases": 8,
+    "holdout_cases": 4,
+    "deviation_weights": {
+      "allocation_l1": 0.4,
+      "critical_unmet": 0.3,
+      "transfer": 0.2,
+      "order": 0.1
+    },
+    "initial_policy": {
+      "policy_version": "v1",
+      "weight_closure": 0.0,
+      "weight_hazard": 0.0,
+      "weight_depth": 0.0,
+      "depth_scale_cm": 25.0,
+      "transfer_penalty": 1.0,
+      "allow_transfer_from_critical": false
+    },
+    "final_policy": {
+      "policy_version": "v3",
+      "weight_closure": 1.0,
+      "weight_hazard": 0.25,
+      "weight_depth": 0.0,
+      "depth_scale_cm": 25.0,
+      "transfer_penalty": 0.1,
+      "allow_transfer_from_critical": false
+    },
+    "initial_train": {
+      "policy_version": "v1",
+      "cases_total": 8,
+      "deviation": 0.226428,
+      "dimensions": {
+        "allocation_l1": 0.116071,
+        "critical_unmet": 0.225,
+        "transfer": 0.5,
+        "order": 0.125
+      },
+      "critical_unmet_units": 15,
+      "expected_critical_unmet_units": 6,
+      "allocation_l1_units": 13,
+      "missed_transfers": 4,
+      "expected_transfers": 4,
+      "order_hits": 7,
+      "order_total": 8,
+      "case_results": [
+        {
+          "case_id": "T1",
+          "split": "train",
+          "title": "实况资源紧张：A-03 关键、B-01 非关键，B-01 可让出 1 台",
+          "deviation": 0.317143,
+          "dimensions": {
+            "allocation_l1": 0.142857,
+            "critical_unmet": 0.2,
+            "transfer": 1.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 5,
+            "B-01": 1
+          },
+          "transfers": [],
+          "expected_transfers": [
+            "B-01->A-03:1"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": [
+            "分配向量差 2 台",
+            "关键片区未满足 1 台，期望 0 台",
+            "调拨动作与期望不一致"
+          ]
+        },
+        {
+          "case_id": "T2",
+          "split": "train",
+          "title": "缺口扩大：A-03 本区仅 2 台，B-01 让出库存与已分配量",
+          "deviation": 0.522857,
+          "dimensions": {
+            "allocation_l1": 0.357143,
+            "critical_unmet": 0.6,
+            "transfer": 1.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 2,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 5,
+            "B-01": 0
+          },
+          "transfers": [],
+          "expected_transfers": [
+            "B-01->A-03:3"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": [
+            "分配向量差 5 台",
+            "关键片区未满足 3 台，期望 0 台",
+            "调拨动作与期望不一致"
+          ]
+        },
+        {
+          "case_id": "T3",
+          "split": "train",
+          "title": "反向：B-01 关键、A-03 非关键，调拨方向必须跟着风险走",
+          "deviation": 0.594286,
+          "dimensions": {
+            "allocation_l1": 0.285714,
+            "critical_unmet": 0.6,
+            "transfer": 1.0,
+            "order": 1.0
+          },
+          "allocation": {
+            "A-03": 2,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 1,
+            "B-01": 5
+          },
+          "transfers": [],
+          "expected_transfers": [
+            "A-03->B-01:3"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "notes": [
+            "分配向量差 4 台",
+            "关键片区未满足 3 台，期望 0 台",
+            "调拨动作与期望不一致",
+            "优先序 ['A-03', 'B-01']，期望 ['B-01', 'A-03']"
+          ]
+        },
+        {
+          "case_id": "T4",
+          "split": "train",
+          "title": "双关键：两个片区都过阈值且有危险源，谁都不许被调出",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 4
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 4
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T5",
+          "split": "train",
+          "title": "仅危险源也算关键：B-01 有燃气管线影响，不可被调出",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T6",
+          "split": "train",
+          "title": "仅危险源关键：A-03 未过阈值但有燃气影响，B-01 应让出 2 台",
+          "deviation": 0.377143,
+          "dimensions": {
+            "allocation_l1": 0.142857,
+            "critical_unmet": 0.4,
+            "transfer": 1.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 3,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 5,
+            "B-01": 2
+          },
+          "transfers": [],
+          "expected_transfers": [
+            "B-01->A-03:2"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": [
+            "分配向量差 2 台",
+            "关键片区未满足 2 台，期望 0 台",
+            "调拨动作与期望不一致"
+          ]
+        },
+        {
+          "case_id": "T7",
+          "split": "train",
+          "title": "都无关键状态：没有优先序依据就不动，不为了凑满而调拨",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T8",
+          "split": "train",
+          "title": "无库存可调：B-01 库存为 0，缺口只能上报增援",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 2,
+            "B-01": 0
+          },
+          "expected_allocation": {
+            "A-03": 2,
+            "B-01": 0
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        }
+      ]
+    },
+    "final_train": {
+      "policy_version": "v3",
+      "cases_total": 8,
+      "deviation": 0.0,
+      "dimensions": {
+        "allocation_l1": 0.0,
+        "critical_unmet": 0.0,
+        "transfer": 0.0,
+        "order": 0.0
+      },
+      "critical_unmet_units": 6,
+      "expected_critical_unmet_units": 6,
+      "allocation_l1_units": 0,
+      "missed_transfers": 0,
+      "expected_transfers": 4,
+      "order_hits": 8,
+      "order_total": 8,
+      "case_results": [
+        {
+          "case_id": "T1",
+          "split": "train",
+          "title": "实况资源紧张：A-03 关键、B-01 非关键，B-01 可让出 1 台",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 5,
+            "B-01": 1
+          },
+          "expected_allocation": {
+            "A-03": 5,
+            "B-01": 1
+          },
+          "transfers": [
+            "B-01->A-03:1"
+          ],
+          "expected_transfers": [
+            "B-01->A-03:1"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T2",
+          "split": "train",
+          "title": "缺口扩大：A-03 本区仅 2 台，B-01 让出库存与已分配量",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 5,
+            "B-01": 0
+          },
+          "expected_allocation": {
+            "A-03": 5,
+            "B-01": 0
+          },
+          "transfers": [
+            "B-01->A-03:3"
+          ],
+          "expected_transfers": [
+            "B-01->A-03:3"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T3",
+          "split": "train",
+          "title": "反向：B-01 关键、A-03 非关键，调拨方向必须跟着风险走",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 1,
+            "B-01": 5
+          },
+          "expected_allocation": {
+            "A-03": 1,
+            "B-01": 5
+          },
+          "transfers": [
+            "A-03->B-01:3"
+          ],
+          "expected_transfers": [
+            "A-03->B-01:3"
+          ],
+          "priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "expected_priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T4",
+          "split": "train",
+          "title": "双关键：两个片区都过阈值且有危险源，谁都不许被调出",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 4
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 4
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T5",
+          "split": "train",
+          "title": "仅危险源也算关键：B-01 有燃气管线影响，不可被调出",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T6",
+          "split": "train",
+          "title": "仅危险源关键：A-03 未过阈值但有燃气影响，B-01 应让出 2 台",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 5,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 5,
+            "B-01": 2
+          },
+          "transfers": [
+            "B-01->A-03:2"
+          ],
+          "expected_transfers": [
+            "B-01->A-03:2"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T7",
+          "split": "train",
+          "title": "都无关键状态：没有优先序依据就不动，不为了凑满而调拨",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T8",
+          "split": "train",
+          "title": "无库存可调：B-01 库存为 0，缺口只能上报增援",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 2,
+            "B-01": 0
+          },
+          "expected_allocation": {
+            "A-03": 2,
+            "B-01": 0
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        }
+      ]
+    },
+    "initial_holdout": {
+      "policy_version": "v1",
+      "cases_total": 4,
+      "deviation": 0.218155,
+      "dimensions": {
+        "allocation_l1": 0.092262,
+        "critical_unmet": 0.1875,
+        "transfer": 0.5,
+        "order": 0.25
+      },
+      "critical_unmet_units": 7,
+      "expected_critical_unmet_units": 4,
+      "allocation_l1_units": 5,
+      "missed_transfers": 2,
+      "expected_transfers": 2,
+      "order_hits": 3,
+      "order_total": 4,
+      "case_results": [
+        {
+          "case_id": "H1",
+          "split": "holdout",
+          "title": "留出：A-03 关键缺口 1 台，B-01 富余 2 台",
+          "deviation": 0.308333,
+          "dimensions": {
+            "allocation_l1": 0.083333,
+            "critical_unmet": 0.25,
+            "transfer": 1.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 3,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "transfers": [],
+          "expected_transfers": [
+            "B-01->A-03:1"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": [
+            "分配向量差 1 台",
+            "关键片区未满足 1 台，期望 0 台",
+            "调拨动作与期望不一致"
+          ]
+        },
+        {
+          "case_id": "H2",
+          "split": "holdout",
+          "title": "留出：反向场景，B-01 关键缺口 3 台，A-03 只能让 2 台",
+          "deviation": 0.564286,
+          "dimensions": {
+            "allocation_l1": 0.285714,
+            "critical_unmet": 0.5,
+            "transfer": 1.0,
+            "order": 1.0
+          },
+          "allocation": {
+            "A-03": 2,
+            "B-01": 1
+          },
+          "expected_allocation": {
+            "A-03": 0,
+            "B-01": 3
+          },
+          "transfers": [],
+          "expected_transfers": [
+            "A-03->B-01:2"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "notes": [
+            "分配向量差 4 台",
+            "关键片区未满足 3 台，期望 1 台",
+            "调拨动作与期望不一致",
+            "优先序 ['A-03', 'B-01']，期望 ['B-01', 'A-03']"
+          ]
+        },
+        {
+          "case_id": "H3",
+          "split": "holdout",
+          "title": "留出：两个片区都无关键状态且都有富余，不应发生调拨",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "expected_allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "H4",
+          "split": "holdout",
+          "title": "留出：双关键但风险类型不同，均不可被调出",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "expected_allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        }
+      ]
+    },
+    "final_holdout": {
+      "policy_version": "v3",
+      "cases_total": 4,
+      "deviation": 0.0,
+      "dimensions": {
+        "allocation_l1": 0.0,
+        "critical_unmet": 0.0,
+        "transfer": 0.0,
+        "order": 0.0
+      },
+      "critical_unmet_units": 4,
+      "expected_critical_unmet_units": 4,
+      "allocation_l1_units": 0,
+      "missed_transfers": 0,
+      "expected_transfers": 2,
+      "order_hits": 4,
+      "order_total": 4,
+      "case_results": [
+        {
+          "case_id": "H1",
+          "split": "holdout",
+          "title": "留出：A-03 关键缺口 1 台，B-01 富余 2 台",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "transfers": [
+            "B-01->A-03:1"
+          ],
+          "expected_transfers": [
+            "B-01->A-03:1"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "H2",
+          "split": "holdout",
+          "title": "留出：反向场景，B-01 关键缺口 3 台，A-03 只能让 2 台",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 0,
+            "B-01": 3
+          },
+          "expected_allocation": {
+            "A-03": 0,
+            "B-01": 3
+          },
+          "transfers": [
+            "A-03->B-01:2"
+          ],
+          "expected_transfers": [
+            "A-03->B-01:2"
+          ],
+          "priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "expected_priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "H3",
+          "split": "holdout",
+          "title": "留出：两个片区都无关键状态且都有富余，不应发生调拨",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "expected_allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "H4",
+          "split": "holdout",
+          "title": "留出：双关键但风险类型不同，均不可被调出",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "expected_allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        }
+      ]
+    },
+    "rounds": [
+      {
+        "round": 1,
+        "target_dimension": "transfer",
+        "candidate_version": "v2",
+        "params_delta": {
+          "weight_closure": 1.0,
+          "transfer_penalty": 0.1
+        },
+        "train_before": 0.226428,
+        "train_after": 0.047143,
+        "holdout_before": 0.218155,
+        "holdout_after": 0.0,
+        "attribution_before": {
+          "allocation_l1": 0.116071,
+          "critical_unmet": 0.225,
+          "transfer": 0.5,
+          "order": 0.125
+        },
+        "action": "promoted",
+        "reason": "训练偏差下降且留出集/评审用例均未退化"
+      },
+      {
+        "round": 2,
+        "target_dimension": "transfer",
+        "candidate_version": "v3",
+        "params_delta": {
+          "weight_hazard": 0.25
+        },
+        "train_before": 0.047143,
+        "train_after": 0.0,
+        "holdout_before": 0.0,
+        "holdout_after": 0.0,
+        "attribution_before": {
+          "allocation_l1": 0.017857,
+          "critical_unmet": 0.05,
+          "transfer": 0.125,
+          "order": 0.0
+        },
+        "action": "promoted",
+        "reason": "训练偏差下降且留出集/评审用例均未退化"
+      },
+      {
+        "round": 3,
+        "target_dimension": "probe",
+        "candidate_version": "v4",
+        "params_delta": {
+          "transfer_penalty": 0.05
+        },
+        "train_before": 0.0,
+        "train_after": 0.0,
+        "holdout_before": 0.0,
+        "holdout_after": 0.0,
+        "attribution_before": {
+          "allocation_l1": 0.0,
+          "critical_unmet": 0.0,
+          "transfer": 0.0,
+          "order": 0.0
+        },
+        "action": "rejected",
+        "reason": "训练偏差未下降"
+      }
+    ],
+    "releases": [
+      {
+        "label": "flood-response-v1.1",
+        "version_id": "v2",
+        "parent_label": "flood-response-v1.0",
+        "trigger_feedback_id": "p9-round-1",
+        "trigger_review_ids": [
+          "REV-001"
+        ],
+        "params_delta": {
+          "weight_closure": 1.0,
+          "transfer_penalty": 0.1
+        },
+        "expected_improvement": 0.179285,
+        "train_deviation_after": 0.047143
+      },
+      {
+        "label": "flood-response-v1.2",
+        "version_id": "v3",
+        "parent_label": "flood-response-v1.1",
+        "trigger_feedback_id": "p9-round-2",
+        "trigger_review_ids": [
+          "REV-001"
+        ],
+        "params_delta": {
+          "weight_hazard": 0.25
+        },
+        "expected_improvement": 0.047143,
+        "train_deviation_after": 0.0
+      }
+    ],
+    "final_label": "flood-response-v1.2",
+    "warm_start": null,
+    "reviews": [
+      {
+        "review_id": "REV-001",
+        "reviewer_role": "水务调度负责人（角色扮演）",
+        "decision": "modify",
+        "reason": "不能只按本区库存各管各的：A-03 已过封路阈值且有燃气基坑，B-01 未达阈值且无危险源，应从 B-01 调 1 台给 A-03；B-01 保留 1 台做民生兜底，缺口上报增援。",
+        "expected_allocation": {
+          "A-03": 5,
+          "B-01": 1
+        },
+        "deviation_before": 0.117143,
+        "deviation_after": 0.0
+      }
+    ],
+    "review_cases": 1,
+    "rolled_back": {
+      "rolled_back_to": "v1",
+      "deviation_after_rollback": 0.226428,
+      "initial_deviation": 0.226428,
+      "matches_initial": true,
+      "restored_version": "v3",
+      "restored_deviation": 0.0
+    },
+    "real_event_baseline": {
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-10-29T09:40:00+08:00",
+      "policy_version": "v1",
+      "publishable": true,
+      "allocation_by_district": {
+        "A-03": 4,
+        "B-01": 2
+      },
+      "unmet_by_district": {
+        "A-03": 1,
+        "B-01": 0
+      },
+      "transfers": [],
+      "escalation": [
+        "A-03 仍缺 1 台：本区库存 4 台，本区需求 5 台，需上报跨区/市级增援"
+      ]
+    },
+    "real_event_evolved": {
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-10-29T09:40:00+08:00",
+      "policy_version": "v3",
+      "publishable": true,
+      "allocation_by_district": {
+        "A-03": 5,
+        "B-01": 1
+      },
+      "unmet_by_district": {
+        "A-03": 0,
+        "B-01": 1
+      },
+      "transfers": [
+        "B-01->A-03:1 台（跨区 40 分钟）"
+      ],
+      "escalation": [
+        "B-01 仍缺 1 台：本区库存 2 台，本区需求 2 台，需上报跨区/市级增援"
+      ]
+    },
+    "history": [
+      "proposed:v2",
+      "promoted:v2",
+      "proposed:v3",
+      "promoted:v3",
+      "proposed:v4",
+      "rejected:v4",
+      "rollback:v3 -> v1",
+      "rollback:v1 -> v3"
+    ]
+  },
+  "second": {
+    "schema_version": "p9-evolution-1",
+    "case_digest": "c2c7666eb0bd1bf8725a3af9c31b7be5c6c71ad553cd0cbbe477d71885df2a18",
+    "feedback_verified": true,
+    "train_cases": 8,
+    "holdout_cases": 4,
+    "deviation_weights": {
+      "allocation_l1": 0.4,
+      "critical_unmet": 0.3,
+      "transfer": 0.2,
+      "order": 0.1
+    },
+    "initial_policy": {
+      "policy_version": "v1",
+      "weight_closure": 1.0,
+      "weight_hazard": 0.25,
+      "weight_depth": 0.0,
+      "depth_scale_cm": 25.0,
+      "transfer_penalty": 0.1,
+      "allow_transfer_from_critical": false
+    },
+    "final_policy": {
+      "policy_version": "v1",
+      "weight_closure": 1.0,
+      "weight_hazard": 0.25,
+      "weight_depth": 0.0,
+      "depth_scale_cm": 25.0,
+      "transfer_penalty": 0.1,
+      "allow_transfer_from_critical": false
+    },
+    "initial_train": {
+      "policy_version": "v1",
+      "cases_total": 8,
+      "deviation": 0.0,
+      "dimensions": {
+        "allocation_l1": 0.0,
+        "critical_unmet": 0.0,
+        "transfer": 0.0,
+        "order": 0.0
+      },
+      "critical_unmet_units": 6,
+      "expected_critical_unmet_units": 6,
+      "allocation_l1_units": 0,
+      "missed_transfers": 0,
+      "expected_transfers": 4,
+      "order_hits": 8,
+      "order_total": 8,
+      "case_results": [
+        {
+          "case_id": "T1",
+          "split": "train",
+          "title": "实况资源紧张：A-03 关键、B-01 非关键，B-01 可让出 1 台",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 5,
+            "B-01": 1
+          },
+          "expected_allocation": {
+            "A-03": 5,
+            "B-01": 1
+          },
+          "transfers": [
+            "B-01->A-03:1"
+          ],
+          "expected_transfers": [
+            "B-01->A-03:1"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T2",
+          "split": "train",
+          "title": "缺口扩大：A-03 本区仅 2 台，B-01 让出库存与已分配量",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 5,
+            "B-01": 0
+          },
+          "expected_allocation": {
+            "A-03": 5,
+            "B-01": 0
+          },
+          "transfers": [
+            "B-01->A-03:3"
+          ],
+          "expected_transfers": [
+            "B-01->A-03:3"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T3",
+          "split": "train",
+          "title": "反向：B-01 关键、A-03 非关键，调拨方向必须跟着风险走",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 1,
+            "B-01": 5
+          },
+          "expected_allocation": {
+            "A-03": 1,
+            "B-01": 5
+          },
+          "transfers": [
+            "A-03->B-01:3"
+          ],
+          "expected_transfers": [
+            "A-03->B-01:3"
+          ],
+          "priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "expected_priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T4",
+          "split": "train",
+          "title": "双关键：两个片区都过阈值且有危险源，谁都不许被调出",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 4
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 4
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T5",
+          "split": "train",
+          "title": "仅危险源也算关键：B-01 有燃气管线影响，不可被调出",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T6",
+          "split": "train",
+          "title": "仅危险源关键：A-03 未过阈值但有燃气影响，B-01 应让出 2 台",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 5,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 5,
+            "B-01": 2
+          },
+          "transfers": [
+            "B-01->A-03:2"
+          ],
+          "expected_transfers": [
+            "B-01->A-03:2"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T7",
+          "split": "train",
+          "title": "都无关键状态：没有优先序依据就不动，不为了凑满而调拨",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T8",
+          "split": "train",
+          "title": "无库存可调：B-01 库存为 0，缺口只能上报增援",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 2,
+            "B-01": 0
+          },
+          "expected_allocation": {
+            "A-03": 2,
+            "B-01": 0
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        }
+      ]
+    },
+    "final_train": {
+      "policy_version": "v1",
+      "cases_total": 8,
+      "deviation": 0.0,
+      "dimensions": {
+        "allocation_l1": 0.0,
+        "critical_unmet": 0.0,
+        "transfer": 0.0,
+        "order": 0.0
+      },
+      "critical_unmet_units": 6,
+      "expected_critical_unmet_units": 6,
+      "allocation_l1_units": 0,
+      "missed_transfers": 0,
+      "expected_transfers": 4,
+      "order_hits": 8,
+      "order_total": 8,
+      "case_results": [
+        {
+          "case_id": "T1",
+          "split": "train",
+          "title": "实况资源紧张：A-03 关键、B-01 非关键，B-01 可让出 1 台",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 5,
+            "B-01": 1
+          },
+          "expected_allocation": {
+            "A-03": 5,
+            "B-01": 1
+          },
+          "transfers": [
+            "B-01->A-03:1"
+          ],
+          "expected_transfers": [
+            "B-01->A-03:1"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T2",
+          "split": "train",
+          "title": "缺口扩大：A-03 本区仅 2 台，B-01 让出库存与已分配量",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 5,
+            "B-01": 0
+          },
+          "expected_allocation": {
+            "A-03": 5,
+            "B-01": 0
+          },
+          "transfers": [
+            "B-01->A-03:3"
+          ],
+          "expected_transfers": [
+            "B-01->A-03:3"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T3",
+          "split": "train",
+          "title": "反向：B-01 关键、A-03 非关键，调拨方向必须跟着风险走",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 1,
+            "B-01": 5
+          },
+          "expected_allocation": {
+            "A-03": 1,
+            "B-01": 5
+          },
+          "transfers": [
+            "A-03->B-01:3"
+          ],
+          "expected_transfers": [
+            "A-03->B-01:3"
+          ],
+          "priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "expected_priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T4",
+          "split": "train",
+          "title": "双关键：两个片区都过阈值且有危险源，谁都不许被调出",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 4
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 4
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T5",
+          "split": "train",
+          "title": "仅危险源也算关键：B-01 有燃气管线影响，不可被调出",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T6",
+          "split": "train",
+          "title": "仅危险源关键：A-03 未过阈值但有燃气影响，B-01 应让出 2 台",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 5,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 5,
+            "B-01": 2
+          },
+          "transfers": [
+            "B-01->A-03:2"
+          ],
+          "expected_transfers": [
+            "B-01->A-03:2"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T7",
+          "split": "train",
+          "title": "都无关键状态：没有优先序依据就不动，不为了凑满而调拨",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "T8",
+          "split": "train",
+          "title": "无库存可调：B-01 库存为 0，缺口只能上报增援",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 2,
+            "B-01": 0
+          },
+          "expected_allocation": {
+            "A-03": 2,
+            "B-01": 0
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        }
+      ]
+    },
+    "initial_holdout": {
+      "policy_version": "v1",
+      "cases_total": 4,
+      "deviation": 0.0,
+      "dimensions": {
+        "allocation_l1": 0.0,
+        "critical_unmet": 0.0,
+        "transfer": 0.0,
+        "order": 0.0
+      },
+      "critical_unmet_units": 4,
+      "expected_critical_unmet_units": 4,
+      "allocation_l1_units": 0,
+      "missed_transfers": 0,
+      "expected_transfers": 2,
+      "order_hits": 4,
+      "order_total": 4,
+      "case_results": [
+        {
+          "case_id": "H1",
+          "split": "holdout",
+          "title": "留出：A-03 关键缺口 1 台，B-01 富余 2 台",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "transfers": [
+            "B-01->A-03:1"
+          ],
+          "expected_transfers": [
+            "B-01->A-03:1"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "H2",
+          "split": "holdout",
+          "title": "留出：反向场景，B-01 关键缺口 3 台，A-03 只能让 2 台",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 0,
+            "B-01": 3
+          },
+          "expected_allocation": {
+            "A-03": 0,
+            "B-01": 3
+          },
+          "transfers": [
+            "A-03->B-01:2"
+          ],
+          "expected_transfers": [
+            "A-03->B-01:2"
+          ],
+          "priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "expected_priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "H3",
+          "split": "holdout",
+          "title": "留出：两个片区都无关键状态且都有富余，不应发生调拨",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "expected_allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "H4",
+          "split": "holdout",
+          "title": "留出：双关键但风险类型不同，均不可被调出",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "expected_allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        }
+      ]
+    },
+    "final_holdout": {
+      "policy_version": "v1",
+      "cases_total": 4,
+      "deviation": 0.0,
+      "dimensions": {
+        "allocation_l1": 0.0,
+        "critical_unmet": 0.0,
+        "transfer": 0.0,
+        "order": 0.0
+      },
+      "critical_unmet_units": 4,
+      "expected_critical_unmet_units": 4,
+      "allocation_l1_units": 0,
+      "missed_transfers": 0,
+      "expected_transfers": 2,
+      "order_hits": 4,
+      "order_total": 4,
+      "case_results": [
+        {
+          "case_id": "H1",
+          "split": "holdout",
+          "title": "留出：A-03 关键缺口 1 台，B-01 富余 2 台",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "expected_allocation": {
+            "A-03": 4,
+            "B-01": 2
+          },
+          "transfers": [
+            "B-01->A-03:1"
+          ],
+          "expected_transfers": [
+            "B-01->A-03:1"
+          ],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "H2",
+          "split": "holdout",
+          "title": "留出：反向场景，B-01 关键缺口 3 台，A-03 只能让 2 台",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 0,
+            "B-01": 3
+          },
+          "expected_allocation": {
+            "A-03": 0,
+            "B-01": 3
+          },
+          "transfers": [
+            "A-03->B-01:2"
+          ],
+          "expected_transfers": [
+            "A-03->B-01:2"
+          ],
+          "priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "expected_priority_order": [
+            "B-01",
+            "A-03"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "H3",
+          "split": "holdout",
+          "title": "留出：两个片区都无关键状态且都有富余，不应发生调拨",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "expected_allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        },
+        {
+          "case_id": "H4",
+          "split": "holdout",
+          "title": "留出：双关键但风险类型不同，均不可被调出",
+          "deviation": 0.0,
+          "dimensions": {
+            "allocation_l1": 0.0,
+            "critical_unmet": 0.0,
+            "transfer": 0.0,
+            "order": 0.0
+          },
+          "allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "expected_allocation": {
+            "A-03": 3,
+            "B-01": 3
+          },
+          "transfers": [],
+          "expected_transfers": [],
+          "priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "expected_priority_order": [
+            "A-03",
+            "B-01"
+          ],
+          "notes": []
+        }
+      ]
+    },
+    "rounds": [
+      {
+        "round": 1,
+        "target_dimension": "probe",
+        "candidate_version": "v2",
+        "params_delta": {
+          "transfer_penalty": 0.05
+        },
+        "train_before": 0.0,
+        "train_after": 0.0,
+        "holdout_before": 0.0,
+        "holdout_after": 0.0,
+        "attribution_before": {
+          "allocation_l1": 0.0,
+          "critical_unmet": 0.0,
+          "transfer": 0.0,
+          "order": 0.0
+        },
+        "action": "rejected",
+        "reason": "训练偏差未下降"
+      }
+    ],
+    "releases": [],
+    "final_label": "flood-response-v1.2",
+    "warm_start": {
+      "entry_id": "M-3979c3901de5",
+      "label": "flood-response-v1.2",
+      "similarity": 1.0,
+      "source_outcome": {
+        "deviation": 0.0,
+        "allocation_l1_units": 0.0,
+        "critical_unmet_units": 6.0,
+        "missed_transfers": 0.0
+      },
+      "params": {
+        "weight_closure": 1.0,
+        "weight_hazard": 0.25,
+        "weight_depth": 0.0,
+        "depth_scale_cm": 25.0,
+        "transfer_penalty": 0.1,
+        "allow_transfer_from_critical": false
+      }
+    },
+    "reviews": [
+      {
+        "review_id": "REV-001",
+        "reviewer_role": "水务调度负责人（角色扮演）",
+        "decision": "modify",
+        "reason": "不能只按本区库存各管各的：A-03 已过封路阈值且有燃气基坑，B-01 未达阈值且无危险源，应从 B-01 调 1 台给 A-03；B-01 保留 1 台做民生兜底，缺口上报增援。",
+        "expected_allocation": {
+          "A-03": 5,
+          "B-01": 1
+        },
+        "deviation_before": 0.0,
+        "deviation_after": 0.0
+      }
+    ],
+    "review_cases": 1,
+    "rolled_back": {
+      "rolled_back_to": "v1",
+      "deviation_after_rollback": 0.0,
+      "initial_deviation": 0.0,
+      "matches_initial": true,
+      "restored_version": "v1",
+      "restored_deviation": 0.0
+    },
+    "real_event_baseline": null,
+    "real_event_evolved": null,
+    "history": [
+      "proposed:v2",
+      "rejected:v2",
+      "rollback:v1 -> v1",
+      "rollback:v1 -> v1"
+    ]
+  },
+  "memory_entries": [
+    {
+      "entry_id": "M-3979c3901de5",
+      "scope": "agent",
+      "signature": {
+        "districts": [
+          "A-03",
+          "B-01"
+        ],
+        "shortage_ratio": 0.666667,
+        "critical_mix": [
+          "closure+hazard|closure+hazard",
+          "closure+hazard|hazard",
+          "closure+hazard|none",
+          "closure|hazard",
+          "hazard|none",
+          "none|none"
+        ],
+        "cases": 12
+      },
+      "label": "flood-response-v1.2",
+      "policy_version": "v3",
+      "params": {
+        "weight_closure": 1.0,
+        "weight_hazard": 0.25,
+        "weight_depth": 0.0,
+        "depth_scale_cm": 25.0,
+        "transfer_penalty": 0.1,
+        "allow_transfer_from_critical": false
+      },
+      "outcome": {
+        "deviation": 0.0,
+        "allocation_l1_units": 0.0,
+        "critical_unmet_units": 6.0,
+        "missed_transfers": 0.0
+      },
+      "feedback_digest": "c2c7666eb0bd1bf8725a3af9c31b7be5c6c71ad553cd0cbbe477d71885df2a18",
+      "event_ids": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7",
+        "T8"
+      ],
+      "review_ids": [
+        "REV-001"
+      ],
+      "note": "由 flood-response-v1.2 进化结果沉淀；训练偏差 0.0000"
+    }
+  ],
+  "memory_path": "samples/eval/decision_memory.json"
+}

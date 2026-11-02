@@ -1,0 +1,237 @@
+{
+  "schema_version": "allocation-cases-1",
+  "note": "P9 分配策略评测集：受控合成场景，每个用例标注依据条款。真实事件 WO-20261029-007 只用于端到端演示，不进入本评测集。",
+  "generated_by": "手工编写，期望值由 docs/urban-scenario-ground-truth.md 跳 5 / CF2 口径推得，不由实现反推",
+  "cases": [
+    {
+      "case_id": "T1",
+      "title": "实况资源紧张：A-03 关键、B-01 非关键，B-01 可让出 1 台",
+      "split": "train",
+      "basis": [
+        "Ground Truth 跳 5：A-03 需 5 台、本区 4 台；B-01 需 2 台、本区 2 台",
+        "CF2：只能保一处时优先保障 A-03（已过封路阈值 + 燃气基坑）",
+        "跳 5：跨区调用 40 分钟"
+      ],
+      "signals": [
+        {"district": "A-03", "depth_cm": 30.0, "closure_required": true, "has_hazard": true, "demand": 5, "local_available": 4, "world_required": 7},
+        {"district": "B-01", "depth_cm": 18.0, "closure_required": false, "has_hazard": false, "demand": 2, "local_available": 2, "world_required": 7}
+      ],
+      "expect": {
+        "allocation_by_district": {"A-03": 5, "B-01": 1},
+        "transfers": [{"from_district": "B-01", "to_district": "A-03", "qty": 1, "delay_min": 40}],
+        "priority_order": ["A-03", "B-01"],
+        "critical_unmet": {"A-03": 0}
+      }
+    },
+    {
+      "case_id": "T2",
+      "title": "缺口扩大：A-03 本区仅 2 台，B-01 让出库存与已分配量",
+      "split": "train",
+      "basis": [
+        "Ground Truth 跳 5：需求按片区归集，可相加；缺口按本区库存算",
+        "CF2：低风险片区让位给关键片区，允许让到 0",
+        "跳 5：跨区调用 40 分钟"
+      ],
+      "signals": [
+        {"district": "A-03", "depth_cm": 30.0, "closure_required": true, "has_hazard": true, "demand": 5, "local_available": 2, "world_required": 7},
+        {"district": "B-01", "depth_cm": 18.0, "closure_required": false, "has_hazard": false, "demand": 2, "local_available": 3, "world_required": 7}
+      ],
+      "expect": {
+        "allocation_by_district": {"A-03": 5, "B-01": 0},
+        "transfers": [{"from_district": "B-01", "to_district": "A-03", "qty": 3, "delay_min": 40}],
+        "priority_order": ["A-03", "B-01"],
+        "critical_unmet": {"A-03": 0}
+      }
+    },
+    {
+      "case_id": "T3",
+      "title": "反向：B-01 关键、A-03 非关键，调拨方向必须跟着风险走",
+      "split": "train",
+      "basis": [
+        "Ground Truth 跳 5：需求/库存按片区归集，两个片区可对称比较",
+        "CF2：优先序由封路阈值与危险源决定，不由片区编号决定"
+      ],
+      "signals": [
+        {"district": "A-03", "depth_cm": 18.0, "closure_required": false, "has_hazard": false, "demand": 2, "local_available": 4, "world_required": 7},
+        {"district": "B-01", "depth_cm": 30.0, "closure_required": true, "has_hazard": true, "demand": 5, "local_available": 2, "world_required": 7}
+      ],
+      "expect": {
+        "allocation_by_district": {"A-03": 1, "B-01": 5},
+        "transfers": [{"from_district": "A-03", "to_district": "B-01", "qty": 3, "delay_min": 40}],
+        "priority_order": ["B-01", "A-03"],
+        "critical_unmet": {"B-01": 0}
+      }
+    },
+    {
+      "case_id": "T4",
+      "title": "双关键：两个片区都过阈值且有危险源，谁都不许被调出",
+      "split": "train",
+      "basis": [
+        "跳 5：缺口按本区库存算，关键片区自身不足时不得再被抽调",
+        "P9 设计：allow_transfer_from_critical 默认 False（决策安全）"
+      ],
+      "signals": [
+        {"district": "A-03", "depth_cm": 30.0, "closure_required": true, "has_hazard": true, "demand": 5, "local_available": 4, "world_required": 10},
+        {"district": "B-01", "depth_cm": 30.0, "closure_required": true, "has_hazard": true, "demand": 5, "local_available": 4, "world_required": 10}
+      ],
+      "expect": {
+        "allocation_by_district": {"A-03": 4, "B-01": 4},
+        "transfers": [],
+        "priority_order": ["A-03", "B-01"],
+        "critical_unmet": {"A-03": 1, "B-01": 1}
+      }
+    },
+    {
+      "case_id": "T5",
+      "title": "仅危险源也算关键：B-01 有燃气管线影响，不可被调出",
+      "split": "train",
+      "basis": [
+        "CF2：次生危险源是与封路阈值并列的优先依据",
+        "跳 2：受影响范围含燃气/电力管线时存在次生风险"
+      ],
+      "signals": [
+        {"district": "A-03", "depth_cm": 30.0, "closure_required": true, "has_hazard": false, "demand": 5, "local_available": 4, "world_required": 7},
+        {"district": "B-01", "depth_cm": 18.0, "closure_required": false, "has_hazard": true, "demand": 2, "local_available": 3, "world_required": 7}
+      ],
+      "expect": {
+        "allocation_by_district": {"A-03": 4, "B-01": 2},
+        "transfers": [],
+        "priority_order": ["A-03", "B-01"],
+        "critical_unmet": {"A-03": 1, "B-01": 0}
+      }
+    },
+    {
+      "case_id": "T6",
+      "title": "仅危险源关键：A-03 未过阈值但有燃气影响，B-01 应让出 2 台",
+      "split": "train",
+      "basis": [
+        "CF2：危险源与封路阈值共同构成优先序，缺一不可",
+        "跳 5：B-01 低洼点需求 2 台，本区富余可调出"
+      ],
+      "signals": [
+        {"district": "A-03", "depth_cm": 18.0, "closure_required": false, "has_hazard": true, "demand": 5, "local_available": 3, "world_required": 7},
+        {"district": "B-01", "depth_cm": 18.0, "closure_required": false, "has_hazard": false, "demand": 2, "local_available": 4, "world_required": 7}
+      ],
+      "expect": {
+        "allocation_by_district": {"A-03": 5, "B-01": 2},
+        "transfers": [{"from_district": "B-01", "to_district": "A-03", "qty": 2, "delay_min": 40}],
+        "priority_order": ["A-03", "B-01"],
+        "critical_unmet": {"A-03": 0}
+      }
+    },
+    {
+      "case_id": "T7",
+      "title": "都无关键状态：没有优先序依据就不动，不为了凑满而调拨",
+      "split": "train",
+      "basis": [
+        "跳 5：低洼点临时抽排只在未达封路阈值的片区生效，不代表可以互相挪用",
+        "P9 设计：transfer_penalty 保证无优先序差时不调拨"
+      ],
+      "signals": [
+        {"district": "A-03", "depth_cm": 18.0, "closure_required": false, "has_hazard": false, "demand": 5, "local_available": 4, "world_required": 7},
+        {"district": "B-01", "depth_cm": 18.0, "closure_required": false, "has_hazard": false, "demand": 2, "local_available": 2, "world_required": 7}
+      ],
+      "expect": {
+        "allocation_by_district": {"A-03": 4, "B-01": 2},
+        "transfers": [],
+        "priority_order": ["A-03", "B-01"],
+        "critical_unmet": {}
+      }
+    },
+    {
+      "case_id": "T8",
+      "title": "无库存可调：B-01 库存为 0，缺口只能上报增援",
+      "split": "train",
+      "basis": [
+        "跳 5：库存 0 时缺口只能上报，不允许编造调拨",
+        "跳 6：第 5 台缺口上报 ORG-EMERG 跨区调配"
+      ],
+      "signals": [
+        {"district": "A-03", "depth_cm": 30.0, "closure_required": true, "has_hazard": true, "demand": 5, "local_available": 2, "world_required": 7},
+        {"district": "B-01", "depth_cm": 18.0, "closure_required": false, "has_hazard": false, "demand": 2, "local_available": 0, "world_required": 7}
+      ],
+      "expect": {
+        "allocation_by_district": {"A-03": 2, "B-01": 0},
+        "transfers": [],
+        "priority_order": ["A-03", "B-01"],
+        "critical_unmet": {"A-03": 3}
+      }
+    },
+    {
+      "case_id": "H1",
+      "title": "留出：A-03 关键缺口 1 台，B-01 富余 2 台",
+      "split": "holdout",
+      "basis": [
+        "Ground Truth 跳 5：需求 4 台、本区 3 台",
+        "CF2：关键片区优先，跨区 40 分钟可接受"
+      ],
+      "signals": [
+        {"district": "A-03", "depth_cm": 30.0, "closure_required": true, "has_hazard": true, "demand": 4, "local_available": 3, "world_required": 6},
+        {"district": "B-01", "depth_cm": 18.0, "closure_required": false, "has_hazard": false, "demand": 2, "local_available": 4, "world_required": 6}
+      ],
+      "expect": {
+        "allocation_by_district": {"A-03": 4, "B-01": 2},
+        "transfers": [{"from_district": "B-01", "to_district": "A-03", "qty": 1, "delay_min": 40}],
+        "priority_order": ["A-03", "B-01"],
+        "critical_unmet": {"A-03": 0}
+      }
+    },
+    {
+      "case_id": "H2",
+      "title": "留出：反向场景，B-01 关键缺口 3 台，A-03 只能让 2 台",
+      "split": "holdout",
+      "basis": [
+        "Ground Truth 跳 5：需求/库存按片区归集，缺口按本区算",
+        "CF2：优先序跟着风险走，与片区编号无关"
+      ],
+      "signals": [
+        {"district": "A-03", "depth_cm": 18.0, "closure_required": false, "has_hazard": false, "demand": 3, "local_available": 2, "world_required": 7},
+        {"district": "B-01", "depth_cm": 30.0, "closure_required": true, "has_hazard": true, "demand": 4, "local_available": 1, "world_required": 7}
+      ],
+      "expect": {
+        "allocation_by_district": {"A-03": 0, "B-01": 3},
+        "transfers": [{"from_district": "A-03", "to_district": "B-01", "qty": 2, "delay_min": 40}],
+        "priority_order": ["B-01", "A-03"],
+        "critical_unmet": {"B-01": 1}
+      }
+    },
+    {
+      "case_id": "H3",
+      "title": "留出：两个片区都无关键状态且都有富余，不应发生调拨",
+      "split": "holdout",
+      "basis": [
+        "P9 设计：无优先序依据不调拨",
+        "跳 5：低洼点需求各自测算"
+      ],
+      "signals": [
+        {"district": "A-03", "depth_cm": 18.0, "closure_required": false, "has_hazard": false, "demand": 3, "local_available": 4, "world_required": 6},
+        {"district": "B-01", "depth_cm": 18.0, "closure_required": false, "has_hazard": false, "demand": 3, "local_available": 4, "world_required": 6}
+      ],
+      "expect": {
+        "allocation_by_district": {"A-03": 3, "B-01": 3},
+        "transfers": [],
+        "priority_order": ["A-03", "B-01"],
+        "critical_unmet": {}
+      }
+    },
+    {
+      "case_id": "H4",
+      "title": "留出：双关键但风险类型不同，均不可被调出",
+      "split": "holdout",
+      "basis": [
+        "CF2：封路阈值与危险源都是关键状态",
+        "P9 设计：关键片区不可被调出（安全默认）"
+      ],
+      "signals": [
+        {"district": "A-03", "depth_cm": 30.0, "closure_required": true, "has_hazard": true, "demand": 5, "local_available": 3, "world_required": 10},
+        {"district": "B-01", "depth_cm": 18.0, "closure_required": false, "has_hazard": true, "demand": 4, "local_available": 3, "world_required": 10}
+      ],
+      "expect": {
+        "allocation_by_district": {"A-03": 3, "B-01": 3},
+        "transfers": [],
+        "priority_order": ["A-03", "B-01"],
+        "critical_unmet": {"A-03": 2, "B-01": 1}
+      }
+    }
+  ]
+}

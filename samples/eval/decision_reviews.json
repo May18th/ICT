@@ -1,0 +1,26 @@
+{
+  "schema_version": "decision-reviews-1",
+  "note": "人工协同反馈样例：由项目成员角色扮演领域负责人做一次方案评审，用于演示第二进化信号通道。不是真实部门批复，答辩必须按此口径说明。",
+  "reviews": [
+    {
+      "review_id": "REV-001",
+      "reviewer_role": "水务调度负责人（角色扮演）",
+      "reviewer_note": "角色扮演，用于演示人工反馈通道，非真实部门批复",
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-10-29T09:40:00+08:00",
+      "policy_version_reviewed": "v1",
+      "decision": "modify",
+      "reason": "不能只按本区库存各管各的：A-03 已过封路阈值且有燃气基坑，B-01 未达阈值且无危险源，应从 B-01 调 1 台给 A-03；B-01 保留 1 台做民生兜底，缺口上报增援。",
+      "expected_allocation": {"A-03": 5, "B-01": 1},
+      "basis": [
+        "Ground Truth 跳 5：A-03 需 5 台、本区 4 台；B-01 需 2 台、本区 2 台",
+        "CF2：只能保一处时优先保障 A-03",
+        "跳 5：B-01 泵站到 A-03 跨区调用需 40 分钟，高峰期可接受"
+      ],
+      "signals": [
+        {"district": "A-03", "depth_cm": 30.0, "closure_required": true, "has_hazard": true, "demand": 5, "local_available": 4, "world_required": 7},
+        {"district": "B-01", "depth_cm": 18.0, "closure_required": false, "has_hazard": false, "demand": 2, "local_available": 2, "world_required": 7}
+      ]
+    }
+  ]
+}
