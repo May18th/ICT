@@ -99,5 +99,5 @@
 
 ```powershell
 uv run --locked pytest -q                            # 696 passed
-uv run --locked python -m decision_poc.evidence_check # 106/106（指纹 8dd1bcdee40ac40e）
+uv run --locked python -m decision_poc.evidence_check # 106/106（指纹 df6e48a10232d54f）
 ```
