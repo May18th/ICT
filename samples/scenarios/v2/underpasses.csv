@@ -1,0 +1,2 @@
+underpass_id,name,road_id,district,entry_sill_height_m,lowest_point_z_m,ramp_length_m,opening_width_m,open_water_area_m2,has_pump_room,close_threshold_m,owner_org,note
+UP-XH-101,兴华路下穿隧道东端,R-101,A-03,0.15,-1.81,96,34,3264,false,0.25,,段内最低点 -1.81m；运维主体未界定（触发 C2 职责空白）；挡水槛与封控阈值为假设值，待核实

@@ -1,0 +1,4 @@
+station_id,rated_m3h,failed_unit_m3h,design_inflow_m3h,note
+DF-PS-01,1200,400,1200,1#泵组电机故障待修；设计来水按额定取（等效于满负荷运行）
+DF-PS-02,2400,0,2400,备电正常；无故障泵组
+DF-PS-03,1800,0,1800,备电正常；无故障泵组

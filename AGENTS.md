@@ -69,7 +69,7 @@
    - `scripts/reproduce.py` 的自检 `expect`（写死 `X/X`）与步骤数；
    - 重新生成 `docs/reports/evidence-check-report.md`（勿手改）。
 3. **验收只有两条**：`git status` 干净 + `python -m decision_poc.evidence_check` 输出当前口径
-   （当前 `106/106`，指纹 `73b104597a9c2318`）。**不看文档里的旧数字**，也不允许为过检放宽期望。
+   （当前 `106/106`，指纹 `73902cbff40036a2`）。**不看文档里的旧数字**，也不允许为过检放宽期望。
 
 全仓扫旧数字时注意 `Get-ChildItem -Recurse`：`docs/**/*.md` 这种通配只匹配一层，
 `docs/superpowers/specs/` 这类深目录容易漏扫。
