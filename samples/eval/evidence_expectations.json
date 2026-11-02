@@ -1,0 +1,200 @@
+{
+  "schema_version": "evidence-expectations-1",
+  "note": "对外宣称数字的冻结口径。evidence_check 逐项比对，任一项不一致即失败（退出码 1）。改这里必须同时改 README / 报告 / 答辩口径，并说明原因；不允许为了过检而放宽期望。 测试数同样是冻结口径：`test_baseline.collected` 由 tests/test_test_count_guard.py 用 pytest 会话实测值核对，`checks.test_suite.docs_declared` 由证据自检核对对外文档声明；两者不一致时先改测试/文档再改期望，并说明原因。",
+  "checks": {
+    "p6_deduction": {
+      "event_id": "WO-20261029-007",
+      "six_hops": [
+        "observed",
+        "affected",
+        "owner",
+        "conflict",
+        "resource",
+        "action"
+      ],
+      "conflict_ids": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "conflict_kinds": [
+        "contention",
+        "gap",
+        "overlap"
+      ],
+      "resource_gap": 1,
+      "action_count": 9,
+      "isolate_before_drain": true,
+      "handoff_required": true,
+      "snapshot_hash_len": 64
+    },
+    "mcp": {
+      "tools_count": 12,
+      "has_allocation_plan": true
+    },
+    "p8_eval": {
+      "cases_total": 22,
+      "cases_passed": 22,
+      "cases_failed": 0,
+      "assets_parsed": 15,
+      "assets_total": 15,
+      "unmapped_columns": 0,
+      "locator_hit_rate": 1.0,
+      "six_hop_rate": 1.0,
+      "citation_completeness": 1.0,
+      "unsupported_claims": 0,
+      "safety_by_kind": {
+        "conflict": "3/3",
+        "expired": "4/4",
+        "insufficient": "6/6",
+        "normal": "7/7",
+        "permission": "2/2"
+      }
+    },
+    "p9_evolution": {
+      "cases_digest": "c2c7666eb0bd1bf8725a3af9c31b7be5c6c71ad553cd0cbbe477d71885df2a18",
+      "feedback_verified": true,
+      "deterministic": true,
+      "train": {
+        "initial_deviation": 0.226428,
+        "final_deviation": 0.0,
+        "initial_l1_units": 13,
+        "final_l1_units": 0,
+        "initial_critical_unmet_units": 15,
+        "final_critical_unmet_units": 6,
+        "initial_missed_transfers": 4,
+        "final_missed_transfers": 0,
+        "initial_order_hits": 7,
+        "final_order_hits": 8
+      },
+      "holdout": {
+        "initial_deviation": 0.218155,
+        "final_deviation": 0.0
+      },
+      "rounds_actions": [
+        "promoted",
+        "promoted",
+        "rejected"
+      ],
+      "releases": [
+        "flood-response-v1.1",
+        "flood-response-v1.2"
+      ],
+      "final_label": "flood-response-v1.2",
+      "review": {
+        "review_id": "REV-001",
+        "deviation_before": 0.117143,
+        "deviation_after": 0.0,
+        "expected_allocation": {
+          "A-03": 5,
+          "B-01": 1
+        }
+      },
+      "warm_start": {
+        "entry_id": "M-3979c3901de5",
+        "label": "flood-response-v1.2",
+        "similarity": 1.0,
+        "second_initial_deviation": 0.0,
+        "second_rounds": 1,
+        "second_promoted_rounds": 0
+      },
+      "memory_entries": 1,
+      "real_event": {
+        "baseline_allocation": {
+          "A-03": 4,
+          "B-01": 2
+        },
+        "evolved_allocation": {
+          "A-03": 5,
+          "B-01": 1
+        },
+        "evolved_unmet": {
+          "A-03": 0,
+          "B-01": 1
+        },
+        "evolved_transfer_count": 1
+      }
+    },
+    "test_suite": {
+      "docs_declared": [
+        600
+      ]
+    },
+    "p11_ablation": {
+      "configs": [
+        "rules_only",
+        "semantic_only",
+        "single_skill",
+        "multi_skill",
+        "full_audited"
+      ],
+      "metrics": {
+        "rules_only": {
+          "six_hop_rate": 0.0,
+          "safety_rate": 0.0,
+          "impact_resource_rate": 0.0,
+          "citation_completeness": 0.0,
+          "auditable_rate": 0.0
+        },
+        "semantic_only": {
+          "six_hop_rate": 0.0,
+          "safety_rate": 0.125,
+          "impact_resource_rate": 0.0,
+          "citation_completeness": 0.0,
+          "auditable_rate": 0.0
+        },
+        "single_skill": {
+          "six_hop_rate": 0.6364,
+          "safety_rate": 1.0,
+          "impact_resource_rate": 0.0,
+          "citation_completeness": 0.0,
+          "auditable_rate": 0.0
+        },
+        "multi_skill": {
+          "six_hop_rate": 0.6364,
+          "safety_rate": 1.0,
+          "impact_resource_rate": 0.6364,
+          "citation_completeness": 0.0,
+          "auditable_rate": 0.0
+        },
+        "full_audited": {
+          "six_hop_rate": 0.6364,
+          "safety_rate": 1.0,
+          "impact_resource_rate": 0.6364,
+          "citation_completeness": 0.6364,
+          "auditable_rate": 0.6364
+        }
+      },
+      "pairwise_pairs": 20,
+      "deterministic": true
+    },
+    "p12_anchoring": {
+      "anchors": 1,
+      "verify_ok": true,
+      "offchain_ok": true,
+      "tamper_detected": true,
+      "deterministic": true
+    },
+    "platform_skills": {
+      "captured": true,
+      "skill_count": 2,
+      "names": [
+        "scarcity-allocation-evolution",
+        "urban-six-hop-deduction"
+      ],
+      "local_file_hashes_match": true,
+      "platform_content_matches": true
+    },
+    "platform_ui": {
+      "captured": true,
+      "page_count": 3,
+      "all_expectations_met": true,
+      "screenshot_hashes_ok": true
+    }
+  },
+  "test_baseline": {
+    "collected": 600,
+    "command": "python -m pytest -q",
+    "verified_at": "2026-11-02"
+  }
+}
