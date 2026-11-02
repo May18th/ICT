@@ -96,5 +96,5 @@
 2. `python -m decision_poc.anchoring --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00 --out artifacts/ledger`
    提交并打印 `verify=True`；篡改链下动作包后 `verify_offchain` 报 `OFFCHAIN_MISMATCH`。
 3. 新增数字进 `samples/eval/evidence_expectations.json` 的 `p11_ablation` / `p12_anchoring`，由
-   `evidence_check` 冻结；测试数、`97/97`、期望指纹同步更新到 README 与对外文档。
+   `evidence_check` 冻结；测试数、`106/106`、期望指纹同步更新到 README 与对外文档。
 4. 现有 600 项测试不回归，`evidence_check` 全绿。
