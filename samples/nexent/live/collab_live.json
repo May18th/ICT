@@ -1,0 +1,36 @@
+{
+  "kind": "collab-live-evidence",
+  "event_id": "WO-20261029-007",
+  "as_of": "2026-10-29T09:40:00+08:00",
+  "agent_name": "urban_collab_agent",
+  "method": "同一天实测记录；成功判据 = 平台返回 JSON 且 kernel_fingerprint 与离线逐字一致",
+  "offline": {
+    "kernel_fingerprint": "d7c16d572ca7a33e",
+    "cards": 26,
+    "merge_order": 15,
+    "covered_agents": 6,
+    "constraint_violations": []
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "conversation_id": 60,
+      "json_parsed": true,
+      "kernel_fingerprint": "d7c16d572ca7a33e",
+      "fingerprint_match": true,
+      "cards": 26,
+      "merge_order": 15,
+      "covered_agents": 6,
+      "constraint_violations": []
+    },
+    {
+      "attempt": 2,
+      "conversation_id": 61,
+      "json_parsed": false,
+      "answer_head": "未按要求输出 JSON（模型返回了其他内容）"
+    }
+  ],
+  "success": true,
+  "success_attempt": 1,
+  "known_limitation": "协同 Agent 输出格式不稳定：2 次调用中 1 次返回可解析 JSON（指纹逐字一致），1 次未按要求输出 JSON；口径是'形状可重跑、格式需容错'，不宣称 100% 稳定"
+}

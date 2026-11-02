@@ -115,3 +115,20 @@ Agent 回答（节选，完整见 `samples/nexent/live/conversation_21.json`）�
 
 「同一套推理内核，离线可复算、平台上可运行：Nexent 的 Agent 调我们 13 个 MCP 工具做六跳推演，
 结论与本仓库离线引擎 8/8 一致（conversation_id 可查）；策略进化与回滚在面板上可当场演示。」
+
+## 2026-11-02 真机复跑（Docker 恢复后）
+
+| 项 | 结果 |
+| --- | --- |
+| MCP 容器 | `urban-twin-mcp` 重建后 `/health` 返回 **13 个工具**（含 `collab_run`） |
+| 平台工具库 | `scan_tool` 命中 **13/13**，缺失 0 |
+| 主 Agent | `urban_deduction_agent` 发布 **v5**，挂 12 个结论类工具（`collab_run` 显式 detach） |
+| 协同 Agent | `urban_collab_agent` agent_id=4 发布 **v1**，挂 6 个工具（含 `collab_run`） |
+| 主链路复核 | `python -m decision_poc.nexent_urban` → **8/8 项一致，conversation_id=59** |
+| 协同复核 | `collab_run` 真机返回 JSON，`kernel_fingerprint=d7c16d572ca7a33e` 与离线**逐字一致**，conversation_id=60 |
+
+已知限制如实记录（证据见 `samples/nexent/live/collab_live.json`）：
+- 协同 Agent 输出格式不稳定：2 次调用中 1 次返回可解析 JSON（指纹一致）、1 次未按要求输出 JSON；
+- 环境侧：本机内存仅 15.3 GB，`nexent-data-process` 占 4.5 GB 时宿主只剩 0.5 GB，导致 northbound 请求被掐断；
+  临时 `docker stop nexent-data-process kg-mcp` 后恢复；`localhost:5013` 端口映射失效时需 `docker restart nexent-northbound`；
+- 未验证：Nexent 的 Agent-as-Tool（路径 A），无证据不宣称。
