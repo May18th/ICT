@@ -1,5 +1,5 @@
 {
-  "manifest_version": "1.1",
+  "manifest_version": "1.2",
   "order": [
     "understand",
     "impact",
@@ -35,6 +35,41 @@
         "CF3"
       ],
       "failure_mode": "基线越权或不可计算 -> PERMISSION_DENIED / EVIDENCE_INSUFFICIENT，不给空差异"
+    },
+    {
+      "name": "allocation_plan",
+      "when": "已有可发布推演结论，且存在跨片区资源缺口，需要给出“这几台先给谁”",
+      "mcp_tools": [
+        "allocation_plan"
+      ],
+      "failure_mode": "无决策输入或依据不可见 -> EVIDENCE_INSUFFICIENT / PERMISSION_DENIED，不给分配方案"
+    },
+    {
+      "name": "scene_render",
+      "group": "presentation",
+      "when": "一次决策已定稿（含分配方案），需要把这份结论演成三维推演作业供 UE 拉取",
+      "mcp_tools": [
+        "scene_render"
+      ],
+      "failure_mode": "作业落盘失败 -> UPSTREAM_UNAVAILABLE；引擎未认领只体现为 delivery=pending，不算失败，决策照出"
+    },
+    {
+      "name": "scene_compare",
+      "group": "presentation",
+      "when": "已各自渲染过基线快照与进化后策略快照，需要给出“策略改了、分配怎么变”的差异结论",
+      "mcp_tools": [
+        "scene_compare"
+      ],
+      "failure_mode": "任一侧快照不存在 -> NOT_FOUND；禁止给“空差异”（空差异会被读成没有影响）"
+    },
+    {
+      "name": "asset_lookup",
+      "group": "bootstrap",
+      "when": "初始化或场景类型变化时，核对 Blender 侧是否已有该场景的可导入资产",
+      "mcp_tools": [
+        "asset_lookup"
+      ],
+      "failure_mode": "资产未生成 -> available=false + 离线生成命令；本工具不启动 Blender（生成是分钟级离线动作）"
     }
   ],
   "skills": [

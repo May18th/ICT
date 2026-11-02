@@ -241,6 +241,24 @@ class EventContext(StrictModel):
         return value
 
 
+class DistrictSignal(StrictModel):
+    """决策输入：一个片区的风险事实与资源账。
+
+    推演只负责"算清楚每个片区是什么情况、要多少、有多少"，不决定"先给谁"。
+    分配是策略层的决策（P9），这里只把决策所需的事实显式暴露出来，避免策略层
+    回头去解析推演结论里的字符串（`demand_by_district=...` 那种编码一改就崩）。
+    """
+
+    district: str = Field(min_length=1)
+    depth_cm: float | None = None
+    # None 表示深度未解析出来：不判定封路，也不按 0 处理
+    closure_required: bool | None = None
+    has_hazard: bool = False
+    demand: int = Field(default=0, ge=0)
+    local_available: int = Field(default=0, ge=0)
+    world_required: int = Field(default=0, ge=0)
+
+
 class DeductionResult(StrictModel):
     event_id: str
     root: EventContext
@@ -259,6 +277,8 @@ class DeductionResult(StrictModel):
     # 需求与库存都按片区归集：同一片区在任一次推演里算出的数字都一样，可直接相加
     demand_by_district: dict[str, int] = Field(default_factory=dict)
     available_by_district: dict[str, int] = Field(default_factory=dict)
+    # 策略层（P9）的决策输入：片区风险事实 + 需求 + 本区库存。默认空 = 资源测算没跑通
+    decision_inputs: dict[str, DistrictSignal] = Field(default_factory=dict)
     rules_version: str = ""
     snapshot_hash: str = ""
 
@@ -622,6 +642,7 @@ class DeductionEngine:
             exposed_hours=exposed_hours,
             demand_by_district=dict(resource_plan.get("demand_by_district", {})),
             available_by_district=dict(resource_plan.get("available_by_district", {})),
+            decision_inputs=dict(resource_plan.get("decision_inputs", {})),
             rules_version=self.rules.version,
             snapshot_hash=self.store.snapshot_hash(),
         )
@@ -1198,6 +1219,29 @@ class DeductionEngine:
             evidence.update(self._refs_of(pump.twin_id))
         available = sum(available_by_district.values())
 
+        # 决策输入按片区归集：关键状态（封路/危险源）与资源账放在同一条记录里，
+        # 策略层不需要再去猜"这个片区算不算关键"。
+        hazard_districts: set[str] = set()
+        for obj in affected:
+            if obj.kind in {ObjectKind.GAS, ObjectKind.POWER}:
+                district = self._district_of(obj)
+                if district:
+                    hazard_districts.add(district)
+        signals: dict[str, DistrictSignal] = {}
+        for district in sorted(set(demand) | set(available_by_district) | set(depths)):
+            depth = depths.get(district)
+            if depth is None and district == own_district:
+                depth = _num(context.get("depth_cm"))
+            signals[district] = DistrictSignal(
+                district=district,
+                depth_cm=depth,
+                closure_required=None if depth is None else depth >= closure_threshold,
+                has_hazard=district in hazard_districts,
+                demand=demand.get(district, 0),
+                local_available=available_by_district.get(district, 0),
+                world_required=required,
+            )
+
         gaps: list[ResourceGap] = []
         if required > available:
             gaps.append(
@@ -1217,6 +1261,7 @@ class DeductionEngine:
             "available": available,
             "demand_by_district": demand,
             "available_by_district": available_by_district,
+            "decision_inputs": signals,
             "basis": basis,
             "gaps": gaps,
             "evidence": sorted(evidence),
@@ -1235,6 +1280,7 @@ class DeductionEngine:
                 "available": 0,
                 "demand_by_district": {},
                 "available_by_district": {},
+                "decision_inputs": {},
                 "basis": [],
                 "gaps": [],
                 "evidence": [],

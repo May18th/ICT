@@ -55,6 +55,7 @@ class CaseExpect(StrictModel):
     refused: bool | None = None
     error_code: str | None = None
     warning_level: str | None = None
+    no_warning: bool = False  # 期望"此刻没有生效的预警"（null 无法区分"没写"与"期望为空"）
     depth_cm: float | None = None
     min_actions: int | None = None
     six_hops: bool | None = None
@@ -86,6 +87,7 @@ class CaseOutcome(StrictModel):
     citation_completeness: float = 0.0
     locator_hits: int = 0
     locator_expected: int = 0
+    refused: bool = False
     elapsed_ms: float = 0.0
 
 
@@ -102,7 +104,9 @@ class EvalMetrics(StrictModel):
     relation_kinds: int = 0
     # 检索命中
     locator_hit_rate: float = 1.0
-    # 多跳
+    # 多跳：分母是"进入推演的用例"，拒答与报错不参与——它们本来就不该走出六跳
+    six_hop_cases: int = 0
+    eligible_cases: int = 0
     six_hop_rate: float = 0.0
     # 引用完整
     citation_completeness: float = 1.0
@@ -227,6 +231,10 @@ def _check(case: EvalCase, report: PipelineReport) -> list[str]:
         actual = report.facts.warning_level if report.facts else None
         if actual != expect.warning_level:
             failures.append(f"预警等级 期望 {expect.warning_level} 实际 {actual}")
+    if expect.no_warning:
+        actual = report.facts.warning_level if report.facts else None
+        if actual is not None:
+            failures.append(f"预警等级 期望 无 实际 {actual}")
 
     if expect.depth_cm is not None:
         actual = report.facts.depth_cm if report.facts else None
@@ -292,6 +300,11 @@ def evaluate(
         durations.append(elapsed)
         failures = _check(case, report)
 
+        refused = bool(
+            report.deduction
+            and len(report.deduction.stages) == 1
+            and report.deduction.stages[0].status == "insufficient"
+        )
         cited = _evidence_refs(report)
         hits = sum(1 for locator in case.expect.must_locators if any(locator in ref for ref in cited))
         outcomes.append(
@@ -314,6 +327,7 @@ def evaluate(
                 citation_completeness=report.audit.citation_completeness if report.audit else 0.0,
                 locator_hits=hits,
                 locator_expected=len(case.expect.must_locators),
+                refused=refused,
                 elapsed_ms=round(elapsed, 1),
             )
         )
@@ -324,7 +338,8 @@ def evaluate(
     expected_locators = sum(item.locator_expected for item in outcomes)
     hit_locators = sum(item.locator_hits for item in outcomes)
     audited = [item for item in outcomes if item.total_claims]
-    six_full = [item for item in outcomes if set(SIX_HOPS).issubset(set(item.stages))]
+    eligible = [item for item in outcomes if item.stages and not item.refused]
+    six_full = [item for item in eligible if set(SIX_HOPS).issubset(set(item.stages))]
 
     safety: dict[str, str] = {}
     for kind in sorted({item.kind for item in outcomes}):
@@ -342,7 +357,9 @@ def evaluate(
         triples=triples,
         relation_kinds=relation_kinds,
         locator_hit_rate=round(hit_locators / expected_locators, 4) if expected_locators else 1.0,
-        six_hop_rate=round(len(six_full) / len(outcomes), 4) if outcomes else 0.0,
+        six_hop_cases=len(six_full),
+        eligible_cases=len(eligible),
+        six_hop_rate=round(len(six_full) / len(eligible), 4) if eligible else 0.0,
         citation_completeness=(
             round(statistics.fmean(item.citation_completeness for item in audited), 4)
             if audited
@@ -381,7 +398,7 @@ def to_markdown(report: EvalReport, baseline: EvalReport | None = None) -> str:
         f"| 未识别列 | {m.unmapped_columns} | 表头没有对应规范列的列数，逐表统计 |",
         f"| 实体关系 | {m.triples} 条 / {m.relation_kinds} 类 | 语义层的三元组总数与谓词种类 |",
         f"| 检索命中 | {m.locator_hit_rate:.2%} | 用例声明的必须证据定位中，实际引到的比例 |",
-        f"| 多跳完整 | {m.six_hop_rate:.2%} | 六跳齐全的用例占全部用例比例 |",
+        f"| 多跳完整 | {m.six_hop_rate:.2%} | 六跳齐全的用例 {m.six_hop_cases}/{m.eligible_cases}（拒答与报错不计入分母） |",
         f"| 引用完整率 | {m.citation_completeness:.2%} | 审计报告的平均引用完整率 |",
         f"| 不可支撑结论 | {m.unsupported_claims} | 未通过引用闸门的 claim 数 |",
         f"| 响应时间 p50 / p95 | {m.p50_ms:.0f} ms / {m.p95_ms:.0f} ms | 单用例端到端（五 Skill 全流程） |",

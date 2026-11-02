@@ -74,8 +74,12 @@ def test_tools_list_shape(server: McpServer) -> None:
         "event_deduce",
         "counterfactual_run",
         "conflict_check",
+        "allocation_plan",
+        "scene_render",
+        "scene_compare",
+        "asset_lookup",
     ]
-    assert len(names) == 8, "P5 的 7 个工具 + P6 反事实的 1 个"
+    assert len(names) == 12, "P5 的 7 个 + P6 反事实 1 个 + P9 分配 1 个 + P10 可视化 3 个"
     for tool in tools:
         assert tool["description"]
         schema = tool["inputSchema"]
@@ -357,7 +361,7 @@ def test_conflict_check_returns_three_kinds(server: McpServer) -> None:
 # --- real process --------------------------------------------------------
 
 
-def test_server_runs_as_subprocess() -> None:
+def test_server_runs_as_subprocess(tmp_path) -> None:
     """"能被 spawn 起来"是另一个断言：编码、缓冲、退出码都得对。"""
     import subprocess
     import sys
@@ -391,14 +395,19 @@ def test_server_runs_as_subprocess() -> None:
         text=True,
         encoding="utf-8",
         cwd=str(root),
-        env={**__import__("os").environ, "PYTHONPATH": str(root / "src")},
+        env={
+            **__import__("os").environ,
+            "PYTHONPATH": str(root / "src"),
+            # 缺省日志会落到 artifacts/：测试必须指到临时目录，否则跑一次测试就在仓库里留文件
+            "URBAN_TWIN_VISUAL_ROOT": str(tmp_path),
+        },
         timeout=120,
     )
     assert completed.returncode == 0, completed.stderr
     lines = [json.loads(line) for line in completed.stdout.splitlines() if line.strip()]
     assert [item["id"] for item in lines] == [1, 2, 3]
     assert lines[0]["result"]["serverInfo"]["name"] == SERVER_NAME
-    assert len(lines[1]["result"]["tools"]) == 8
+    assert len(lines[1]["result"]["tools"]) == 12
     payload = json.loads(lines[2]["result"]["content"][0]["text"])
     assert payload["status"] == "ok"
     assert payload["data"]["triple_count"] > 0
@@ -524,3 +533,82 @@ def test_counterfactual_refuses_when_the_baseline_is_invisible(server: McpServer
     )
     assert payload["status"] == "error"
     assert payload["error"]["code"] == "PERMISSION_DENIED"
+
+
+# --- allocation (P9) -----------------------------------------------------
+
+
+def test_allocation_plan_default_policy_keeps_local_stock(server: McpServer) -> None:
+    payload = _call(
+        server,
+        "allocation_plan",
+        {"event_id": EVENT, "as_of": EVENT_AS_OF, "caller_labels": ["ORG-EMERG"]},
+    )
+    assert payload["status"] == "ok"
+    allocation = payload["data"]["allocation"]
+    assert allocation["policy_version"] == "v1"
+    assert allocation["allocation_by_district"] == {"A-03": 4, "B-01": 2}
+    assert allocation["unmet_by_district"] == {"A-03": 1, "B-01": 0}
+    assert allocation["transfers"] == []
+
+
+def test_allocation_plan_accepts_evolved_policy(server: McpServer) -> None:
+    payload = _call(
+        server,
+        "allocation_plan",
+        {
+            "event_id": EVENT,
+            "as_of": EVENT_AS_OF,
+            "caller_labels": ["ORG-EMERG"],
+            "policy": {
+                "policy_version": "v3",
+                "weight_closure": 1.0,
+                "weight_hazard": 0.25,
+                "transfer_penalty": 0.1,
+            },
+        },
+    )
+    assert payload["status"] == "ok"
+    allocation = payload["data"]["allocation"]
+    assert allocation["allocation_by_district"] == {"A-03": 5, "B-01": 1}
+    assert allocation["unmet_by_district"] == {"A-03": 0, "B-01": 1}
+    [transfer] = allocation["transfers"]
+    assert (transfer["from_district"], transfer["to_district"], transfer["qty"]) == ("B-01", "A-03", 1)
+    assert transfer["delay_min"] == 40
+    assert any("B-01" in item for item in allocation["escalation"])
+
+
+def test_allocation_plan_unknown_event(server: McpServer) -> None:
+    payload = _call(
+        server,
+        "allocation_plan",
+        {"event_id": "WO-ghost", "as_of": EVENT_AS_OF, "caller_labels": ["ORG-EMERG"]},
+    )
+    assert payload["status"] == "error"
+    assert payload["error"]["code"] == "NOT_FOUND"
+
+
+def test_allocation_plan_refuses_when_evidence_is_invisible(server: McpServer) -> None:
+    """分配方案隐含引用片区风险事实，依据不可见时不能只给方案。"""
+    payload = _call(
+        server,
+        "allocation_plan",
+        {"event_id": EVENT, "as_of": EVENT_AS_OF, "caller_labels": ["ORG-ROAD"]},
+    )
+    assert payload["status"] == "error"
+    assert payload["error"]["code"] == "PERMISSION_DENIED"
+
+
+def test_allocation_plan_rejects_unknown_policy_field(server: McpServer) -> None:
+    payload = _call(
+        server,
+        "allocation_plan",
+        {
+            "event_id": EVENT,
+            "as_of": EVENT_AS_OF,
+            "caller_labels": ["ORG-EMERG"],
+            "policy": {"weight_telepathy": 1.0},
+        },
+    )
+    assert payload["status"] == "error"
+    assert payload["error"]["code"] == "VALIDATION_FAILED"

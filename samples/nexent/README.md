@@ -29,3 +29,31 @@ uv run --locked python -m decision_poc.skills --manifest > samples/nexent/skills
 ## 进程内外的差别
 
 `skills.py` 在同一进程里直接调用语义层与推演引擎，不为每次调用起一个 MCP 子进程（15 个资产规模下 IPC 纯粹是额外故障点）。`mcp_tools` 字段描述的是**外部编排时应绑定的工具**，两者结论必须一致，`test_skill_deduction_agrees_with_the_mcp_tool` 逐项比对冲突编号、资源缺口、处置顺序与快照哈希来守住这一点。
+
+## 真正接进 Nexent：SSE + SKILL.md（P9.3）
+
+上面这些是"描述"，Nexent 实际只认两样东西：
+
+1. **MCP 服务必须是 HTTP/SSE**（远程链接 / 容器 / API 转 MCP），stdio 进程接不进去：
+
+   ```powershell
+   $env:PYTHONPATH = "src"
+   uv run --locked python -m decision_poc.mcp_sse --port 8000
+   # MCP SSE：http://127.0.0.1:8000/sse；/health 可查 12 个工具
+   ```
+
+   Nexent 里填 `http://host.docker.internal:8000/sse`（Docker 部署访问宿主机）。
+
+2. **Skill 用 SKILL.md 上传**，本目录 `skill/` 下是两个可直接上传的 SOP：
+   - `skill/urban-six-hop-deduction/SKILL.md`：六跳编排 + 证据要求 + 失败语义；
+   - `skill/scarcity-allocation-evolution/SKILL.md`：稀缺分配 + 进化前后对比 + 回滚口径。
+
+   已实测上传到本机 Nexent 技能仓库（`skill_id=2/3`），幂等脚本与命令见
+   [deploy/nexent/README.md](../../deploy/nexent/README.md) §2.1：
+   `deploy/nexent/upload_skills.py all --json /tmp/skills_evidence.json`，
+   证据落 `samples/nexent/live/skills.json`（含本地文件与平台正文两份 sha256，`content_matches=true`）。
+   平台界面截图见 `docs/reports/captures/nexent/skill-space.png`。
+   边界：技能在仓库里可浏览，**未绑定到已发布的 `urban_deduction_agent`**（绑定要草稿态 Agent）。
+
+真机验证用 `python -m decision_poc.nexent_urban`（8 项与离线结论比对，不是"返回 JSON 就算过"）。
+完整步骤、证据清单与验收见 [集成设计](../../docs/nexent-urban-integration-design.md)。

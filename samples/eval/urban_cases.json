@@ -8,15 +8,26 @@
       "kind": "normal",
       "event_id": "WO-20261029-007",
       "as_of": "2026-10-29T09:40:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["ok"],
+        "status": [
+          "ok"
+        ],
         "publishable": true,
         "six_hops": true,
         "min_actions": 9,
         "min_affected": 9,
-        "must_objects": ["R-101", "DF-PS-01", "CP-2026-041"],
-        "must_locators": ["emergency_plan/v2.0#line:29", "road_network/v1.1#row:2"],
+        "must_objects": [
+          "R-101",
+          "DF-PS-01",
+          "CP-2026-041"
+        ],
+        "must_locators": [
+          "emergency_plan/v2.0#line:29",
+          "road_network/v1.1#row:2"
+        ],
         "depth_cm": 30,
         "warning_level": "orange",
         "citation_completeness": 1.0
@@ -28,12 +39,18 @@
       "kind": "normal",
       "event_id": "WO-20261029-007",
       "as_of": "2026-10-29T12:30:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["ok"],
+        "status": [
+          "ok"
+        ],
         "publishable": true,
         "six_hops": true,
-        "gap": {"RES-PUMP-M": 1},
+        "gap": {
+          "RES-PUMP-M": 1
+        },
         "warning_level": "orange"
       }
     },
@@ -43,9 +60,13 @@
       "kind": "normal",
       "event_id": "WO-20261029-007",
       "as_of": "2026-10-30T07:00:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["ok"],
+        "status": [
+          "ok"
+        ],
         "publishable": true,
         "six_hops": true,
         "warning_level": "red",
@@ -58,12 +79,22 @@
       "kind": "normal",
       "event_id": "WO-20261029-009",
       "as_of": "2026-10-29T09:45:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["partial"],
+        "status": [
+          "partial"
+        ],
         "publishable": false,
-        "conflict_kinds": ["overlap", "gap", "contention"],
-        "gap": {"RES-PUMP-M": 1},
+        "conflict_kinds": [
+          "overlap",
+          "gap",
+          "contention"
+        ],
+        "gap": {
+          "RES-PUMP-M": 1
+        },
         "warning_level": "orange"
       }
     },
@@ -73,13 +104,19 @@
       "kind": "normal",
       "event_id": "WO-20261029-011",
       "as_of": "2026-10-29T09:55:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["partial"],
+        "status": [
+          "partial"
+        ],
         "publishable": false,
         "depth_cm": 18,
         "warning_level": "yellow",
-        "conflict_kinds": ["overlap"]
+        "conflict_kinds": [
+          "overlap"
+        ]
       }
     },
     {
@@ -88,11 +125,18 @@
       "kind": "normal",
       "event_id": "WO-20261026-013",
       "as_of": "2026-10-26T16:00:00+08:00",
-      "caller_labels": ["ORG-DRAIN"],
+      "caller_labels": [
+        "ORG-DRAIN"
+      ],
       "expect": {
-        "status": ["partial"],
+        "status": [
+          "partial"
+        ],
         "publishable": false,
-        "conflict_kinds": ["overlap", "gap"]
+        "conflict_kinds": [
+          "overlap",
+          "gap"
+        ]
       }
     },
     {
@@ -101,12 +145,19 @@
       "kind": "normal",
       "event_id": "WO-20261029-007",
       "as_of": "2026-10-29T09:40:00+08:00",
-      "caller_labels": ["ORG-EMERG", "ORG-ROAD"],
+      "caller_labels": [
+        "ORG-EMERG",
+        "ORG-ROAD"
+      ],
       "expect": {
-        "status": ["ok"],
+        "status": [
+          "ok"
+        ],
         "publishable": true,
         "six_hops": true,
-        "gap": {"RES-PUMP-M": 1}
+        "gap": {
+          "RES-PUMP-M": 1
+        }
       }
     },
     {
@@ -115,12 +166,26 @@
       "kind": "conflict",
       "event_id": "WO-20261029-007",
       "as_of": "2026-10-29T09:40:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["ok"],
-        "conflict_ids": ["C1", "C2", "C3"],
-        "conflict_kinds": ["overlap", "gap", "contention"],
-        "gap": {"RES-PUMP-M": 1}
+        "status": [
+          "ok"
+        ],
+        "conflict_ids": [
+          "C1",
+          "C2",
+          "C3"
+        ],
+        "conflict_kinds": [
+          "overlap",
+          "gap",
+          "contention"
+        ],
+        "gap": {
+          "RES-PUMP-M": 1
+        }
       }
     },
     {
@@ -129,10 +194,16 @@
       "kind": "conflict",
       "event_id": "WO-20261026-013",
       "as_of": "2026-10-26T16:00:00+08:00",
-      "caller_labels": ["ORG-DRAIN"],
+      "caller_labels": [
+        "ORG-DRAIN"
+      ],
       "expect": {
-        "conflict_ids": ["C2"],
-        "conflict_kinds": ["gap"]
+        "conflict_ids": [
+          "C2"
+        ],
+        "conflict_kinds": [
+          "gap"
+        ]
       }
     },
     {
@@ -141,9 +212,13 @@
       "kind": "conflict",
       "event_id": "WO-20261029-011",
       "as_of": "2026-10-29T09:55:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "conflict_kinds": ["overlap"],
+        "conflict_kinds": [
+          "overlap"
+        ],
         "gap": {}
       }
     },
@@ -153,9 +228,13 @@
       "kind": "insufficient",
       "event_id": "WO-2099-000",
       "as_of": "2026-10-29T09:40:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["error"],
+        "status": [
+          "error"
+        ],
         "error_code": "NOT_FOUND",
         "publishable": false
       }
@@ -166,9 +245,14 @@
       "kind": "insufficient",
       "event_id": "WO-20261029-007",
       "as_of": "2026-10-29T05:00:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["partial", "error"],
+        "status": [
+          "partial",
+          "error"
+        ],
         "refused": true,
         "publishable": false,
         "six_hops": false
@@ -180,9 +264,14 @@
       "kind": "insufficient",
       "event_id": "WO-20261020-002",
       "as_of": "2026-10-22T09:00:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["partial", "error"],
+        "status": [
+          "partial",
+          "error"
+        ],
         "refused": true,
         "publishable": false
       }
@@ -193,9 +282,14 @@
       "kind": "insufficient",
       "event_id": "WO-20261029-007",
       "as_of": "2026-03-01T09:00:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["partial", "error"],
+        "status": [
+          "partial",
+          "error"
+        ],
         "refused": true,
         "publishable": false
       }
@@ -206,9 +300,14 @@
       "kind": "insufficient",
       "event_id": "WO-20261026-013",
       "as_of": "2026-10-26T15:00:00+08:00",
-      "caller_labels": ["ORG-DRAIN"],
+      "caller_labels": [
+        "ORG-DRAIN"
+      ],
       "expect": {
-        "status": ["partial", "error"],
+        "status": [
+          "partial",
+          "error"
+        ],
         "refused": true,
         "publishable": false
       }
@@ -219,9 +318,14 @@
       "kind": "insufficient",
       "event_id": "WO-20261029-011",
       "as_of": "2026-10-29T09:10:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["partial", "error"],
+        "status": [
+          "partial",
+          "error"
+        ],
         "refused": true,
         "publishable": false
       }
@@ -234,7 +338,10 @@
       "as_of": "2026-10-29T09:40:00+08:00",
       "caller_labels": [],
       "expect": {
-        "status": ["partial", "error"],
+        "status": [
+          "partial",
+          "error"
+        ],
         "publishable": false,
         "error_code": "PERMISSION_DENIED"
       }
@@ -245,9 +352,14 @@
       "kind": "permission",
       "event_id": "WO-20261029-009",
       "as_of": "2026-10-29T09:45:00+08:00",
-      "caller_labels": ["ORG-GAS"],
+      "caller_labels": [
+        "ORG-GAS"
+      ],
       "expect": {
-        "status": ["partial", "error"],
+        "status": [
+          "partial",
+          "error"
+        ],
         "publishable": false,
         "error_code": "PERMISSION_DENIED"
       }
@@ -258,11 +370,15 @@
       "kind": "expired",
       "event_id": "WO-20261029-007",
       "as_of": "2026-10-29T20:00:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["ok"],
-        "warning_level": null,
-        "min_actions": 6
+        "status": [
+          "ok"
+        ],
+        "min_actions": 6,
+        "no_warning": true
       }
     },
     {
@@ -271,10 +387,14 @@
       "kind": "expired",
       "event_id": "WO-20261029-007",
       "as_of": "2026-11-05T20:00:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["ok"],
-        "warning_level": null
+        "status": [
+          "ok"
+        ],
+        "no_warning": true
       }
     },
     {
@@ -283,11 +403,15 @@
       "kind": "expired",
       "event_id": "WO-20261029-007",
       "as_of": "2026-11-10T20:00:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "status": ["ok"],
-        "warning_level": null,
-        "six_hops": true
+        "status": [
+          "ok"
+        ],
+        "six_hops": true,
+        "no_warning": true
       }
     },
     {
@@ -296,10 +420,12 @@
       "kind": "expired",
       "event_id": "WO-20261029-011",
       "as_of": "2026-10-29T20:00:00+08:00",
-      "caller_labels": ["ORG-EMERG"],
+      "caller_labels": [
+        "ORG-EMERG"
+      ],
       "expect": {
-        "warning_level": null,
-        "depth_cm": 18
+        "depth_cm": 18,
+        "no_warning": true
       }
     }
   ]

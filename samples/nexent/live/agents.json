@@ -1,0 +1,77 @@
+{
+  "message": "success",
+  "data": [
+    {
+      "name": "urban_deduction_agent",
+      "display_name": "城市内涝跨部门决策智能体",
+      "description": "基于 Nexent + MCP 的城市内涝跨部门推演：六跳结论、三类冲突、稀缺资源分配与证据链",
+      "author": "UrbanEvolve",
+      "model_ids": [
+        2
+      ],
+      "model_names": [
+        "openPangu-2.0-Pro"
+      ],
+      "model_name": "openPangu-2.0-Pro",
+      "is_available": true,
+      "unavailable_reasons": [],
+      "is_new": true,
+      "is_main_agent": true,
+      "group_ids": "2",
+      "permission": "EDIT",
+      "current_version_no": 3,
+      "version_name": "urban-mcp-v3",
+      "greeting_message": null,
+      "example_questions": null,
+      "allow_chat_metadata": false,
+      "model_params_override": {
+        "2": {
+          "extra_params": {}
+        }
+      },
+      "enable_protocol_repair_retry": true,
+      "tags": []
+    },
+    {
+      "name": "equipment_decision_agent",
+      "display_name": "设备故障决策智能体",
+      "description": "面向设备运维场景的可进化决策智能体：知识库检索 + 知识图谱推理双驱动，输出带依据的故障判断与处置建议。",
+      "author": "nexent",
+      "model_ids": [
+        2
+      ],
+      "model_names": [
+        "openPangu-2.0-Pro"
+      ],
+      "model_name": "openPangu-2.0-Pro",
+      "is_available": true,
+      "unavailable_reasons": [],
+      "is_new": true,
+      "is_main_agent": false,
+      "group_ids": "2",
+      "permission": "EDIT",
+      "current_version_no": 2,
+      "version_name": "设备故障决策智能体-协议修复",
+      "greeting_message": "我是设备故障决策智能体。可以问我：某台设备为什么会出这个问题、该怎么处理。我会给出结论、依据和推理链。",
+      "example_questions": [
+        "EQ-002 激光切割机切割面挂渣，可能是什么原因？",
+        "伺服电机过热会导致什么后果？",
+        "张工负责哪些设备？"
+      ],
+      "allow_chat_metadata": false,
+      "model_params_override": {
+        "1": {
+          "extra_params": {}
+        },
+        "2": {
+          "extra_params": {}
+        }
+      },
+      "enable_protocol_repair_retry": true,
+      "tags": [
+        "data"
+      ]
+    }
+  ],
+  "requestId": "6faee4ed-b775-4500-adb0-a059db979670"
+}

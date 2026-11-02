@@ -1,0 +1,3 @@
+{"error_code": null, "knowledge_version": "kb-v1.0.0", "latency_ms": 28, "origin": "mcp", "snapshot_hash": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db", "status": "ok", "tool": "allocation_plan", "trace_id": null}
+{"error_code": null, "knowledge_version": "kb-v1.0.0", "latency_ms": 29, "origin": "mcp", "snapshot_hash": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db", "status": "ok", "tool": "event_deduce", "trace_id": null}
+{"error_code": null, "knowledge_version": "kb-v1.0.0", "latency_ms": 88, "origin": "mcp", "snapshot_hash": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db", "status": "ok", "tool": "scene_render", "trace_id": null}
