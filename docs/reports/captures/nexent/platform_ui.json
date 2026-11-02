@@ -1,0 +1,72 @@
+{
+  "schema_version": "platform-ui-capture-1",
+  "captured_at": "2026-11-02T21:07:45+0800",
+  "web_url": "http://127.0.0.1:3000",
+  "pages": [
+    {
+      "name": "skill-space",
+      "path": "/zh/skill-space",
+      "purpose": "平台技能仓库「我的 Skill」：两个 SKILL.md 技能已上传到平台（非本地文件）",
+      "expect": [
+        "urban-six-hop-deduction",
+        "scarcity-allocation-evolution"
+      ],
+      "hit": [
+        "urban-six-hop-deduction",
+        "scarcity-allocation-evolution"
+      ],
+      "missing": [],
+      "ok": true,
+      "url": "http://127.0.0.1:3000/zh/skill-space",
+      "title": "AI Agent Platform",
+      "screenshot": "docs/reports/captures/nexent/skill-space.png",
+      "screenshot_bytes": 87540,
+      "screenshot_sha256": "5550aa2a28cdf81074e7026d79e6a106e2780a33a024164e4fd6b0d45f65d2b8"
+    },
+    {
+      "name": "agents",
+      "path": "/zh/agents",
+      "purpose": "平台智能体列表：已发布的城市内涝决策 Agent（当前版本 V3 / 已发布）",
+      "expect": [
+        "城市内涝跨部门决策智能体"
+      ],
+      "hit": [
+        "城市内涝跨部门决策智能体"
+      ],
+      "missing": [],
+      "ok": true,
+      "url": "http://127.0.0.1:3000/zh/agents",
+      "title": "AI Agent Platform",
+      "screenshot": "docs/reports/captures/nexent/agents.png",
+      "screenshot_bytes": 78321,
+      "screenshot_sha256": "722315fceda9bfa4a21d7f7c61b5d31a3bade3fc6a51a84b061115880ef3705f"
+    },
+    {
+      "name": "mcp-space",
+      "path": "/zh/mcp-space",
+      "purpose": "平台 MCP「我的MCP」：urban-twin-mcp 连通性校验通过，12 个工具可用",
+      "expect": [
+        "urban-twin-mcp",
+        "12 个工具",
+        "连接成功"
+      ],
+      "hit": [
+        "urban-twin-mcp",
+        "12 个工具",
+        "连接成功"
+      ],
+      "missing": [],
+      "ok": true,
+      "url": "http://127.0.0.1:3000/zh/mcp-space",
+      "title": "AI Agent Platform",
+      "screenshot": "docs/reports/captures/nexent/mcp-space.png",
+      "screenshot_bytes": 91083,
+      "screenshot_sha256": "111e88a3dfe0c5360e9c728ef6932100d2db4a6857f1a2adaf91404b9978b8a5"
+    }
+  ],
+  "all_expectations_met": true,
+  "boundary": [
+    "截图来自本机 Nexent v2.7.0 前端，不是公网部署；换环境需重跑本脚本。",
+    "录屏只覆盖页面浏览，不包含问答全过程；问答一致性证据见 samples/nexent/live/。"
+  ]
+}

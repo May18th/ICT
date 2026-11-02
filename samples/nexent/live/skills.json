@@ -1,0 +1,63 @@
+{
+  "captured_at": "2026-11-02T20:52:46+0800",
+  "config_api": "http://localhost:5010",
+  "skills": [
+    {
+      "name": "scarcity-allocation-evolution",
+      "file": "/tmp/nexent_skills/scarcity-allocation-evolution/SKILL.md",
+      "file_sha256": "291ca69add6a68ce276338f47d7382b37f3060895d4c4a529191aaa8943f3f97",
+      "content_sha256": "d597c842b303174eadcf5e2950372f14282f53c3107b0d1b0ced156ef8b5e049",
+      "description": "当六跳推演显示跨片区抽排资源存在缺口，需要回答\"这几台先给谁、为什么\"时使用；也用于\n比较 v1 与进化后策略在同一事件上的分配差异、以及回滚验证。所有分配必须来自策略工具，\n不允许按经验口算。\n",
+      "tags": [
+        "allocation",
+        "decision-evolution",
+        "rollback"
+      ],
+      "platform_skill_id": 2,
+      "platform_source": "custom",
+      "action": "unchanged",
+      "http_status": null,
+      "error": null
+    },
+    {
+      "name": "urban-six-hop-deduction",
+      "file": "/tmp/nexent_skills/urban-six-hop-deduction/SKILL.md",
+      "file_sha256": "ac994ded1d7003dcf4f7fe3040ea1f3c15388692f54d8b95fc2af476cd2ee1c5",
+      "content_sha256": "73580c2e35a1c88631f75e20d2675856490d866cefaf1b5a02ab72d7961de24b",
+      "description": "面向城市内涝/道路积水/地下管线施工等突发事件的跨部门六跳推演。当用户给出事件编号（如\nWO-20261029-007）与时间点，需要回答\"哪些设施受影响、哪些部门协同、资源够不够、处置按什么\n顺序、每条结论依据什么\"时使用。必须调用 MCP 工具取证，禁止凭记忆作答。\n",
+      "tags": [
+        "urban",
+        "emergency-response",
+        "cross-department",
+        "provenance"
+      ],
+      "platform_skill_id": 3,
+      "platform_source": "custom",
+      "action": "unchanged",
+      "http_status": null,
+      "error": null
+    }
+  ],
+  "platform_verification": [
+    {
+      "name": "scarcity-allocation-evolution",
+      "file_sha256": "291ca69add6a68ce276338f47d7382b37f3060895d4c4a529191aaa8943f3f97",
+      "content_sha256": "d597c842b303174eadcf5e2950372f14282f53c3107b0d1b0ced156ef8b5e049",
+      "stored_content_sha256": "d597c842b303174eadcf5e2950372f14282f53c3107b0d1b0ced156ef8b5e049",
+      "content_matches": true
+    },
+    {
+      "name": "urban-six-hop-deduction",
+      "file_sha256": "ac994ded1d7003dcf4f7fe3040ea1f3c15388692f54d8b95fc2af476cd2ee1c5",
+      "content_sha256": "73580c2e35a1c88631f75e20d2675856490d866cefaf1b5a02ab72d7961de24b",
+      "stored_content_sha256": "73580c2e35a1c88631f75e20d2675856490d866cefaf1b5a02ab72d7961de24b",
+      "content_matches": true
+    }
+  ],
+  "platform_skill_names": [
+    "ontology-builder",
+    "scarcity-allocation-evolution",
+    "urban-six-hop-deduction"
+  ],
+  "all_verified": true
+}
