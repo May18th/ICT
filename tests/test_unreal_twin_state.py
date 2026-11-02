@@ -320,3 +320,26 @@ def test_sync_from_files_without_jobs_is_quiet(twin, tmp_path):
     module, state = twin
     assert module.sync_from_files(tmp_path) is None
     assert any("没有渲染作业" in line for line in state["logs"])
+
+
+def test_apply_scenario_marks_pump_overload(twin) -> None:
+    module, state = twin
+    _level_actor(state, "PS_01", ("twin:TW-pump_station-DF-PS-01", "kind:pump_station", "state:overload"))
+    counts = module.apply_scenario("flood")
+    assert counts["pump_alerts"] == 1
+
+
+def test_apply_scenario_marks_underpass_backflow(twin) -> None:
+    module, state = twin
+    _level_actor(state, "UP_101", ("twin:TW-underpass-UP-XH-101", "kind:underpass", "state:backflow_high"))
+    counts = module.apply_scenario("flood")
+    assert counts["underpass_alerts"] == 1
+
+
+def test_highlight_restores_underpass_and_pump_alert_materials(twin) -> None:
+    module, state = twin
+    _level_actor(state, "UP_101", ("twin:TW-underpass-UP-XH-101", "kind:underpass", "state:backflow_high"))
+    _level_actor(state, "PS_01", ("twin:TW-pump_station-DF-PS-01", "kind:pump_station", "state:overload"))
+    assert module.highlight(["TW-underpass-UP-XH-101"]) == 1
+    assert module.apply_scenario("closure")["underpass_alerts"] == 1
+

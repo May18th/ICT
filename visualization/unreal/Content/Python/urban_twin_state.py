@@ -113,7 +113,7 @@ def apply_scenario(scenario: str) -> dict[str, int]:
     """normal / flood / closure / construction：只改显示，不动语义。"""
     show_water = scenario in {"flood", "closure", "construction"}
     show_closure = scenario in {"closure", "construction"}
-    counts = {"water": 0, "closed": 0, "construction": 0}
+    counts = {"water": 0, "closed": 0, "construction": 0, "pump_alerts": 0, "underpass_alerts": 0}
     water_material = _material("M_FloodWater")
 
     for actor in _all():
@@ -127,6 +127,20 @@ def apply_scenario(scenario: str) -> dict[str, int]:
             if show_water:
                 _swap_material(actor, water_material)
                 counts["water"] += 1
+            continue
+        if "kind:pump_station" in tags:
+            # 泵站负荷：推演 pump_load 的 overload/high_load 用告警材质表达
+            pump_state = next((tag.split(":", 1)[1] for tag in tags if tag.startswith("state:")), "normal")
+            if pump_state in {"overload", "high_load"}:
+                _swap_material(actor, _material("M_PumpStation_Alert") or _material("M_PumpStation"))
+                counts["pump_alerts"] += 1
+            continue
+        if "kind:underpass" in tags:
+            # 下穿通道：倒灌状态用告警材质表达
+            up_state = next((tag.split(":", 1)[1] for tag in tags if tag.startswith("state:")), "normal")
+            if up_state in {"backflow_high", "backflow_medium"}:
+                _swap_material(actor, _material("M_Underpass_Alert") or _material("M_Underpass"))
+                counts["underpass_alerts"] += 1
             continue
         if "kind:road" not in tags:
             continue
@@ -174,7 +188,13 @@ def highlight(twin_ids: list[str]) -> int:
         if kind == "road":
             _swap_material(actor, base.get(state, normal_roads))
         elif kind in {"pump_station", "intake"}:
-            _swap_material(actor, _material("M_PumpStation" if kind == "pump_station" else "M_Intake"))
+            if kind == "pump_station" and state in {"overload", "high_load"}:
+                _swap_material(actor, _material("M_PumpStation_Alert") or _material("M_PumpStation"))
+            else:
+                _swap_material(actor, _material("M_PumpStation" if kind == "pump_station" else "M_Intake"))
+        elif kind == "underpass":
+            alert = _material("M_Underpass_Alert") if state in {"backflow_high", "backflow_medium"} else None
+            _swap_material(actor, alert or _material("M_Underpass") or highlight_material)
     _last_hits = hits
     _last_misses = sorted(wanted - matched)
     if _last_misses:
