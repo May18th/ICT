@@ -28,7 +28,7 @@ uv run --locked python -m decision_poc.skills --manifest > samples/nexent/skills
 
 ## 进程内外的差别
 
-`skills.py` 在同一进程里直接调用语义层与推演引擎，不为每次调用起一个 MCP 子进程（15 个资产规模下 IPC 纯粹是额外故障点）。`mcp_tools` 字段描述的是**外部编排时应绑定的工具**，两者结论必须一致，`test_skill_deduction_agrees_with_the_mcp_tool` 逐项比对冲突编号、资源缺口、处置顺序与快照哈希来守住这一点。
+`skills.py` 在同一进程里直接调用语义层与推演引擎，不为每次调用起一个 MCP 子进程（16 个资产规模下 IPC 纯粹是额外故障点）。`mcp_tools` 字段描述的是**外部编排时应绑定的工具**，两者结论必须一致，`test_skill_deduction_agrees_with_the_mcp_tool` 逐项比对冲突编号、资源缺口、处置顺序与快照哈希来守住这一点。
 
 ## 真正接进 Nexent：SSE + SKILL.md（P9.3）
 

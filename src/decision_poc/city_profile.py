@@ -34,6 +34,11 @@ CITY_SCHEMA = OntologySchema(
             seeds=["泵站", "雨水口", "pump", "intake"],
         ),
         OntologyType(
+            name="Underpass",
+            description="下穿隧道/地下通道：含入口挡水槛、最低点标高与封控阈值",
+            seeds=["下穿", "隧道", "地下通道", "underpass"],
+        ),
+        OntologyType(
             name="Pipeline",
             description="地下管线：排水、燃气、电力、通信、供水",
             seeds=["管线", "管道", "pipeline", "gas", "drainage"],
@@ -85,6 +90,7 @@ CITY_SCHEMA = OntologySchema(
             domain=[
                 "Road",
                 "Pipeline",
+                "Underpass",
                 "DrainageFacility",
                 "ConstructionProject",
                 "Incident",
@@ -102,7 +108,7 @@ CITY_SCHEMA = OntologySchema(
         ),
         RelationSchema(
             name="affected_by",
-            domain=["Road", "Pipeline", "DrainageFacility", "ConstructionProject"],
+            domain=["Road", "Pipeline", "Underpass", "DrainageFacility", "ConstructionProject"],
             range=["WeatherEvent", "Incident"],
             description="设施受某事件影响",
         ),
@@ -157,6 +163,7 @@ ASSET_ENTITY_TYPE: dict[str, str | None] = {
     "road_network": "Road",
     "pipeline_ledger": "Pipeline",
     "drainage_facility": "DrainageFacility",
+    "underpass": "Underpass",
     "construction_plan": "ConstructionProject",
     "work_order": "Incident",
     "weather_alert": "WeatherEvent",
@@ -173,6 +180,7 @@ ID_COLUMN: dict[str, str] = {
     "road_network": "road_id",
     "pipeline_ledger": "pipeline_id",
     "drainage_facility": "facility_id",
+    "underpass": "underpass_id",
     "construction_plan": "plan_id",
     "work_order": "order_id",
     "weather_alert": "alert_id",
@@ -245,6 +253,15 @@ ALIASES: dict[str, tuple[str, ...]] = {
     "description": ("描述", "详情", "事件描述", "预警内容"),
     "source_org": ("来源单位", "发布单位", "数据来源"),
     "note": ("说明", "备注"),
+    # 下穿隧道专有列（第 16 个资产）
+    "underpass_id": ("通道编号", "下穿隧道编号"),
+    "entry_sill_height_m": ("入口挡水槛(m)", "挡水槛高度", "入口挡水高度(m)"),
+    "lowest_point_z_m": ("最低点标高(m)", "洞底标高", "最低点高程(m)"),
+    "ramp_length_m": ("敞口坡长(m)", "引道长度(m)"),
+    "opening_width_m": ("洞口宽度(m)", "洞口宽"),
+    "open_water_area_m2": ("敞口汇水面积(m2)", "敞口面积(m2)"),
+    "has_pump_room": ("独立泵房", "是否有泵房"),
+    "close_threshold_m": ("封控水深阈值(m)", "封控阈值(m)"),
 }
 
 FLOAT_COLUMNS = frozenset(
@@ -256,6 +273,12 @@ FLOAT_COLUMNS = frozenset(
         "capacity_m3h",
         "rainfall_mm_3h",
         "work_zone_factor",
+        "entry_sill_height_m",
+        "lowest_point_z_m",
+        "ramp_length_m",
+        "opening_width_m",
+        "open_water_area_m2",
+        "close_threshold_m",
     }
 )
 INT_COLUMNS = frozenset({"lanes", "diameter_mm", "install_year", "qty_available", "speed_kmh"})
@@ -272,6 +295,12 @@ UNITS: dict[str, str] = {
     "rainfall_mm_3h": "mm/3h",
     "speed_kmh": "km/h",
     "qty_available": "unit",
+    "entry_sill_height_m": "m",
+    "lowest_point_z_m": "m",
+    "ramp_length_m": "m",
+    "opening_width_m": "m",
+    "open_water_area_m2": "m2",
+    "close_threshold_m": "m",
 }
 
 

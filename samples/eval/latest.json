@@ -1,14 +1,14 @@
 {
   "schema_version": "urban-eval-1",
-  "dataset_snapshot": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db",
+  "dataset_snapshot": "45ce5cc707a53a5beac7e0d2b4f8abf2fd6835a39d21c880a00f4e0fc3f09105",
   "metrics": {
     "cases_total": 22,
     "cases_passed": 22,
     "cases_failed": 0,
-    "assets_total": 15,
-    "assets_parsed": 15,
+    "assets_total": 16,
+    "assets_parsed": 16,
     "unmapped_columns": 0,
-    "triples": 101,
+    "triples": 102,
     "relation_kinds": 8,
     "locator_hit_rate": 1.0,
     "six_hop_cases": 14,
@@ -16,8 +16,8 @@
     "six_hop_rate": 1.0,
     "citation_completeness": 1.0,
     "unsupported_claims": 0,
-    "p50_ms": 5.2,
-    "p95_ms": 6.1,
+    "p50_ms": 5.4,
+    "p95_ms": 6.3,
     "safety_by_kind": {
       "conflict": "3/3",
       "expired": "4/4",
@@ -62,7 +62,7 @@
       "locator_hits": 2,
       "locator_expected": 2,
       "refused": false,
-      "elapsed_ms": 7.7
+      "elapsed_ms": 6.8
     },
     {
       "case_id": "N02",
@@ -99,7 +99,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 6.1
+      "elapsed_ms": 6.3
     },
     {
       "case_id": "N03",
@@ -132,7 +132,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 5.6
+      "elapsed_ms": 6.5
     },
     {
       "case_id": "N04",
@@ -168,7 +168,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 6.6
+      "elapsed_ms": 5.8
     },
     {
       "case_id": "N05",
@@ -198,7 +198,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 4.9
+      "elapsed_ms": 5.8
     },
     {
       "case_id": "N06",
@@ -229,7 +229,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 5.0
+      "elapsed_ms": 5.4
     },
     {
       "case_id": "N07",
@@ -266,7 +266,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 5.9
+      "elapsed_ms": 6.3
     },
     {
       "case_id": "C01",
@@ -303,7 +303,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 3.0
+      "elapsed_ms": 4.4
     },
     {
       "case_id": "C02",
@@ -334,7 +334,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 2.4
+      "elapsed_ms": 2.9
     },
     {
       "case_id": "C03",
@@ -364,7 +364,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 2.8
+      "elapsed_ms": 2.6
     },
     {
       "case_id": "I01",
@@ -402,7 +402,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 4.7
+      "elapsed_ms": 4.6
     },
     {
       "case_id": "I03",
@@ -422,7 +422,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 4.3
+      "elapsed_ms": 5.0
     },
     {
       "case_id": "I04",
@@ -442,7 +442,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 3.8
+      "elapsed_ms": 4.0
     },
     {
       "case_id": "I05",
@@ -462,7 +462,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 4.1
+      "elapsed_ms": 4.7
     },
     {
       "case_id": "I06",
@@ -482,7 +482,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 4.6
+      "elapsed_ms": 5.0
     },
     {
       "case_id": "P01",
@@ -518,7 +518,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 5.6
+      "elapsed_ms": 5.3
     },
     {
       "case_id": "E01",
@@ -551,7 +551,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 5.9
+      "elapsed_ms": 6.0
     },
     {
       "case_id": "E02",
@@ -584,7 +584,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 5.7
+      "elapsed_ms": 6.3
     },
     {
       "case_id": "E03",
@@ -617,7 +617,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 5.8
+      "elapsed_ms": 6.0
     },
     {
       "case_id": "E04",
@@ -647,7 +647,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 5.5
+      "elapsed_ms": 5.4
     }
   ]
 }

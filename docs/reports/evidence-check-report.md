@@ -2,7 +2,7 @@
 
 由 `python -m decision_poc.evidence_check --report <path>` 生成，**不要手改**。
 
-- 期望指纹：`ff0b41f7b14f1eb5`（期望文件被改动即换指纹）
+- 期望指纹：`46f8e1c371d32216`（期望文件被改动即换指纹）
 - 检查项：106 项，通过 106，失败 0
 - 结论：全部一致
 
@@ -22,8 +22,8 @@
 | `p8_eval.cases_total` | `22` | `22` | 通过 |
 | `p8_eval.cases_passed` | `22` | `22` | 通过 |
 | `p8_eval.cases_failed` | `0` | `0` | 通过 |
-| `p8_eval.assets_parsed` | `15` | `15` | 通过 |
-| `p8_eval.assets_total` | `15` | `15` | 通过 |
+| `p8_eval.assets_parsed` | `16` | `16` | 通过 |
+| `p8_eval.assets_total` | `16` | `16` | 通过 |
 | `p8_eval.unmapped_columns` | `0` | `0` | 通过 |
 | `p8_eval.locator_hit_rate` | `1.0` | `1.0` | 通过 |
 | `p8_eval.six_hop_rate` | `1.0` | `1.0` | 通过 |

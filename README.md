@@ -99,7 +99,7 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望：对外数字自检：106/106 项一致（期望指纹 ff0b41f7b14f1eb5）
+# 期望：对外数字自检：106/106 项一致（期望指纹 46f8e1c371d32216）
 ```
 
 期望值冻结在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/答辩口径，
@@ -374,7 +374,7 @@ uv run --locked python -m decision_poc.urban_eval --json samples/eval/latest.jso
     --baseline samples/eval/baseline_before_temporal_guard.json                        # 含改进前后对比
 ```
 
-预期：`22/22 通过`；资产解析 15/15、未识别列 0、检索命中 100%、六跳完整 100%、引用完整率 100%、
+预期：`22/22 通过`；资产解析 16/16、未识别列 0、检索命中 100%、六跳完整 100%、引用完整率 100%、
 不可支撑结论 0，单用例 p50 约 10 ms 以内。改进前基线（`samples/eval/baseline_before_temporal_guard.json`）
 是 17/22——差的 5 条全部是「as_of 早于上报时间 / 工单已闭环」被当成正常事件推演掉的，
 生成方式见 `samples/eval/make_pre_guard_baseline.py` 顶部注释。
