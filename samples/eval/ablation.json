@@ -1,8 +1,8 @@
 {
-  "schema_version": "p11-ablation-1",
+  "schema_version": "p11-ablation-2",
   "dataset_snapshot": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db",
-  "bootstrap_runs": 30,
-  "bootstrap_seed": 20261102,
+  "stats_mode": "leave-one-out",
+  "pairwise_mode": "exact-sign-flip",
   "configs": [
     {
       "config": "rules_only",
@@ -284,211 +284,186 @@
     "rules_only": {
       "six_hop_rate": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "N01",
+        "n": 22
       },
       "safety_rate": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "I01",
+        "n": 8
       },
       "impact_resource_rate": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "N01",
+        "n": 22
       },
       "citation_completeness": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "N01",
+        "n": 22
       },
       "auditable_rate": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "N01",
+        "n": 22
       }
     },
     "semantic_only": {
       "six_hop_rate": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "N01",
+        "n": 22
       },
       "safety_rate": {
-        "mean": 0.1542,
-        "sd": 0.1318,
-        "ci95": [
-          0.0,
-          0.375
-        ]
+        "mean": 0.125,
+        "loo_min": 0.0,
+        "loo_max": 0.1429,
+        "dropped_case": "I01",
+        "n": 8
       },
       "impact_resource_rate": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "N01",
+        "n": 22
       },
       "citation_completeness": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "N01",
+        "n": 22
       },
       "auditable_rate": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "N01",
+        "n": 22
       }
     },
     "single_skill": {
       "six_hop_rate": {
-        "mean": 0.6424,
-        "sd": 0.1035,
-        "ci95": [
-          0.4091,
-          0.8182
-        ]
+        "mean": 0.6364,
+        "loo_min": 0.619,
+        "loo_max": 0.6667,
+        "dropped_case": "I01",
+        "n": 22
       },
       "safety_rate": {
         "mean": 1.0,
-        "sd": 0.0,
-        "ci95": [
-          1.0,
-          1.0
-        ]
+        "loo_min": 1.0,
+        "loo_max": 1.0,
+        "dropped_case": "I01",
+        "n": 8
       },
       "impact_resource_rate": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "N01",
+        "n": 22
       },
       "citation_completeness": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "N01",
+        "n": 22
       },
       "auditable_rate": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "N01",
+        "n": 22
       }
     },
     "multi_skill": {
       "six_hop_rate": {
-        "mean": 0.5924,
-        "sd": 0.1059,
-        "ci95": [
-          0.4091,
-          0.8182
-        ]
+        "mean": 0.6364,
+        "loo_min": 0.619,
+        "loo_max": 0.6667,
+        "dropped_case": "I01",
+        "n": 22
       },
       "safety_rate": {
         "mean": 1.0,
-        "sd": 0.0,
-        "ci95": [
-          1.0,
-          1.0
-        ]
+        "loo_min": 1.0,
+        "loo_max": 1.0,
+        "dropped_case": "I01",
+        "n": 8
       },
       "impact_resource_rate": {
-        "mean": 0.6227,
-        "sd": 0.1139,
-        "ci95": [
-          0.3182,
-          0.7727
-        ]
+        "mean": 0.6364,
+        "loo_min": 0.619,
+        "loo_max": 0.6667,
+        "dropped_case": "I01",
+        "n": 22
       },
       "citation_completeness": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "N01",
+        "n": 22
       },
       "auditable_rate": {
         "mean": 0.0,
-        "sd": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        "loo_min": 0.0,
+        "loo_max": 0.0,
+        "dropped_case": "N01",
+        "n": 22
       }
     },
     "full_audited": {
       "six_hop_rate": {
-        "mean": 0.65,
-        "sd": 0.094,
-        "ci95": [
-          0.4545,
-          0.7727
-        ]
+        "mean": 0.6364,
+        "loo_min": 0.619,
+        "loo_max": 0.6667,
+        "dropped_case": "I01",
+        "n": 22
       },
       "safety_rate": {
         "mean": 1.0,
-        "sd": 0.0,
-        "ci95": [
-          1.0,
-          1.0
-        ]
+        "loo_min": 1.0,
+        "loo_max": 1.0,
+        "dropped_case": "I01",
+        "n": 8
       },
       "impact_resource_rate": {
-        "mean": 0.6606,
-        "sd": 0.0966,
-        "ci95": [
-          0.4545,
-          0.8182
-        ]
+        "mean": 0.6364,
+        "loo_min": 0.619,
+        "loo_max": 0.6667,
+        "dropped_case": "I01",
+        "n": 22
       },
       "citation_completeness": {
-        "mean": 0.6136,
-        "sd": 0.0836,
-        "ci95": [
-          0.4091,
-          0.7273
-        ]
+        "mean": 0.6364,
+        "loo_min": 0.619,
+        "loo_max": 0.6667,
+        "dropped_case": "I01",
+        "n": 22
       },
       "auditable_rate": {
-        "mean": 0.6394,
-        "sd": 0.0893,
-        "ci95": [
-          0.4545,
-          0.7727
-        ]
+        "mean": 0.6364,
+        "loo_min": 0.619,
+        "loo_max": 0.6667,
+        "dropped_case": "I01",
+        "n": 22
       }
     }
   },
@@ -533,14 +508,14 @@
       "right": "single_skill",
       "metric": "six_hop_rate",
       "delta": 0.6364,
-      "p_value": 0.0
+      "p_value": 0.0001220703125
     },
     {
       "left": "semantic_only",
       "right": "single_skill",
       "metric": "safety_rate",
       "delta": 0.875,
-      "p_value": 0.0175
+      "p_value": 0.015625
     },
     {
       "left": "semantic_only",
@@ -582,7 +557,7 @@
       "right": "multi_skill",
       "metric": "impact_resource_rate",
       "delta": 0.6364,
-      "p_value": 0.0
+      "p_value": 0.0001220703125
     },
     {
       "left": "single_skill",
@@ -624,14 +599,14 @@
       "right": "full_audited",
       "metric": "citation_completeness",
       "delta": 0.6364,
-      "p_value": 0.0
+      "p_value": 0.0001220703125
     },
     {
       "left": "multi_skill",
       "right": "full_audited",
       "metric": "auditable_rate",
       "delta": 0.6364,
-      "p_value": 0.0
+      "p_value": 0.0001220703125
     }
   ],
   "rows": [

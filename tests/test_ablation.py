@@ -85,31 +85,46 @@ def test_report_is_deterministic(report: AblationReport) -> None:
     again = evaluate()
     assert again.fingerprint() == report.fingerprint()
     assert again.model_dump(mode="json")["rows"] == report.model_dump(mode="json")["rows"]
+    # 精确 p 值也必须逐位一致：这里并不存在"随机种子"，两次运行必须完全相同
+    assert [(t.left, t.right, t.metric, t.p_value) for t in again.pairwise] == [
+        (t.left, t.right, t.metric, t.p_value) for t in report.pairwise
+    ]
 
 
-def test_bootstrap_stats_stay_inside_probability_range(report: AblationReport) -> None:
+def test_leave_one_out_stats_are_deterministic_and_bracket_the_mean(report: AblationReport) -> None:
+    """逐例剔除是确定性算法：范围必须夹住全量值，且分母 n 与实际用例数一致。"""
     for config in CONFIG_NAMES:
         for metric in FROZEN_METRICS:
             stat = report.stats[config][metric]
             assert 0.0 <= stat.mean <= 1.0
-            assert 0.0 <= stat.sd <= 0.5
-            if stat.ci95:
-                low, high = stat.ci95
-                assert low <= stat.mean <= high
-                assert 0.0 <= low <= high <= 1.0
+            assert 0.0 <= stat.loo_min <= stat.loo_max <= 1.0
+            assert stat.loo_min - 1e-9 <= stat.mean <= stat.loo_max + 1e-9
+            assert stat.n >= 1
+            if stat.n > 1:
+                assert stat.dropped_case, "n>1 时必须能报出'剔除哪个用例影响最大'"
 
 
-def test_pairwise_covers_every_adjacent_rung(report: AblationReport) -> None:
+def test_pairwise_p_values_are_exact_not_simulated(report: AblationReport) -> None:
+    """精确符号翻转的 p 必然是 k/2^n：乘以 2^22 后是整数，随机近似做不到。"""
     pairs = {(test.left, test.right) for test in report.pairwise}
     assert pairs == set(zip(CONFIG_NAMES, CONFIG_NAMES[1:]))
     for test in report.pairwise:
         assert 0.0 <= test.p_value <= 1.0
         assert test.metric in FROZEN_METRICS
+        scaled = test.p_value * (1 << 22)
+        assert abs(scaled - round(scaled)) < 1e-6, f"{test.metric} 的 p 值不是精确 k/2^22"
+    # 退化为全零差值的组合：p 必须正好是 1（没有任何证据支持"有差异"）
+    from decision_poc.ablation import _exact_sign_flip_p
+
+    assert _exact_sign_flip_p([0.0, 0.0, 0.0]) == 1.0
+    # 三例全为正差：8 种符号组合里只有 2 种满足 |S| >= 3，精确 p = 0.25
+    assert _exact_sign_flip_p([1.0, 1.0, 1.0]) == 0.25
 
 
-def test_markdown_states_the_bootstrap_caveat(report: AblationReport) -> None:
+def test_markdown_states_the_deterministic_caveat(report: AblationReport) -> None:
     text = to_markdown(report)
-    assert "固定用例集上的固定种子 bootstrap 重采样" in text
+    assert "不引入任何随机数" in text
+    assert "精确符号翻转检验" in text
     assert "不外推到总体" in text
     assert "不宣称区块链" in text
 
