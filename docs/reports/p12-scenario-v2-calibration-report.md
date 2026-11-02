@@ -63,6 +63,25 @@
 无论选哪个，这条结论都已固化成测试 `test_switching_to_v2_would_erase_the_resource_gap`，
 将来谁改口径都会先看到这张账。
 
+### 4.4 实测：加 1 台需求对 P9 的真实影响
+
+用当前推演结果直接跑分配（不猜，跑出来看）：
+
+| 方案 | allocation_by_district | unmet | transfers |
+| --- | --- | --- | --- |
+| 基线（当前推演） | A-03 4 / B-01 2 | A-03 1 | 无 |
+| 倒灌计入 A-03（demand 5 → 6） | A-03 4 / B-01 2 | A-03 **2** | 无 |
+| 倒灌单列 A-04 | A-03 4 / B-01 2 / A-04 0 | A-03 1 / A-04 1 | 无 |
+
+三条结论：
+
+1. **12 个 P9 分配案例不受影响**——它们是手写冻结信号（`allocation_cases.json` 里显式给 `demand` / `local_available`），不读推演数据集；
+2. **基线策略 v1 不做跨区调拨**，所以加需求的直接后果是"未满足 +1"，不是"重新分货"；
+3. **真正会变的是真实事件那一条**（`real_event` 冻结在 `evidence_check`）：进化策略下 A-03 的 unmet 由 0 变 1，分配向量 `A-03 5 / B-01 1` 不变。
+
+因此 T3 的重算面是可控的：`resource_gap`、`action_count`、`real_event.evolved_unmet`、资产数 15 → 16，
+加上文档中"15 个资产 / 28 条规则"这类表述；**不需要重标 12 个案例**。这一点把方案 A 的成本从"重做 P9"
+降到"改几个冻结数字 + 一处未满足数"。
 ## 5 本阶段明确没做
 
 | 项 | 原因 |
@@ -73,12 +92,12 @@
 
 ## 6 对外数字变化
 
-测试数 671 → 692（新增 21 项 v2 口径测试），自检指纹 `73b104597a9c2318` → `73902cbff40036a2`。
+测试数 671 → 696（新增 25 项 v2 口径测试），自检指纹随测试数变化，当前口径以 `evidence_check` 实跑为准。
 已按 `AGENTS.md`「单一 owner + 一次性同步」改全五处；六跳、缺口、冲突、P9 分配等其余 105 项口径未变。
 
 ## 7 验证
 
 ```powershell
-uv run --locked pytest -q                            # 692 passed
-uv run --locked python -m decision_poc.evidence_check # 106/106（指纹 73902cbff40036a2）
+uv run --locked pytest -q                            # 696 passed
+uv run --locked python -m decision_poc.evidence_check # 106/106（指纹 455ed736ddd7f17b）
 ```

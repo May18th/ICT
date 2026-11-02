@@ -18,6 +18,7 @@ from decision_poc.scenario_v2 import (
     load_underpasses,
     pump_load,
     underpass_closure_required,
+    underpass_pump_demand,
 )
 
 UNIT_CAPACITY_M3H = 400.0
@@ -245,3 +246,35 @@ def test_switching_to_v2_would_erase_the_resource_gap() -> None:
     assert required_v2 == 5
     assert required_v1 - AVAILABLE_PUMPS == 1
     assert max(0, required_v2 - AVAILABLE_PUMPS) == 0
+
+
+def test_underpass_pump_demand_needs_one_mobile_pump() -> None:
+    spec = load_underpasses()["UP-XH-101"]
+    demand = underpass_pump_demand(spec)
+    # 敞口 3264 m² × 平均水深 (1.81+0.15)/2 = 0.98 m ≈ 3199 m³；10 h 排空 ≈ 320 m³/h → 1 台
+    assert demand.drain_volume_m3 == pytest.approx(3198.7, rel=1e-3)
+    assert demand.demand_flow_m3h == pytest.approx(319.9, rel=1e-3)
+    assert demand.pumps == 1
+    assert len(demand.basis) == 2
+    assert demand.assumption_note
+
+
+def test_underpass_with_pump_room_takes_no_mobile_pump() -> None:
+    spec = load_underpasses()["UP-XH-101"].model_copy(update={"has_pump_room": True})
+    demand = underpass_pump_demand(spec)
+    assert demand.pumps == 0
+    assert "自带泵房" in demand.basis[0]
+
+
+def test_underpass_pump_demand_rejects_non_positive_drain_hours() -> None:
+    spec = load_underpasses()["UP-XH-101"]
+    with pytest.raises(ValueError):
+        underpass_pump_demand(spec, drain_hours=0.0)
+
+
+def test_underpass_pump_demand_scales_with_drain_time() -> None:
+    spec = load_underpasses()["UP-XH-101"]
+    fast = underpass_pump_demand(spec, drain_hours=2.0)
+    slow = underpass_pump_demand(spec, drain_hours=20.0)
+    assert fast.pumps > slow.pumps
+    assert slow.pumps == 1
