@@ -142,7 +142,7 @@ def build_steps(*, include_slow: bool) -> list[Step]:
     )
     steps.append(
         Step(
-            "MCP 12 工具契约",
+            "MCP 13 工具契约",
             [py, "-m", "decision_poc.mcp_server", "--list-tools"],
             expect=[r"semantic_query", r"provenance_verify", r"scene_render", r"allocation_plan"],
         )

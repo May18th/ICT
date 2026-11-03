@@ -80,7 +80,7 @@
    **因此不宣称"平台 Agent 会调用这两个技能"**。
 2. 截图与技能证据都来自**本机 Docker 单环境**；换机器必须重跑并重生成证据，否则 `evidence_check` 会失败。
 3. 录屏只覆盖页面浏览；问答过程录屏（提问 → 平台调工具 → 六跳 JSON 出现在界面）仍待补，
-   本轮问答一致性证据仍是 `samples/nexent/live/`（conversation_id=21，8/8）。
+   本轮问答一致性证据仍是 `samples/nexent/live/`（conversation_id=78，8/8）。
 
 ## 7 复现命令
 
