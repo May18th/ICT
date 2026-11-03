@@ -1,0 +1,103 @@
+{
+  "schema_version": "urban-twin-scene-v1",
+  "objects": [
+    {
+      "twin_id": "TW-incident-CD20250703-TUNNEL-01",
+      "kind": "incident",
+      "name": "7 隧道积水事件",
+      "state": "flooded",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-underpass-UP-2025-01",
+      "kind": "underpass",
+      "name": "金牛区豆腐堰隧道",
+      "state": "flooded",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-211822566",
+      "kind": "road",
+      "name": "OSM-211822566",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-25373389",
+      "kind": "road",
+      "name": "OSM-25373389",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-28620974",
+      "kind": "road",
+      "name": "OSM-28620974",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-28620975",
+      "kind": "road",
+      "name": "OSM-28620975",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-114412861",
+      "kind": "road",
+      "name": "OSM-114412861",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-135980035",
+      "kind": "road",
+      "name": "OSM-135980035",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-135980651",
+      "kind": "road",
+      "name": "OSM-135980651",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-458891632",
+      "kind": "road",
+      "name": "OSM-458891632",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-461774554",
+      "kind": "road",
+      "name": "OSM-461774554",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-576653470",
+      "kind": "road",
+      "name": "OSM-576653470",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-1309526583",
+      "kind": "road",
+      "name": "OSM-1309526583",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-1309526584",
+      "kind": "road",
+      "name": "OSM-1309526584",
+      "state": "normal",
+      "attributes": {}
+    }
+  ]
+}

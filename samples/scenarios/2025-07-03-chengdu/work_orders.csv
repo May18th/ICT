@@ -1,0 +1,2 @@
+order_id,road_id,facility_id,pipeline_id,order_type,reported_at,reporter_org,severity,status,description
+CD20250703-TUNNEL-01,OSM-211822566,,,waterlogging,2025-07-03T17:40:00+08:00,ORG-TRAFFIC,high,open,真实事件：7 个隧道及多条主次干道积水，交警实施临时管控，市水务局组织抽排（来源：央视网/川观新闻）

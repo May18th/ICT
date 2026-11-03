@@ -1,0 +1,18 @@
+{
+  "version": "1",
+  "annotator": "manual:v1-vd02",
+  "annotations": {
+    "pipeline_map.png": [
+      {"label": "积水区", "bbox": [250, 245, 220, 30], "confidence": 0.95,
+       "note": "V2-R-MAIN x30–60 低洼点，对应工单 V2-IN-A1，水深 30cm"},
+      {"label": "DF-PS-01 雨水泵站", "bbox": [298, 274, 28, 28], "confidence": 0.9,
+       "note": "泵站故障待修、无备用电源、运维主体未明确"},
+      {"label": "燃气管线 DN300", "bbox": [190, 246, 370, 8], "confidence": 0.9,
+       "note": "PL-V2-GAS-MAIN，上层浅埋 −1.55m"},
+      {"label": "V2-R-SEC 兴华路", "bbox": [352, 110, 16, 360], "confidence": 0.85,
+       "note": "封路公告指定的绕行路线，本身有占道施工 CP-V2-002"},
+      {"label": "雨水主干 DN1400", "bbox": [40, 265, 520, 8], "confidence": 0.85,
+       "note": "PL-V2-DRN-MAIN，下层深埋 −4.2→−5.6m"}
+    ]
+  }
+}
