@@ -22,7 +22,7 @@
       },
       "priority": 5,
       "confidence": 0.95,
-      "source_ref": "plan_flood_emergency_cd_2020.md#CD-CITY/emergency_plan/2020#line:34",
+      "source_ref": "plan_flood_emergency_chengdu_2020.md#CD-CITY/emergency_plan/2020#line:40",
       "keyword": "8个以上区（市）县24小时普降250毫米以上特大暴雨"
     },
     {
@@ -45,7 +45,7 @@
       },
       "priority": 6,
       "confidence": 0.95,
-      "source_ref": "plan_flood_emergency_cd_2020.md#CD-CITY/emergency_plan/2020#line:40",
+      "source_ref": "plan_flood_emergency_chengdu_2020.md#CD-CITY/emergency_plan/2020#line:55",
       "keyword": "5个以上区（市）县24小时普降250毫米以上特大暴雨"
     },
     {
@@ -68,7 +68,7 @@
       },
       "priority": 7,
       "confidence": 0.95,
-      "source_ref": "plan_flood_emergency_cd_2020.md#CD-CITY/emergency_plan/2020#line:46",
+      "source_ref": "plan_flood_emergency_chengdu_2020.md#CD-CITY/emergency_plan/2020#line:70",
       "keyword": "8个以上区（市）县12小时普降100毫米以上大暴雨"
     },
     {
@@ -91,7 +91,7 @@
       },
       "priority": 8,
       "confidence": 0.95,
-      "source_ref": "plan_flood_emergency_cd_2020.md#CD-CITY/emergency_plan/2020#line:52",
+      "source_ref": "plan_flood_emergency_chengdu_2020.md#CD-CITY/emergency_plan/2020#line:85",
       "keyword": "8个以上区（市）县12小时普降50毫米以上暴雨"
     },
     {
@@ -669,24 +669,38 @@
       "keyword": "下穿隧道倒灌"
     },
     {
-      "rule_id": "RULE-CITY-WARN-NOT-RESPONSE",
-      "stage": "observed",
+      "rule_id": "RULE-RISK-RESPONSE-VS-WARNING",
+      "stage": "residual_risk",
       "when": {
-        "min_warning_signal_level_code": [
-          "1"
+        "warning_level": [
+          "orange",
+          "red"
         ]
       },
       "then": {
-        "constraint": "气象预警信号级别不得直接映射为防汛应急响应级别",
-        "correct_path": "预警信号 → 提取雨量/时长/落区 → 按市级响应启动条件二次判定",
-        "counter_example": "2020-08-11 13:50 气象橙色预警信号，14:00 启动防汛Ⅳ级（蓝色）响应",
-        "plan_basis": "《成都市防汛抗旱应急预案》（2020-04-10）第 1 节分级与第 3 节启动条件",
-        "activation": "待激活：需要「预警信号级别→响应级别」的映射输入，而该输入本身不成立"
+        "residual_risk": "防汛应急响应级别与气象暴雨预警信号是两套独立体系，颜色相同不代表同级对应：2020-08-11 13:50 气象橙色预警信号对应的是 14:00 的防汛Ⅳ级（蓝色）响应，不得互换引用",
+        "correct_path": "先从预警信号提取雨量/时长/落区，再按市级响应启动条件判定级别"
       },
-      "priority": 4,
+      "priority": 40,
       "confidence": 0.95,
-      "source_ref": "plan_flood_emergency_cd_2020.md#CD-CITY/emergency_plan/2020#line:24",
-      "keyword": "不得按颜色直接对级"
+      "source_ref": "plan_flood_emergency_chengdu_2020.md#CD-CITY/emergency_plan/2020#line:27",
+      "keyword": "两套独立体系"
+    },
+    {
+      "rule_id": "RULE-RISK-MUNICIPAL-VS-LOCAL",
+      "stage": "residual_risk",
+      "when": {
+        "min_depth_cm": [
+          "25"
+        ]
+      },
+      "then": {
+        "residual_risk": "达成封路判据的 25cm 阈值来自区级属地合成预案；市级预案只在雨量/预警口径上构成上位依据，引用时须注明层级，不得表述为市级规定"
+      },
+      "priority": 45,
+      "confidence": 0.9,
+      "source_ref": "plan_flood_emergency_chengdu_2020.md#CD-CITY/emergency_plan/2020#line:107",
+      "keyword": "市级上位预案"
     }
   ]
 }

@@ -582,32 +582,32 @@
       }
     },
     {
-      "asset_id": "AS-CD-CITY-emergency_plan-2f156c8d",
+      "asset_id": "AS-CD-CITY-emergency_plan-b410bfe9",
       "modality": "text",
       "parse_status": "parsed",
-      "file_name": "plan_flood_emergency_cd_2020.md",
+      "file_name": "plan_flood_emergency_chengdu_2020.md",
       "doc_type": "emergency_plan",
       "equipment_id": "CD-CITY",
       "version": "2020",
       "standard_refs": [],
       "locator": "CD-CITY/emergency_plan/2020",
-      "checksum_sha256": "2f156c8d1e5c10cb6b7548aefe05e027fd2288f62570b03d630939b62e4121d8",
-      "byte_size": 3668,
-      "summary": "文本资产：66 行，首段「气象预警信号与防汛应急响应级别是两套独立体系，不得按颜色直接对级：须先从预警信号提取雨量、时长与落区，再按第 3 节的量化条件判定响应级别。2020-08-11 的真实链条可证——13:50 气象橙色预警信号发布，14:00 启动的是防汛Ⅳ级（蓝色）应急响应，二者相差一级。」",
+      "checksum_sha256": "b410bfe994d4f21e84ac1e600a58f2223db95b99aeeb08c001f99f6f37fff6ec",
+      "byte_size": 6516,
+      "summary": "文本资产：109 行，首段「---」",
       "structure": {
-        "lines": 66,
-        "lead": "气象预警信号与防汛应急响应级别是两套独立体系，不得按颜色直接对级：须先从预警信号提取雨量、时长与落区，再按第 3 节的量化条件判定响应级别。2020-08-11 的真实链条可证——13:50 气象橙色预警信号发布，14:00 启动的是防汛Ⅳ级（蓝色）应急响应，二者相差一级。"
+        "lines": 109,
+        "lead": "---"
       },
       "governance": {
         "asset_type": "emergency_plan",
         "title": "成都市防汛抗旱应急预案（2020 年）",
-        "source_uri": "demo://urban/plan_flood_emergency_cd_2020.md",
+        "source_uri": "demo://urban/plan_flood_emergency_chengdu_2020.md",
         "source_org": "成都市人民政府办公厅",
         "published_at": "2020-04-10T09:00:00+08:00",
         "valid_from": "2020-04-10T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "2f156c8d1e5c10cb6b7548aefe05e027fd2288f62570b03d630939b62e4121d8",
+        "content_hash": "b410bfe994d4f21e84ac1e600a58f2223db95b99aeeb08c001f99f6f37fff6ec",
         "status": "published"
       }
     },
