@@ -38,3 +38,12 @@ visualization/blender/scenes.bak-*/
 # real user review records contain personal data; keep them out of git (or point URBAN_TWIN_REVIEWS elsewhere)
 samples/eval/review_submissions.jsonl
 samples/eval/review_gate_reviews.json
+
+# 有条件开放数据（《数据利用承诺书》约束：原始文件与入库副本不得进入代码仓库、不得随作品包提交）
+samples/scenarios/**/raw_conditional/
+samples/data/raw_conditional/
+*.conditional.json
+*.conditional.csv
+
+# 发布目录：含 .env 密钥与 src 副本，不进仓库
+deploy-webdemo/
