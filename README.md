@@ -200,6 +200,7 @@ uv sync --group llm                          # 可选依赖（openai SDK）；�
 $env:DECISION_LLM_PROVIDER = "deepseek"
 $env:DEEPSEEK_API_KEY      = "<你的 key>"    # 只放环境变量，不要写进仓库
 $env:DEEPSEEK_MODEL        = "deepseek-chat" # 可选：deepseek-reasoner / deepseek-v4-flash / deepseek-v4-pro
+$env:DEEPSEEK_TEMPERATURE  = "0"             # 可选，默认 0；固定采样温度，重复跑 A/B 才有可比性
 uv run --group llm python scripts/deepseek_smoke.py
 ```
 
@@ -421,7 +422,7 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **744 项**测试通过；`python -m decision_poc.evidence_check` 106/106 项一致；
+当前基线：`uv run --locked pytest -q` 共 **745 项**测试通过；`python -m decision_poc.evidence_check` 106/106 项一致；
 城市内涝主链路 Nexent 真机校验 8/8（`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。
 P0-P10 的验收口径与实测数字见各阶段回传报告（`docs/reports/`）。

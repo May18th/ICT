@@ -20,6 +20,7 @@ from decision_poc.nexent_urban import (
     DEFAULT_EVENT_ID,
     UrbanAgentAnswer,
     build_urban_query,
+    compare_with_offline,
     offline_baseline,
     parse_urban_answer,
     run,
@@ -96,9 +97,14 @@ def test_query_names_event_time_and_tools() -> None:
     query = build_urban_query({"event_id": DEFAULT_EVENT_ID, "as_of": DEFAULT_AS_OF})
     assert DEFAULT_EVENT_ID in query
     assert DEFAULT_AS_OF in query
-    for tool in ("event_deduce", "twin_neighbors", "conflict_check", "allocation_plan"):
+    # 只点名 Agent 实际挂载的两个工具
+    for tool in ("event_deduce", "evidence_locate"):
         assert tool in query
+    # 未挂载的工具不得出现在查询里：点名了模型就会去调，随后走 parallel_executor 截断
+    for unmounted in ("twin_neighbors", "conflict_check", "allocation_plan"):
+        assert unmounted not in query
     assert "只输出 JSON" in query
+    assert "six_hops 只放六个阶段英文名" in query
 
 
 def test_parse_tolerates_think_tags_and_fences() -> None:
@@ -106,6 +112,37 @@ def test_parse_tolerates_think_tags_and_fences() -> None:
     answer = parse_urban_answer(noisy)
     assert answer.event_id == DEFAULT_EVENT_ID
     assert answer.resource_gap == 2
+
+
+def test_parse_normalizes_stage_descriptions_but_keeps_bad_ones() -> None:
+    """模型把"阶段: 内容"写进 six_hops 时只归一阶段名；写错的阶段原样保留并照样判负。
+
+    这是 2026-11-03 真机 7/8 的直接原因：结论全对，只有 six_hops 带了描述。
+    容错只做"冒号前恰好是合法阶段名"这一种，避免把真错误洗成通过。
+    """
+    described = _answer(
+        six_hops=[
+            "observed: A-03 兴华路积水 30cm",
+            "affected: DF-IN-101,PL-DRN-101",
+            "owner：DF-PS-01 无主责",
+            "conflict: C1/C2/C3",
+            "resource: 缺口 2 台",
+            "action -> 停止基坑→隔离→抽排",
+        ]
+    )
+    answer = parse_urban_answer(json.dumps(described, ensure_ascii=False))
+    assert answer.six_hops == ["observed", "affected", "owner", "conflict", "resource", "action"]
+    assert answer.resource_gap == 2
+    assert answer.conflicts[0]["conflict_id"] == "C1"
+
+    wrong_stage = _answer(
+        six_hops=["阶段一: 观测", "affected", "owner", "conflict", "resource", "action"]
+    )
+    bad = parse_urban_answer(json.dumps(wrong_stage, ensure_ascii=False))
+    assert "阶段一: 观测" in bad.six_hops
+    baseline = offline_baseline(DEFAULT_EVENT_ID, DEFAULT_AS_OF)
+    failed = [item.name for item in compare_with_offline(bad, baseline) if not item.passed]
+    assert "六跳齐全" in failed
 
 
 def test_parse_rejects_natural_language() -> None:
@@ -134,18 +171,23 @@ def test_consistent_answer_passes_all_checks() -> None:
     body = captured["body"]
     assert body["agent_name"] == "urban-agent"
     assert DEFAULT_EVENT_ID in body["query"]
-    assert body["query"].count("allocation_plan") >= 1
+    assert body["query"].count("event_deduce") >= 1
 
 
 def test_inconsistent_answer_must_fail() -> None:
-    """返回了合法 JSON 但缺口编成 0——这正是"看起来过了"的假阳性，必须拦。"""
+    """返回了合法 JSON 但缺口编成 0——这正是"看起来过了"的假阳性，必须拦。
+
+    同时钉住：结论不一致**不许**靠重试蒙过去，attempts>1 也只调用一次。
+    """
     transport = _transport(
         _handler_with_answer(json.dumps(_answer(resource_gap=0), ensure_ascii=False))
     )
-    report = run(settings=SETTINGS, transport=transport)
+    report = run(settings=SETTINGS, transport=transport, attempts=3, sleep=lambda _s: None)
     assert report.passed is False
     names = [item.name for item in report.failures]
     assert "资源缺口" in names
+    assert report.attempts_used == 1
+    assert report.attempt_errors == []
 
 
 def test_wrong_conflict_ids_must_fail() -> None:
