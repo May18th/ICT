@@ -36,6 +36,7 @@ scripts/deepseek_smoke.py ──generate_decision_live──> model_provider.bui
 | `DECISION_LLM_PROVIDER` | `test` | `test`（离线 `TestModel`）/ `deepseek` |
 | `DEEPSEEK_API_KEY` | 无 | `provider=deepseek` 时必填；只从环境变量读取 |
 | `DEEPSEEK_MODEL` | `deepseek-chat` | 支持 `deepseek-chat`、`deepseek-reasoner`、`deepseek-v4-flash`、`deepseek-v4-pro` |
+| `DEEPSEEK_TEMPERATURE` | `0` | 采样温度，取值 `0`–`2`；默认 0 是为了让同一模型两次 A/B 结果可比。设非 0 时评分会波动，报告须注明温度 |
 
 依赖：真实模型需要可选依赖 `openai`（`uv sync --group llm`），默认 `uv sync --locked`
 不安装它，离线环境不受影响。
@@ -47,6 +48,7 @@ scripts/deepseek_smoke.py ──generate_decision_live──> model_provider.bui
 | 未配置 `DECISION_LLM_PROVIDER` | 默认走 `TestModel`；`generate_decision_live` 明确报 `ModelProviderError`，不静默降级 |
 | `provider=deepseek` 但缺 `DEEPSEEK_API_KEY` | 构造阶段抛 `ModelProviderError`，**不发请求** |
 | 缺 `openai` 依赖 | 抛 `ModelProviderError` 并提示 `uv sync --group llm` |
+| `DEEPSEEK_TEMPERATURE` 非数字或超出 `0`–`2` | `settings_from_env` 阶段抛 `ModelProviderError`，**不发请求** |
 | 鉴权失败 / 限流 / 网络错误 | 不吞异常，由调用方（脚本/评测）记录并决策是否重试 |
 | 模型输出不符合 `DecisionOutput` | Pydantic 校验失败照常抛错，不生成兜底结论 |
 
@@ -93,4 +95,18 @@ scripts/deepseek_smoke.py ──generate_decision_live──> model_provider.bui
 
 结论：生产链路保留**确定性推演负责排序、模型只做给定选项内的选择与解释**；
 这与 `docs/innovation-and-evidence.md` 的"不让模型生成推演断言"一致。
+
+### 8.1 复跑与采样温度（2026-11-03）
+
+同 key、同用例、`deepseek-chat` 复跑两次，结果随采样温度变化：
+
+| 温度 | 选中参照项 | 两轮是否逐用例一致 | 未命中用例 |
+|---|---:|---|---|
+| 未固定（API 默认） | 19/22（86.4%） | 否，两次不同 | N01 / C01 / C03 |
+| `DEEPSEEK_TEMPERATURE=0` | 21/22（95.5%） | **是，22 项逐项相同** | 仅 N03 |
+
+因此 `build_model` 默认钉 `temperature=0`（可用环境变量覆盖），否则同一模型两次评分不可比。
+注意：温度 0 只保证**可复现**，不等于**更准**——19/22 与 21/22 的差别在于哪几项未命中
+（温度 0 时 N03 未命中，但 N01 / C01 命中），单次 22 用例样本不足以判定优劣。
+
 

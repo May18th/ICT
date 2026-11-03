@@ -12,8 +12,10 @@ from decision_poc.contracts import DecisionRequest
 from decision_poc.model_provider import (
     API_KEY_ENV,
     DEFAULT_DEEPSEEK_MODEL,
+    DEFAULT_TEMPERATURE,
     MODEL_ENV,
     PROVIDER_ENV,
+    TEMPERATURE_ENV,
     ModelProviderError,
     ModelSettings,
     build_model,
@@ -54,8 +56,13 @@ def test_default_settings_stay_offline() -> None:
 
     assert settings.provider == "test"
     assert settings.model_name == DEFAULT_DEEPSEEK_MODEL
+    assert settings.temperature == DEFAULT_TEMPERATURE == 0.0
     assert settings.is_real is False
     assert build_model(settings, {}) is None
+
+    # 采样温度可显式覆盖（0.7 用于需要多样性的对照实验）
+    assert settings_from_env({TEMPERATURE_ENV: "0.7"}).temperature == 0.7
+    assert settings_from_env({TEMPERATURE_ENV: "  "}).temperature == DEFAULT_TEMPERATURE
 
 
 def test_unknown_provider_is_rejected() -> None:
@@ -91,6 +98,16 @@ def test_deepseek_model_can_be_built_without_network() -> None:
 
     assert model is not None
     assert getattr(model, "model_name", None) == "deepseek-chat"
+    # 温度必须真的透传进模型，否则 A/B 重复跑没有可比性
+    assert dict(model.settings)["temperature"] == 0.0
+    assert dict(build_model(
+        settings_from_env({PROVIDER_ENV: "deepseek", TEMPERATURE_ENV: "0.3"}),
+        {API_KEY_ENV: "unit-test-key"},
+    ).settings)["temperature"] == 0.3
+
+    for bad in ("hot", "3", "-0.1"):
+        with pytest.raises(ModelProviderError, match=TEMPERATURE_ENV):
+            settings_from_env({PROVIDER_ENV: "deepseek", TEMPERATURE_ENV: bad})
 
 
 def test_explicit_test_model_keeps_deterministic_path() -> None:
