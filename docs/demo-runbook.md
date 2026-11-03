@@ -219,6 +219,17 @@ uv run --locked python -m decision_poc.web_demo --port 8787
 - 平台侧模型温度无法钉 0，真机会漂移（N01 三次分别选 opt-2 / opt-1），页面按"与参照不一致"如实展示——
   这正是"优先级必须由确定性推演掌握"的证据，不要改成全部一致的口径。
 
+#### 公网演示地址（已发布）
+
+`https://urban-twin-demo.app.workbuddy.host/?sharecode=K4MXY6WYTS`
+
+- 发布包 = `agent_poc/deploy-webdemo/`（`src/` + `samples/` + `main.py` + `requirements.txt` + `.env`），
+  **改完源码要先同步 `src/`、`samples/` 到该目录再重新发布**；旧版本发布会复用同一沙箱，链接与 cookie 不变。
+- 分享网关要求 URL 带 `?sharecode=`，不带会 403；卡片内嵌预览不带 sharecode，所以常显示 Not Found，
+  **验收一律用完整链接在真实浏览器打开**。
+- 该服务对 HEAD 返回 501（Python `http.server` 未实现 `do_HEAD`），监控探活要用 GET。
+- `.env` 里的 `DEEPSEEK_API_KEY` 只落发布目录（`.gitignore` 已排除 `deploy-webdemo/`），不进仓库；交完材料记得吊销轮换。
+
 ### 2. 让智能体触发（MCP 侧）
 
 ```powershell
