@@ -3,6 +3,98 @@
   "note": "推演规则是数据，不是代码。source_ref = <file_name>#<locator>，加载时校验该行确实存在且包含 keyword；校验失败即拒绝加载。assumption=true 表示该数值没有原文依据，是演示假设，必须在输出里显式标注。",
   "rules": [
     {
+      "rule_id": "RULE-CITY-RESP-RED",
+      "stage": "observed",
+      "when": {
+        "min_city_rainfall_24h_mm": [
+          "250"
+        ],
+        "min_districts_24h_over_250mm": [
+          "9"
+        ]
+      },
+      "then": {
+        "city_response_level": "Ⅰ级（红色）",
+        "trigger": "全市8个以上区（市）县24小时普降250毫米以上特大暴雨，且降雨仍在持续",
+        "boundary": "原文「8个以上」按附则「以上不含本数」取严格大于8，故区县阈值记为9；250毫米同理为严格大于250",
+        "plan_basis": "《成都市防汛抗旱应急预案》（2020-04-10）Ⅰ级防汛应急响应启动条件④",
+        "activation": "待激活：数据集无逐区县24小时累计雨量，缺输入时显式报缺口"
+      },
+      "priority": 5,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_cd_2020.md#CD-CITY/emergency_plan/2020#line:34",
+      "keyword": "8个以上区（市）县24小时普降250毫米以上特大暴雨"
+    },
+    {
+      "rule_id": "RULE-CITY-RESP-ORANGE",
+      "stage": "observed",
+      "when": {
+        "min_city_rainfall_24h_mm": [
+          "250"
+        ],
+        "min_districts_24h_over_250mm": [
+          "6"
+        ]
+      },
+      "then": {
+        "city_response_level": "Ⅱ级（橙色）",
+        "trigger": "全市5个以上区（市）县24小时普降250毫米以上特大暴雨，且降雨仍在持续；或主城区（5+2）24小时普降150毫米以上大暴雨",
+        "boundary": "原文「5个以上」取严格大于5，故区县阈值记为6",
+        "plan_basis": "《成都市防汛抗旱应急预案》（2020-04-10）Ⅱ级防汛应急响应启动条件④",
+        "activation": "待激活：数据集无逐区县24小时累计雨量，缺输入时显式报缺口"
+      },
+      "priority": 6,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_cd_2020.md#CD-CITY/emergency_plan/2020#line:40",
+      "keyword": "5个以上区（市）县24小时普降250毫米以上特大暴雨"
+    },
+    {
+      "rule_id": "RULE-CITY-RESP-YELLOW",
+      "stage": "observed",
+      "when": {
+        "min_city_rainfall_12h_mm": [
+          "100"
+        ],
+        "min_districts_12h_over_100mm": [
+          "9"
+        ]
+      },
+      "then": {
+        "city_response_level": "Ⅲ级（黄色）",
+        "trigger": "全市8个以上区（市）县12小时普降100毫米以上大暴雨，且未来24小时仍有普遍暴雨天气过程",
+        "boundary": "原文「8个以上」取严格大于8，故区县阈值记为9",
+        "plan_basis": "《成都市防汛抗旱应急预案》（2020-04-10）Ⅲ级防汛应急响应启动条件④",
+        "activation": "待激活：数据集无逐区县12小时累计雨量，缺输入时显式报缺口"
+      },
+      "priority": 7,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_cd_2020.md#CD-CITY/emergency_plan/2020#line:46",
+      "keyword": "8个以上区（市）县12小时普降100毫米以上大暴雨"
+    },
+    {
+      "rule_id": "RULE-CITY-RESP-BLUE",
+      "stage": "observed",
+      "when": {
+        "min_city_rainfall_12h_mm": [
+          "50"
+        ],
+        "min_districts_12h_over_50mm": [
+          "9"
+        ]
+      },
+      "then": {
+        "city_response_level": "Ⅳ级（蓝色）",
+        "trigger": "全市8个以上区（市）县12小时普降50毫米以上暴雨，且未来12小时仍有区域性暴雨天气过程",
+        "boundary": "原文「8个以上」取严格大于8，故区县阈值记为9；50毫米同理为严格大于50",
+        "plan_basis": "《成都市防汛抗旱应急预案》（2020-04-10）Ⅳ级防汛应急响应启动条件④",
+        "activation": "待激活：数据集无逐区县12小时累计雨量，缺输入时显式报缺口"
+      },
+      "priority": 8,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_cd_2020.md#CD-CITY/emergency_plan/2020#line:52",
+      "keyword": "8个以上区（市）县12小时普降50毫米以上暴雨"
+    },
+    {
       "rule_id": "RULE-OBS-RESPONSE-YELLOW",
       "stage": "observed",
       "when": {
@@ -575,6 +667,26 @@
       "confidence": 0.88,
       "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:16",
       "keyword": "下穿隧道倒灌"
+    },
+    {
+      "rule_id": "RULE-CITY-WARN-NOT-RESPONSE",
+      "stage": "observed",
+      "when": {
+        "min_warning_signal_level_code": [
+          "1"
+        ]
+      },
+      "then": {
+        "constraint": "气象预警信号级别不得直接映射为防汛应急响应级别",
+        "correct_path": "预警信号 → 提取雨量/时长/落区 → 按市级响应启动条件二次判定",
+        "counter_example": "2020-08-11 13:50 气象橙色预警信号，14:00 启动防汛Ⅳ级（蓝色）响应",
+        "plan_basis": "《成都市防汛抗旱应急预案》（2020-04-10）第 1 节分级与第 3 节启动条件",
+        "activation": "待激活：需要「预警信号级别→响应级别」的映射输入，而该输入本身不成立"
+      },
+      "priority": 4,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_cd_2020.md#CD-CITY/emergency_plan/2020#line:24",
+      "keyword": "不得按颜色直接对级"
     }
   ]
 }

@@ -71,7 +71,7 @@ def test_all_cases_pass(report: EvalReport) -> None:
 
 def test_metrics_are_computed_from_the_run(report: EvalReport) -> None:
     metrics = report.metrics
-    assert metrics.assets_total == 16 and metrics.assets_parsed == 16
+    assert metrics.assets_total == 17 and metrics.assets_parsed == 17
     assert metrics.unmapped_columns == 0
     assert metrics.triples > 0 and metrics.relation_kinds > 0
     assert metrics.locator_hit_rate == 1.0

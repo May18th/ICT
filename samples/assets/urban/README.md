@@ -1,6 +1,6 @@
 # 最小城市内涝数据集（P1）
 
-**全部为合成数据，不含任何真实市政信息、真实单位或个人数据。** 事件与文件编号均为虚构。
+**除 `plan_flood_emergency_cd_2020.md` 为真实公开文件外，其余全部为合成数据，不含任何真实市政信息、真实单位或个人数据。** 事件与文件编号均为虚构。
 
 ## 文件清单
 
@@ -15,6 +15,7 @@
 | `department_duties.csv` | duty_list | 表格 | 8 个部门职责；封路权限交叉、泵站职责缺失均在此 |
 | `resource_inventory.csv` | resource_inventory | 表格 | 9 条资源（按片区存放）；抽水泵 A-03 4 台 + B-01 2 台，是资源缺口与跨区调配的关键数 |
 | `plan_flood_emergency_v2.md` | emergency_plan | 文本 | 现行预案：封路 25cm、基坑停工、先隔离风险源 |
+| `plan_flood_emergency_cd_2020.md` | emergency_plan | 文本 | **真实公开文件**：成都市防汛抗旱应急预案（2020），市级上位响应启动条件；原件 412，正文取自双源全文转载。承载 `RULE-CITY-RESP-*` 与 `RULE-CITY-WARN-NOT-RESPONSE` 的阈值依据 |
 | `plan_flood_emergency_v1.md` | emergency_plan | 文本 | 已废止预案：封路 30cm、抽排优先（冲突/过期测试） |
 | `procedure_waterlogging.md` | procedure | 文本 | 内部：移动泵折算 400 m³/h、泵站故障按 80% 折算 |
 | `procedure_gas_protection.md` | procedure | 文本 | 内部：基坑浸泡检测频次、管道悬空处理 |
