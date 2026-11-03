@@ -1,0 +1,2 @@
+order_id,road_id,facility_id,pipeline_id,order_type,reported_at,reporter_org,severity,status,description
+PUB-IN-001,OSM-211822566,,,waterlogging,2026-11-01T08:40:00+08:00,ORG-ROAD,high,open,公开场景合成工单：积水 30cm（非真实工单）

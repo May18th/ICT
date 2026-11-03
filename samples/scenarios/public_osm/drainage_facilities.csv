@@ -1,0 +1,2 @@
+facility_id,name,facility_type,road_id,drainage_zone,capacity_m3h,backup_power,last_inspection,state,owner_org,note,pump_units,failed_units
+DF-PUB-01,公开场景泵站,pump_station,OSM-211822566,DZ-OSM,1200,no,2026-10-20,fault_pending_repair,,合成设施（非真实台账）

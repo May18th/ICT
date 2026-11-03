@@ -1,0 +1,2 @@
+pipeline_id,kind,road_id,depth_m,diameter_mm,material,install_year,owner_org,status,note
+PL-PUB-DRN-01,drainage,OSM-211822566,2.8,600,concrete,2010,ORG-DRAIN,in_service,合成管线（非真实台账）

@@ -1,0 +1,2 @@
+plan_id,project_name,road_id,pipeline_id,work_type,excavation_depth_m,start_at,end_at,permit_org,contractor,closure_scope,status
+CP-PUB-001,公开场景占道施工,OSM-211822566,,trenching,1.2,2026-10-28T08:00:00+08:00,2026-11-12T18:00:00+08:00,ORG-ROAD,C-9002,半幅封闭,approved
