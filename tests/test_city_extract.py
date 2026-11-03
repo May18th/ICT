@@ -27,7 +27,7 @@ def test_entity_counts_per_type() -> None:
     assert counts["Department"] == 8
     assert counts["Resource"] == 9
     assert counts["Area"] == 2
-    assert counts["EmergencyPlan"] == 5
+    assert counts["EmergencyPlan"] == 6
     assert counts["Action"] >= 6
 
 

@@ -1,6 +1,6 @@
 # 最小城市内涝数据集（P1）
 
-**除 `plan_flood_emergency_chengdu_2020.md` 为真实公开文件外，其余全部为合成数据，不含任何真实市政信息、真实单位或个人数据。** 事件与文件编号均为虚构。
+**`plan_flood_emergency_chengdu_2020.md`（2020 版）与 `plan_flood_emergency_cd_2026.md`（2026 修订版）为真实公开文件；其余全部为合成数据，不含任何真实市政信息、真实单位或个人数据。** 事件与文件编号均为虚构。
 
 ## 文件清单
 
@@ -15,6 +15,7 @@
 | `department_duties.csv` | duty_list | 表格 | 8 个部门职责；封路权限交叉、泵站职责缺失均在此 |
 | `resource_inventory.csv` | resource_inventory | 表格 | 9 条资源（按片区存放）；抽水泵 A-03 4 台 + B-01 2 台，是资源缺口与跨区调配的关键数 |
 | `plan_flood_emergency_v2.md` | emergency_plan | 文本 | 现行预案：封路 25cm、基坑停工、先隔离风险源 |
+| `plan_flood_emergency_cd_2026.md` | emergency_plan | 文本 | **真实公开文件**：成都市防汛抗旱应急预案（2026 年度修订），市应急局官网 PDF 原件（77 页，sha256 `a909aa84…`）第 45/76 页节选；现行市级响应启动条件（区县 8、四级 6h50、三级 12h100、二级 24h150、一级 24h250；预警路径上限三级），承载 `RULE-CITY26-RESP-*` 与 `RULE-RISK-RESPONSE-VS-WARNING` 的依据 |
 | `plan_flood_emergency_chengdu_2020.md` | emergency_plan | 文本 | **真实公开文件**：成都市防汛抗旱应急预案（2020），市级上位响应启动条件；原件 412，正文取自双源全文转载。承载 `RULE-CITY-RESP-*`、`RULE-RISK-RESPONSE-VS-WARNING`、`RULE-RISK-MUNICIPAL-VS-LOCAL` 的阈值依据 |
 | `plan_flood_emergency_v1.md` | emergency_plan | 文本 | 已废止预案：封路 30cm、抽排优先（冲突/过期测试） |
 | `procedure_waterlogging.md` | procedure | 文本 | 内部：移动泵折算 400 m³/h、泵站故障按 80% 折算 |
@@ -58,7 +59,7 @@ python -m decision_poc.scene_binding --check
 python -m decision_poc.health --dataset samples/assets/urban
 ```
 
-预期：`assets=15 types=12 modalities={'image': 1, 'table': 8, 'text': 6}`。
+预期：`assets=18 types=13 modalities={'image': 1, 'table': 9, 'text': 8}`。
 
 ## 设计说明
 
