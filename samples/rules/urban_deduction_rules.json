@@ -1,99 +1,7 @@
 {
-  "version": "urban-rules-1.2",
+  "version": "urban-rules-1.3",
   "note": "推演规则是数据，不是代码。source_ref = <file_name>#<locator>，加载时校验该行确实存在且包含 keyword；校验失败即拒绝加载。assumption=true 表示该数值没有原文依据，是演示假设，必须在输出里显式标注。",
   "rules": [
-    {
-      "rule_id": "RULE-CITY-RESP-RED",
-      "stage": "observed",
-      "when": {
-        "min_city_rainfall_24h_mm": [
-          "250"
-        ],
-        "min_districts_24h_over_250mm": [
-          "9"
-        ]
-      },
-      "then": {
-        "city_response_level": "Ⅰ级（红色）",
-        "trigger": "全市8个以上区（市）县24小时普降250毫米以上特大暴雨，且降雨仍在持续",
-        "boundary": "原文「8个以上」按附则「以上不含本数」取严格大于8，故区县阈值记为9；250毫米同理为严格大于250",
-        "plan_basis": "《成都市防汛抗旱应急预案》（2020-04-10）Ⅰ级防汛应急响应启动条件④",
-        "activation": "待激活：数据集无逐区县24小时累计雨量，缺输入时显式报缺口"
-      },
-      "priority": 5,
-      "confidence": 0.95,
-      "source_ref": "plan_flood_emergency_chengdu_2020.md#CD-CITY/emergency_plan/2020#line:40",
-      "keyword": "8个以上区（市）县24小时普降250毫米以上特大暴雨"
-    },
-    {
-      "rule_id": "RULE-CITY-RESP-ORANGE",
-      "stage": "observed",
-      "when": {
-        "min_city_rainfall_24h_mm": [
-          "250"
-        ],
-        "min_districts_24h_over_250mm": [
-          "6"
-        ]
-      },
-      "then": {
-        "city_response_level": "Ⅱ级（橙色）",
-        "trigger": "全市5个以上区（市）县24小时普降250毫米以上特大暴雨，且降雨仍在持续；或主城区（5+2）24小时普降150毫米以上大暴雨",
-        "boundary": "原文「5个以上」取严格大于5，故区县阈值记为6",
-        "plan_basis": "《成都市防汛抗旱应急预案》（2020-04-10）Ⅱ级防汛应急响应启动条件④",
-        "activation": "待激活：数据集无逐区县24小时累计雨量，缺输入时显式报缺口"
-      },
-      "priority": 6,
-      "confidence": 0.95,
-      "source_ref": "plan_flood_emergency_chengdu_2020.md#CD-CITY/emergency_plan/2020#line:55",
-      "keyword": "5个以上区（市）县24小时普降250毫米以上特大暴雨"
-    },
-    {
-      "rule_id": "RULE-CITY-RESP-YELLOW",
-      "stage": "observed",
-      "when": {
-        "min_city_rainfall_12h_mm": [
-          "100"
-        ],
-        "min_districts_12h_over_100mm": [
-          "9"
-        ]
-      },
-      "then": {
-        "city_response_level": "Ⅲ级（黄色）",
-        "trigger": "全市8个以上区（市）县12小时普降100毫米以上大暴雨，且未来24小时仍有普遍暴雨天气过程",
-        "boundary": "原文「8个以上」取严格大于8，故区县阈值记为9",
-        "plan_basis": "《成都市防汛抗旱应急预案》（2020-04-10）Ⅲ级防汛应急响应启动条件④",
-        "activation": "待激活：数据集无逐区县12小时累计雨量，缺输入时显式报缺口"
-      },
-      "priority": 7,
-      "confidence": 0.95,
-      "source_ref": "plan_flood_emergency_chengdu_2020.md#CD-CITY/emergency_plan/2020#line:70",
-      "keyword": "8个以上区（市）县12小时普降100毫米以上大暴雨"
-    },
-    {
-      "rule_id": "RULE-CITY-RESP-BLUE",
-      "stage": "observed",
-      "when": {
-        "min_city_rainfall_12h_mm": [
-          "50"
-        ],
-        "min_districts_12h_over_50mm": [
-          "9"
-        ]
-      },
-      "then": {
-        "city_response_level": "Ⅳ级（蓝色）",
-        "trigger": "全市8个以上区（市）县12小时普降50毫米以上暴雨，且未来12小时仍有区域性暴雨天气过程",
-        "boundary": "原文「8个以上」取严格大于8，故区县阈值记为9；50毫米同理为严格大于50",
-        "plan_basis": "《成都市防汛抗旱应急预案》（2020-04-10）Ⅳ级防汛应急响应启动条件④",
-        "activation": "待激活：数据集无逐区县12小时累计雨量，缺输入时显式报缺口"
-      },
-      "priority": 8,
-      "confidence": 0.95,
-      "source_ref": "plan_flood_emergency_chengdu_2020.md#CD-CITY/emergency_plan/2020#line:85",
-      "keyword": "8个以上区（市）县12小时普降50毫米以上暴雨"
-    },
     {
       "rule_id": "RULE-OBS-RESPONSE-YELLOW",
       "stage": "observed",
@@ -678,13 +586,13 @@
         ]
       },
       "then": {
-        "residual_risk": "防汛应急响应级别与气象暴雨预警信号是两套独立体系，颜色相同不代表同级对应：2020-08-11 13:50 气象橙色预警信号对应的是 14:00 的防汛Ⅳ级（蓝色）响应，不得互换引用",
+        "residual_risk": "防汛应急响应级别与气象暴雨预警信号是两套独立体系：2026 版将预警列为响应启动条件（橙→四级、红→三级，上限三级），2025-07-03 实测红警 17:10、三级响应 18:00 启动，不得以预警级别直接替代响应级别",
         "correct_path": "先从预警信号提取雨量/时长/落区，再按市级响应启动条件判定级别"
       },
       "priority": 40,
       "confidence": 0.95,
-      "source_ref": "plan_flood_emergency_chengdu_2020.md#CD-CITY/emergency_plan/2020#line:27",
-      "keyword": "两套独立体系"
+      "source_ref": "plan_flood_emergency_cd_2026.md#CD-CITY/emergency_plan/2026#line:11",
+      "keyword": "发布暴雨橙色预警"
     },
     {
       "rule_id": "RULE-RISK-MUNICIPAL-VS-LOCAL",
@@ -695,12 +603,131 @@
         ]
       },
       "then": {
-        "residual_risk": "达成封路判据的 25cm 阈值来自区级属地合成预案；市级预案只在雨量/预警口径上构成上位依据，引用时须注明层级，不得表述为市级规定"
+        "residual_risk": "达成封路判据的 25cm 阈值来自区级属地合成预案；市级预案只在雨量/预警口径上构成上位依据，2026 修订版仍无积水深度阈值，引用时须注明层级，不得表述为市级规定"
       },
       "priority": 45,
       "confidence": 0.9,
       "source_ref": "plan_flood_emergency_chengdu_2020.md#CD-CITY/emergency_plan/2020#line:107",
       "keyword": "市级上位预案"
+    },
+    {
+      "rule_id": "RULE-CITY26-RESP-BLUE",
+      "stage": "observed",
+      "when": {
+        "min_city_rainfall_6h_mm": [
+          "50"
+        ],
+        "min_districts_6h_over_50mm": [
+          "8"
+        ]
+      },
+      "then": {
+        "city_response_level": "Ⅳ级（蓝色）",
+        "trigger": "四级响应（蓝色）：全市 8 个以上区（市）县 6 小时普降 50 毫米以上暴雨，且强降雨仍在持续。",
+        "boundary": "2026 版附则 7.4 无“以上不含本数”条款，按通常语义含本数 → 区县阈值记 8；2020 版附则第 95 行明确排除本数，旧规则记 9。两版不可混用。",
+        "plan_basis": "《成都市防汛抗旱应急预案（2026 年度修订）》附件5（PDF 第 76 页）",
+        "activation": "待激活：数据集无逐区县累计雨量字段，缺输入时显式报缺口；不参与属地定级"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_cd_2026.md#CD-CITY/emergency_plan/2026#line:12",
+      "keyword": "6 小时普降 50 毫米以上暴雨",
+      "assumption": false
+    },
+    {
+      "rule_id": "RULE-CITY26-RESP-YELLOW",
+      "stage": "observed",
+      "when": {
+        "min_city_rainfall_12h_mm": [
+          "100"
+        ],
+        "min_districts_12h_over_100mm": [
+          "8"
+        ]
+      },
+      "then": {
+        "city_response_level": "Ⅲ级（黄色）",
+        "trigger": "三级响应（黄色）：全市 8 个以上区（市）县 12 小时普降 100 毫米以上大暴雨，且强降雨仍在持续。",
+        "boundary": "2026 版附则 7.4 无“以上不含本数”条款，按通常语义含本数 → 区县阈值记 8；2020 版附则第 95 行明确排除本数，旧规则记 9。两版不可混用。",
+        "plan_basis": "《成都市防汛抗旱应急预案（2026 年度修订）》附件5（PDF 第 76 页）",
+        "activation": "待激活：数据集无逐区县累计雨量字段，缺输入时显式报缺口；不参与属地定级"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_cd_2026.md#CD-CITY/emergency_plan/2026#line:14",
+      "keyword": "12 小时普降 100 毫米以上大暴雨",
+      "assumption": false
+    },
+    {
+      "rule_id": "RULE-CITY26-RESP-ORANGE",
+      "stage": "observed",
+      "when": {
+        "min_city_rainfall_24h_mm": [
+          "150"
+        ],
+        "min_districts_24h_over_150mm": [
+          "8"
+        ]
+      },
+      "then": {
+        "city_response_level": "Ⅱ级（橙色）",
+        "trigger": "二级响应（橙色）：全市 8 个以上区（市）县 24 小时普降 150 毫米以上大暴雨，且强降雨仍在持续。",
+        "boundary": "2026 版附则 7.4 无“以上不含本数”条款，按通常语义含本数 → 区县阈值记 8；2020 版附则第 95 行明确排除本数，旧规则记 9。两版不可混用。",
+        "plan_basis": "《成都市防汛抗旱应急预案（2026 年度修订）》附件5（PDF 第 76 页）",
+        "activation": "待激活：数据集无逐区县累计雨量字段，缺输入时显式报缺口；不参与属地定级"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_cd_2026.md#CD-CITY/emergency_plan/2026#line:15",
+      "keyword": "24 小时普降 150 毫米以上大暴雨",
+      "assumption": false
+    },
+    {
+      "rule_id": "RULE-CITY26-RESP-RED",
+      "stage": "observed",
+      "when": {
+        "min_city_rainfall_24h_mm": [
+          "250"
+        ],
+        "min_districts_24h_over_250mm": [
+          "8"
+        ]
+      },
+      "then": {
+        "city_response_level": "Ⅰ级（红色）",
+        "trigger": "一级响应（红色）：全市 8 个以上区（市）县 24 小时普降 250 毫米以上特大暴雨。",
+        "boundary": "2026 版附则 7.4 无“以上不含本数”条款，按通常语义含本数 → 区县阈值记 8；2020 版附则第 95 行明确排除本数，旧规则记 9。两版不可混用。",
+        "plan_basis": "《成都市防汛抗旱应急预案（2026 年度修订）》附件5（PDF 第 76 页）",
+        "activation": "待激活：数据集无逐区县累计雨量字段，缺输入时显式报缺口；不参与属地定级"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_cd_2026.md#CD-CITY/emergency_plan/2026#line:16",
+      "keyword": "24 小时普降 250 毫米以上特大暴雨",
+      "assumption": false
+    },
+    {
+      "rule_id": "RULE-CITY26-WARN-TO-RESPONSE",
+      "stage": "observed",
+      "when": {
+        "warning_level": [
+          "orange",
+          "red"
+        ]
+      },
+      "then": {
+        "city_response_level_orange": "Ⅳ级（蓝色）",
+        "city_response_level_red": "Ⅲ级（黄色）",
+        "warning_path_cap": "预警路径上限为三级：2026 二级/一级启动条件不含暴雨预警，红警→一级不成立",
+        "boundary": "预警级别→响应级别为 2026 新增；2020 全文无此条。预警信号与响应级别是两套体系，不得互换引用",
+        "plan_basis": "《成都市防汛抗旱应急预案（2026 年度修订）》附件5（PDF 第 76 页）",
+        "activation": "待激活：属地推演不消费 city_response_*，仅作上位口径对照"
+      },
+      "priority": 15,
+      "confidence": 0.9,
+      "source_ref": "plan_flood_emergency_cd_2026.md#CD-CITY/emergency_plan/2026#line:11",
+      "keyword": "发布暴雨橙色预警",
+      "assumption": false
     }
   ]
 }

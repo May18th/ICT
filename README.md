@@ -120,7 +120,7 @@ uv run --locked python -m decision_poc.asset_manifest       # -> samples/assets/
 uv run --locked python -m decision_poc.ontology_bootstrap   # -> samples/assets/ontology_candidates.json
 ```
 
-导入城市内涝最小数据集（17 个资产：16 合成 + 1 真实公开预案，含治理字段与版本有效期）：
+导入城市内涝最小数据集（18 个资产：16 合成 + 2 真实公开预案，含治理字段与版本有效期）：
 
 ```powershell
 $env:PYTHONPATH = "src"
@@ -374,7 +374,7 @@ uv run --locked python -m decision_poc.urban_eval --json samples/eval/latest.jso
     --baseline samples/eval/baseline_before_temporal_guard.json                        # 含改进前后对比
 ```
 
-预期：`22/22 通过`；资产解析 17/17、未识别列 0、检索命中 100%、六跳完整 100%、引用完整率 100%、
+预期：`22/22 通过`；资产解析 18/18、未识别列 0、检索命中 100%、六跳完整 100%、引用完整率 100%、
 不可支撑结论 0，单用例 p50 约 10 ms 以内。改进前基线（`samples/eval/baseline_before_temporal_guard.json`）
 是 17/22——差的 5 条全部是「as_of 早于上报时间 / 工单已闭环」被当成正常事件推演掉的，
 生成方式见 `samples/eval/make_pre_guard_baseline.py` 顶部注释。
@@ -385,7 +385,7 @@ uv run --locked python -m decision_poc.urban_eval --json samples/eval/latest.jso
 agent_poc/
 ├─ src/decision_poc/       # 契约、治理、认知、语义层、推演、溯源、MCP、Skills
 ├─ tests/                  # 契约、工具、流程、评测、基线测试
-├─ samples/assets/urban/   # 17 个资产（16 合成 + 1 真实公开预案）
+├─ samples/assets/urban/   # 18 个资产（16 合成 + 2 真实公开预案）
 ├─ samples/rules/          # 推演规则（每条带原文行号）
 ├─ samples/nexent/         # Nexent 侧绑定表（由代码生成，不手改）
 ├─ samples/eval/           # P8 评测用例 + P9 分配用例/人工评审/分层记忆/进化快照

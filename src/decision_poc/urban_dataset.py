@@ -160,6 +160,17 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         note="真实公开文件：原件 412 未取，正文取自四川发布与红星新闻网全文转载（双源一致）；承载市级防汛响应启动条件，是 RULE-CITY-RESP-* 与 RULE-RISK-RESPONSE-VS-WARNING、RULE-RISK-MUNICIPAL-VS-LOCAL 的文本依据",
     ),
     UrbanAssetSpec(
+        file_name="plan_flood_emergency_cd_2026.md",
+        asset_type="emergency_plan",
+        title="成都市防汛抗旱应急预案（2026 年度修订）",
+        source_org="成都市应急管理局",
+        version="2026",
+        published_at="2026-05-29T09:00:00+08:00",
+        valid_from="2026-05-29T00:00:00+08:00",
+        scope="CD-CITY",
+        note="真实公开文件：市应急局官网 PDF 原件（77 页，sha256 a909aa84e50af342…）第 45/76 页节选；承载 2026 版市级防汛响应启动条件，是 RULE-CITY26-RESP-* 与 RULE-RISK-RESPONSE-VS-WARNING 的文本依据",
+    ),
+    UrbanAssetSpec(
         file_name="plan_flood_emergency_v1.md",
         asset_type="emergency_plan",
         title="城区防汛排涝应急预案 v1.0（已废止）",

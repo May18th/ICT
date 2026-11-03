@@ -63,7 +63,7 @@ def test_all_assets_parse_and_locators_are_well_formed() -> None:
     assets = [asset for asset, _ in load_urban_assets()]
     documents = parse_assets(assets, DEFAULT_DATASET_ROOT, annotations_path=ANNOTATIONS)
     stats = parse_stats(documents)
-    assert stats["documents"] == 17
+    assert stats["documents"] == 18
     assert stats["tables"] == 9
     assert stats["regions"] == 5
     assert stats["metadata_only"] == 0

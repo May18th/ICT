@@ -1,11 +1,11 @@
 {
   "manifest_version": "urban-1",
-  "asset_count": 17,
+  "asset_count": 18,
   "type_counts": {
     "construction_plan": 1,
     "drainage_facility": 1,
     "duty_list": 1,
-    "emergency_plan": 3,
+    "emergency_plan": 4,
     "pipeline_ledger": 1,
     "procedure": 2,
     "public_notice": 2,
@@ -19,7 +19,7 @@
   "modality_counts": {
     "image": 1,
     "table": 9,
-    "text": 7
+    "text": 8
   },
   "source_org_counts": {
     "区城建档案中心": 4,
@@ -28,7 +28,8 @@
     "区道路管理中心": 3,
     "市气象台": 1,
     "市燃气公司": 2,
-    "成都市人民政府办公厅": 1
+    "成都市人民政府办公厅": 1,
+    "成都市应急管理局": 1
   },
   "assets": [
     {
@@ -578,6 +579,36 @@
         "valid_to": null,
         "visibility": [],
         "content_hash": "afb7c435503a99fd0950ee98fe7c190f6fca3f3aa4dd182d56c4415380318994",
+        "status": "published"
+      }
+    },
+    {
+      "asset_id": "AS-CD-CITY-emergency_plan-2de19b5d",
+      "modality": "text",
+      "parse_status": "parsed",
+      "file_name": "plan_flood_emergency_cd_2026.md",
+      "doc_type": "emergency_plan",
+      "equipment_id": "CD-CITY",
+      "version": "2026",
+      "standard_refs": [],
+      "locator": "CD-CITY/emergency_plan/2026",
+      "checksum_sha256": "2de19b5d1db280e4d22bd145fca2faf8dabfe22cd891a66b314dfce1ca8f630f",
+      "byte_size": 1975,
+      "summary": "文本资产：26 行，首段「四级响应（蓝色）：市气象台发布暴雨橙色预警。」",
+      "structure": {
+        "lines": 26,
+        "lead": "四级响应（蓝色）：市气象台发布暴雨橙色预警。"
+      },
+      "governance": {
+        "asset_type": "emergency_plan",
+        "title": "成都市防汛抗旱应急预案（2026 年度修订）",
+        "source_uri": "demo://urban/plan_flood_emergency_cd_2026.md",
+        "source_org": "成都市应急管理局",
+        "published_at": "2026-05-29T09:00:00+08:00",
+        "valid_from": "2026-05-29T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "2de19b5d1db280e4d22bd145fca2faf8dabfe22cd891a66b314dfce1ca8f630f",
         "status": "published"
       }
     },
