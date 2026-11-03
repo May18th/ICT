@@ -149,7 +149,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         note="现行版，封路阈值 25cm，处置顺序先隔离风险源",
     ),
     UrbanAssetSpec(
-        file_name="plan_flood_emergency_cd_2020.md",
+        file_name="plan_flood_emergency_chengdu_2020.md",
         asset_type="emergency_plan",
         title="成都市防汛抗旱应急预案（2020 年）",
         source_org="成都市人民政府办公厅",
@@ -157,7 +157,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         published_at="2020-04-10T09:00:00+08:00",
         valid_from="2020-04-10T00:00:00+08:00",
         scope="CD-CITY",
-        note="真实公开文件：原件 412 未取，正文取自四川发布与红星新闻网全文转载（双源一致）；承载市级防汛响应启动条件，是 RULE-CITY-RESP-* 与 RULE-CITY-WARN-NOT-RESPONSE 的文本依据",
+        note="真实公开文件：原件 412 未取，正文取自四川发布与红星新闻网全文转载（双源一致）；承载市级防汛响应启动条件，是 RULE-CITY-RESP-* 与 RULE-RISK-RESPONSE-VS-WARNING、RULE-RISK-MUNICIPAL-VS-LOCAL 的文本依据",
     ),
     UrbanAssetSpec(
         file_name="plan_flood_emergency_v1.md",

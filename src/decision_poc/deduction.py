@@ -1556,11 +1556,15 @@ class DeductionEngine:
             "detour_under_construction": "true" if detour else "false",
             "pit_exposed_warning_level": context.get("pit_exposed_warning_level", "none"),
             "backflow_risk": self._backflow_risk_level(affected, context),
+            # 响应级别与现场深度也是残余风险的判据（例如「响应级别 vs 气象预警」、
+            # 「市级上位 vs 区级属地阈值」）；此前不在白名单里，引用它们的规则永不触发。
+            "warning_level": context.get("warning_level") or "",
+            "depth_cm": str(context["depth_cm"]) if context.get("depth_cm") is not None else "",
         }
         risks: list[str] = []
         for rule in self.rules.by_stage("residual_risk"):
             if self._matches(rule, ctx):
-                risks.append(rule.then.get("risk", ""))
+                risks.append(rule.then.get("risk") or rule.then.get("residual_risk", ""))
         return [risk for risk in risks if risk]
 
 
