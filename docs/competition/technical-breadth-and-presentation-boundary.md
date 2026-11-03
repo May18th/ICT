@@ -30,7 +30,7 @@
 | 5 | 反事实 | 同一 DAG 干预后重放 | CF1 封路 / CF2 库存 6→2 / CF3 预警升级 | 820 m/1.2 min → 3860 m/6.3 min；缺口 2→6 | 已核实 |
 | 6 | 溯源与血缘 | claim 引用闸门 + append-only 哈希链 + 三层反向索引 + 变更传播 | asset→triple→claim→decision | 引用完整率 100%、漏报 0、重算范围 <30%、篡改可定位 | 已核实 |
 | 7 | 决策进化 | 偏差归因→候选→评测门禁→采纳/拒绝→版本标签/回滚 + 分层记忆 | 抽排分配策略 v1.0→v1.2 | 训练 0.2264→0、留出 0.2182→0、3 轮 2 采纳 1 拒绝 | 已核实 |
-| 8 | 编排与平台 | 12 MCP 工具（3 个呈现类）+ 5 Skill 编排 + 2 SKILL.md + Nexent Agent | `urban_deduction_agent` v3 | 真机 8/8 一致、conversation_id=21、3 次工具调用日志 | 已核实 |
+| 8 | 编排与平台 | 13 MCP 工具（3 个呈现类 + 1 个协同）+ 5 Skill 编排 + 2 SKILL.md + Nexent Agent | `urban_deduction_agent` v10 | 真机 8/8 一致、conversation_id=78、2 次工具调用日志 | 已核实 |
 | 9 | 呈现层（加分项，非考点） | `scene_render`/`scene_compare` → RenderJob → UE `apply_job` → ack | 六跳高亮 + 分配面板 | 工具调用日志 `artifacts/visual/tool_log.jsonl` + ack | **主键已闭环（P10.1），UE 现场演出待验** |
 
 答辩口径一句话：**"同一个事件 ID，从资产到决策到回滚共 8 层，每层有一个可当场跑出来核对的数字。"**

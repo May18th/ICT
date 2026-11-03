@@ -7,7 +7,7 @@
 
 > 填写口径：所有数字均由仓库内命令生成，评审可按文末「复现方式」逐条核对；
 > 未在真实 Nexent 平台验证的内容一律标注"离线同构 / 待真机"，不写成已完成。
-> 2026-10-30 更新：城市内涝主链路已在本机 Nexent v2.7.0 真机跑通（8/8，conversation_id=21），
+> 2026-10-30 更新：城市内涝主链路已在本机 Nexent v2.7.0 真机跑通（8/8，conversation_id=78），
 > 考点⑤ 转为已验证；2026-11-02 补：2 个 SKILL.md 已上传平台技能仓库（skill_id=2/3）、平台界面截图 3 张已固化；
 
 ---
@@ -35,7 +35,7 @@
 | ② 低资源 KG 本体半自动构建 | 种子本体 → 规则抽取 → 置信度分档（auto/review/drop）→ 人工确认 → 版本发布/回滚；改 1 格只产 2 条候选，回滚哈希逐位一致 | 强 |
 | ③ MCP / Skills 编排 | 13 个 MCP 工具（含推演、冲突、分配、渲染）+ 5 Skill 编排 + 2 个可上传的 SKILL.md；**Nexent 平台 Agent 已实调 MCP 工具并产出结论** | 强（工具编排真机已验证；2 个 SKILL.md 已上传平台技能仓库，未绑定 Agent） |
 | ④ 跨文档多跳推理与可溯源 | 六跳推演 + 三类冲突 + 反事实重放 + 哈希链账本 + 变更传播影响分析；引用完整率 100%、篡改可定位 | 强 |
-| ⑤ 基于 Nexent 可运行 | **真机已跑通**：13 工具注册、Agent 发布 v3、conversation_id=21、结论与离线 8/8 一致、平台工具调用日志可查（见 [真机报告](../reports/nexent-live-integration-report.md)） | **强**（原高风险项已解除） |
+| ⑤ 基于 Nexent 可运行 | **真机已跑通**：13 工具注册、Agent 发布 v10、conversation_id=78、结论与离线 8/8 一致、平台工具调用日志可查（见 [真机报告](../reports/nexent-live-integration-report.md)） | **强**（原高风险项已解除） |
 
 ## 3 背景与问题
 
@@ -141,12 +141,16 @@
 ## 10 与 Nexent 的集成状态（评委必问）——**已真机跑通**
 
 - **已完成（真机，Nexent v2.7.0）**：MCP 服务 `urban-twin-mcp`（13 工具，SSE）注册进平台；
-  Agent `urban_deduction_agent`（openPangu-2.0-Pro）创建并发布 v3；真机对话 **conversation_id=21**，
-  六跳结论与离线推演 **8/8 项一致**；平台侧调用日志含 `event_deduce`（29ms）/ `allocation_plan`（28ms）/
-  `scene_render`（88ms），三条快照哈希一致。证据：`samples/nexent/live/`。
+  Agent `urban_deduction_agent`（openPangu-2.0-Pro）创建并发布 v10；真机对话 **conversation_id=78**，
+  六跳结论与离线推演 **8/8 项一致**；平台侧调用日志含 `event_deduce`（18ms）/ 协议修复重试（6ms），
+  两条快照哈希一致。证据：`samples/nexent/live/`。
 - **可复现**：`deploy/nexent/README.md`（容器构建 → 平台装配脚本 → 结论级校验 → 证据抓取），
   校验命令 `python -m decision_poc.nexent_urban`（退出码 0/1/2/3 语义明确，返回 JSON 不等于通过）。
 - **已完成**：2 个 SKILL.md 上传平台技能仓库（skill_id=2/3，正文逐位一致，证据 `samples/nexent/live/skills.json`）；
+- **模型使用声明**：Nexent 平台侧唯一 LLM 为 **openPangu-2.0-Pro**（平台模型设置页配置，上表全部真机证据基于它）；
+  另有**本地决策节点**（`src/decision_poc/model_provider.py`）可选接入 DeepSeek（`deepseek-chat`，OpenAI 兼容接口，
+  默认关闭，密钥仅走环境变量、不入仓库），用于 22 用例 A/B 质量与可复现性实测（21/22、温度 0 两轮逐项一致，
+  见 `docs/reports/p8-llm-ab-report.md`）。DeepSeek 不参与 Nexent 平台演示链路，属"模型无关性"验证证据。
 - **表述红线**：分层记忆为离线同构契约（Tenant/User/Agent 对齐），**未在真实 Nexent 平台真机验证**；
   人工评审为角色扮演，非真实部门批复；真机只在小规模本机 Docker 演示环境验证。
 
@@ -173,6 +177,7 @@ uv run --locked python -m decision_poc.web_demo --port 8787 # 推演面板 + /ev
 | 图像 | 仅登记尺寸/区域，未做 OCR 与图像语义理解 |
 | 反馈 | "受控评测环境下的反馈信号"（冻结 ground truth + 人工评审），不是真实市政数据回流 |
 | 记忆 | 离线同构契约，未真机验证 |
+| 模型 | 平台演示链路仅用 openPangu-2.0-Pro；DeepSeek 仅用于本地决策节点 A/B 实验（默认关闭、非演示依赖），API 调用计费与合规由使用者承担 |
 | 评审 | 角色扮演，非真实部门批复 |
 | 指标 | 数字由命令生成；`evidence_check` 106 项冻结期望，漂移即失败 |
 | 场景宽度 | 跨部门目前覆盖 A-03/B-01 两片区；更大规模需扩数据集，不夸大为"全城级" |

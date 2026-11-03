@@ -2,7 +2,7 @@
 
 这是一个面向华为 ModelEngine Nexent 赛题方向的决策智能体工程：**离线内核可复现、平台上可运行**。默认离线（不联网、不带凭据），
 只在内核验证完成后通过北向 API / MCP 接入真实 Nexent。城市内涝主链路已在本机 Nexent v2.7.0 真机跑通，
-平台 Agent 调 MCP 工具产出的六跳结论与离线推演 8/8 一致（conversation_id=21，证据见 `samples/nexent/live/`）。
+平台 Agent 调 MCP 工具产出的六跳结论与离线推演 8/8 一致（conversation_id=78，证据见 `samples/nexent/live/`）。
 
 当前提供 `NexentAdapter` 作为离线适配边界：它只把 `DecisionRequest` 转成可传输的 JSON 负载，并调用注入的传输函数；默认不会联网。真实 Nexent 接入由 `NexentHttpTransport` 承担，走官方北向 `/nb/v1/chat/run` SSE 契约（Bearer API Key + `Idempotency-Key`），并且只在显式构造时才联网，现有审批、评测和回滚门禁保持不变。
 
@@ -44,11 +44,11 @@
 - Nexent 北向传输层（SSE 聚合、幂等键、401/429/冲突错误映射，默认不联网）；
 - Nexent SDK 传输层（无平台环境时的内嵌路径，可选依赖）；
 - 北向链路真机验证（本机 Nexent v2.7.0，SSE → 结构化决策）；
-- 城市内涝主链路 Nexent 真机集成：MCP-over-SSE（12 工具）+ Agent 发布 + 8/8 结论一致性校验（conversation_id=21）；
+- 城市内涝主链路 Nexent 真机集成：MCP-over-SSE（13 工具）+ Agent 发布 + 8/8 结论一致性校验（conversation_id=78）；
 - 多模态数据资产标识（表格 / 文本 / 图片统一登记、结构摘要、标准引用、可引用定位）；
 - 本体半自动构建（种子本体 → 规则抽取 → 置信度分档 + 跨文档多跳证据 + 合并计划）；
 - 城市内涝数字孪生语义层 + 六跳跨部门推演 + 三类职责冲突 + 反事实重放（P4–P6）；
-- 五个 Skill 编排与 12 个 MCP 工具（9 个决策语义 + 3 个可视化，含权限收口、trace_id、失败语义、工具分组 allowlist）（P6/P9/P10）；
+- 五个 Skill 编排与 13 个 MCP 工具（9 个决策语义 + 3 个可视化 + 1 个协同，含权限收口、trace_id、失败语义、工具分组 allowlist）（P6/P9/P10）；
 - P8 评测：22 个事件用例、七项指标口径与改进前后对比；
 - P9 决策层：推演输出片区决策输入、稀缺资源分配策略、偏差归因 + 评测门禁 + 回滚的受控进化闭环；
 - P9.1 持续进化：分层决策记忆（离线同构）+ 人工评审第二反馈通道 + 语义化策略版本标签；
@@ -169,7 +169,7 @@ uv run --locked python -m decision_poc.counterfactual --case CF2 --json
 
 ```powershell
 $env:PYTHONPATH = "src"
-uv run --locked python -m decision_poc.mcp_server --list-tools     # 打印 12 个工具的参数结构
+uv run --locked python -m decision_poc.mcp_server --list-tools     # 打印 13 个工具的参数结构
 uv run --locked python -m decision_poc.mcp_server                  # 进入 stdio 服务循环
 ```
 
@@ -257,11 +257,11 @@ uv run --locked python -c "from decision_poc.nexent_sdk_transport import NexentS
 赛题 3 的「基于 Nexent 可运行」不是"能连上"，而是"平台 Agent 调工具产出的结论与离线一致"。当前已在本机
 Nexent **v2.7.0**（openPangu-2.0-Pro）跑通：
 
-- MCP 服务 `urban-twin-mcp`（12 工具）以 SSE 方式跑在 `nexent_network` 容器里；
-- Agent `urban_deduction_agent`（agent_id=3，已发布 v3）挂载全部 12 个工具；
-- 一次真实对话（**conversation_id=21**）产出六跳 JSON，与离线 `DeductionEngine` **8/8 项一致**；
-- 平台侧确实发生了工具调用：`event_deduce`（29ms）、`allocation_plan`（28ms）、`scene_render`（88ms），
-  三条日志快照哈希一致。
+- MCP 服务 `urban-twin-mcp`（13 工具）以 SSE 方式跑在 `nexent_network` 容器里；
+- Agent `urban_deduction_agent`（agent_id=3，已发布 v10）只挂 2 个工具（`event_deduce` / `evidence_locate`，收窄原因见真机报告 §6）；
+- 一次真实对话（**conversation_id=78**）产出六跳 JSON，与离线 `DeductionEngine` **8/8 项一致**；
+- 平台侧确实发生了工具调用：`event_deduce`（18ms）+ 一次协议修复重试（6ms），
+  两条日志快照哈希一致（协同链路的 3 次 `collab_run` 实测另见 `samples/nexent/live/collab_live.json`，成功率 2/3）。
 
 ```powershell
 # 1) 构建并启动 MCP 容器（详细步骤见 deploy/nexent/README.md）
@@ -405,7 +405,7 @@ agent_poc/
 - [技术基线与风险](docs/technical-baseline.md)
 - [Nexent 集成边界](docs/nexent-integration-boundary.md)
 - [Nexent 北向传输层设计](docs/nexent-northbound-transport-design.md)
-- [城市内涝主链路 Nexent 集成与真机报告](docs/reports/nexent-live-integration-report.md)（8/8 一致性，conversation_id=21）
+- [城市内涝主链路 Nexent 集成与真机报告](docs/reports/nexent-live-integration-report.md)（8/8 一致性，conversation_id=78）
 - [Nexent 集成设计（SSE + SKILL.md）](docs/nexent-urban-integration-design.md)
 - [平台侧证据报告（技能上传 + 界面截图）](docs/reports/platform-evidence-report.md)
 - [Nexent 侧装配与复现手册](deploy/nexent/README.md)

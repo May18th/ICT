@@ -240,7 +240,7 @@ def build() -> Path:
             ],
             [
                 "③ MCP / Skills 编排",
-                "12 个 MCP 工具（9 决策语义 + 3 可视化）+ 5 个 Skill 编排 + 绑定表；Nexent 真机上由平台 Agent 实际调用",
+                "13 个 MCP 工具（9 决策语义 + 3 可视化 + 1 协同）+ 5 个 Skill 编排 + 绑定表；Nexent 真机上由平台 Agent 实际调用",
                 "src/decision_poc/mcp_server.py、samples/nexent/skills.json",
             ],
             [
@@ -250,7 +250,7 @@ def build() -> Path:
             ],
             [
                 "⑤ 基于 Nexent 可运行",
-                "Nexent v2.7.0 真机：注册 12 工具、发布 urban_deduction_agent（v3）、一次对话 conversation_id=21，六跳结论与离线 8/8 一致",
+                "Nexent v2.7.0 真机：注册 13 工具、发布 urban_deduction_agent（v10）、一次对话 conversation_id=78，六跳结论与离线 8/8 一致",
                 "samples/nexent/live/、docs/reports/nexent-live-integration-report.md",
             ],
         ],
@@ -358,7 +358,7 @@ def build() -> Path:
             ["人工评审第二信号", "评审偏差 0.1171→0.0000，违反评审的候选全部被拒", "同上"],
             ["分层记忆 warm start", "第二会话起点偏差 0.0000，轮次 3→1", "同上"],
             ["策略版本", "flood-response-v1.0 → v1.2，可回滚；A-03 4→5 台 / B-01 2→1 台", "同上"],
-            ["Nexent 真机", "12 工具 / Agent v3 / conversation_id=21 / 六跳 8/8 一致 / 3 次工具调用", "docs/reports/nexent-live-integration-report.md"],
+            ["Nexent 真机", "13 工具 / Agent v10 / conversation_id=78 / 六跳 8/8 一致 / 2 次工具调用", "docs/reports/nexent-live-integration-report.md"],
             ["P10 可视化契约", "RenderJob snap-7f476f6c5880ee60 → 引擎演出 → ack（engine=blender-eevee），delivery=acked", "python -c \"from decision_poc.visualize import delivery_state; print(delivery_state('snap-7f476f6c5880ee60'))\""],
         ],
         widths=[4.4, 7.4, 5.2],

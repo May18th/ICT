@@ -33,7 +33,7 @@
 | ② 低资源 KG 本体半自动构建 | 种子本体 → 规则抽取 → 置信度分档 → 人工确认 → 版本发布/回滚；P3 报告实测（改 1 格 → 2 条候选、回滚哈希逐位一致）`[已核实]` | 候选抽取是**规则+词典基线**，没有与 LLM 抽取对比的"低资源"量化（少样本 vs 全监督） | 低 |
 | ③ MCP / Skills 编排 | 13 个 MCP 工具（9 决策语义含 `allocation_plan`，3 可视化 `scene_render`/`scene_compare`/`asset_lookup`）+ 5 Skill 编排 + 绑定表；**Nexent 真机已由平台 Agent 调用 MCP 工具**（`event_deduce`/`allocation_plan`/`scene_render`，见真机报告）；**2 个 SKILL.md 已上传平台技能仓库**（skill_id=2/3，正文逐位一致，见 `samples/nexent/live/skills.json` + `captures/nexent/skill-space.png`）`[已核实]` | 技能只在仓库里可浏览，**未绑定到已发布 Agent**（平台要求草稿态建技能实例）；编排仍以单 Agent 调工具为主 | 中（原"高"已降） |
 | ④ 跨文档多跳推理与可溯源 | 六跳推演 + 三类冲突 + 反事实 + 哈希链账本 + 变更传播影响分析；引用完整率 100%、篡改可定位 `[已核实]` | 跨部门只覆盖 A-03/B-01 两片区，场景宽度偏窄 | 低 |
-| ⑤ **基于 Nexent 可运行** | **已补齐**：Nexent v2.7.0 上注册 13 个 MCP 工具（tool_id 41–52），创建并发布 Agent `urban_deduction_agent`（agent_id=3，v3），真机对话**六跳结论与离线 8/8 一致**（conversation_id=21），平台调用日志含 3 次工具调用；2 个技能已上传技能仓库；平台界面截图三张（技能/智能体/MCP 连通性校验）`[已核实：`samples/nexent/live/` + `docs/reports/captures/nexent/`]` | 仅本机 Docker 单环境、单事件；技能未绑定 Agent；真实问答录屏仍待补 | 低（原"最高"已解除） |
+| ⑤ **基于 Nexent 可运行** | **已补齐**：Nexent v2.7.0 上注册 13 个 MCP 工具（tool_id 41–53），创建并发布 Agent `urban_deduction_agent`（agent_id=3，v10），真机对话**六跳结论与离线 8/8 一致**（conversation_id=78），平台调用日志含 2 次工具调用（`event_deduce` + 协议修复重试）；2 个技能已上传技能仓库；平台界面截图三张（技能/智能体/MCP 连通性校验）`[已核实：`samples/nexent/live/` + `docs/reports/captures/nexent/`]` | 仅本机 Docker 单环境、单事件；技能未绑定 Agent；真实问答录屏仍待补 | 低（原"最高"已解除） |
 
 结论：原"唯一可能一票否决"的考点⑤已补齐（真机 8/8 + 工具调用日志 + conversation_id）。
 剩余高风险项转移到**参赛形态**：模板 1 未按官方版式产出、开源截图/复现材料未整备、真实用户评分与 PPT/视频缺失。
@@ -57,7 +57,7 @@
 | 项 | 实测结果 |
 | --- | --- |
 | Docker / Nexent | **可用**：Docker Desktop 启动后 Nexent v2.7.0 全栈在线（`/nb/v1/health` healthy）；MCP 服务以 `urban-twin-mcp` 容器跑在 `nexent_network` |
-| Nexent 真机 | **已跑通**：13 工具注册、Agent `urban_deduction_agent` 发布 v3、conversation_id=21、8/8 一致；证据 `samples/nexent/live/` |
+| Nexent 真机 | **已跑通**：13 工具注册、Agent `urban_deduction_agent` 发布 v10、conversation_id=78、8/8 一致；证据 `samples/nexent/live/` |
 | 测试与自检 | 745 项测试通过；对外数字自检 106/106；`uv lock --check`、`compileall`、`uv pip check` 通过 |
 | Git | `main` 与 `origin/main` 同步在 `6f7c559`（2026-11-02 推送 12 个提交）；工作区干净；每轮结束由 `scripts/git_sync.ps1` 自动提交推送 |
 | 开源合规 | 无 `LICENSE`；`samples/` 为合成数据、来源已标注，未发现真实私有数据；真机证据不含 API Key |
@@ -83,7 +83,7 @@
 
 | 优先级 | 动作 | 验收 | 状态 |
 | --- | --- | --- | --- |
-| P0 | ~~Nexent 真机跑通城市内涝主链路~~ | 六跳 + 分配 + 证据链，与离线可核对 | **已完成**：8/8 + conversation_id=21 + 3 次工具调用日志（[真机报告](reports/nexent-live-integration-report.md)） |
+| P0 | ~~Nexent 真机跑通城市内涝主链路~~ | 六跳 + 分配 + 证据链，与离线可核对 | **已完成**：8/8 + conversation_id=78 + 2 次工具调用日志（[真机报告](reports/nexent-live-integration-report.md)） |
 | P0 | **拿到官方模板 1/模板 2 与报名通知原文**，确认时间线与提交格式 | 官方文件落库到 `docs/competition/` | 阻塞在用户侧（用户称已拿到，需放入工作区） |
 | P1 | 按模板 1 写初赛作品 Word（数据集处理/关键代码/量化指标/演示截图） | 可提交的 PDF/Word | 内容草稿已备：`docs/competition/preliminary-submission-draft.md`，待套版 |
 | P1 | 提交并推送当前全部工作；补 LICENSE、部署说明、一键复现脚本 | 干净 clone 后按 README 可复现 106/106 自检 | LICENSE 与 `scripts/reproduce.py`（17/17 步）已完成；**2026-11-02 已推送 12 个分组提交到 `origin/main`（起始点 `6f7c559`）**，每轮结束由 `scripts/git_sync.ps1` 自动提交推送；HEAD 以 `git log -1` 为准 |

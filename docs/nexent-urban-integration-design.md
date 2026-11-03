@@ -155,9 +155,9 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 
 - 已完成（离线可验证）：SSE 传输（`mcp_sse.py` + 10 项测试）、2 个 SKILL.md、`nexent_urban` 查询/解析/比对（11 项测试）、
   `NexentHttpTransport` 支持注入 `query_builder`（默认行为不变）、`trust_env=False` 避免系统代理打挂本地调用。
-- **已完成（真机）**：本机 Nexent v2.7.0 上注册 13 个 MCP 工具（tool_id 41–52）、创建并发布 Agent
-  `urban_deduction_agent`（agent_id=3，v3）、一次真实对话六跳结论与离线 **8/8 一致**（conversation_id=21），
-  平台调用日志含 `event_deduce` / `allocation_plan` / `scene_render`。
+- **已完成（真机）**：本机 Nexent v2.7.0 上注册 13 个 MCP 工具（tool_id 41–53）、创建并发布 Agent
+  `urban_deduction_agent`（agent_id=3，v10）、一次真实对话六跳结论与离线 **8/8 一致**（conversation_id=78），
+  平台调用日志含 `event_deduce`（含一次协议修复重试）。
   证据：`samples/nexent/live/`；报告：[真机集成报告](reports/nexent-live-integration-report.md)。
 - **已完成（平台侧）**：2 个 SKILL.md 已上传平台技能仓库（skill_id=2/3，幂等脚本 `deploy/nexent/upload_skills.py`），证据 `samples/nexent/live/skills.json`；平台界面截图 3 张 + sha256 证据（`deploy/nexent/capture_platform_ui.py` → `docs/reports/captures/nexent/`），报告 [平台侧证据报告](reports/platform-evidence-report.md)。
   `twin_neighbors` 的 `twin_id` 参数提示词修正。
