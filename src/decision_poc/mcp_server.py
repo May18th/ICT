@@ -470,6 +470,9 @@ class UrbanToolkit:
     def _log(self, name: str, trace_id: str | None, result: ToolResult) -> None:
         entry = {
             "tool": name,
+            # 带时间戳：日志是容器内累积文件、没有会话维度，只有时间才能把某次调用
+            # 归属到某一轮会话（否则"这 3 条 event_deduce 是哪一轮的"说不清）。
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
             # 演示现场要能区分"智能体调的"和"人手动点的"，所以带来源
             "origin": "mcp",
             "trace_id": trace_id,

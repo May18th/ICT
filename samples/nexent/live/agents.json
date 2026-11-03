@@ -2,6 +2,37 @@
   "message": "success",
   "data": [
     {
+      "name": "urban_collab_agent",
+      "display_name": "城市内涝应急协同总控",
+      "description": "把六跳推演拆成 1 总控 + 5 专业部门的动作卡，编排联合发布与处置顺序",
+      "author": "UrbanEvolve",
+      "model_ids": [
+        2
+      ],
+      "model_names": [
+        "openPangu-2.0-Pro"
+      ],
+      "model_name": "openPangu-2.0-Pro",
+      "is_available": true,
+      "unavailable_reasons": [],
+      "is_new": true,
+      "is_main_agent": true,
+      "group_ids": "2",
+      "permission": "EDIT",
+      "current_version_no": 4,
+      "version_name": "urban-collab-v1",
+      "greeting_message": null,
+      "example_questions": null,
+      "allow_chat_metadata": false,
+      "model_params_override": {
+        "2": {
+          "extra_params": {}
+        }
+      },
+      "enable_protocol_repair_retry": true,
+      "tags": []
+    },
+    {
       "name": "urban_deduction_agent",
       "display_name": "城市内涝跨部门决策智能体",
       "description": "基于 Nexent + MCP 的城市内涝跨部门推演：六跳结论、三类冲突、稀缺资源分配与证据链",
@@ -19,7 +50,7 @@
       "is_main_agent": true,
       "group_ids": "2",
       "permission": "EDIT",
-      "current_version_no": 3,
+      "current_version_no": 10,
       "version_name": "urban-mcp-v3",
       "greeting_message": null,
       "example_questions": null,
@@ -73,5 +104,5 @@
       ]
     }
   ],
-  "requestId": "6faee4ed-b775-4500-adb0-a059db979670"
+  "requestId": "e84b1b95-6203-47ca-8c30-5d7223aa6d59"
 }

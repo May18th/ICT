@@ -20,18 +20,30 @@ tags:
 
 不适用：没有事件编号的泛泛咨询；纯知识问答；预测未来事件。
 
-## 必须遵守的流程（六跳，顺序不可乱）
+## 平台内执行口径（MCP 工具路径，先读这段）
 
-1. **事件理解**：调 `event_deduce`，取 `root`（片区、积水深度、响应等级）与第一跳状态；
-   深度缺失时不要按 0 处理，直接进"证据不足"路径。
-2. **影响分析**：调 `twin_neighbors`（种子 = 事件 `twin_id`，`max_hops=3`，用
-   `block_expansion_through=["region"]` 防止片区当中转），列出受影响对象并给出证据定位。
-3. **责任部门**：在 `event_deduce` 结果的第 3 跳里核对；出现 `unassigned` 即职责空白，
-   必须转人工，不得替部门认领。
-4. **职责冲突**：调 `conflict_check`，三类冲突（overlap / gap / contention）必须**全部保留**，
-   不允许"综合判断"抹平。资源争用要给缺口数值。
-5. **资源测算**：在 `event_deduce` 第 5 跳读需求/库存/缺口；缺口 > 0 时调 `allocation_plan`
-   给出分配与需上报增援的部分（跨区调拨必须写明时延）。
+1. **第一步只调 `event_deduce`**。它一次返回六跳全部事实：`steps` 里的 `observed` / `affected` /
+   `owner` / `conflict` / `resource`、逐条 `conflicts`（C1/C2/C3）、`resource.gap`、`action_order`
+   与每步 `evidence_refs`。拿到返回后直接组输出 JSON，**不要再调 `twin_neighbors`、`conflict_check`、
+   `allocation_plan`** —— 这些数据已经在返回里，重复调用只会拉长上下文并导致回答被截断。
+2. **禁止 `parallel_executor`**。平台一次性并发工具调用会截断，表现为回答停在 `<|tool_call_start|>`
+   文本上、拿不到最终 JSON。一次只发一个工具调用。
+3. 下列工具只在**追问与复核**时按需单个调用，不是主流程必需：
+   `twin_neighbors`（要受影响对象逐条证据）、`conflict_check`（要冲突条款原文）、
+   `allocation_plan`（要逐区调拨明细与时延）、`evidence_locate`（要引文原文）。
+4. 用户没追问依据时，不要为了"更完整"去补调工具；结论以 `event_deduce` 返回为准。
+
+## 六跳判定口径（核对 `event_deduce` 返回，不是工具调用清单）
+
+1. **事件理解**：看 `observed`，取片区、积水深度、响应等级；深度缺失时不要按 0 处理，直接进
+   "证据不足"路径。
+2. **影响分析**：看 `affected`，列出受影响对象及其 `reason`；需要逐条证据时再调 `twin_neighbors`
+   （种子 = 事件 `twin_id`，`max_hops=3`，`block_expansion_through=["region"]` 防片区当中转）。
+3. **责任部门**：看 `owner.owners`；出现 `owner.unassigned` 即职责空白，必须转人工，不得替部门认领。
+4. **职责冲突**：看 `conflicts`，三类（overlap / gap / contention）必须**全部保留**，不允许"综合判断"
+   抹平；资源争用要给缺口数值。
+5. **资源测算**：看 `resource` 的 required / available / gap；缺口 > 0 时按 `resource.basis` 说明口径，
+   需要逐区调拨明细再调 `allocation_plan`（跨区调拨必须写明时延）。
 6. **处置顺序与二次风险**：按 `action_order` 输出，并**校验"隔离风险源"序位早于"抽排"**；
    二次风险逐条列出。
 
@@ -44,19 +56,21 @@ tags:
 
 ## 输出格式
 
+结构如下，**所有值必须来自本次工具返回**；方括号里是占位说明，不得照抄成本文以外的具体数字：
+
 ```json
 {
-  "event_id": "WO-20261029-007",
-  "as_of": "2026-10-29T09:40:00+08:00",
+  "event_id": "<工单号>",
+  "as_of": "<用户给的 ISO 时点>",
   "six_hops": ["observed", "affected", "owner", "conflict", "resource", "action"],
-  "summary": "一句话结论",
-  "conflicts": ["C1", "C2", "C3"],
-  "resource_gap": 1,
-  "action_order": ["停止基坑开挖...", "隔离风险源...", "封闭积水路段...", "..."],
-  "residual_risks": ["..."],
-  "evidence_refs": ["AS-...#row:4", "..."],
-  "handoff_required": true,
-  "handoff_reasons": ["..."]
+  "summary": "<一句话结论>",
+  "conflicts": [{"conflict_id": "C1", "kind": "overlap", "subject": "<对象>"}],
+  "resource_gap": <整数，从 resource.gap 读>,
+  "action_order": ["<处置动作，按 action_order 顺序>"],
+  "residual_risks": ["<二次风险>"],
+  "evidence_refs": ["<asset_id#locator>"],
+  "handoff_required": <true|false>,
+  "handoff_reasons": ["<转人工原因>"]
 }
 ```
 
