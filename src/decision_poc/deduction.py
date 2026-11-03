@@ -710,6 +710,10 @@ class DeductionEngine:
         depth = _num(context.get("depth_cm"))
         warning = context.get("warning_level")
         for rule in self.rules.by_stage("observed"):
+            if "response_level" not in rule.then:
+                # 非定级规则（例如市级上位响应启动条件）不参与属地定级。
+                # 缺少 min_depth_cm 时旧实现会默认取 0，导致任何 observed 规则都被当成命中。
+                continue
             trigger_depth = _num(rule.when.get("min_depth_cm", ["0"])[0])
             trigger_warning = rule.when.get("warning_level", [])
             hit_depth = depth is not None and trigger_depth is not None and depth >= trigger_depth
