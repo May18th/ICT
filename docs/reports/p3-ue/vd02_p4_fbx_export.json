@@ -1,0 +1,83 @@
+{
+  "schema_version": "vd02-p4-fbx-export-v1",
+  "blend": "D:\\华为ICT\\blender-ue-scene\\blender\\2026-11-02-VD02-P4-replay.blend",
+  "outdir": "D:\\华为ICT\\blender-ue-scene\\ue\\incoming\\p4",
+  "fbx_count": 9,
+  "total_bytes": 1234732,
+  "files": [
+    {
+      "name": "TW-incident-V2-IN-A1",
+      "objects": 2,
+      "file": "TW-incident-V2-IN-A1.fbx",
+      "bytes": 25244,
+      "sha256": "7691c1e95c28080a7d3950254b8c1f9fbf212ac50fd90e033ed26609a84c3459",
+      "twin_id": "TW-incident-V2-IN-A1"
+    },
+    {
+      "name": "TW-road-V2-R-MAIN",
+      "objects": 1,
+      "file": "TW-road-V2-R-MAIN.fbx",
+      "bytes": 20876,
+      "sha256": "67214ac821a371b86d31361a9c9e1a3244e1a83a62814d96505bb2d64f1b6fb0",
+      "twin_id": "TW-road-V2-R-MAIN"
+    },
+    {
+      "name": "TW-road-V2-R-SEC",
+      "objects": 2,
+      "file": "TW-road-V2-R-SEC.fbx",
+      "bytes": 22908,
+      "sha256": "d63494bf0e714b5578382dc39daaeb2bcf75a31fcf5ec56432610b706588694b",
+      "twin_id": "TW-road-V2-R-SEC"
+    },
+    {
+      "name": "TW-drainage-DF-PS-01",
+      "objects": 37,
+      "file": "TW-drainage-DF-PS-01.fbx",
+      "bytes": 100332,
+      "sha256": "fcd1fa7e9c42d847b986d4b5e143a508c907d1c7f0b77a09e5c9241c34dbad94",
+      "twin_id": "TW-drainage-DF-PS-01"
+    },
+    {
+      "name": "TW-drainage-DF-PS-02",
+      "objects": 45,
+      "file": "TW-drainage-DF-PS-02.fbx",
+      "bytes": 115868,
+      "sha256": "bb088900fe52e8aeedd8a15c35b7b10fc01bfeee6f6db11ea3f6ef7b53cdc56b",
+      "twin_id": "TW-drainage-DF-PS-02"
+    },
+    {
+      "name": "TW-drainage-DF-PS-03",
+      "objects": 40,
+      "file": "TW-drainage-DF-PS-03.fbx",
+      "bytes": 105228,
+      "sha256": "aa7aa4da1cb327516a9d276747d3f4776b84b58f1f86a6d4ff089c1db5be3103",
+      "twin_id": "TW-drainage-DF-PS-03"
+    },
+    {
+      "name": "VD02_PIPE_LOWER",
+      "objects": 168,
+      "file": "VD02_PIPE_LOWER.fbx",
+      "bytes": 405756,
+      "sha256": "e2a619a752822de30209b902acedce6e274d0d7ef0a1c8d42ece9dec4e92bc7f",
+      "collection": "VD02_PIPE_LOWER"
+    },
+    {
+      "name": "VD02_PIPE_UPPER",
+      "objects": 48,
+      "file": "VD02_PIPE_UPPER.fbx",
+      "bytes": 124620,
+      "sha256": "2fa80eddd50f1a371d6b522a0f6ba2b3518d8a73e2fc0ed1ace99d52469449c9",
+      "collection": "VD02_PIPE_UPPER"
+    },
+    {
+      "name": "VD02_PIPE_SURFACE",
+      "objects": 146,
+      "file": "VD02_PIPE_SURFACE.fbx",
+      "bytes": 313900,
+      "sha256": "6e78d2eec901f8d22d64f58f62b8af6fff06d4fc43a159829dd807a6b2c76c2c",
+      "collection": "VD02_PIPE_SURFACE"
+    }
+  ],
+  "ue_units_note": "FBX 为米制（FBX_SCALE_ALL）；UE 导入后仍须 set_actor_transform(scale=100, location=cm)，本机实测 global_scale 链路不生效",
+  "tag_note": "FBX 不携带 Blender 自定义属性；tags 需由 vd02_ue_import_manifest.json 写入 Actor"
+}
