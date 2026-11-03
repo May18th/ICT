@@ -20,12 +20,35 @@ import json
 import os
 import subprocess
 import sys
+import time
 import urllib.request
 from pathlib import Path
 
 LIVE_DIR = Path("samples/nexent/live")
 MCP_CONTAINER = os.getenv("NEXENT_MCP_CONTAINER", "urban-twin-mcp")
 TOOL_LOG_IN_CONTAINER = "/app/artifacts/visual/tool_log.jsonl"
+
+
+def _container_started_at(name: str) -> str | None:
+    """MCP 容器启动时间；用于证明工具日志窗口覆盖本轮会话（日志在容器内累积）。
+
+    沙箱/受限环境里脚本内部调 docker CLI 会被拒，所以允许用 `NEXENT_MCP_STARTED_AT`
+    由调用方传入（宿主侧 `docker inspect` 取到的值），保证证据可复现而不是留空。
+    """
+    preset = os.getenv("NEXENT_MCP_STARTED_AT", "").strip()
+    if preset:
+        return preset
+    try:
+        proc = subprocess.run(
+            ["docker", "inspect", name, "--format", "{{.State.StartedAt}}"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    value = (proc.stdout or "").strip()
+    return value or None
 
 
 def _get(path: str, *, timeout: int = 30):
@@ -79,12 +102,23 @@ def main() -> int:
 
     tool_log = _copy_tool_log()
     calls = []
+    log_meta = None
     if tool_log is not None:
         calls = [
             json.loads(line)
             for line in tool_log.read_text(encoding="utf-8").splitlines()
             if line.strip()
         ]
+        # 工具日志是容器内累积文件、不带会话维度，所以必须记下"这份日志的窗口"：
+        # 行数 + 文件 mtime + 容器启动时间，才能说明它对应哪一轮，而不是拿旧日志冒充新调用。
+        stat = tool_log.stat()
+        log_meta = {
+            "path": str(tool_log),
+            "lines": len(calls),
+            "file_mtime": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(stat.st_mtime)),
+            "container_started_at": _container_started_at(MCP_CONTAINER),
+            "snapshot_hashes": sorted({item.get("snapshot_hash") for item in calls if item.get("snapshot_hash")}),
+        }
         print("MCP 工具调用:", [(item.get("tool"), item.get("status")) for item in calls])
 
     smoke_path = Path("samples/eval/nexent_urban_smoke.json")
@@ -104,6 +138,7 @@ def main() -> int:
             for item in (agents.get("data") or [])
         ],
         "tool_calls": calls,
+        "tool_log": log_meta,
         "checks_passed": sum(1 for item in smoke.get("checks", []) if item.get("passed")),
         "checks_total": len(smoke.get("checks", [])),
         "smoke_passed": bool(smoke) and all(item.get("passed") for item in smoke.get("checks", [])),

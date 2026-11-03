@@ -15,7 +15,7 @@
 子命令：
     register-mcp   注册 MCP 服务（SSE 地址指向 urban-twin-mcp 容器）
     sync-tools     scan_tool 同步 MCP 工具到平台工具库
-    create-agent   创建/复用 Agent，挂 12 个工具，发布版本
+    create-agent   创建/复用 Agent，挂 13 个工具，发布版本
     mint-key       生成北向 API Key（打印一次）
     status         打印当前 MCP / Agent / 工具现状
     all            依次执行 register-mcp → sync-tools → create-agent → mint-key
@@ -36,6 +36,14 @@ MCP_URL = os.getenv("NEXENT_MCP_URL", "http://urban-twin-mcp:8000/sse")
 AGENT_NAME = os.getenv("NEXENT_URBAN_AGENT", "urban_deduction_agent")
 MODEL_IDS = [int(item) for item in os.getenv("NEXENT_MODEL_IDS", "2").split(",") if item.strip()]
 
+#: 平台在 `requested_output_tokens` 为空时会回落到硬编码 4096（见
+#: `nexent/core/models/capacity_resolver.py::_DEFAULT_REQUESTED_OUTPUT_TOKENS`）。
+#: 主 Agent 的六跳 JSON 约 3.2k 字符，4096 够用且响应快，显式写出来是为了不让它跟着平台默认值漂；
+#: **协同 Agent 的完整动作卡 JSON 超过 4096 token**，会被截断成半截 JSON（表现为"模型输出
+#: 格式不稳定"），所以单独放到 8192。模型上限 32768，8192 留足余量。
+MAIN_REQUESTED_OUTPUT_TOKENS = int(os.getenv("NEXENT_MAIN_OUTPUT_TOKENS", "4096"))
+COLLAB_REQUESTED_OUTPUT_TOKENS = int(os.getenv("NEXENT_COLLAB_OUTPUT_TOKENS", "8192"))
+
 OUR_TOOLS = {
     "semantic_query", "twin_neighbors", "evidence_locate", "claim_trace", "provenance_verify",
     "event_deduce", "counterfactual_run", "conflict_check", "allocation_plan",
@@ -43,14 +51,23 @@ OUR_TOOLS = {
     "collab_run",
 }
 
-#: 主 Agent 只挂"结论类"工具：协同入口 `collab_run` 挂在专用协同 Agent 上。
-#: 否则主 Agent 可能绕过 `event_deduce` 直接调 `collab_run`，8 项结论一致性校验就会失守。
-MAIN_TOOLS = OUR_TOOLS - {"collab_run"}
+#: 主 Agent 只挂"结论类"工具。**故意收窄到 event_deduce + evidence_locate**：
+#: openPangu 看到 twin_neighbors/conflict_check/allocation_plan 就会去调（即使提示词明令禁止、
+#: 即使 skill 写明"数据已在 event_deduce 返回里"），随后走 parallel_executor 把回答截断在
+#: `<|tool_call_start|>`。工具列表才是模型真正读的"提示词"，收窄挂载是唯一稳的约束方式。
+#: 协同入口 `collab_run` 挂在专用协同 Agent 上，否则主 Agent 会绕过 event_deduce，
+#: 8 项结论一致性校验就守不住。
+MAIN_TOOLS = {"event_deduce", "evidence_locate"}
 
 DUTY_PROMPT = """你是城市内涝跨部门决策智能体。用户给出事件编号与时点后，严格按两步执行：
 
-第一步：调用工具 event_deduce，参数为 {"event_id": "<用户给的事件编号>", "as_of": "<用户给的时点>",
-"caller_labels": ["ORG-EMERG"]}。收到结果后，不要调用其他工具，也不要使用 parallel_executor。
+第一步：**第一个动作就必须是调用 MCP 工具 event_deduce**，参数为 {"event_id": "<用户给的事件编号>",
+"as_of": "<用户给的时点>", "caller_labels": ["ORG-EMERG"]}。
+
+禁止事项（违反即视为答错）：不要用 python_interpreter 读技能文档或写代码；不要调用 read_skill_md；
+不要使用 parallel_executor；不要先输出思考再补工具调用。event_deduce 一次返回就包含六跳全部事实
+（observed/affected/owner/conflict/resource/action）、三类冲突、资源缺口与 action_order，
+所以拿到返回后**不要再调任何工具**。
 
 第二步：只根据 event_deduce 的返回结果，输出一个 JSON 对象，字段如下（不得增删字段）：
 {"event_id": "...", "as_of": "...", "summary": "<一句话结论>",
@@ -63,10 +80,13 @@ DUTY_PROMPT = """你是城市内涝跨部门决策智能体。用户给出事件
  "evidence_refs": ["<asset_id#locator>"],
  "handoff_required": <true|false>}
 
-要求：工具返回里没有的数字不要编；JSON 前不要加解释，不要输出 <|tool_call_start|> 等标记，
-不要 Markdown 代码块。"""
+要求：工具返回里没有的数字不要编；JSON 前不要加解释，不要 Markdown 代码块。
+"""
 
-CONSTRAINT_PROMPT = "第二步只输出 JSON 对象本身；不要在最终回答里发起工具调用。"
+CONSTRAINT_PROMPT = (
+    "最终回答只输出 JSON 对象本身：不得发起工具调用，不得使用 python_interpreter，"
+    "不得使用 parallel_executor，不得输出 Markdown 代码块或解释性文字。"
+)
 
 # --- 多智能体协同 Agent（路径 B：总控 Agent 调 collab_run） ----------------
 #
@@ -81,8 +101,12 @@ COLLAB_TOOLS = {
 
 COLLAB_PROMPT = """你是城市内涝应急协同总控。用户给出事件编号与时点后，严格按两步执行：
 
-第一步：调用工具 collab_run，参数为 {"event_id": "<用户给的事件编号>", "as_of": "<用户给的时点>",
-"caller_labels": ["ORG-EMERG"]}。收到结果后不要再调用其他工具。
+第一步：**第一个动作就必须是调用 MCP 工具 collab_run**，参数为 {"event_id": "<用户给的事件编号>",
+"as_of": "<用户给的时点>", "caller_labels": ["ORG-EMERG"]}。
+
+禁止事项（违反即视为答错）：不要用 python_interpreter 读技能文档或写代码；不要调用 read_skill_md；
+不要使用 parallel_executor。collab_run 一次返回就包含动作卡、签署对、处置顺序与内核指纹，
+拿到返回后不要再调用其他工具。
 
 第二步：只根据 collab_run 的返回结果，输出一个 JSON 对象，字段如下（不得增删字段）：
 {"event_id": "...", "as_of": "...",
@@ -98,7 +122,10 @@ COLLAB_PROMPT = """你是城市内涝应急协同总控。用户给出事件编�
 要求：只转述工具返回，不得新增动作卡或改写冲突；kernel_fingerprint 必须与工具返回逐字一致，
 它是"这份协同方案对应哪一次推演"的唯一凭据。JSON 前不要加解释，不要 Markdown 代码块。"""
 
-COLLAB_CONSTRAINT_PROMPT = "第二步只输出 JSON；不得编造 card_id、动作或指纹；不要在最终回答里发起工具调用。"
+COLLAB_CONSTRAINT_PROMPT = (
+    "最终回答只输出 JSON：不得编造 card_id、动作或指纹；不得使用 python_interpreter 或 parallel_executor；"
+    "不要在最终回答里发起工具调用。"
+)
 
 
 class Platform(PlatformClient):
@@ -123,7 +150,7 @@ class Platform(PlatformClient):
                 payload={
                     "name": MCP_NAME,
                     "server_url": MCP_URL,
-                    "description": "城市孪生决策工具：六跳推演/冲突/溯源/分配/渲染（12 个工具）",
+                    "description": "城市孪生决策工具：六跳推演/冲突/溯源/分配/渲染（13 个工具）",
                     "source": "local",
                     "enabled": True,
                     "skip_health_check": False,
@@ -163,26 +190,31 @@ class Platform(PlatformClient):
 
     def create_agent(self) -> int | None:
         agent = self.find_agent()
+        payload = {
+            "name": AGENT_NAME,
+            "display_name": "城市内涝跨部门决策智能体",
+            "description": "基于 Nexent + MCP 的城市内涝跨部门推演：六跳结论、三类冲突、稀缺资源分配与证据链",
+            "business_description": "面向城市运行管理中心的应急决策辅助",
+            "author": "UrbanEvolve",
+            "model_ids": MODEL_IDS,
+            "max_steps": 20,
+            "duty_prompt": DUTY_PROMPT,
+            "constraint_prompt": CONSTRAINT_PROMPT,
+            "enable_context_manager": False,
+            "enable_protocol_repair_retry": True,
+            "requested_output_tokens": MAIN_REQUESTED_OUTPUT_TOKENS,
+        }
         if agent is None:
-            status, body = self.call(
-                "/api/agent/update",
-                method="POST",
-                payload={
-                    "name": AGENT_NAME,
-                    "display_name": "城市内涝跨部门决策智能体",
-                    "description": "基于 Nexent + MCP 的城市内涝跨部门推演：六跳结论、三类冲突、稀缺资源分配与证据链",
-                    "business_description": "面向城市运行管理中心的应急决策辅助",
-                    "author": "UrbanEvolve",
-                    "model_ids": MODEL_IDS,
-                    "max_steps": 20,
-                    "duty_prompt": DUTY_PROMPT,
-                    "constraint_prompt": CONSTRAINT_PROMPT,
-                    "enable_context_manager": False,
-                    "enable_protocol_repair_retry": True,
-                },
-            )
+            status, body = self.call("/api/agent/update", method="POST", payload=payload)
             print(f"[agent] create: {status} {str(body)[:200]}")
             agent = self.find_agent()
+        else:
+            # 复用已有 Agent 时也必须回写草稿：否则改了 DUTY_PROMPT 却发布旧提示词，
+            # 表现为"脚本改了、平台行为没变"，只能靠翻渠道日志才发现。
+            payload["agent_id"] = int(agent["agent_id"])
+            status, body = self.call("/api/agent/update", method="POST", payload=payload)
+            print(f"[agent] update(draft): {status} {str(body)[:200]}")
+            agent = self.find_agent() or agent
         if agent is None:
             print("[agent] 创建失败")
             return None
@@ -201,26 +233,29 @@ class Platform(PlatformClient):
 
     def create_collab_agent(self) -> int | None:
         agent = self.find_collab_agent()
+        payload = {
+            "name": COLLAB_AGENT_NAME,
+            "display_name": "城市内涝应急协同总控",
+            "description": "把六跳推演拆成 1 总控 + 5 专业部门的动作卡，编排联合发布与处置顺序",
+            "business_description": "面向城市运行管理中心的跨部门任务分派",
+            "author": "UrbanEvolve",
+            "model_ids": MODEL_IDS,
+            "max_steps": 20,
+            "duty_prompt": COLLAB_PROMPT,
+            "constraint_prompt": COLLAB_CONSTRAINT_PROMPT,
+            "enable_context_manager": False,
+            "enable_protocol_repair_retry": True,
+            "requested_output_tokens": COLLAB_REQUESTED_OUTPUT_TOKENS,
+        }
         if agent is None:
-            status, body = self.call(
-                "/api/agent/update",
-                method="POST",
-                payload={
-                    "name": COLLAB_AGENT_NAME,
-                    "display_name": "城市内涝应急协同总控",
-                    "description": "把六跳推演拆成 1 总控 + 5 专业部门的动作卡，编排联合发布与处置顺序",
-                    "business_description": "面向城市运行管理中心的跨部门任务分派",
-                    "author": "UrbanEvolve",
-                    "model_ids": MODEL_IDS,
-                    "max_steps": 20,
-                    "duty_prompt": COLLAB_PROMPT,
-                    "constraint_prompt": COLLAB_CONSTRAINT_PROMPT,
-                    "enable_context_manager": False,
-                    "enable_protocol_repair_retry": True,
-                },
-            )
+            status, body = self.call("/api/agent/update", method="POST", payload=payload)
             print(f"[collab] create: {status} {str(body)[:200]}")
             agent = self.find_collab_agent()
+        else:
+            payload["agent_id"] = int(agent["agent_id"])
+            status, body = self.call("/api/agent/update", method="POST", payload=payload)
+            print(f"[collab] update(draft): {status} {str(body)[:200]}")
+            agent = self.find_collab_agent() or agent
         if agent is None:
             print("[collab] 创建失败")
             return None
@@ -277,6 +312,9 @@ class Platform(PlatformClient):
 
     # --- API Key -----------------------------------------------------
     def mint_api_key(self) -> str:
+        # 平台模块挂在 /opt/backend 下；从 /tmp 执行脚本时不在 sys.path，需显式补
+        if "/opt/backend" not in sys.path:
+            sys.path.insert(0, "/opt/backend")
         from database.token_db import create_token, generate_access_key  # type: ignore
 
         access_key = generate_access_key()

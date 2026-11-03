@@ -1,13 +1,20 @@
 {
   "schema_version": "nexent-live-evidence-1",
   "nexent_base_url": "http://localhost:5013",
-  "conversation_id": 21,
+  "conversation_id": 78,
   "agents": [
+    {
+      "name": "urban_collab_agent",
+      "display_name": "城市内涝应急协同总控",
+      "model_name": "openPangu-2.0-Pro",
+      "current_version_no": 4,
+      "version_name": "urban-collab-v1"
+    },
     {
       "name": "urban_deduction_agent",
       "display_name": "城市内涝跨部门决策智能体",
       "model_name": "openPangu-2.0-Pro",
-      "current_version_no": 3,
+      "current_version_no": 10,
       "version_name": "urban-mcp-v3"
     },
     {
@@ -22,19 +29,9 @@
     {
       "error_code": null,
       "knowledge_version": "kb-v1.0.0",
-      "latency_ms": 28,
+      "latency_ms": 11,
       "origin": "mcp",
-      "snapshot_hash": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db",
-      "status": "ok",
-      "tool": "allocation_plan",
-      "trace_id": null
-    },
-    {
-      "error_code": null,
-      "knowledge_version": "kb-v1.0.0",
-      "latency_ms": 29,
-      "origin": "mcp",
-      "snapshot_hash": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db",
+      "snapshot_hash": "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5",
       "status": "ok",
       "tool": "event_deduce",
       "trace_id": null
@@ -42,14 +39,23 @@
     {
       "error_code": null,
       "knowledge_version": "kb-v1.0.0",
-      "latency_ms": 88,
+      "latency_ms": 6,
       "origin": "mcp",
-      "snapshot_hash": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db",
+      "snapshot_hash": "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5",
       "status": "ok",
-      "tool": "scene_render",
+      "tool": "event_deduce",
       "trace_id": null
     }
   ],
+  "tool_log": {
+    "path": "samples\\nexent\\live\\mcp_tool_log.jsonl",
+    "lines": 2,
+    "file_mtime": "2026-11-03T14:56:17",
+    "container_started_at": "2026-11-03T06:42:45.16205947Z",
+    "snapshot_hashes": [
+      "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5"
+    ]
+  },
   "checks_passed": 8,
   "checks_total": 8,
   "smoke_passed": true,

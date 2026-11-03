@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 from typing import Any, Mapping, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -92,6 +93,10 @@ class UrbanSmokeReport(BaseModel):
     answer: UrbanAgentAnswer | None = None
     checks: list[UrbanCheckItem] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
+    #: 实际用了第几次调用才拿到可解析答案（1 表示一次就过）。
+    attempts_used: int = 0
+    #: 每次失败的原因，按发生顺序；用于区分"偶发协议失败"和"结论真的不对"。
+    attempt_errors: list[str] = Field(default_factory=list)
 
     @property
     def passed(self) -> bool:
@@ -106,32 +111,65 @@ class UrbanSmokeReport(BaseModel):
 
 
 def build_urban_query(payload: Mapping[str, Any]) -> str:
-    """把内涝事件渲染成一条确定性查询；要求 Agent 调工具取证并按 JSON 作答。"""
+    """把内涝事件渲染成一条确定性查询；要求 Agent 调工具取证并按 JSON 作答。
+
+    工具清单必须与 Agent **实际挂载**的工具一致。`urban_deduction_agent` 只挂了
+    `event_deduce` + `evidence_locate`（理由见 deploy/nexent/README.md §7）；早期查询里点名
+    `twin_neighbors` / `conflict_check` / `allocation_plan` 会让模型去调不存在的工具，
+    表现为 `TypeError`、`parallel_executor` 卡死、回答截断在 `<|tool_call_start|>`。
+    """
     event_id = str(payload.get("event_id") or DEFAULT_EVENT_ID)
     as_of = str(payload.get("as_of") or DEFAULT_AS_OF)
     labels = [str(item) for item in payload.get("caller_labels") or DEFAULT_LABELS]
     return "\n".join(
         [
             f"城市内涝跨部门事件：{event_id}，时点 {as_of}，调用方身份 {','.join(labels)}。",
-            "请使用已挂载的 MCP 工具与 Skill 完成六跳推演：",
-            "1) event_deduce 取事件事实与六跳；2) twin_neighbors 取受影响对象；",
-            "3) conflict_check 取职责冲突；4) allocation_plan 取稀缺资源分配与调拨；",
-            "5) 若追问依据，用 evidence_locate 取原文；不得凭记忆编造。",
+            "请使用已挂载的 MCP 工具完成六跳推演：",
+            "1) event_deduce 一次返回六跳全部事实、三类冲突、资源缺口与处置顺序；",
+            "2) 需要核对依据时用 evidence_locate 取原文；不得凭记忆编造。",
+            "除上述两个工具外不要再调用任何工具，也不要使用 python_interpreter 或 parallel_executor。",
             "证据不足或依据不可见时，按工具返回的错误码声明，不得删除依据后照给结论。",
             "严格按下面的 JSON 结构作答（只输出 JSON，不要 Markdown 围栏、不要解释）：",
             URBAN_SCHEMA_HINT,
+            "six_hops 只放六个阶段英文名本身（observed/affected/owner/conflict/resource/action），"
+            "不得写成 \"stage: 描述\" 或带编号；阶段内容放在 summary 与其余字段里。",
             f"event_id 固定填 \"{event_id}\"，as_of 固定填 \"{as_of}\"。",
         ]
     )
+
+
+def _normalize_hops(values: Sequence[str]) -> list[str]:
+    """把 `"observed: 兴华路积水 30cm"` 这类写法归一到阶段名。
+
+    为什么要容错而不是直接判负：模型偶尔把"阶段 + 该跳内容"写进同一个字符串，
+    结论本身是对的（冲突、缺口、顺序都在别的字段里逐项校验过），只是格式漂移。
+    只在冒号/破折号前**恰好是一个合法阶段名**时才截断，其余原样保留，
+    免得把真错误（阶段写错、阶段缺失）洗成通过。
+    """
+    cleaned: list[str] = []
+    for raw in values:
+        text = str(raw).strip()
+        for separator in (":", "：", "—", "->"):
+            head, found, _ = text.partition(separator)
+            if found and head.strip().lower() in DEDUCTION_STAGES:
+                text = head.strip().lower()
+                break
+        else:
+            text = text.lower() if text.lower() in DEDUCTION_STAGES else text
+        if text not in cleaned:
+            cleaned.append(text)
+    return cleaned
 
 
 def parse_urban_answer(text: str) -> UrbanAgentAnswer:
     body = _strip_code_fence(_strip_reasoning_tags(text))
     for candidate in _iter_json_blocks(body):
         try:
-            return UrbanAgentAnswer.model_validate_json(candidate)
+            answer = UrbanAgentAnswer.model_validate_json(candidate)
         except Exception:  # noqa: BLE001 - 换下一个 JSON 块
             continue
+        answer.six_hops = _normalize_hops(answer.six_hops)
+        return answer
     raise UrbanAnswerError("回答中找不到符合 UrbanAgentAnswer 的 JSON")
 
 
@@ -234,8 +272,16 @@ def run(
     as_of: str = DEFAULT_AS_OF,
     labels: Sequence[str] = DEFAULT_LABELS,
     environ: dict[str, str] | None = None,
+    attempts: int = 1,
+    sleep: Any | None = None,
     out=sys.stdout,
 ) -> UrbanSmokeReport:
+    """跑一次主链路验收。
+
+    `attempts > 1` 时只在**协议/调用层面失败**时重试（拿不到可解析 JSON、SSE 报协议错误），
+    绝不在"解析成功但 8 项不一致"时重试——那属于结论错误，重试等于把错误答案刷成通过。
+    每次失败原因都记进 `attempt_errors`，`attempts_used` 如实反映用了几次调用。
+    """
     source = os.environ if environ is None else environ
     missing = [] if settings is not None else [name for name in REQUIRED_ENV if not str(source.get(name, "")).strip()]
     if missing:
@@ -259,31 +305,43 @@ def run(
         "as_of": as_of,
         "caller_labels": list(labels),
     }
-    try:
-        result = invoke(payload)
-    except NexentError as exc:
-        return UrbanSmokeReport(
-            event_id=event_id, as_of=as_of, errors=[f"Nexent 调用失败：{type(exc).__name__}: {exc}"]
-        )
-    conversation_id = result.get("conversation_id")
-    answer_text = result.get("answer") or ""
-    try:
-        answer = parse_urban_answer(answer_text)
-    except UrbanAnswerError as exc:
+    total = max(1, attempts)
+    attempt_errors: list[str] = []
+    for attempt in range(1, total + 1):
+        try:
+            result = invoke(payload)
+        except NexentError as exc:
+            attempt_errors.append(f"第{attempt}次 Nexent 调用失败：{type(exc).__name__}: {exc}")
+            if attempt < total:
+                (sleep or time.sleep)(2.0 * attempt)
+            continue
+        conversation_id = result.get("conversation_id")
+        answer_text = result.get("answer") or ""
+        try:
+            answer = parse_urban_answer(answer_text)
+        except UrbanAnswerError as exc:
+            attempt_errors.append(f"第{attempt}次 {exc}")
+            if attempt < total:
+                (sleep or time.sleep)(2.0 * attempt)
+            continue
+        baseline = offline_baseline(event_id, as_of, labels=labels)
+        checks = compare_with_offline(answer, baseline)
         return UrbanSmokeReport(
             event_id=event_id,
             as_of=as_of,
             conversation_id=conversation_id,
-            errors=[str(exc)],
+            answer=answer,
+            checks=checks,
+            attempts_used=attempt,
+            attempt_errors=attempt_errors,
         )
-    baseline = offline_baseline(event_id, as_of, labels=labels)
-    checks = compare_with_offline(answer, baseline)
+
     return UrbanSmokeReport(
         event_id=event_id,
         as_of=as_of,
-        conversation_id=conversation_id,
-        answer=answer,
-        checks=checks,
+        errors=attempt_errors[-1:],
+        attempts_used=total,
+        attempt_errors=attempt_errors,
     )
 
 
@@ -297,15 +355,24 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--as-of", default=DEFAULT_AS_OF, dest="as_of")
     parser.add_argument("--labels", default=",".join(DEFAULT_LABELS))
     parser.add_argument("--json", dest="json_path", default=None)
+    parser.add_argument(
+        "--attempts",
+        type=int,
+        default=int(os.getenv("NEXENT_URBAN_ATTEMPTS", "1")),
+        help="协议层面失败（拿不到可解析 JSON / SSE 报错）时的最大调用次数；结论不一致不重试",
+    )
     args = parser.parse_args(argv)
 
     report = run(
         event_id=args.event,
         as_of=args.as_of,
         labels=[item for item in args.labels.split(",") if item],
+        attempts=args.attempts,
     )
     if report.errors:
         print("失败：" + "；".join(report.errors))
+        for reason in report.attempt_errors[:-1]:
+            print(f"  · {reason}")
         if any("缺少环境变量" in item or "配置无效" in item for item in report.errors):
             print(
                 "需要：NEXENT_BASE_URL（默认 http://localhost:5013）、NEXENT_API_KEY、NEXENT_AGENT_NAME；\n"
@@ -317,8 +384,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  ! {item.name}: 期望 {item.expected} 实际 {item.actual}")
     print(
         f"Nexent 城市内涝主链路：{sum(1 for c in report.checks if c.passed)}/{len(report.checks)} 项一致；"
-        f"conversation_id={report.conversation_id}"
+        f"conversation_id={report.conversation_id}；attempts={report.attempts_used}"
     )
+    for reason in report.attempt_errors:
+        print(f"  · {reason}")
     if args.json_path:
         from pathlib import Path
 
