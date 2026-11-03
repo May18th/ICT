@@ -1,0 +1,2 @@
+alert_id,issued_at,valid_from,valid_to,level,rainfall_mm_3h,district,source_org,status,description
+WA-PUB-001,2026-11-01T07:30:00+08:00,2026-11-01T08:00:00+08:00,2026-11-01T14:00:00+08:00,orange,60,OSM-中心城区,ORG-METEO,active,合成预警（非真实气象记录）

@@ -1,0 +1,96 @@
+{
+  "schema_version": "urban-twin-scene-v1",
+  "objects": [
+    {
+      "twin_id": "TW-incident-PUB-IN-001",
+      "kind": "incident",
+      "name": "公开场景合成积水",
+      "state": "flooded",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-211822566",
+      "kind": "road",
+      "name": "蜀都大道人民东路",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-25373389",
+      "kind": "road",
+      "name": "人民中路一段",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-28620974",
+      "kind": "road",
+      "name": "新光华街",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-28620975",
+      "kind": "road",
+      "name": "顺城大街",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-114412861",
+      "kind": "road",
+      "name": "红照壁街",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-135980035",
+      "kind": "road",
+      "name": "人民南路二段",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-135980651",
+      "kind": "road",
+      "name": "新光华街",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-458891632",
+      "kind": "road",
+      "name": "人民中路三段",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-461774554",
+      "kind": "road",
+      "name": "人民中路三段",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-576653470",
+      "kind": "road",
+      "name": "顺城大街",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-1309526583",
+      "kind": "road",
+      "name": "大业路",
+      "state": "normal",
+      "attributes": {}
+    },
+    {
+      "twin_id": "TW-road-OSM-1309526584",
+      "kind": "road",
+      "name": "大业路",
+      "state": "normal",
+      "attributes": {}
+    }
+  ]
+}
