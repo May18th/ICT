@@ -1,2 +1,2 @@
 alert_id,issued_at,valid_from,valid_to,level,rainfall_mm_3h,district,source_org,status,description
-WA-PUB-001,2026-11-01T07:30:00+08:00,2026-11-01T08:00:00+08:00,2026-11-01T14:00:00+08:00,orange,60,OSM-中心城区,ORG-METEO,active,合成预警（非真实气象记录）
+WA-CNR-20200811-20,2020-08-11T13:50:00+08:00,2020-08-11T13:50:00+08:00,2020-08-11T16:50:00+08:00,orange,50,成都市金牛区等8区,成都市气象台,active,真实公开记录：第20号暴雨黄色预警升级为橙色，未来3小时累计雨量可达50mm以上（来源 https://news.cnr.cn/native/city/20200811/t20200811_525201661.shtml）
