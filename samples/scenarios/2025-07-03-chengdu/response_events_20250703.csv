@@ -1,0 +1,2 @@
+event_id,decided_at,from_level,to_level,authority,deciding_basis,trigger_facts,source_url,source_type,note
+RESP-CD-20250703-1800,2025-07-03T18:00:00+08:00,none,三级,成都市防汛抗旱指挥部,《成都市防汛抗旱应急预案（2025年2月修订）》,17:10 暴雨红色预警；中心城区特大暴雨、7 个隧道积水,https://www.sohu.com/a/910430386_122177654,media_reprint,真实响应：18:00 起启动三级应急响应；预警信号（17:10）与响应级别（18:00）是两套体系
