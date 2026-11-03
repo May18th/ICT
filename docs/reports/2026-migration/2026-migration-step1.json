@@ -1,0 +1,58 @@
+{
+  "step": 1,
+  "pdf_sha256": "a909aa84e50af3424510d12a0c05b138484823d35aef2bbcc6abd13ee948f416",
+  "pdf_page_checks": {
+    "p45_12h100": true,
+    "p45_red_warning": true,
+    "p76_6h50": true,
+    "p76_12h100": true,
+    "p76_24h150": true,
+    "p76_24h250": true,
+    "p76_orange_warning": true,
+    "p76_red_warning": true
+  },
+  "candidate_asset": "D:\\华为ICT\\blender-ue-scene\\out\\public_raw\\plan_flood_emergency_cd_2026.candidate.md",
+  "candidate_lines": 26,
+  "rules_draft": "D:\\华为ICT\\blender-ue-scene\\out\\public_raw\\plan_flood_emergency_cd_2026.rules_draft.json",
+  "rules": [
+    {
+      "rule_id": "RULE-CITY26-RESP-BLUE",
+      "line": 12,
+      "keyword": "6小时普降50毫米",
+      "line_text": "四级响应（蓝色）：全市 8 个以上区（市）县 6 小时普降 50 毫米以上暴雨，且强降雨仍在持续。",
+      "hit": true
+    },
+    {
+      "rule_id": "RULE-CITY26-RESP-YELLOW",
+      "line": 14,
+      "keyword": "12小时普降100毫米",
+      "line_text": "三级响应（黄色）：全市 8 个以上区（市）县 12 小时普降 100 毫米以上大暴雨，且强降雨仍在持续。",
+      "hit": true
+    },
+    {
+      "rule_id": "RULE-CITY26-RESP-ORANGE",
+      "line": 15,
+      "keyword": "24小时普降150毫米",
+      "line_text": "二级响应（橙色）：全市 8 个以上区（市）县 24 小时普降 150 毫米以上大暴雨，且强降雨仍在持续。",
+      "hit": true
+    },
+    {
+      "rule_id": "RULE-CITY26-RESP-RED",
+      "line": 16,
+      "keyword": "24小时普降250毫米",
+      "line_text": "一级响应（红色）：全市 8 个以上区（市）县 24 小时普降 250 毫米以上特大暴雨。",
+      "hit": true
+    },
+    {
+      "rule_id": "RULE-CITY26-WARN-TO-RESPONSE",
+      "line": 11,
+      "keyword": "发布暴雨橙色预警",
+      "line_text": "四级响应（蓝色）：市气象台发布暴雨橙色预警。",
+      "hit": true
+    }
+  ],
+  "all_hit": true,
+  "frozen_numbers_touched": false,
+  "next_step": "注册候选资产为第 18 个资产 → 6 条规则并入共享库 → 冻结数字一次性同步（18/18 + 指纹）",
+  "design_rule": "city_response_level 与属地 response_level 分两层，禁止互相覆盖"
+}
