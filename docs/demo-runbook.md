@@ -209,6 +209,16 @@ uv run --locked python -m decision_poc.web_demo --port 8787
 下面是**工具调用日志**面板，每条带 `origin`：`manual` = 人点的，`mcp` = 智能体调的。
 这一栏是"谁触发了渲染"的唯一证据，演示时不要藏起来。
 
+#### LLM 决策按钮（可选，真调 DeepSeek）
+
+工具栏的「LLM 决策（DeepSeek）」按钮走 `/api/llm-decision`：用例固定 N01，选项与参照项由确定性推演
+（直接复用 `llm_ab.build_task`）生成，模型调用与 P8 A/B 同一条 `generate_decision_live` 路径，temperature 钉 0。
+
+- 未配置 `DECISION_LLM_PROVIDER=deepseek` + `DEEPSEEK_API_KEY` 时返回 `configured=false`，页面显示"未配置"，不影响其余演示；
+- 卡片顶部固定显示 Nexent 平台真机验证行（`/api/platform-evidence`，只读 `samples/nexent/live/llm_decision_platform.json`）；
+- 平台侧模型温度无法钉 0，真机会漂移（N01 三次分别选 opt-2 / opt-1），页面按"与参照不一致"如实展示——
+  这正是"优先级必须由确定性推演掌握"的证据，不要改成全部一致的口径。
+
 ### 2. 让智能体触发（MCP 侧）
 
 ```powershell

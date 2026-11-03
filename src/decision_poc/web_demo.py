@@ -19,6 +19,7 @@ from urllib.parse import parse_qs, urlparse
 
 from . import review_collect as reviews
 from . import visualize
+from . import web_llm
 from .deduction import DistrictSignal
 from .evolution_demo import build_evolution_html, build_evolution_payload
 from .skills import SkillPipeline, SkillRuntime
@@ -95,12 +96,13 @@ def build_demo_payload(*, event_id: str = EVENT_ID, as_of: str = AS_OF) -> dict[
 def build_html() -> str:
     return """<!doctype html><html lang=zh-CN><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Urban Twin</title>
 <style>body{font:15px system-ui;margin:0;background:#0b1220;color:#e8eef7}main{max-width:1180px;margin:auto;padding:28px}h1{color:#7dd3fc;margin-bottom:4px}.sub{color:#9fb1c8}.toolbar{display:flex;gap:12px;align-items:center;margin:22px 0}button{background:#38bdf8;border:0;border-radius:6px;padding:10px 18px;font-weight:700;cursor:pointer}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.card{background:#152238;border:1px solid #263a55;border-radius:10px;padding:16px}.card h2{font-size:17px;margin:0 0 12px;color:#bae6fd}.metric{display:inline-block;background:#20344d;border-radius:7px;padding:10px;margin:0 8px 8px 0}.metric b{display:block;font-size:22px;color:#7dd3fc}.pill{display:inline-block;background:#334155;padding:3px 8px;border-radius:99px;margin:3px;font-size:12px}.warn{color:#fbbf24}.ok{color:#86efac}.trace{border-left:2px solid #38bdf8;padding-left:12px;margin:8px 0}.evidence{font-size:12px;color:#b8c7d9;word-break:break-all}svg{width:100%;height:330px;background:#0e1a2c;border-radius:8px}.road{stroke:#64748b;stroke-width:8}.pipe{stroke:#f97316;stroke-width:3;stroke-dasharray:7 5}.flood{fill:#38bdf8;opacity:.35}.node{fill:#fbbf24;stroke:#fff;stroke-width:2}.navlink{color:#7dd3fc;text-decoration:none;margin-left:auto;font-weight:600}@media(max-width:800px){.grid{grid-template-columns:1fr}}</style>
-<main><h1>城市内涝跨部门事件推演</h1><div class=sub>暴雨 + 道路封闭 + 地下管线施工冲突 · 证据链可追溯</div><div class=toolbar><button onclick="run()">运行演示</button><button class=ghost onclick="renderScene('v1')">渲染基线 v1</button><button class=ghost onclick="renderScene('v4')">渲染进化 v4</button><button class=ghost onclick="diffScenes()">对比两版</button><span id=status>等待运行</span><a class=navlink href='/evolution'>决策进化对比 →</a></div><section id=summary class=card><h2>事件概览</h2><div id=metrics>点击“运行演示”加载推演结果</div></section><div class=grid><section class=card><h2>数字孪生影响范围</h2><svg viewBox='0 0 700 330' aria-label='影响范围示意图'><path class=road d='M40 260 L660 70 M40 80 L660 260'/><path class=pipe d='M80 250 L400 160 L630 150'/><ellipse class=flood cx=350 cy=165 rx=130 ry=80/><circle class=node cx=350 cy=165 r=8/><text x=365 y=160 fill='#e8eef7'>A-03 积水区</text></svg><div id=assets></div></section><section class=card><h2>跨部门协同</h2><div id=departments></div><h2>资源与风险</h2><div id=risks></div></section></div><section class=card style='margin-top:16px'><h2>推理链路与证据</h2><div id=trace></div></section>
+<main><h1>城市内涝跨部门事件推演</h1><div class=sub>暴雨 + 道路封闭 + 地下管线施工冲突 · 证据链可追溯</div><div class=toolbar><button onclick="run()">运行演示</button><button class=ghost onclick="renderScene('v1')">渲染基线 v1</button><button class=ghost onclick="renderScene('v4')">渲染进化 v4</button><button class=ghost onclick="diffScenes()">对比两版</button><button class=ghost onclick="runLLM()">LLM 决策（DeepSeek）</button><span id=status>等待运行</span><a class=navlink href='/evolution'>决策进化对比 →</a></div><section id=summary class=card><h2>事件概览</h2><div id=metrics>点击“运行演示”加载推演结果</div></section><div class=grid><section class=card><h2>数字孪生影响范围</h2><svg viewBox='0 0 700 330' aria-label='影响范围示意图'><path class=road d='M40 260 L660 70 M40 80 L660 260'/><path class=pipe d='M80 250 L400 160 L630 150'/><ellipse class=flood cx=350 cy=165 rx=130 ry=80/><circle class=node cx=350 cy=165 r=8/><text x=365 y=160 fill='#e8eef7'>A-03 积水区</text></svg><div id=assets></div></section><section class=card><h2>跨部门协同</h2><div id=departments></div><h2>资源与风险</h2><div id=risks></div></section></div><section class=card style='margin-top:16px'><h2>推理链路与证据</h2><div id=trace></div></section>
 <style>.ghost{background:#1e3a55;color:#bae6fd}#log{max-height:360px;overflow:auto;font:12px ui-monospace,monospace}.logrow{padding:6px 8px;border-bottom:1px solid #1e3250;white-space:nowrap}.logrow .mcp{color:#86efac}.logrow .manual{color:#fbbf24}#panel{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}#comparebody{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}</style>
 <div class=grid style='margin-top:16px'>
 <section class=card><h2>当前渲染作业（UE 拉取的就是它）</h2><div id=panel>尚未渲染</div></section>
 <section class=card><h2>工具调用日志（谁触发了渲染）</h2><div id=log><span class=warn>暂无调用记录</span></div></section>
 </div>
+<section id=llmcard class=card style='margin-top:16px;display:none'><h2>LLM 决策对照（DeepSeek，temperature=0）</h2><div id=llmbody style='font:13px ui-monospace,monospace;color:#cfe3f7'></div></section>
 <section id=comparecard class=card style='margin-top:16px;display:none'><h2>策略对比</h2><div id=comparebody></div></section></main>
 <script>const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function list(v){return (v||[]).map(x=>'<span class=pill>'+esc(typeof x==='string'?x:(x.name||x.id||JSON.stringify(x)))+'</span>').join('')||'<span class=warn>无</span>'}
@@ -120,7 +122,22 @@ async function diffScenes(){if(!lastV1||!lastV4){status.textContent='先各渲�
  comparebody.textContent=c.verdict+NL+NL+'分配差异：'+NL+rows+NL+NL+'高亮新增: '+((c.scene.highlights_added||[]).join(', ')||'无');loadLog()}
 async function loadLog(){const r=await fetch('/api/tool-log?limit=30');const d=await r.json();
  log.innerHTML=(d.entries||[]).slice().reverse().map(e=>'<div class=logrow><span class="'+esc(e.origin||'mcp')+'">['+esc(e.origin||'mcp')+']</span> '+esc(e.tool)+' <span class=ok>'+esc(e.status)+'</span>'+(e.policy_version?' · '+esc(e.policy_version):'')+(e.snapshot_id?' · '+esc(String(e.snapshot_id).slice(0,14)):'')+'</div>').join('')||'<span class=warn>暂无调用记录</span>'}
-loadLog();</script></html>"""
+async function runLLM(){status.textContent='LLM 决策中…（约 4-8 秒）';
+ const r=await fetch('/api/llm-decision');const d=await r.json();
+ llmcard.style.display='';
+ if(!d.configured){llmbody.innerHTML='<span class=warn>未配置真实模型：'+esc(d.reason)+'</span><br>'+esc(d.hint);status.textContent='LLM 未配置';return}
+ if(d.status==='error'){llmbody.innerHTML='<span class=warn>调用失败: '+esc(d.error)+'</span>';status.textContent='LLM 调用失败';return}
+ const NL=String.fromCharCode(10);
+ const mark=d.selected_match?'<span class=ok>与确定性参照一致</span>':'<span class=warn>与确定性参照不一致（参照 '+esc(d.expected_option_id)+'）</span>';
+ llmbody.innerHTML='<b>'+esc(d.selected_option_id)+'</b> '+esc(d.selected_description)+'<br>'+mark+' · 置信度 '+esc(d.confidence)+' · 风险 '+esc(d.risk_level)+' · 时延 '+esc(d.latency_ms)+'ms · 模型 '+esc(d.model)+'（t='+esc(d.temperature)+'）<br><b>摘要：</b>'+esc(d.summary)+'<br><b>风险：</b>'+esc(d.risks.join('；'))+'<br><b>引用证据：</b>'+esc(d.evidence_cited)+' 条';
+ status.textContent='LLM 决策完成';loadLog()}
+async function loadPlatform(){try{const r=await fetch('/api/platform-evidence');const d=await r.json();
+ if(!d.available){return}
+ const p=d.record;const NL=String.fromCharCode(10);
+ const agree=p.selected_match?'<span class=ok>与参照一致</span>':'<span class=warn>与参照不一致（真机温度未钉 0 会漂移，印证推演定优先级）</span>';
+ llmcard.style.display='';
+ llmbody.innerHTML='<b>Nexent 平台真机验证</b>（Agent '+esc(p.agent_name)+' · '+esc(p.case_id)+' · schema '+(p.schema_valid?'<span class=ok>合法</span>':'<span class=warn>失败</span>')+'）<br>选中 <b>'+esc(p.selected_option_id||'-')+'</b>（参照 '+esc(p.expected_option_id)+'）· '+agree+' · 时延 '+esc(p.latency_ms)+'ms<br><span class=evidence>'+esc(p.method||'')+'</span>';}catch(e){}}
+loadPlatform();loadLog();</script></html>"""
 
 
 # --- 可视化端点 -----------------------------------------------------------
@@ -328,6 +345,23 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return _json(review_payload())
     if segments[:2] == ["api", "demo"]:
         return _json(build_demo_payload())
+
+    if segments[:2] == ["api", "llm-decision"]:
+        # 可选端点：配置了 DeepSeek 才会真调模型，否则返回 configured=false 优雅降级。
+        return _json(web_llm.llm_decision_payload())
+
+    if segments[:2] == ["api", "platform-evidence"]:
+        # Nexent 平台真机验证证据（发布时固化的 JSON，只读）。
+        evidence_path = (
+            Path(__file__).resolve().parents[2]
+            / "samples" / "nexent" / "live" / "llm_decision_platform.json"
+        )
+        if not evidence_path.is_file():
+            return _json({"available": False})
+        try:
+            return _json({"available": True, "record": json.loads(evidence_path.read_text(encoding="utf-8"))})
+        except (OSError, json.JSONDecodeError) as exc:
+            return _error(f"平台证据读取失败: {exc}", 500)
 
     if segments[:2] == ["api", "tool-log"]:
         limit = int((query.get("limit") or ["30"])[0])
