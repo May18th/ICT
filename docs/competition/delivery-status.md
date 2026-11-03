@@ -11,7 +11,7 @@
 | **已完成** | 有产物 + 有命令/测试能当场验证 | 复现脚本、真机 8/8、两条负例 |
 | **部分完成** | 主链路通了，但缺验收条件（单环境、缺截图、缺绑定等） | 可视化闭环（只本机）、真机回归（单事件） |
 | **设计中** | 有设计/有代码，但**没有进入主链路或没有验收证据** | 多智能体协同、定量层 |
-| **未开始** | 只有想法或只有别人家的模板 | PPT、录屏、公网 Demo、真实用户评分 |
+| **未开始** | 只有想法或只有别人家的模板 | PPT、录屏、真实用户评分 |
 
 ## 1. 交付物矩阵
 
@@ -20,7 +20,7 @@
 | 模板 1 作品信息收集表（Word） | 初赛唯一提交物，需按官方版式 | 内容稿已成稿并可重生成（六页：五考点/数据集/关键代码/指标/截图/边界），**官方版式未套** | 部分完成 | `docs/competition/初赛作品信息收集表-内容稿-v0.1.docx`；`scripts/build_preliminary_docx.py` | 用户侧（官方模板原文未入仓） | 套官方模板后导出 PDF，逐项对照官方要求打勾 |
 | 项目 PPT（初赛） | 覆盖背景/价值/创新/数据/代码/指标 | **无任何 `.pptx`** | 未开始 | 全仓 `*.pptx` 检索为空 | 我方 | 10 页内，含主线三卖点 + 一屏业务价值 + 负例截图 |
 | 模板 2 答辩 PPT | 决赛 | 无 | 未开始 | — | 我方 | 进决赛后再做，初赛不投入 |
-| 公网 Demo 地址 | 可访问演示地址 | 仅 `localhost:8787`（`web_demo` 可起，页面无外部依赖） | 未开始 | `python -m decision_poc.web_demo --port 8787` | 我方（需一台可访问机器/隧道） | 外网打开 `/evolution` 与 `/` 两页，录一次屏 |
+| 公网 Demo 地址 | 可访问演示地址 | 已发布：`https://urban-twin-demo.app.workbuddy.host/?sharecode=K4MXY6WYTS`（发布包 `agent_poc/deploy-webdemo/`，`src`+`samples` 与仓库逐字节一致） | 已完成 | 2026-11-04 复验：`/`、`/evolution`、`/api/demo`、`/api/llm-decision`、`/api/platform-evidence` 全 200；`/api/llm-decision` 公网真调 DeepSeek 选中 `opt-3`=确定性参照（t=0、约 4.1s）；平台真机证据 `available:true` | — | 用**完整含 `?sharecode=`** 的链接在真实浏览器打开并录屏（卡片内嵌预览不带 sharecode，会显示 Not Found，属已知限制） |
 | 完整代码 + 数据集 | 可复现、开源 | 已推 `origin/main`；`LICENSE`（MIT）、`scripts/reproduce.py` 均在仓 | 已完成 | `git log -1`；`LICENSE`；`scripts/reproduce.py` | — | 干净 clone 后按 README 跑 `reproduce.py` 全绿 |
 | 开源截图 | 决赛材料 | 仓库已公开、`LICENSE` 已入库；平台界面截图已有 4 张 | 部分完成 | `docs/reports/captures/`；`platform_ui.json`（sha256 进自检） | 我方 | 界面截图 + 开源协议页截图一起入 PPT |
 | README / 部署说明 | 一键复现 | README 有本地快速开始；**Nexent 部署说明仍是本机 docker 手工步骤** | 部分完成 | `README.md`、`docs/demo-runbook.md` | 我方 | 一页 `deploy/nexent/README.md` 能从零起平台并跑 8/8 |
@@ -74,7 +74,7 @@
 | P1 | 3 个事件真机回归 | 0.5 人日 | 平台在线 | 3 份 id + 逐条比对表 |
 | P1 | 初赛 PPT（10 页内） | 1 人日 | P0 前三项 | 用主线文档取话术，不另写 |
 | P1 | 真实用户评分 3–5 人 | 1 人日（含组织） | 用户侧找人 | `reviews/` 有数据 + 汇总 |
-| P2 | 公网 Demo | 0.5–1 人日 | 一台可外网访问机器 | 外网 URL 可开两页 |
+| — | 公网 Demo（**已完成** 2026-11-04） | — | — | 发布通道 WorkBuddy SitesDeploy；复验记录见 §1"公网 Demo 地址"行 | 外网可开 `/`、`/evolution`、`/api/llm-decision`、`/api/platform-evidence` 四个端点 |
 | P2 | 定量层接管跳 5 缺口（含数字一次改全） | 2–3 人日 | §3 三个台账字段 | 六跳缺口可公式复算 + changelog |
 | P2 | `collab_run` 注册 + 平台真机 | 1–2 人日 | 平台在线 | 平台调用日志含 `collab_run` |
 
