@@ -7,14 +7,17 @@
 |---|---|
 | 对外数字自检 | **106/106 项一致**，期望指纹 `db4af83c9449a498` |
 | 测试 | `743 passed` |
-| 期望文件 | `samples\eval\evidence_expectations.json` |
-| P8 期望 assets_total / assets_parsed | None / None |
-| P8 期望 cases_passed / cases_failed | None / None |
+| 期望文件 | `samples/eval/evidence_expectations.json` |
 | urban 资产数（manifest） | 17 |
 | 共享规则数 | 38（其中真实来源 6） |
 
+## P8 资产口径（迁移后按实测同步）
+- `assets_total` / `assets_parsed` 的期望值位于 `samples/eval/evidence_expectations.json`，迁移前实测值由
+  `scripts/run_evidence_check.py`（或等价入口）输出的 `p8_eval` 段给出：当前自检 **106/106 全部一致**，
+  说明期望 == 实测；迁移后**先跑 P8 取实测**，再改期望，不允许反向迁就实现。
+
 ## 迁移后需同步的位置（清单，本文件不修改）
-1. 期望文件 → `p8_eval.assets_total/assets_parsed`（按 P8 实测，不迁就实现）；
+1. `samples/eval/evidence_expectations.json` → `p8_eval.assets_total/assets_parsed`（按 P8 实测）；
 2. `README.md:123/377/388`（资产口径；**不要动 89/94 的 17/17 步骤数**）；
 3. `docs/competition-gap-audit.md:32`；
 4. `samples/assets/urban/README.md` 资产表；
