@@ -1,0 +1,69 @@
+# 城市孪生 MCP 服务的编排单元。
+#
+# 为什么只编排自己这一个服务、不把 Nexent 全栈写进来：
+# Nexent 有自己的 compose（`nexent-src/docker/`）和升级节奏，重复声明会版本漂移；
+# 我们只在它的 `nexent_network` 上加进来，容器名互访（MCP 地址 `http://urban-twin-mcp:8000/sse`）。
+#
+# 用法：
+#   docker compose -f deploy/docker-compose.mcp.yml up -d
+#   docker compose -f deploy/docker-compose.mcp.yml ps
+#   docker compose -f deploy/docker-compose.mcp.yml logs -f mcp
+#
+# 前置：Nexent 全栈已起，`docker network ls` 里能看到 nexent_network。
+
+name: urban-twin
+
+services:
+  mcp:
+    image: urban-twin-mcp:dev
+    build:
+      # 构建需要能拉 python:3.12-slim；离线环境请先在联网机器上 build 再导入镜像
+      context: ..
+      dockerfile: deploy/mcp_sse/Dockerfile
+    container_name: urban-twin-mcp
+    restart: unless-stopped
+    # 与镜像 CMD 保持一致，写在这里是为了「容器实际启动参数」在编排文件里可见，
+    # 避免有人手工 docker run 时改了端口/参数而编排文件失真
+    command:
+      - python
+      - -m
+      - decision_poc.mcp_sse
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    networks:
+      - nexent_network
+    # 宿主机调试口：只绑 127.0.0.1，且避开 8000。
+    # 8000 在 nexent 网络里被 supabase-kong 占着（kong 未发布到宿主，但它一旦发布就会冲突）；
+    # 容器间调用仍走 http://urban-twin-mcp:8000/sse，不依赖这条映射。
+    ports:
+      - "127.0.0.1:18000:8000"
+    # 工具调用日志与渲染产物落到宿主，取证不必再 docker cp（沙箱里 docker cp 常被管道权限拦）
+    # 目标路径对齐 src/decision_poc/visualize.py 的 DEFAULT_VISUAL_ROOT（容器内 /app/artifacts/visual）
+    volumes:
+      - ../artifacts/visual:/app/artifacts/visual
+    healthcheck:
+      # 判据是"13 个工具都在"，而不是"进程没死"：容器活着但工具没注册
+      # 时平台侧只会表现为"智能体变笨"，不会报错
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import json, sys, urllib.request
+          data = json.loads(urllib.request.urlopen("http://127.0.0.1:8000/health", timeout=4).read())
+          sys.exit(0 if data.get("tools_count") == 13 else 1)
+      interval: 30s
+      timeout: 8s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  nexent_network:
+    external: true
