@@ -1,0 +1,92 @@
+{
+  "version": "urban-rules-2026-draft",
+  "base": "samples/rules/urban_deduction_rules.json（38 条，共享库）",
+  "adds": [
+    {
+      "rule_id": "RULE-CITY26-RESP-BLUE",
+      "stage": "observed",
+      "when": {
+        "rain_6h_mm": [
+          "50"
+        ]
+      },
+      "then": {
+        "city_response_level": "Ⅳ级（蓝色）"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_cd_2026.md#CD-CITY/emergency_plan/2026#line:12",
+      "keyword": "6小时普降50毫米",
+      "assumption": false
+    },
+    {
+      "rule_id": "RULE-CITY26-RESP-YELLOW",
+      "stage": "observed",
+      "when": {
+        "rain_12h_mm": [
+          "100"
+        ]
+      },
+      "then": {
+        "city_response_level": "Ⅲ级（黄色）"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_cd_2026.md#CD-CITY/emergency_plan/2026#line:14",
+      "keyword": "12小时普降100毫米",
+      "assumption": false
+    },
+    {
+      "rule_id": "RULE-CITY26-RESP-ORANGE",
+      "stage": "observed",
+      "when": {
+        "rain_24h_mm": [
+          "150"
+        ]
+      },
+      "then": {
+        "city_response_level": "Ⅱ级（橙色）"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_cd_2026.md#CD-CITY/emergency_plan/2026#line:15",
+      "keyword": "24小时普降150毫米",
+      "assumption": false
+    },
+    {
+      "rule_id": "RULE-CITY26-RESP-RED",
+      "stage": "observed",
+      "when": {
+        "rain_24h_mm": [
+          "250"
+        ]
+      },
+      "then": {
+        "city_response_level": "Ⅰ级（红色）"
+      },
+      "priority": 10,
+      "confidence": 0.95,
+      "source_ref": "plan_flood_emergency_cd_2026.md#CD-CITY/emergency_plan/2026#line:16",
+      "keyword": "24小时普降250毫米",
+      "assumption": false
+    },
+    {
+      "rule_id": "RULE-CITY26-WARN-TO-RESPONSE",
+      "stage": "observed",
+      "when": {
+        "warning_level": [
+          "orange",
+          "red"
+        ]
+      },
+      "then": {
+        "city_response_note": "2026 版将暴雨预警列为响应启动条件：橙色→四级（蓝）、红色→三级（黄）；与属地 25cm 封路判据分属两层，不得互相覆盖"
+      },
+      "priority": 15,
+      "confidence": 0.9,
+      "source_ref": "plan_flood_emergency_cd_2026.md#CD-CITY/emergency_plan/2026#line:11",
+      "keyword": "发布暴雨橙色预警",
+      "assumption": false
+    }
+  ]
+}
