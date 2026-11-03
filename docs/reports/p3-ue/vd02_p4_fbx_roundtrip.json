@@ -1,0 +1,202 @@
+{
+  "schema_version": "vd02-fbx-roundtrip-v1",
+  "tolerance_m": 0.05,
+  "checked": 6,
+  "passed": 6,
+  "failed": 0,
+  "items": [
+    {
+      "twin_id": "TW-drainage-DF-PS-01",
+      "file": "TW-drainage-DF-PS-01.fbx",
+      "meshes": 37,
+      "tris": 588,
+      "got_bbox": [
+        380.0,
+        949.7,
+        -4.0,
+        500.0,
+        970.0,
+        6.6
+      ],
+      "want_bbox": [
+        380.0,
+        949.7,
+        -4.0,
+        500.0,
+        970.0,
+        6.6
+      ],
+      "delta_m": [
+        0.0,
+        0.0,
+        -0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "max_delta_m": 0.0,
+      "ok": true
+    },
+    {
+      "twin_id": "TW-drainage-DF-PS-02",
+      "file": "TW-drainage-DF-PS-02.fbx",
+      "meshes": 45,
+      "tris": 732,
+      "got_bbox": [
+        900.0,
+        399.7,
+        -4.0,
+        946.8,
+        420.0,
+        6.6
+      ],
+      "want_bbox": [
+        900.0,
+        399.7,
+        -4.0,
+        946.8,
+        420.0,
+        6.6
+      ],
+      "delta_m": [
+        0.0,
+        0.0,
+        -0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "max_delta_m": 0.0,
+      "ok": true
+    },
+    {
+      "twin_id": "TW-drainage-DF-PS-03",
+      "file": "TW-drainage-DF-PS-03.fbx",
+      "meshes": 40,
+      "tris": 608,
+      "got_bbox": [
+        5.0,
+        379.7,
+        -4.0,
+        76.8,
+        400.0,
+        6.6
+      ],
+      "want_bbox": [
+        5.0,
+        379.7,
+        -4.0,
+        76.8,
+        400.0,
+        6.6
+      ],
+      "delta_m": [
+        0.0,
+        0.0,
+        -0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "max_delta_m": 0.0,
+      "ok": true
+    },
+    {
+      "twin_id": "TW-incident-V2-IN-A1",
+      "file": "TW-incident-V2-IN-A1.fbx",
+      "meshes": 2,
+      "tris": 24,
+      "got_bbox": [
+        30.0,
+        500.0,
+        -0.95,
+        60.0,
+        530.0,
+        -0.58
+      ],
+      "want_bbox": [
+        30.0,
+        500.0,
+        -0.95,
+        60.0,
+        530.0,
+        -0.58
+      ],
+      "delta_m": [
+        0.0,
+        0.0,
+        -0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "max_delta_m": 0.0,
+      "ok": true
+    },
+    {
+      "twin_id": "TW-road-V2-R-MAIN",
+      "file": "TW-road-V2-R-MAIN.fbx",
+      "meshes": 1,
+      "tris": 12,
+      "got_bbox": [
+        0.0,
+        480.0,
+        -0.9,
+        1000.0,
+        530.0,
+        -0.6
+      ],
+      "want_bbox": [
+        0.0,
+        480.0,
+        -0.9,
+        1000.0,
+        530.0,
+        -0.6
+      ],
+      "delta_m": [
+        0.0,
+        0.0,
+        -0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "max_delta_m": 0.0,
+      "ok": true
+    },
+    {
+      "twin_id": "TW-road-V2-R-SEC",
+      "file": "TW-road-V2-R-SEC.fbx",
+      "meshes": 2,
+      "tris": 24,
+      "got_bbox": [
+        470.0,
+        0.0,
+        -0.8,
+        510.0,
+        1000.0,
+        -0.5
+      ],
+      "want_bbox": [
+        470.0,
+        0.0,
+        -0.8,
+        510.0,
+        1000.0,
+        -0.5
+      ],
+      "delta_m": [
+        0.0,
+        0.0,
+        -0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "max_delta_m": 0.0,
+      "ok": true
+    }
+  ],
+  "note": "把 FBX 重新导入空场景比对绑定 bbox；通过即说明导出链无 100 倍单位错误。管线三件套不在 binding 里，另见 export 报告。"
+}
