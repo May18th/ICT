@@ -99,11 +99,26 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望：对外数字自检：106/106 项一致（期望指纹 65e58b1e98039670）
+# 期望：对外数字自检：106/106 项一致（期望指纹 f9c0c592703a449f）
 ```
 
 期望值冻结在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/答辩口径，
 不允许为过检放宽期望。报告见 [对外数字自检报告](docs/reports/evidence-check-report.md)。
+
+数据门禁：逐条核对**数据来源分级、高程基准、跨字段一致性**，不通过即退出码 1：
+
+```powershell
+$env:PYTHONPATH = "src"
+uv run --locked python -m decision_poc.data_gate
+# 期望：PASS facts=60 errors=0 warns=1
+```
+
+它回答的是另外三个模块都不回答的问题：这份数据里哪一条是实测、哪一条是推导、哪一条是假设。
+`deduction.verify_rules` 只校规则出处，`provenance` 只校运行时 claim，`evidence_check` 只校对外数字，
+三者都不管"CSV 里这个数到底是台账还是占位"。来源标注写在 `samples/gate/data_provenance.json`，
+**不改数据集 CSV**——改 CSV 会让 `manifest.json` 指纹和上面的 106/106 一起漂。
+眼下唯一的 warn 是「50 条未逐条标注来源，按数据集自述记为 synthetic」：这是当前真实状况，
+不是可以忽略的提示，对外材料不得把这一批说成实测值。
 
 运行技术基线：
 
@@ -422,7 +437,7 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **745 项**测试通过；`python -m decision_poc.evidence_check` 106/106 项一致；
+当前基线：`uv run --locked pytest -q` 共 **769 项**测试通过；`python -m decision_poc.evidence_check` 106/106 项一致；
 城市内涝主链路 Nexent 真机校验 8/8（`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。
 P0-P10 的验收口径与实测数字见各阶段回传报告（`docs/reports/`）。
