@@ -1,0 +1,61 @@
+{
+  "schema_version": "data-provenance-1",
+  "dataset": "samples/assets/urban",
+  "default_level": "synthetic",
+  "default_basis": "数据集自述为演示合成数据（urban_dataset.py 模块 docstring），且本条未逐条标注来源；对外不得当作实测台账引用",
+  "note": "只给两类打标注：① 高程基准（不标就无法判断是否混用两套基准）；② 已知为假设值的条目（原文写在 CSV 的 note 里，这里变成机器可读）。其余落到 default_level 并在报告里如实计数，不假装已确认。",
+  "entries": [
+    {
+      "entity_id": "road:R-101",
+      "field": "elevation_m",
+      "datum": "site_relative"
+    },
+    {
+      "entity_id": "road:R-102",
+      "field": "elevation_m",
+      "datum": "site_relative"
+    },
+    {
+      "entity_id": "road:R-103",
+      "field": "elevation_m",
+      "datum": "site_relative"
+    },
+    {
+      "entity_id": "road:R-104",
+      "field": "elevation_m",
+      "datum": "site_relative"
+    },
+    {
+      "entity_id": "road:R-105",
+      "field": "elevation_m",
+      "datum": "site_relative"
+    },
+    {
+      "entity_id": "road:R-201",
+      "field": "elevation_m",
+      "datum": "site_relative"
+    },
+    {
+      "entity_id": "road:R-202",
+      "field": "elevation_m",
+      "datum": "site_relative"
+    },
+    {
+      "entity_id": "underpass:UP-XH-101",
+      "field": "lowest_point_z_m",
+      "datum": "site_relative"
+    },
+    {
+      "entity_id": "underpass:UP-XH-101",
+      "field": "entry_sill_height_m",
+      "level": "assumption",
+      "basis": "underpasses.csv 同一行 note 明写「挡水槛与封控阈值为假设值，待核实」；无公开口径，需甲方核实后改为 real"
+    },
+    {
+      "entity_id": "underpass:UP-XH-101",
+      "field": "close_threshold_m",
+      "level": "assumption",
+      "basis": "underpasses.csv 同一行 note 明写「挡水槛与封控阈值为假设值，待核实」；数值与预案封路阈值 25cm 相同，但隧道专用封控标准未见公开口径"
+    }
+  ]
+}
