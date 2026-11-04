@@ -268,7 +268,17 @@ def _reset() -> None:
 def build_scene(
     layout: dict, flags: dict[str, bool], scenario: str, focus: str | None = None
 ) -> dict[str, int]:
-    counts = {"road": 0, "pipeline": 0, "facility": 0, "building": 0, "water": 0, "cone": 0}
+    counts = {
+        "road": 0,
+        "pipeline": 0,
+        "facility": 0,
+        "building": 0,
+        "water": 0,
+        "cone": 0,
+        "construction_fence": 0,
+        "excavation": 0,
+        "exposed_pipeline": 0,
+    }
     # 标签与锥桶的尺寸随取景窗口缩放：窗口 1000m 时按 1.0 倍，600m 时按 0.6 倍。
     # 写死绝对尺寸的话，换个取景尺度就有的是天那么大、有的是看不见。
     focus_district = _focus_district(layout, focus)
@@ -410,12 +420,35 @@ def build_scene(
                     (length * 0.55, 0.35, 4.0), angle, cone_material, "Construction",
                 )
                 _tag(fence, twin_id=f"TW-work_site-fence-{road['road_id']}-{side}", kind="construction_fence", state="active")
+                counts["construction_fence"] += 1
             pit = _box(
                 f"Excavation_{road['road_id']}",
                 ((start["x"] + end["x"]) / 2, (start["y"] + end["y"]) / 2, road["z"] - 1.2),
                 (length * 0.35, road["width_m"] * 1.8, 2.4), angle, ground_material, "Construction",
             )
             _tag(pit, twin_id=f"TW-excavation-{road['road_id']}", kind="excavation", state="open")
+            counts["excavation"] += 1
+
+            for pipeline in layout["pipelines"]:
+                if pipeline["road_id"] != road["road_id"] or pipeline["kind"] != "gas":
+                    continue
+                start, end = pipeline["polyline"][0], pipeline["polyline"][1]
+                exposed = _cylinder(
+                    f"ExposedGas_{pipeline['pipeline_id']}",
+                    (start["x"], start["y"], road["z"] + 1.1),
+                    (end["x"], end["y"], road["z"] + 1.1),
+                    max(0.5, pipeline["diameter_mm"] / 1800),
+                    pipe_materials["gas"],
+                    "Construction",
+                )
+                _tag(
+                    exposed,
+                    twin_id=f"TW-exposed-{pipeline['pipeline_id']}",
+                    kind="gas_exposed",
+                    state="exposed",
+                    evidence=pipeline["evidence"],
+                )
+                counts["exposed_pipeline"] += 1
 
     for pipeline in layout["pipelines"]:
         start, end = pipeline["polyline"][0], pipeline["polyline"][1]

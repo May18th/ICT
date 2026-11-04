@@ -14,8 +14,12 @@
         "facility": 7,
         "building": 120,
         "water": 0,
-        "cone": 0
-      }
+        "cone": 0,
+        "construction_fence": 0,
+        "excavation": 0,
+        "exposed_pipeline": 0
+      },
+      "preview": "visualization/blender/scenes/preview_normal.png"
     },
     {
       "scenario": "flood",
@@ -27,8 +31,12 @@
         "facility": 7,
         "building": 120,
         "water": 2,
-        "cone": 0
-      }
+        "cone": 0,
+        "construction_fence": 0,
+        "excavation": 0,
+        "exposed_pipeline": 0
+      },
+      "preview": "visualization/blender/scenes/preview_flood.png"
     },
     {
       "scenario": "closure",
@@ -40,8 +48,12 @@
         "facility": 7,
         "building": 120,
         "water": 2,
-        "cone": 18
-      }
+        "cone": 18,
+        "construction_fence": 0,
+        "excavation": 0,
+        "exposed_pipeline": 0
+      },
+      "preview": "visualization/blender/scenes/preview_closure.png"
     },
     {
       "scenario": "construction",
@@ -53,8 +65,12 @@
         "facility": 7,
         "building": 120,
         "water": 2,
-        "cone": 18
-      }
+        "cone": 18,
+        "construction_fence": 8,
+        "excavation": 4,
+        "exposed_pipeline": 2
+      },
+      "preview": "visualization/blender/scenes/preview_construction.png"
     }
   ]
 }
