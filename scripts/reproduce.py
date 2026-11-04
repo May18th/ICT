@@ -23,6 +23,7 @@ import shutil
 import subprocess
 import sys
 import time
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -66,7 +67,10 @@ def build_steps(*, include_slow: bool) -> list[Step]:
     steps.append(
         Step(
             "单元测试",
-            [py, "-m", "pytest", "-q"],
+            # --basetemp 指向一个本次独有的空目录：pytest 创建后保留、退出不做批量清理。
+            # 否则 pytest 会在退出时批量删除旧的 pytest-of-* 临时目录，在受限沙箱里触发
+            # 批量删除拦截（fail-closed），把退出码改成 1 并吞掉末尾的 "N passed" 汇总行。
+            [py, "-m", "pytest", "-q", "--basetemp", str(ROOT / "artifacts" / "tmp" / f"pytest-{uuid.uuid4().hex[:8]}")],
             expect=[r"\d+ passed"],
             slow=True,
             timeout=1800,
