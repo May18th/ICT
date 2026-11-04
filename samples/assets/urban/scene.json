@@ -1,6 +1,6 @@
 {
   "schema_version": "urban-twin-scene-v1",
-  "snapshot_hash": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db",
+  "snapshot_hash": "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5",
   "objects": [
     {
       "twin_id": "TW-action-先组织抽排降低水位",
@@ -272,7 +272,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-drainage_facility-cd569425"
+        "AS-A-03-drainage_facility-4e6c1308"
       ],
       "attributes": {
         "name": "兴华路雨水口组",
@@ -294,7 +294,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-drainage_facility-cd569425"
+        "AS-A-03-drainage_facility-4e6c1308"
       ],
       "attributes": {
         "name": "民生街雨水口组",
@@ -315,7 +315,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-drainage_facility-cd569425"
+        "AS-A-03-drainage_facility-4e6c1308"
       ],
       "attributes": {
         "name": "滨河路雨水口组",
@@ -569,6 +569,38 @@
       }
     },
     {
+      "twin_id": "TW-plan-成都市防汛抗旱应急预案-2020-年-全文转载留存",
+      "kind": "plan",
+      "name": "成都市防汛抗旱应急预案（2020 年）— 全文转载留存",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-CD-CITY-emergency_plan-b410bfe9"
+      ],
+      "attributes": {
+        "file_name": "plan_flood_emergency_chengdu_2020.md",
+        "version": "2020",
+        "standard_refs": ""
+      }
+    },
+    {
+      "twin_id": "TW-plan-成都市防汛抗旱应急预案-2026-年度修订-响应分级条款节选",
+      "kind": "plan",
+      "name": "成都市防汛抗旱应急预案（2026 年度修订）· 响应分级条款节选",
+      "position": "",
+      "state": "unknown",
+      "region_id": null,
+      "asset_ids": [
+        "AS-CD-CITY-emergency_plan-2de19b5d"
+      ],
+      "attributes": {
+        "file_name": "plan_flood_emergency_cd_2026.md",
+        "version": "2026",
+        "standard_refs": ""
+      }
+    },
+    {
       "twin_id": "TW-plan-道路积水处置作业指引",
       "kind": "plan",
       "name": "道路积水处置作业指引",
@@ -614,7 +646,7 @@
       "state": "under_maintenance",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-drainage_facility-cd569425"
+        "AS-A-03-drainage_facility-4e6c1308"
       ],
       "attributes": {
         "name": "兴华路雨水泵站",
@@ -625,7 +657,9 @@
         "backup_power": "no",
         "last_inspection": "2026-08-12T00:00:00",
         "state": "fault_pending_repair",
-        "note": "1#泵组电机故障，运维主体未明确"
+        "note": "1#泵组电机故障，运维主体未明确",
+        "pump_units": "3",
+        "failed_units": "1"
       }
     },
     {
@@ -636,7 +670,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-drainage_facility-cd569425"
+        "AS-A-03-drainage_facility-4e6c1308"
       ],
       "attributes": {
         "name": "建设大道泵站",
@@ -648,7 +682,9 @@
         "last_inspection": "2026-09-05T00:00:00",
         "state": "in_service",
         "owner_org": "ORG-DRAIN",
-        "note": "备用电源可用"
+        "note": "备用电源可用",
+        "pump_units": "6",
+        "failed_units": "0"
       }
     },
     {
@@ -659,7 +695,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-drainage_facility-cd569425"
+        "AS-A-03-drainage_facility-4e6c1308"
       ],
       "attributes": {
         "name": "滨河路雨水泵站",
@@ -671,7 +707,9 @@
         "last_inspection": "2026-09-20T00:00:00",
         "state": "in_service",
         "owner_org": "ORG-DRAIN",
-        "note": "备用电源可用"
+        "note": "备用电源可用",
+        "pump_units": "4",
+        "failed_units": "0"
       }
     },
     {
@@ -684,6 +722,7 @@
       "asset_ids": [
         "AS-A-03-resource_inventory-8133c741",
         "AS-A-03-road_network-6fbe05c1",
+        "AS-A-03-underpass-0684ecae",
         "AS-A-03-weather_alert-de042dd8"
       ],
       "attributes": {}
@@ -1087,6 +1126,30 @@
         "owner_org": "ORG-TELECOM",
         "status": "in_service",
         "note": "占道施工中"
+      }
+    },
+    {
+      "twin_id": "TW-underpass-UP-XH-101",
+      "kind": "underpass",
+      "name": "UP-XH-101",
+      "position": "",
+      "state": "unknown",
+      "region_id": "A-03",
+      "asset_ids": [
+        "AS-A-03-underpass-0684ecae"
+      ],
+      "attributes": {
+        "name": "兴华路下穿隧道东端",
+        "road_id": "R-101",
+        "district": "A-03",
+        "entry_sill_height_m": "0.15",
+        "lowest_point_z_m": "-1.81",
+        "ramp_length_m": "96.0",
+        "opening_width_m": "34.0",
+        "open_water_area_m2": "3264.0",
+        "has_pump_room": "no",
+        "close_threshold_m": "0.25",
+        "note": "段内最低点 -1.81m，敞口坡道 96m 内由路面降至洞底；无独立泵房；运维主体未明确（职责空白 C2）；挡水槛与封控阈值为假设值，待核实"
       }
     },
     {

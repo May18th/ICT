@@ -796,12 +796,20 @@ _LEVEL_MEANING = {
 }
 
 
+def _display_path(value: str) -> str:
+    """报告的路径按仓库根写相对路径：报告要进版本库，绝对路径在别人机器上毫无意义。"""
+    try:
+        return Path(value).resolve().relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return value
+
+
 def render_markdown(report: GateReport) -> str:
     lines: list[str] = [
         "# 数据门禁报告",
         "",
-        f"- 数据集：`{report.dataset}`",
-        f"- 来源标注：`{report.annotations}`",
+        f"- 数据集：`{_display_path(report.dataset)}`",
+        f"- 来源标注：`{_display_path(report.annotations)}`",
         f"- 事实总数：**{report.facts_total}**",
         "",
         "## 一、来源分级",
