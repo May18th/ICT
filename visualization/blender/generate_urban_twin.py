@@ -391,7 +391,11 @@ def build_scene(
                 counts["cone"] += 1
 
     if flags.get("construction"):
-        construction_roads = {item["road_id"] for item in layout.get("states", {}).get("under_construction", [])}
+        # states.under_construction 兼容两种形态：字符串数组 或 [{road_id: ...}] 字典数组
+        construction_roads = {
+            item["road_id"] if isinstance(item, dict) else item
+            for item in layout.get("states", {}).get("under_construction", [])
+        }
         for road in layout["roads"]:
             if road["road_id"] not in construction_roads:
                 continue
