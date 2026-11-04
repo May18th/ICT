@@ -3,7 +3,7 @@
   "event_id": "WO-20261029-007",
   "as_of": "2026-10-29T09:40:00+08:00",
   "district": "A-03",
-  "snapshot_hash": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db",
+  "snapshot_hash": "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5",
   "knowledge_version": "kb-v1.0.0",
   "steps": [
     {
@@ -44,14 +44,14 @@
         "TW-road-R-201",
         "TW-work_site-CP-2026-041"
       ],
-      "narrative": "受影响对象 13 个：DF-IN-101、DF-IN-201、PL-DRN-101、PL-GAS-101、WO-20261029-009、WO-20261029-011、PL-PWR-101、DF-PS-01、R-101、R-103、R-105、R-201、CP-2026-041",
+      "narrative": "受影响对象 14 个：DF-IN-101、DF-IN-201、PL-DRN-101、PL-GAS-101、WO-20261029-009、WO-20261029-011、PL-PWR-101、DF-PS-01、R-101、R-103、R-105、R-201、UP-XH-101、CP-2026-041",
       "evidence": [
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:3",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:4",
-        "AS-A-03-drainage_facility-cd569425#A-03/drainage_facility/v1#row:2",
-        "AS-A-03-drainage_facility-cd569425#A-03/drainage_facility/v1#row:3",
-        "AS-A-03-drainage_facility-cd569425#A-03/drainage_facility/v1#row:7",
+        "AS-A-03-drainage_facility-4e6c1308#A-03/drainage_facility/v1#row:2",
+        "AS-A-03-drainage_facility-4e6c1308#A-03/drainage_facility/v1#row:3",
+        "AS-A-03-drainage_facility-4e6c1308#A-03/drainage_facility/v1#row:7",
         "AS-A-03-duty_list-07d920f0#A-03/duty_list/v2#row:3",
         "AS-A-03-pipeline_ledger-4741e97f#A-03/pipeline_ledger/v1#row:2",
         "AS-A-03-pipeline_ledger-4741e97f#A-03/pipeline_ledger/v1#row:4",
@@ -87,9 +87,9 @@
       ],
       "narrative": "统筹 ORG-EMERG；未指派 DF-PS-01",
       "evidence": [
-        "AS-A-03-drainage_facility-cd569425#A-03/drainage_facility/v1#row:2",
-        "AS-A-03-drainage_facility-cd569425#A-03/drainage_facility/v1#row:3",
-        "AS-A-03-drainage_facility-cd569425#A-03/drainage_facility/v1#row:7",
+        "AS-A-03-drainage_facility-4e6c1308#A-03/drainage_facility/v1#row:2",
+        "AS-A-03-drainage_facility-4e6c1308#A-03/drainage_facility/v1#row:3",
+        "AS-A-03-drainage_facility-4e6c1308#A-03/drainage_facility/v1#row:7",
         "AS-A-03-duty_list-07d920f0#A-03/duty_list/v2#row:3",
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:24",
         "AS-A-03-pipeline_ledger-4741e97f#A-03/pipeline_ledger/v1#row:2",
@@ -126,7 +126,7 @@
       "narrative": "权限交叉 C1；职责空白 C2；资源争用 C3",
       "evidence": [
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
-        "AS-A-03-drainage_facility-cd569425#A-03/drainage_facility/v1#row:2",
+        "AS-A-03-drainage_facility-4e6c1308#A-03/drainage_facility/v1#row:2",
         "AS-A-03-duty_list-07d920f0#A-03/duty_list/v2#row:3",
         "AS-A-03-duty_list-07d920f0#A-03/duty_list/v2#row:4",
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:29",
@@ -155,16 +155,17 @@
         "TW-pump_station-DF-PS-02",
         "TW-pump_station-DF-PS-03"
       ],
-      "narrative": "需求 7 / 可用 6 / 缺口 1",
+      "narrative": "需求 8 / 可用 6 / 缺口 2",
       "evidence": [
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
-        "AS-A-03-drainage_facility-cd569425#A-03/drainage_facility/v1#row:2",
+        "AS-A-03-drainage_facility-4e6c1308#A-03/drainage_facility/v1#row:2",
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:29",
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:38",
         "AS-A-03-procedure-30dc5dcb#A-03/procedure/v1.2#line:20",
         "AS-A-03-procedure-30dc5dcb#A-03/procedure/v1.2#line:21",
         "AS-A-03-resource_inventory-8133c741#A-03/resource_inventory/v1#row:2",
         "AS-A-03-resource_inventory-8133c741#A-03/resource_inventory/v1#row:3",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:3"
       ]
     },
@@ -183,6 +184,7 @@
       "evidence": [
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:38",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
@@ -198,10 +200,11 @@
         "TW-road-R-105",
         "TW-road-R-201"
       ],
-      "narrative": "隔离风险源：确认无泄漏后关阀或断电，未确认不得进入下一步",
+      "narrative": "封闭下穿隧道洞口全幅（外部积水漫过入口挡水槛或洞内积水达封控阈值），由 ORG-ROAD 与 ORG-TRAFFIC 联合发布；封控水深阈值沿用道路 25cm（假设值，待核实）",
       "evidence": [
-        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:44",
+        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:16",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
@@ -217,10 +220,11 @@
         "TW-road-R-105",
         "TW-road-R-201"
       ],
-      "narrative": "封闭积水路段全幅（深度 ≥25cm 或面积 ≥200m²），范围覆盖积水区上下游各 50m",
+      "narrative": "隔离风险源：确认无泄漏后关阀或断电，未确认不得进入下一步",
       "evidence": [
-        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:29",
+        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:44",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
@@ -236,10 +240,11 @@
         "TW-road-R-105",
         "TW-road-R-201"
       ],
-      "narrative": "封路由 ORG-ROAD 与 ORG-TRAFFIC 联合发布，单一部门发布无效",
+      "narrative": "封闭积水路段全幅（深度 ≥25cm 或面积 ≥200m²），范围覆盖积水区上下游各 50m",
       "evidence": [
-        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:31",
+        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:29",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
@@ -255,10 +260,11 @@
         "TW-road-R-105",
         "TW-road-R-201"
       ],
-      "narrative": "先清掏反涌雨水口再抽排，避免无效抽排",
+      "narrative": "封路由 ORG-ROAD 与 ORG-TRAFFIC 联合发布，单一部门发布无效",
       "evidence": [
-        "AS-A-03-procedure-30dc5dcb#A-03/procedure/v1.2#line:26",
+        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:31",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
@@ -274,10 +280,11 @@
         "TW-road-R-105",
         "TW-road-R-201"
       ],
-      "narrative": "启动泵站抽排；泵站不可用时按 400 m³/h 折算投入移动泵，缺口上报跨区调配",
+      "narrative": "先清掏反涌雨水口再抽排，避免无效抽排",
       "evidence": [
-        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:45",
+        "AS-A-03-procedure-30dc5dcb#A-03/procedure/v1.2#line:26",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
@@ -293,10 +300,11 @@
         "TW-road-R-105",
         "TW-road-R-201"
       ],
-      "narrative": "绕行方案避开占道施工路段；无法避开时同步通知施工单位并增设现场疏导",
+      "narrative": "启动泵站抽排；泵站不可用时按 400 m³/h 折算投入移动泵，缺口上报跨区调配",
       "evidence": [
-        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:32",
+        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:45",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
@@ -312,10 +320,11 @@
         "TW-road-R-105",
         "TW-road-R-201"
       ],
-      "narrative": "全程同步交通管制与信息发布",
+      "narrative": "绕行方案避开占道施工路段；无法避开时同步通知施工单位并增设现场疏导",
       "evidence": [
-        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:47",
+        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:32",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
@@ -331,10 +340,31 @@
         "TW-road-R-105",
         "TW-road-R-201"
       ],
+      "narrative": "全程同步交通管制与信息发布",
+      "evidence": [
+        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:47",
+        "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
+        "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
+        "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
+      ]
+    },
+    {
+      "index": 14,
+      "stage": "action",
+      "title": "处置顺序",
+      "status": "supported",
+      "highlights": [
+        "TW-road-R-101",
+        "TW-road-R-103",
+        "TW-road-R-105",
+        "TW-road-R-201"
+      ],
       "narrative": "水位降至基坑底以下 0.3m 后复检管道悬空与泄漏，方可恢复作业",
       "evidence": [
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:46",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
@@ -350,12 +380,27 @@
       "evidence": [
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:38",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
     },
     {
       "order": 2,
+      "action": "封闭下穿隧道洞口全幅（外部积水漫过入口挡水槛或洞内积水达封控阈值），由 ORG-ROAD 与 ORG-TRAFFIC 联合发布；封控水深阈值沿用道路 25cm（假设值，待核实）",
+      "rule_ids": [
+        "RULE-ACT-CLOSE-UNDERPASS"
+      ],
+      "evidence": [
+        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:16",
+        "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
+        "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
+        "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
+      ]
+    },
+    {
+      "order": 3,
       "action": "隔离风险源：确认无泄漏后关阀或断电，未确认不得进入下一步",
       "rule_ids": [
         "RULE-ACT-ISOLATE-FIRST"
@@ -363,12 +408,13 @@
       "evidence": [
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:44",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
     },
     {
-      "order": 3,
+      "order": 4,
       "action": "封闭积水路段全幅（深度 ≥25cm 或面积 ≥200m²），范围覆盖积水区上下游各 50m",
       "rule_ids": [
         "RULE-ACT-CLOSE-ROAD"
@@ -376,12 +422,13 @@
       "evidence": [
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:29",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
     },
     {
-      "order": 4,
+      "order": 5,
       "action": "封路由 ORG-ROAD 与 ORG-TRAFFIC 联合发布，单一部门发布无效",
       "rule_ids": [
         "RULE-ACT-CLOSE-ROAD-JOINT"
@@ -389,12 +436,13 @@
       "evidence": [
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:31",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
     },
     {
-      "order": 5,
+      "order": 6,
       "action": "先清掏反涌雨水口再抽排，避免无效抽排",
       "rule_ids": [
         "RULE-ACT-INTAKE-CLEAN-FIRST"
@@ -402,12 +450,13 @@
       "evidence": [
         "AS-A-03-procedure-30dc5dcb#A-03/procedure/v1.2#line:26",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
     },
     {
-      "order": 6,
+      "order": 7,
       "action": "启动泵站抽排；泵站不可用时按 400 m³/h 折算投入移动泵，缺口上报跨区调配",
       "rule_ids": [
         "RULE-ACT-PUMP-SECOND"
@@ -415,12 +464,13 @@
       "evidence": [
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:45",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
     },
     {
-      "order": 7,
+      "order": 8,
       "action": "绕行方案避开占道施工路段；无法避开时同步通知施工单位并增设现场疏导",
       "rule_ids": [
         "RULE-ACT-DETOUR"
@@ -428,12 +478,13 @@
       "evidence": [
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:32",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
     },
     {
-      "order": 8,
+      "order": 9,
       "action": "全程同步交通管制与信息发布",
       "rule_ids": [
         "RULE-ACT-TRAFFIC-SYNC"
@@ -441,12 +492,13 @@
       "evidence": [
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:47",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
     },
     {
-      "order": 9,
+      "order": 10,
       "action": "水位降至基坑底以下 0.3m 后复检管道悬空与泄漏，方可恢复作业",
       "rule_ids": [
         "RULE-ACT-RESUME-AFTER-DRAWDOWN"
@@ -454,6 +506,7 @@
       "evidence": [
         "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:46",
         "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
+        "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:4",
         "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:6"
       ]
@@ -462,7 +515,7 @@
   "metrics": {
     "affected": 18,
     "conflicts": 3,
-    "gap": 1,
+    "gap": 2,
     "publishable": true,
     "status": "ok",
     "water_twin": "TW-incident-WO-20261029-007"

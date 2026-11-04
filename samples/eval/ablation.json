@@ -1,6 +1,6 @@
 {
   "schema_version": "p11-ablation-2",
-  "dataset_snapshot": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db",
+  "dataset_snapshot": "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5",
   "stats_mode": "leave-one-out",
   "pairwise_mode": "exact-sign-flip",
   "configs": [
@@ -1462,7 +1462,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 9,
+      "actions": 10,
       "status": "ok"
     },
     {
@@ -1481,7 +1481,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 9,
+      "actions": 10,
       "status": "ok"
     },
     {
@@ -1500,7 +1500,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 6,
+      "actions": 7,
       "status": "ok"
     },
     {
@@ -1576,7 +1576,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 9,
+      "actions": 10,
       "status": "ok"
     },
     {
@@ -1595,7 +1595,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 9,
+      "actions": 10,
       "status": "ok"
     },
     {
@@ -1804,7 +1804,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 6,
+      "actions": 7,
       "status": "ok"
     },
     {
@@ -1823,7 +1823,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 6,
+      "actions": 7,
       "status": "ok"
     },
     {
@@ -1842,7 +1842,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 6,
+      "actions": 7,
       "status": "ok"
     },
     {
@@ -1880,7 +1880,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 9,
+      "actions": 10,
       "status": "ok"
     },
     {
@@ -1899,7 +1899,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 9,
+      "actions": 10,
       "status": "ok"
     },
     {
@@ -1918,7 +1918,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 6,
+      "actions": 7,
       "status": "ok"
     },
     {
@@ -1994,7 +1994,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 9,
+      "actions": 10,
       "status": "ok"
     },
     {
@@ -2013,7 +2013,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 9,
+      "actions": 10,
       "status": "ok"
     },
     {
@@ -2222,7 +2222,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 6,
+      "actions": 7,
       "status": "ok"
     },
     {
@@ -2241,7 +2241,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 6,
+      "actions": 7,
       "status": "ok"
     },
     {
@@ -2260,7 +2260,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 6,
+      "actions": 7,
       "status": "ok"
     },
     {
@@ -2298,7 +2298,7 @@
       "citation_completeness": 1.0,
       "auditable": true,
       "publishable": true,
-      "actions": 9,
+      "actions": 10,
       "status": "ok"
     },
     {
@@ -2317,7 +2317,7 @@
       "citation_completeness": 1.0,
       "auditable": true,
       "publishable": true,
-      "actions": 9,
+      "actions": 10,
       "status": "ok"
     },
     {
@@ -2336,7 +2336,7 @@
       "citation_completeness": 1.0,
       "auditable": true,
       "publishable": true,
-      "actions": 6,
+      "actions": 7,
       "status": "ok"
     },
     {
@@ -2412,7 +2412,7 @@
       "citation_completeness": 1.0,
       "auditable": true,
       "publishable": true,
-      "actions": 9,
+      "actions": 10,
       "status": "ok"
     },
     {
@@ -2431,7 +2431,7 @@
       "citation_completeness": 1.0,
       "auditable": true,
       "publishable": true,
-      "actions": 9,
+      "actions": 10,
       "status": "ok"
     },
     {
@@ -2640,7 +2640,7 @@
       "citation_completeness": 1.0,
       "auditable": true,
       "publishable": true,
-      "actions": 6,
+      "actions": 7,
       "status": "ok"
     },
     {
@@ -2659,7 +2659,7 @@
       "citation_completeness": 1.0,
       "auditable": true,
       "publishable": true,
-      "actions": 6,
+      "actions": 7,
       "status": "ok"
     },
     {
@@ -2678,7 +2678,7 @@
       "citation_completeness": 1.0,
       "auditable": true,
       "publishable": true,
-      "actions": 6,
+      "actions": 7,
       "status": "ok"
     },
     {

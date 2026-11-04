@@ -2,7 +2,7 @@
 
 由 `python -m decision_poc.ablation --report <path>` 生成，**不要手改**。
 
-- 数据集快照：`9b60debff3c9c53c`
+- 数据集快照：`2085018615b3a69b`
 - 用例：22 例 × 5 档配置
 - 统计口径：leave-one-out（逐例剔除）+ exact-sign-flip（全部符号组合穷举，零随机）
 

@@ -1,12 +1,12 @@
 {
   "schema_version": "urban-eval-1",
-  "dataset_snapshot": "45ce5cc707a53a5beac7e0d2b4f8abf2fd6835a39d21c880a00f4e0fc3f09105",
+  "dataset_snapshot": "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5",
   "metrics": {
     "cases_total": 22,
     "cases_passed": 22,
     "cases_failed": 0,
-    "assets_total": 16,
-    "assets_parsed": 16,
+    "assets_total": 18,
+    "assets_parsed": 18,
     "unmapped_columns": 0,
     "triples": 102,
     "relation_kinds": 8,
@@ -16,8 +16,8 @@
     "six_hop_rate": 1.0,
     "citation_completeness": 1.0,
     "unsupported_claims": 0,
-    "p50_ms": 5.4,
-    "p95_ms": 6.3,
+    "p50_ms": 5.0,
+    "p95_ms": 6.1,
     "safety_by_kind": {
       "conflict": "3/3",
       "expired": "4/4",
@@ -49,6 +49,7 @@
         "action",
         "action",
         "action",
+        "action",
         "action"
       ],
       "conflicts": [
@@ -56,13 +57,13 @@
         "C2:gap",
         "C3:contention"
       ],
-      "supported_claims": 14,
-      "total_claims": 14,
+      "supported_claims": 15,
+      "total_claims": 15,
       "citation_completeness": 1.0,
       "locator_hits": 2,
       "locator_expected": 2,
       "refused": false,
-      "elapsed_ms": 6.8
+      "elapsed_ms": 24.3
     },
     {
       "case_id": "N02",
@@ -86,6 +87,7 @@
         "action",
         "action",
         "action",
+        "action",
         "action"
       ],
       "conflicts": [
@@ -93,13 +95,13 @@
         "C2:gap",
         "C3:contention"
       ],
-      "supported_claims": 14,
-      "total_claims": 14,
+      "supported_claims": 15,
+      "total_claims": 15,
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 6.3
+      "elapsed_ms": 6.7
     },
     {
       "case_id": "N03",
@@ -120,19 +122,20 @@
         "action",
         "action",
         "action",
+        "action",
         "action"
       ],
       "conflicts": [
         "C1:overlap",
         "C2:gap"
       ],
-      "supported_claims": 11,
-      "total_claims": 11,
+      "supported_claims": 12,
+      "total_claims": 12,
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 6.5
+      "elapsed_ms": 5.3
     },
     {
       "case_id": "N04",
@@ -168,7 +171,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 5.8
+      "elapsed_ms": 5.7
     },
     {
       "case_id": "N05",
@@ -198,7 +201,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 5.8
+      "elapsed_ms": 5.0
     },
     {
       "case_id": "N06",
@@ -229,7 +232,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 5.4
+      "elapsed_ms": 5.0
     },
     {
       "case_id": "N07",
@@ -253,6 +256,7 @@
         "action",
         "action",
         "action",
+        "action",
         "action"
       ],
       "conflicts": [
@@ -260,13 +264,13 @@
         "C2:gap",
         "C3:contention"
       ],
-      "supported_claims": 14,
-      "total_claims": 14,
+      "supported_claims": 15,
+      "total_claims": 15,
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 6.3
+      "elapsed_ms": 6.1
     },
     {
       "case_id": "C01",
@@ -290,6 +294,7 @@
         "action",
         "action",
         "action",
+        "action",
         "action"
       ],
       "conflicts": [
@@ -297,13 +302,13 @@
         "C2:gap",
         "C3:contention"
       ],
-      "supported_claims": 14,
-      "total_claims": 14,
+      "supported_claims": 15,
+      "total_claims": 15,
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 4.4
+      "elapsed_ms": 3.5
     },
     {
       "case_id": "C02",
@@ -334,7 +339,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 2.9
+      "elapsed_ms": 2.4
     },
     {
       "case_id": "C03",
@@ -364,7 +369,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 2.6
+      "elapsed_ms": 2.3
     },
     {
       "case_id": "I01",
@@ -422,7 +427,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 5.0
+      "elapsed_ms": 3.8
     },
     {
       "case_id": "I04",
@@ -442,7 +447,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 4.0
+      "elapsed_ms": 3.7
     },
     {
       "case_id": "I05",
@@ -462,7 +467,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 4.7
+      "elapsed_ms": 3.7
     },
     {
       "case_id": "I06",
@@ -482,7 +487,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 5.0
+      "elapsed_ms": 4.2
     },
     {
       "case_id": "P01",
@@ -500,7 +505,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 5.6
+      "elapsed_ms": 5.3
     },
     {
       "case_id": "P02",
@@ -518,7 +523,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 5.3
+      "elapsed_ms": 5.0
     },
     {
       "case_id": "E01",
@@ -539,19 +544,20 @@
         "action",
         "action",
         "action",
+        "action",
         "action"
       ],
       "conflicts": [
         "C1:overlap",
         "C2:gap"
       ],
-      "supported_claims": 11,
-      "total_claims": 11,
+      "supported_claims": 12,
+      "total_claims": 12,
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 6.0
+      "elapsed_ms": 6.1
     },
     {
       "case_id": "E02",
@@ -572,19 +578,20 @@
         "action",
         "action",
         "action",
+        "action",
         "action"
       ],
       "conflicts": [
         "C1:overlap",
         "C2:gap"
       ],
-      "supported_claims": 11,
-      "total_claims": 11,
+      "supported_claims": 12,
+      "total_claims": 12,
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 6.3
+      "elapsed_ms": 5.4
     },
     {
       "case_id": "E03",
@@ -605,19 +612,20 @@
         "action",
         "action",
         "action",
+        "action",
         "action"
       ],
       "conflicts": [
         "C1:overlap",
         "C2:gap"
       ],
-      "supported_claims": 11,
-      "total_claims": 11,
+      "supported_claims": 12,
+      "total_claims": 12,
       "citation_completeness": 1.0,
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 6.0
+      "elapsed_ms": 5.2
     },
     {
       "case_id": "E04",

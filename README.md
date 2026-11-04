@@ -83,15 +83,15 @@ uv sync --locked
 uv run --locked pytest -q
 ```
 
-一条命令生成并核对全部对外材料（测试、数据集、布局、推演、反事实、Skill 编排、P8 评测、MCP 契约、P9 进化、P11 消融与锚定、106 项自检）：
+一条命令生成并核对全部对外材料（测试、数据集、数据门禁、布局、回放、实体表、推演、反事实、Skill 编排、P8 评测、MCP 契约、P9 进化、P11 消融与锚定、106 项自检）：
 
 ```powershell
-uv run --locked python scripts/reproduce.py            # 全量，约 30 秒（本机实测 17/17 步通过）
+uv run --locked python scripts/reproduce.py            # 全量，约 40 秒（本机实测 20/20 步通过）
 uv run --locked python scripts/reproduce.py --fast     # 跳过 pytest 与 P9 进化，只核对数字
 uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步骤
 ```
 
-期望末行 `结果：17/17 步通过`；明细写 `artifacts/reproduce/summary.json`（已被 .gitignore 忽略）。
+期望末行 `结果：20/20 步通过`；明细写 `artifacts/reproduce/summary.json`（已被 .gitignore 忽略）。
 脚本只比对、不改数字：任一期望不成立即退出码 1，并把失败步骤的原始输出打出来。
 
 一条命令核对全部对外宣称数字（六跳、P8 评测、P9 双会话进化、MCP 工具数；任一项漂移即失败）：
@@ -111,6 +111,7 @@ uv run --locked python -m decision_poc.evidence_check
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.data_gate
 # 期望：PASS facts=60 errors=0 warns=1
+# 报告：加 --out docs/reports/data-gate-report.md（reproduce.py 第 8 步会自动生成）
 ```
 
 它回答的是另外三个模块都不回答的问题：这份数据里哪一条是实测、哪一条是推导、哪一条是假设。
@@ -167,7 +168,7 @@ uv run --locked python -m decision_poc.skills --event WO-20261029-007 --as-of 20
 uv run --locked python -m decision_poc.skills --manifest > samples/nexent/skills.json                                          # 重新生成绑定表
 ```
 
-预期：末行打印 `claim 14/14 通过  引用完整率 1.00`；换 `ORG-ROAD` 后状态变 `partial`、可发布为 `否`，终止原因写明依据不可见。
+预期：末行打印 `claim 15/15 通过  引用完整率 1.00`；换 `ORG-ROAD` 后状态变 `partial`、可发布为 `否`，终止原因写明依据不可见。
 Nexent 侧只需消费 `samples/nexent/skills.json`（顺序、请求 Schema、工具绑定、失败语义），说明见 [samples/nexent/README.md](samples/nexent/README.md)。
 
 跑反事实（CF1–CF3：改一个输入后重放同一套规则，取与基线的差异）：

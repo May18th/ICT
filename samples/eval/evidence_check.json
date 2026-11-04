@@ -1,6 +1,6 @@
 {
   "schema_version": "evidence-check-1",
-  "expectations_digest": "c816e79a8daaa70326e9286dcf44fb535cb4af5374731918c802792171f1c716",
+  "expectations_digest": "f9c0c592703a449f97fac199fc645157c8c08abc28ea5d178f34ccbd7df3207c",
   "total": 106,
   "passed_count": 106,
   "failed_count": 0,
@@ -66,15 +66,15 @@
     },
     {
       "path": "p6_deduction.resource_gap",
-      "expected": 1,
-      "actual": 1,
+      "expected": 2,
+      "actual": 2,
       "passed": true,
       "note": ""
     },
     {
       "path": "p6_deduction.action_count",
-      "expected": 9,
-      "actual": 9,
+      "expected": 10,
+      "actual": 10,
       "passed": true,
       "note": ""
     },
@@ -101,8 +101,8 @@
     },
     {
       "path": "mcp.tools_count",
-      "expected": 12,
-      "actual": 12,
+      "expected": 13,
+      "actual": 13,
       "passed": true,
       "note": ""
     },
@@ -136,15 +136,15 @@
     },
     {
       "path": "p8_eval.assets_parsed",
-      "expected": 15,
-      "actual": 15,
+      "expected": 18,
+      "actual": 18,
       "passed": true,
       "note": ""
     },
     {
       "path": "p8_eval.assets_total",
-      "expected": 15,
-      "actual": 15,
+      "expected": 18,
+      "actual": 18,
       "passed": true,
       "note": ""
     },
@@ -458,15 +458,15 @@
     },
     {
       "path": "p9_evolution.real_event.evolved_allocation.A-03",
-      "expected": 5,
-      "actual": 5,
+      "expected": 6,
+      "actual": 6,
       "passed": true,
       "note": ""
     },
     {
       "path": "p9_evolution.real_event.evolved_allocation.B-01",
-      "expected": 1,
-      "actual": 1,
+      "expected": 0,
+      "actual": 0,
       "passed": true,
       "note": ""
     },
@@ -479,8 +479,8 @@
     },
     {
       "path": "p9_evolution.real_event.evolved_unmet.B-01",
-      "expected": 1,
-      "actual": 1,
+      "expected": 2,
+      "actual": 2,
       "passed": true,
       "note": ""
     },
@@ -494,10 +494,10 @@
     {
       "path": "test_suite.docs_declared",
       "expected": [
-        600
+        769
       ],
       "actual": [
-        600
+        769
       ],
       "passed": true,
       "note": ""

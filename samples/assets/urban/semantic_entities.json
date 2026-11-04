@@ -1,12 +1,12 @@
 {
   "schema_version": "urban-twin-semantic-entities-v1",
-  "projection_hash": "proj-25e51a6bcbba448a",
+  "projection_hash": "proj-6515c567c7b31d32",
   "event_id": "WO-20261029-007",
   "as_of": "2026-10-29T09:40:00+08:00",
   "district": "A-03",
-  "scene_snapshot_hash": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db",
-  "layout_snapshot_hash": "3791062782309aff172b4cf8ccff6fe020cdfef816e291700a0d58bafb929712",
-  "replay_snapshot_hash": "9b60debff3c9c53cb874313b0399d9e59b5e81a16fdd23fff2a3468de50431db",
+  "scene_snapshot_hash": "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5",
+  "layout_snapshot_hash": "6b3736aa7057757bacbed9127fa7851e4c6d41939ee4e024cfed5c699850870e",
+  "replay_snapshot_hash": "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5",
   "hop_order": [
     "observed",
     "affected",
@@ -632,7 +632,8 @@
         10,
         11,
         12,
-        13
+        13,
+        14
       ],
       "drawable": true,
       "geometry": {
@@ -724,7 +725,8 @@
         10,
         11,
         12,
-        13
+        13,
+        14
       ],
       "drawable": true,
       "geometry": {
@@ -816,7 +818,8 @@
         10,
         11,
         12,
-        13
+        13,
+        14
       ],
       "drawable": true,
       "geometry": {
@@ -871,7 +874,8 @@
         10,
         11,
         12,
-        13
+        13,
+        14
       ],
       "drawable": true,
       "geometry": {
@@ -1101,6 +1105,8 @@
     "TW-plan-地下燃气管道施工保护规程",
     "TW-plan-城区防汛排涝应急预案-2021-年版-已废止",
     "TW-plan-城区防汛排涝应急预案-2025-年修订",
+    "TW-plan-成都市防汛抗旱应急预案-2020-年-全文转载留存",
+    "TW-plan-成都市防汛抗旱应急预案-2026-年度修订-响应分级条款节选",
     "TW-plan-道路积水处置作业指引",
     "TW-region-A-03",
     "TW-region-B-01",
@@ -1113,6 +1119,7 @@
     "TW-resource-RES-SAND",
     "TW-resource-RES-SAND-B01",
     "TW-resource-RES-SIGN",
+    "TW-underpass-UP-XH-101",
     "TW-weather-WA-20261028-07",
     "TW-weather-WA-20261029-01",
     "TW-weather-WA-20261029-02",
@@ -1294,7 +1301,7 @@
     "entities": 23,
     "drawable": 23,
     "unrepresented": 3,
-    "excluded": 37,
+    "excluded": 40,
     "event_entities": 16,
     "highlight_ids": 19,
     "highlight_ids_drawable": 16,
@@ -1318,9 +1325,10 @@
       "action": 7,
       "department": 8,
       "incident": 1,
-      "plan": 4,
+      "plan": 6,
       "region": 2,
       "resource": 9,
+      "underpass": 1,
       "weather": 4,
       "work_site": 2
     }

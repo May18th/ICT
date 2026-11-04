@@ -84,7 +84,15 @@ def build_steps(*, include_slow: bool) -> list[Step]:
         Step(
             "数据集健康检查",
             [py, "-m", "decision_poc.health", "--dataset", "samples/assets/urban"],
-            expect=[r'"assets":\s*15'],
+            expect=[r'"assets":\s*18'],
+        )
+    )
+    steps.append(
+        Step(
+            "数据门禁（来源分级 / 基准 / 跨字段）",
+            [py, "-m", "decision_poc.data_gate", "--out", "docs/reports/data-gate-report.md"],
+            expect=[r"PASS facts=\d+ errors=0"],
+            writes=["docs/reports/data-gate-report.md"],
         )
     )
     steps.append(
@@ -99,6 +107,22 @@ def build_steps(*, include_slow: bool) -> list[Step]:
             "生成场景导出（Blender/UE 取数）",
             [py, "-m", "decision_poc.scene_export", "--out", "samples/assets/urban/scene.json"],
             writes=["samples/assets/urban/scene.json"],
+        )
+    )
+    steps.append(
+        Step(
+            "生成推演回放脚本",
+            [py, "-m", "decision_poc.replay_export"],
+            expect=[r"个动作", r"快照 "],
+            writes=["samples/replay/core_run.json"],
+        )
+    )
+    steps.append(
+        Step(
+            "生成实体表（决策层 → 3D 绑定）",
+            [py, "-m", "decision_poc.scene_binding"],
+            expect=[r"实体 \d+", r"指纹 proj-"],
+            writes=["samples/assets/urban/semantic_entities.json"],
         )
     )
     steps.append(
@@ -119,7 +143,7 @@ def build_steps(*, include_slow: bool) -> list[Step]:
         Step(
             "五 Skill 编排与证据审计",
             [py, "-m", "decision_poc.skills", "--event", EVENT, "--as-of", AS_OF, "--caller-labels", "ORG-EMERG"],
-            expect=[r"claim 14/14", r"引用完整率 1\.00"],
+            expect=[r"claim 15/15", r"引用完整率 1\.00"],
         )
     )
     steps.append(
