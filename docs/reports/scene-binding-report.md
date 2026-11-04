@@ -3,10 +3,10 @@
 由 `python -m decision_poc.scene_binding --markdown <path>` 生成，**不要手改**。
 
 - 事件：`WO-20261029-007` @ `2026-10-29T09:40:00+08:00`（片区 A-03）
-- 投影指纹：`proj-25e51a6bcbba448a`
-- 真源哈希：scene `9b60debff3c9` / layout `379106278230` / replay `9b60debff3c9`
-- 实体 23 个（全部可画）/ 未落到几何 3 个 / 本事件会被高亮 16 个
-- 回放高亮 id 19 个：可画 16 + 不可画 3（不允许静默丢）
+- 投影指纹：`proj-de40f14cbc813e83`
+- 真源哈希：scene `d102aa807648` / layout `438d4cc786ba` / replay `d102aa807648`
+- 实体 26 个（全部可画）/ 未落到几何 3 个 / 本事件会被高亮 17 个
+- 回放高亮 id 20 个：可画 17 + 不可画 3（不允许静默丢）
 
 ## 1 主跳分布（primary_hop = 回放里出现过的最后一跳）
 
@@ -14,7 +14,7 @@
 | --- | --- |
 | `observed` | 1 |
 | `conflict` | 2 |
-| `resource` | 9 |
+| `resource` | 10 |
 | `action` | 4 |
 
 ## 2 实体 ↔ 几何 ↔ Actor tag
@@ -24,13 +24,16 @@
 | `TW-drainage-DF-IN-101` | drainage | `resource` | facilities:DF-IN-101 | twin:TW-drainage-DF-IN-101 / kind:intake / state:clogged / evidence:A-03/drainage_facility/v1#row:3 | A-03/drainage_facility/v1#row:3 |
 | `TW-drainage-DF-IN-103` | drainage | `resource` | facilities:DF-IN-103 | twin:TW-drainage-DF-IN-103 / kind:intake / state:in_service / evidence:A-03/drainage_facility/v1#row:5 | A-03/drainage_facility/v1#row:5 |
 | `TW-drainage-DF-IN-201` | drainage | `resource` | facilities:DF-IN-201 | twin:TW-drainage-DF-IN-201 / kind:intake / state:in_service / evidence:A-03/drainage_facility/v1#row:7 | A-03/drainage_facility/v1#row:7 |
+| `TW-drainage-DF-IN-202` | drainage | `resource` | facilities:DF-IN-202 | twin:TW-drainage-DF-IN-202 / kind: intake / state:in_service / evidence:A-03/drainage_facility/v1#row:8 | A-03/drainage_facility/v1#row:8 |
 | `TW-drainage-PL-DRN-101` | drainage | `resource` | pipelines:PL-DRN-101 | twin:TW-drainage-PL-DRN-101 / kind:drainage / evidence:A-03/pipeline_ledger/v1#row:2 | A-03/pipeline_ledger/v1#row:2 |
 | `TW-drainage-PL-DRN-102` | drainage | `resource` | pipelines:PL-DRN-102 | twin:TW-drainage-PL-DRN-102 / kind:drainage / evidence:A-03/pipeline_ledger/v1#row:3 | A-03/pipeline_ledger/v1#row:3 |
 | `TW-drainage-PL-DRN-201` | drainage | `resource` | pipelines:PL-DRN-201 | twin:TW-drainage-PL-DRN-201 / kind:drainage / evidence:A-03/pipeline_ledger/v1#row:8 | A-03/pipeline_ledger/v1#row:8 |
 | `TW-gas-PL-GAS-101` | gas | `conflict` | pipelines:PL-GAS-101 | twin:TW-gas-PL-GAS-101 / kind:gas / evidence:A-03/pipeline_ledger/v1#row:4 | A-03/pipeline_ledger/v1#row:4 |
+| `TW-gas-PL-GAS-201` | gas | `-` | pipelines:PL-GAS-201 | twin:TW-gas-PL-GAS-201 / kind:gas / evidence:A-03/pipeline_ledger/v1#row:10 | A-03/pipeline_ledger/v1#row:10 |
 | `TW-incident-WO-20261029-007` | incident | `observed` | water:WO-20261029-007 | twin:TW-incident-WO-20261029-007 / kind:water / state:30cm / evidence:A-03/work_order/v1#row:2 | A-03/work_order/v1#row:2 |
 | `TW-incident-WO-20261029-011` | incident | `-` | water:WO-20261029-011 | twin:TW-incident-WO-20261029-011 / kind:water / state:18cm / evidence:A-03/work_order/v1#row:6 | A-03/work_order/v1#row:6 |
 | `TW-power-PL-PWR-101` | power | `conflict` | pipelines:PL-PWR-101 | twin:TW-power-PL-PWR-101 / kind:power / evidence:A-03/pipeline_ledger/v1#row:5 | A-03/pipeline_ledger/v1#row:5 |
+| `TW-power-PL-PWR-201` | power | `-` | pipelines:PL-PWR-201 | twin:TW-power-PL-PWR-201 / kind:power / evidence:A-03/pipeline_ledger/v1#row:11 | A-03/pipeline_ledger/v1#row:11 |
 | `TW-pump_station-DF-PS-01` | pump_station | `resource` | facilities:DF-PS-01 | twin:TW-pump_station-DF-PS-01 / kind:pump_station / state:fault_pending_repair / evidence:A-03/drainage_facility/v1#row:2 | A-03/drainage_facility/v1#row:2 |
 | `TW-pump_station-DF-PS-02` | pump_station | `resource` | facilities:DF-PS-02 | twin:TW-pump_station-DF-PS-02 / kind:pump_station / state:in_service / evidence:A-03/drainage_facility/v1#row:4 | A-03/drainage_facility/v1#row:4 |
 | `TW-pump_station-DF-PS-03` | pump_station | `resource` | facilities:DF-PS-03 | twin:TW-pump_station-DF-PS-03 / kind:pump_station / state:in_service / evidence:A-03/drainage_facility/v1#row:6 | A-03/drainage_facility/v1#row:6 |
@@ -39,7 +42,7 @@
 | `TW-road-R-103` | road | `action` | roads:R-103 | twin:TW-road-R-103 / kind:road / state:under_construction / evidence:A-03/road_network/v1.1#row:4 | A-03/road_network/v1.1#row:4 |
 | `TW-road-R-104` | road | `-` | roads:R-104 | twin:TW-road-R-104 / kind:road / state:normal / evidence:A-03/road_network/v1.1#row:5 | A-03/road_network/v1.1#row:5 |
 | `TW-road-R-105` | road | `action` | roads:R-105 | twin:TW-road-R-105 / kind:road / state:under_construction / evidence:A-03/road_network/v1.1#row:6 | A-03/road_network/v1.1#row:6 |
-| `TW-road-R-201` | road | `action` | roads:R-201 | twin:TW-road-R-201 / kind:road / state:normal / evidence:A-03/road_network/v1.1#row:7 | A-03/road_network/v1.1#row:7 |
+| `TW-road-R-201` | road | `action` | roads:R-201 | twin:TW-road-R-201 / kind:road / state:under_construction / evidence:A-03/road_network/v1.1#row:7 | A-03/road_network/v1.1#row:7 |
 | `TW-road-R-202` | road | `-` | roads:R-202 | twin:TW-road-R-202 / kind:road / state:normal / evidence:A-03/road_network/v1.1#row:8 | A-03/road_network/v1.1#row:8 |
 | `TW-telecom-PL-TEL-103` | telecom | `-` | pipelines:PL-TEL-103 | twin:TW-telecom-PL-TEL-103 / kind:telecom / evidence:A-03/pipeline_ledger/v1#row:6 | A-03/pipeline_ledger/v1#row:6 |
 | `TW-water-PL-WTR-103` | water | `-` | pipelines:PL-WTR-103 | twin:TW-water-PL-WTR-103 / kind:water / evidence:A-03/pipeline_ledger/v1#row:7 | A-03/pipeline_ledger/v1#row:7 |

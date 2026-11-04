@@ -23,6 +23,24 @@ def build_scene_payload(store: TwinSemanticStore | None = None) -> dict[str, Any
             "asset_ids": item.asset_ids,
             "attributes": item.attributes,
         })
+    # Buildings are geometry-only scene objects. They are kept in the same
+    # source snapshot so the 3D layer can validate district ownership.
+    from pathlib import Path
+    import json
+    layout_path = Path(__file__).resolve().parents[2] / "samples" / "assets" / "urban" / "scene_layout.json"
+    if layout_path.is_file():
+        layout = json.loads(layout_path.read_text(encoding="utf-8"))
+        for building in layout.get("buildings", []):
+            objects.append({
+                "twin_id": building["building_id"],
+                "kind": "building",
+                "name": building["building_id"],
+                "position": f"building:{building['building_id']}",
+                "state": "in_service",
+                "region_id": building.get("district"),
+                "asset_ids": [],
+                "attributes": {"district": building.get("district"), "height_m": building.get("height_m")},
+            })
     return {
         "schema_version": "urban-twin-scene-v1",
         "snapshot_hash": store.snapshot_hash(),

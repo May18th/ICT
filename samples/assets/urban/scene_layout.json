@@ -1,6 +1,6 @@
 {
   "schema_version": "urban-twin-layout-v1",
-  "snapshot_hash": "6b3736aa7057757bacbed9127fa7851e4c6d41939ee4e024cfed5c699850870e",
+  "snapshot_hash": "438d4cc786ba4f227a266ddff1037f4e828d93b189b78c40411d893c046262a9",
   "units": "m",
   "notes": "示意图布局，非测绘坐标；z=0 为地平面，路面取 elevation_m，管线取 -depth_m",
   "bounds": {
@@ -176,7 +176,7 @@
       "name": "滨河路",
       "district": "B-01",
       "road_class": "次干路",
-      "state": "normal",
+      "state": "under_construction",
       "width_m": 14.0,
       "z": 5.4,
       "length_m": 920.0,
@@ -371,6 +371,29 @@
       "z_end": -4.86,
       "polyline": [
         {
+          "x": 1428.7,
+          "y": 224.3
+        },
+        {
+          "x": 1033.1,
+          "y": 24.5
+        }
+      ],
+      "evidence": "A-03/pipeline_ledger/v1#row:8"
+    },
+    {
+      "pipeline_id": "PL-GAS-201",
+      "twin_id": "TW-gas-PL-GAS-201",
+      "kind": "gas",
+      "road_id": "R-201",
+      "diameter_mm": 250,
+      "depth_m": 1.55,
+      "z": -1.55,
+      "layer": "upper",
+      "z_start": -1.55,
+      "z_end": -1.55,
+      "polyline": [
+        {
           "x": 1429.5,
           "y": 222.7
         },
@@ -379,7 +402,30 @@
           "y": 22.9
         }
       ],
-      "evidence": "A-03/pipeline_ledger/v1#row:8"
+      "evidence": "A-03/pipeline_ledger/v1#row:10"
+    },
+    {
+      "pipeline_id": "PL-PWR-201",
+      "twin_id": "TW-power-PL-PWR-201",
+      "kind": "power",
+      "road_id": "R-201",
+      "diameter_mm": 120,
+      "depth_m": 1.0,
+      "z": -1.0,
+      "layer": "upper",
+      "z_start": -1.0,
+      "z_end": -1.0,
+      "polyline": [
+        {
+          "x": 1430.3,
+          "y": 221.1
+        },
+        {
+          "x": 1034.7,
+          "y": 21.3
+        }
+      ],
+      "evidence": "A-03/pipeline_ledger/v1#row:11"
     },
     {
       "pipeline_id": "PL-WTR-202",
@@ -453,6 +499,22 @@
       },
       "z": 5.4,
       "evidence": "A-03/drainage_facility/v1#row:7"
+    },
+    {
+      "facility_id": "DF-IN-202",
+      "twin_id": "TW-drainage-DF-IN-202",
+      "name": "滨河路雨水口组",
+      "facility_type": " intake",
+      "road_id": "R-202",
+      "state": "in_service",
+      "capacity_m3h": 160,
+      "footprint_m": 6.4,
+      "xy": {
+        "x": 739.3,
+        "y": -143.2
+      },
+      "z": 6.0,
+      "evidence": "A-03/drainage_facility/v1#row:8"
     },
     {
       "facility_id": "DF-PS-01",
@@ -3346,7 +3408,8 @@
     "under_construction": [
       "R-101",
       "R-103",
-      "R-105"
+      "R-105",
+      "R-201"
     ],
     "flooded_roads": [
       "R-101",

@@ -33,7 +33,7 @@
   },
   "assets": [
     {
-      "asset_id": "AS-A-03-construction_plan-79142c4f",
+      "asset_id": "AS-A-03-construction_plan-9d16ae32",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "construction_plans.csv",
@@ -42,11 +42,11 @@
       "version": "v3",
       "standard_refs": [],
       "locator": "A-03/construction_plan/v3",
-      "checksum_sha256": "79142c4fde6b5ba38589c613815237b0062249eb307bbf8433f7c2f1ef986142",
-      "byte_size": 615,
-      "summary": "表格资产：3 行 × 12 列，列名 plan_id、project_name、road_id、pipeline_id、work_type、excavation_depth_m 等",
+      "checksum_sha256": "9d16ae32831e2b14cf383581c276c3441e286267c606e9cb38bc005811b3aad3",
+      "byte_size": 784,
+      "summary": "表格资产：4 行 × 12 列，列名 plan_id、project_name、road_id、pipeline_id、work_type、excavation_depth_m 等",
       "structure": {
-        "rows": 3,
+        "rows": 4,
         "columns": 12,
         "headers": [
           "plan_id",
@@ -72,12 +72,16 @@
         "valid_from": "2026-10-26T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "79142c4fde6b5ba38589c613815237b0062249eb307bbf8433f7c2f1ef986142",
+        "content_hash": "9d16ae32831e2b14cf383581c276c3441e286267c606e9cb38bc005811b3aad3",
         "status": "published"
-      }
+      },
+      "coverage": [
+        "A-03",
+        "B-01"
+      ]
     },
     {
-      "asset_id": "AS-A-03-drainage_facility-4e6c1308",
+      "asset_id": "AS-A-03-drainage_facility-073cc674",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "drainage_facilities.csv",
@@ -86,11 +90,11 @@
       "version": "v1",
       "standard_refs": [],
       "locator": "A-03/drainage_facility/v1",
-      "checksum_sha256": "4e6c13087fbd8a32b783840dba277b70497ab1db29bb0c09f9929355737f630f",
-      "byte_size": 808,
-      "summary": "表格资产：6 行 × 13 列，列名 facility_id、name、facility_type、road_id、drainage_zone、capacity_m3h 等",
+      "checksum_sha256": "073cc6746cf7eff9ead095436fc1345fb567d0c1160a4bd9350c7d8ee5161a2f",
+      "byte_size": 920,
+      "summary": "表格资产：7 行 × 13 列，列名 facility_id、name、facility_type、road_id、drainage_zone、capacity_m3h 等",
       "structure": {
-        "rows": 6,
+        "rows": 7,
         "columns": 13,
         "headers": [
           "facility_id",
@@ -117,9 +121,13 @@
         "valid_from": "2026-09-10T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "4e6c13087fbd8a32b783840dba277b70497ab1db29bb0c09f9929355737f630f",
+        "content_hash": "073cc6746cf7eff9ead095436fc1345fb567d0c1160a4bd9350c7d8ee5161a2f",
         "status": "published"
-      }
+      },
+      "coverage": [
+        "A-03",
+        "B-01"
+      ]
     },
     {
       "asset_id": "AS-A-03-duty_list-07d920f0",
@@ -158,7 +166,8 @@
         "visibility": [],
         "content_hash": "07d920f0f21c946276293a8433905dd5d9cad45d7dda3f9cfbcf97592c9521bf",
         "status": "published"
-      }
+      },
+      "coverage": []
     },
     {
       "asset_id": "AS-A-03-emergency_plan-cbaa17ca",
@@ -190,7 +199,8 @@
         "visibility": [],
         "content_hash": "cbaa17cae29ca33f46e56d83a11ce4f16e59a7706c53896f8864395db43d6a6c",
         "status": "deprecated"
-      }
+      },
+      "coverage": []
     },
     {
       "asset_id": "AS-A-03-emergency_plan-df41ffb1",
@@ -222,10 +232,11 @@
         "visibility": [],
         "content_hash": "df41ffb1cc966ba3d1eec4bcf733cb3aaedc77d7328f7e9d5a6651970c85b3f2",
         "status": "published"
-      }
+      },
+      "coverage": []
     },
     {
-      "asset_id": "AS-A-03-pipeline_ledger-4741e97f",
+      "asset_id": "AS-A-03-pipeline_ledger-40793355",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "pipeline_ledger.csv",
@@ -234,11 +245,11 @@
       "version": "v1",
       "standard_refs": [],
       "locator": "A-03/pipeline_ledger/v1",
-      "checksum_sha256": "4741e97fe68e2f308fa76be390748b5fefbb9c398640ad02e081c6a7f48a0de5",
-      "byte_size": 751,
-      "summary": "表格资产：8 行 × 10 列，列名 pipeline_id、kind、road_id、depth_m、diameter_mm、material 等",
+      "checksum_sha256": "407933557d21d1cc9ffca70dbed2c495af702a9e329d1fa738e4945a4d90ce0a",
+      "byte_size": 948,
+      "summary": "表格资产：10 行 × 10 列，列名 pipeline_id、kind、road_id、depth_m、diameter_mm、material 等",
       "structure": {
-        "rows": 8,
+        "rows": 10,
         "columns": 10,
         "headers": [
           "pipeline_id",
@@ -262,9 +273,13 @@
         "valid_from": "2026-02-01T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "4741e97fe68e2f308fa76be390748b5fefbb9c398640ad02e081c6a7f48a0de5",
+        "content_hash": "407933557d21d1cc9ffca70dbed2c495af702a9e329d1fa738e4945a4d90ce0a",
         "status": "published"
-      }
+      },
+      "coverage": [
+        "A-03",
+        "B-01"
+      ]
     },
     {
       "asset_id": "AS-A-03-procedure-21ee9523",
@@ -299,7 +314,8 @@
         ],
         "content_hash": "21ee9523f707df05ca1cbf486700fac57f33d0965f0c49260731d925d3875e92",
         "status": "published"
-      }
+      },
+      "coverage": []
     },
     {
       "asset_id": "AS-A-03-procedure-30dc5dcb",
@@ -334,7 +350,8 @@
         ],
         "content_hash": "30dc5dcbeca0684d9a982245d583b7b0667fce116684337f4eb861d450a5a37c",
         "status": "published"
-      }
+      },
+      "coverage": []
     },
     {
       "asset_id": "AS-A-03-resource_inventory-8133c741",
@@ -375,7 +392,11 @@
         "visibility": [],
         "content_hash": "8133c74194d562da62a54f9df208e317afc4e28e65871b10644e94cbbc4318ef",
         "status": "published"
-      }
+      },
+      "coverage": [
+        "A-03",
+        "B-01"
+      ]
     },
     {
       "asset_id": "AS-A-03-road_network-6fbe05c1",
@@ -421,7 +442,11 @@
         "visibility": [],
         "content_hash": "6fbe05c17fd1fc491bc967e417be72917d7b38de83339a43f1611ed6d5fdef47",
         "status": "published"
-      }
+      },
+      "coverage": [
+        "A-03",
+        "B-01"
+      ]
     },
     {
       "asset_id": "AS-A-03-schematic_map-68ff291d",
@@ -451,10 +476,11 @@
         "visibility": [],
         "content_hash": "68ff291d5b28c7a8341d68e8e4754000505378daaff3cad1e938b1b65f6fddea",
         "status": "published"
-      }
+      },
+      "coverage": []
     },
     {
-      "asset_id": "AS-A-03-underpass-0684ecae",
+      "asset_id": "AS-A-03-underpass-d4ae624c",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "underpasses.csv",
@@ -463,11 +489,11 @@
       "version": "v1",
       "standard_refs": [],
       "locator": "A-03/underpass/v1",
-      "checksum_sha256": "0684ecae4f062fb944da2358226f34c5f225e6f1f372d2f207edb91fd231b714",
-      "byte_size": 429,
-      "summary": "表格资产：1 行 × 13 列，列名 underpass_id、name、road_id、district、entry_sill_height_m、lowest_point_z_m 等",
+      "checksum_sha256": "d4ae624ce6a0df0fd7c82539af1eace12355d590e27fb1518110de8dc4ce9632",
+      "byte_size": 548,
+      "summary": "表格资产：2 行 × 13 列，列名 underpass_id、name、road_id、district、entry_sill_height_m、lowest_point_z_m 等",
       "structure": {
-        "rows": 1,
+        "rows": 2,
         "columns": 13,
         "headers": [
           "underpass_id",
@@ -494,9 +520,13 @@
         "valid_from": "2026-10-29T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "0684ecae4f062fb944da2358226f34c5f225e6f1f372d2f207edb91fd231b714",
+        "content_hash": "d4ae624ce6a0df0fd7c82539af1eace12355d590e27fb1518110de8dc4ce9632",
         "status": "published"
-      }
+      },
+      "coverage": [
+        "A-03",
+        "B-01"
+      ]
     },
     {
       "asset_id": "AS-A-03-weather_alert-de042dd8",
@@ -538,10 +568,14 @@
         "visibility": [],
         "content_hash": "de042dd890bec1b37de6061a0fbc11ea23dc65c82f21f63d4946ce608d80e9a5",
         "status": "published"
-      }
+      },
+      "coverage": [
+        "A-03",
+        "B-01"
+      ]
     },
     {
-      "asset_id": "AS-A-03-work_order-afb7c435",
+      "asset_id": "AS-A-03-work_order-6a1282a1",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "work_orders.csv",
@@ -550,11 +584,11 @@
       "version": "v1",
       "standard_refs": [],
       "locator": "A-03/work_order/v1",
-      "checksum_sha256": "afb7c435503a99fd0950ee98fe7c190f6fca3f3aa4dd182d56c4415380318994",
-      "byte_size": 868,
-      "summary": "表格资产：5 行 × 10 列，列名 order_id、road_id、facility_id、pipeline_id、order_type、reported_at 等",
+      "checksum_sha256": "6a1282a1710c5760648ce61a548cba8582f6ee713c72713d0fa4eddde1dbe18a",
+      "byte_size": 1283,
+      "summary": "表格资产：8 行 × 10 列，列名 order_id、road_id、facility_id、pipeline_id、order_type、reported_at 等",
       "structure": {
-        "rows": 5,
+        "rows": 8,
         "columns": 10,
         "headers": [
           "order_id",
@@ -578,9 +612,13 @@
         "valid_from": "2026-10-29T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "afb7c435503a99fd0950ee98fe7c190f6fca3f3aa4dd182d56c4415380318994",
+        "content_hash": "6a1282a1710c5760648ce61a548cba8582f6ee713c72713d0fa4eddde1dbe18a",
         "status": "published"
-      }
+      },
+      "coverage": [
+        "A-03",
+        "B-01"
+      ]
     },
     {
       "asset_id": "AS-CD-CITY-emergency_plan-2de19b5d",
@@ -610,7 +648,8 @@
         "visibility": [],
         "content_hash": "2de19b5d1db280e4d22bd145fca2faf8dabfe22cd891a66b314dfce1ca8f630f",
         "status": "published"
-      }
+      },
+      "coverage": []
     },
     {
       "asset_id": "AS-CD-CITY-emergency_plan-b410bfe9",
@@ -640,7 +679,8 @@
         "visibility": [],
         "content_hash": "b410bfe994d4f21e84ac1e600a58f2223db95b99aeeb08c001f99f6f37fff6ec",
         "status": "published"
-      }
+      },
+      "coverage": []
     },
     {
       "asset_id": "AS-R-101-public_notice-27eaffa5",
@@ -672,7 +712,8 @@
         "visibility": [],
         "content_hash": "27eaffa5b2824e0eb0b2234bd724a9494b11e0ccdea3c53fbe1234347ba13d08",
         "status": "published"
-      }
+      },
+      "coverage": []
     },
     {
       "asset_id": "AS-R-101-public_notice-cc38b190",
@@ -704,7 +745,8 @@
         "visibility": [],
         "content_hash": "cc38b190bcd33658751136a3ec5dbf9628efb2f04231275d4f9d4091cca40832",
         "status": "published"
-      }
+      },
+      "coverage": []
     }
   ]
 }

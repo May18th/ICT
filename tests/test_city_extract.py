@@ -19,10 +19,10 @@ def _entities(type_name: str):
 def test_entity_counts_per_type() -> None:
     counts = Counter(entity.type for entity in BUNDLE.entities)
     assert counts["Road"] == 7
-    assert counts["Pipeline"] == 8
-    assert counts["DrainageFacility"] == 6
-    assert counts["ConstructionProject"] == 3
-    assert counts["Incident"] == 5
+    assert counts["Pipeline"] == 10
+    assert counts["DrainageFacility"] == 7
+    assert counts["ConstructionProject"] == 4
+    assert counts["Incident"] == 8
     assert counts["WeatherEvent"] == 4
     assert counts["Department"] == 8
     assert counts["Resource"] == 9

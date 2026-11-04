@@ -16,6 +16,7 @@ Nothing here is real municipal data; see `samples/assets/urban/README.md`.
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 from dataclasses import dataclass
 from datetime import datetime
@@ -308,6 +309,7 @@ def build_urban_manifest(root: Path | str | None = None) -> dict[str, Any]:
         type_counts[governance.asset_type] = type_counts.get(governance.asset_type, 0) + 1
         modality_counts[asset.modality.value] = modality_counts.get(asset.modality.value, 0) + 1
         source_orgs[governance.source_org] = source_orgs.get(governance.source_org, 0) + 1
+    coverage_by_file = _coverage_by_file(Path(root) if root is not None else DEFAULT_DATASET_ROOT)
     return {
         "manifest_version": MANIFEST_VERSION,
         "asset_count": len(rows),
@@ -318,10 +320,37 @@ def build_urban_manifest(root: Path | str | None = None) -> dict[str, Any]:
             {
                 **asset.model_dump(mode="json"),
                 "governance": governance.model_dump(mode="json"),
+                "coverage": coverage_by_file.get(asset.file_name, []),
             }
             for asset, governance in rows
         ],
     }
+
+
+def _coverage_by_file(root: Path) -> dict[str, list[str]]:
+    """Derive district coverage from row-level road references."""
+    result: dict[str, set[str]] = {}
+    road_district: dict[str, str] = {}
+    road_path = root / "road_network.csv"
+    with road_path.open(encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            if row.get("road_id") and row.get("district"):
+                road_district[row["road_id"]] = row["district"]
+    direct = {"underpasses.csv": "district", "weather_alerts.csv": "district", "resource_inventory.csv": "district"}
+    for filename, column in direct.items():
+        path = root / filename
+        with path.open(encoding="utf-8-sig", newline="") as handle:
+            result[filename] = {row[column] for row in csv.DictReader(handle) if row.get(column)}
+    for filename in ("pipeline_ledger.csv", "drainage_facilities.csv", "construction_plans.csv", "work_orders.csv"):
+        path = root / filename
+        with path.open(encoding="utf-8-sig", newline="") as handle:
+            result[filename] = {
+                road_district[row["road_id"]]
+                for row in csv.DictReader(handle)
+                if row.get("road_id") in road_district
+            }
+    result["road_network.csv"] = set(road_district.values())
+    return {name: sorted(values) for name, values in result.items()}
 
 
 def write_urban_manifest(root: Path | str | None = None) -> Path:

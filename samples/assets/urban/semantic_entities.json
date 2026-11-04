@@ -1,12 +1,12 @@
 {
   "schema_version": "urban-twin-semantic-entities-v1",
-  "projection_hash": "proj-6515c567c7b31d32",
+  "projection_hash": "proj-de40f14cbc813e83",
   "event_id": "WO-20261029-007",
   "as_of": "2026-10-29T09:40:00+08:00",
   "district": "A-03",
-  "scene_snapshot_hash": "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5",
-  "layout_snapshot_hash": "6b3736aa7057757bacbed9127fa7851e4c6d41939ee4e024cfed5c699850870e",
-  "replay_snapshot_hash": "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5",
+  "scene_snapshot_hash": "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891",
+  "layout_snapshot_hash": "438d4cc786ba4f227a266ddff1037f4e828d93b189b78c40411d893c046262a9",
+  "replay_snapshot_hash": "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891",
   "hop_order": [
     "observed",
     "affected",
@@ -158,6 +158,49 @@
       "note": ""
     },
     {
+      "twin_id": "TW-drainage-DF-IN-202",
+      "kind": "drainage",
+      "name": "DF-IN-202",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "in_service",
+      "primary_hop": "resource",
+      "hops": [
+        "affected",
+        "owner",
+        "conflict",
+        "resource"
+      ],
+      "highlight_steps": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "facilities:DF-IN-202",
+        "layout_section": "facilities",
+        "shape": "point",
+        "points": [
+          {
+            "x": 739.3,
+            "y": -143.2
+          }
+        ],
+        "z": 6.0,
+        "depth_cm": null,
+        "evidence": "A-03/drainage_facility/v1#row:8",
+        "actor_tags": [
+          "twin:TW-drainage-DF-IN-202",
+          "kind: intake",
+          "state:in_service",
+          "evidence:A-03/drainage_facility/v1#row:8"
+        ]
+      },
+      "note": ""
+    },
+    {
       "twin_id": "TW-drainage-PL-DRN-101",
       "kind": "drainage",
       "name": "PL-DRN-101",
@@ -276,12 +319,12 @@
         "shape": "polyline",
         "points": [
           {
-            "x": 1429.5,
-            "y": 222.7
+            "x": 1428.7,
+            "y": 224.3
           },
           {
-            "x": 1033.9,
-            "y": 22.9
+            "x": 1033.1,
+            "y": 24.5
           }
         ],
         "z": -4.2,
@@ -335,6 +378,42 @@
           "twin:TW-gas-PL-GAS-101",
           "kind:gas",
           "evidence:A-03/pipeline_ledger/v1#row:4"
+        ]
+      },
+      "note": "布局管线没有事件状态字段，state 只存在于语义层"
+    },
+    {
+      "twin_id": "TW-gas-PL-GAS-201",
+      "kind": "gas",
+      "name": "PL-GAS-201",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "",
+      "primary_hop": null,
+      "hops": [],
+      "highlight_steps": [],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "pipelines:PL-GAS-201",
+        "layout_section": "pipelines",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": 1429.5,
+            "y": 222.7
+          },
+          {
+            "x": 1033.9,
+            "y": 22.9
+          }
+        ],
+        "z": -1.55,
+        "depth_cm": null,
+        "evidence": "A-03/pipeline_ledger/v1#row:10",
+        "actor_tags": [
+          "twin:TW-gas-PL-GAS-201",
+          "kind:gas",
+          "evidence:A-03/pipeline_ledger/v1#row:10"
         ]
       },
       "note": "布局管线没有事件状态字段，state 只存在于语义层"
@@ -473,6 +552,42 @@
           "twin:TW-power-PL-PWR-101",
           "kind:power",
           "evidence:A-03/pipeline_ledger/v1#row:5"
+        ]
+      },
+      "note": "布局管线没有事件状态字段，state 只存在于语义层"
+    },
+    {
+      "twin_id": "TW-power-PL-PWR-201",
+      "kind": "power",
+      "name": "PL-PWR-201",
+      "region_id": null,
+      "scene_state": "in_service",
+      "layout_state": "",
+      "primary_hop": null,
+      "hops": [],
+      "highlight_steps": [],
+      "drawable": true,
+      "geometry": {
+        "layout_ref": "pipelines:PL-PWR-201",
+        "layout_section": "pipelines",
+        "shape": "polyline",
+        "points": [
+          {
+            "x": 1430.3,
+            "y": 221.1
+          },
+          {
+            "x": 1034.7,
+            "y": 21.3
+          }
+        ],
+        "z": -1.0,
+        "depth_cm": null,
+        "evidence": "A-03/pipeline_ledger/v1#row:11",
+        "actor_tags": [
+          "twin:TW-power-PL-PWR-201",
+          "kind:power",
+          "evidence:A-03/pipeline_ledger/v1#row:11"
         ]
       },
       "note": "布局管线没有事件状态字段，state 只存在于语义层"
@@ -854,7 +969,7 @@
       "name": "R-201",
       "region_id": "B-01",
       "scene_state": "in_service",
-      "layout_state": "normal",
+      "layout_state": "under_construction",
       "primary_hop": "action",
       "hops": [
         "affected",
@@ -898,7 +1013,7 @@
         "actor_tags": [
           "twin:TW-road-R-201",
           "kind:road",
-          "state:normal",
+          "state:under_construction",
           "evidence:A-03/road_network/v1.1#row:7"
         ]
       },
@@ -1086,6 +1201,126 @@
     }
   ],
   "excluded_twin_ids": [
+    "B-A-03-000",
+    "B-A-03-001",
+    "B-A-03-002",
+    "B-A-03-003",
+    "B-A-03-004",
+    "B-A-03-005",
+    "B-A-03-006",
+    "B-A-03-007",
+    "B-A-03-008",
+    "B-A-03-009",
+    "B-A-03-010",
+    "B-A-03-011",
+    "B-A-03-012",
+    "B-A-03-013",
+    "B-A-03-014",
+    "B-A-03-015",
+    "B-A-03-016",
+    "B-A-03-017",
+    "B-A-03-018",
+    "B-A-03-019",
+    "B-A-03-020",
+    "B-A-03-021",
+    "B-A-03-022",
+    "B-A-03-023",
+    "B-A-03-024",
+    "B-A-03-025",
+    "B-A-03-026",
+    "B-A-03-027",
+    "B-A-03-028",
+    "B-A-03-029",
+    "B-A-03-030",
+    "B-A-03-031",
+    "B-A-03-032",
+    "B-A-03-033",
+    "B-A-03-034",
+    "B-A-03-035",
+    "B-A-03-036",
+    "B-A-03-037",
+    "B-A-03-038",
+    "B-A-03-039",
+    "B-A-03-040",
+    "B-A-03-041",
+    "B-A-03-042",
+    "B-A-03-043",
+    "B-A-03-044",
+    "B-A-03-045",
+    "B-A-03-046",
+    "B-A-03-047",
+    "B-A-03-048",
+    "B-A-03-049",
+    "B-A-03-050",
+    "B-A-03-051",
+    "B-A-03-052",
+    "B-A-03-053",
+    "B-A-03-054",
+    "B-A-03-055",
+    "B-A-03-056",
+    "B-A-03-057",
+    "B-A-03-058",
+    "B-A-03-059",
+    "B-B-01-000",
+    "B-B-01-001",
+    "B-B-01-002",
+    "B-B-01-003",
+    "B-B-01-004",
+    "B-B-01-005",
+    "B-B-01-006",
+    "B-B-01-007",
+    "B-B-01-008",
+    "B-B-01-009",
+    "B-B-01-010",
+    "B-B-01-011",
+    "B-B-01-012",
+    "B-B-01-013",
+    "B-B-01-014",
+    "B-B-01-015",
+    "B-B-01-016",
+    "B-B-01-017",
+    "B-B-01-018",
+    "B-B-01-019",
+    "B-B-01-020",
+    "B-B-01-021",
+    "B-B-01-022",
+    "B-B-01-023",
+    "B-B-01-024",
+    "B-B-01-025",
+    "B-B-01-026",
+    "B-B-01-027",
+    "B-B-01-028",
+    "B-B-01-029",
+    "B-B-01-030",
+    "B-B-01-031",
+    "B-B-01-032",
+    "B-B-01-033",
+    "B-B-01-034",
+    "B-B-01-035",
+    "B-B-01-036",
+    "B-B-01-037",
+    "B-B-01-038",
+    "B-B-01-039",
+    "B-B-01-040",
+    "B-B-01-041",
+    "B-B-01-042",
+    "B-B-01-043",
+    "B-B-01-044",
+    "B-B-01-045",
+    "B-B-01-046",
+    "B-B-01-047",
+    "B-B-01-048",
+    "B-B-01-049",
+    "B-B-01-050",
+    "B-B-01-051",
+    "B-B-01-052",
+    "B-B-01-053",
+    "B-B-01-054",
+    "B-B-01-055",
+    "B-B-01-056",
+    "B-B-01-057",
+    "B-B-01-058",
+    "B-B-01-059",
     "TW-action-先组织抽排降低水位",
     "TW-action-先隔离风险源-对积水影响范围内的压力管线-燃气",
     "TW-action-全程同步交通管制与信息发布",
@@ -1102,6 +1337,9 @@
     "TW-department-ORG-TRAFFIC",
     "TW-department-ORG-WATER",
     "TW-incident-WO-20261020-002",
+    "TW-incident-WO-20261030-021",
+    "TW-incident-WO-20261030-022",
+    "TW-incident-WO-20261030-023",
     "TW-plan-地下燃气管道施工保护规程",
     "TW-plan-城区防汛排涝应急预案-2021-年版-已废止",
     "TW-plan-城区防汛排涝应急预案-2025-年修订",
@@ -1119,13 +1357,15 @@
     "TW-resource-RES-SAND",
     "TW-resource-RES-SAND-B01",
     "TW-resource-RES-SIGN",
+    "TW-underpass-UP-BH-201",
     "TW-underpass-UP-XH-101",
     "TW-weather-WA-20261028-07",
     "TW-weather-WA-20261029-01",
     "TW-weather-WA-20261029-02",
     "TW-weather-WA-20261030-01",
     "TW-work_site-CP-2026-035",
-    "TW-work_site-CP-2026-038"
+    "TW-work_site-CP-2026-038",
+    "TW-work_site-CP-2026-052"
   ],
   "legacy_osm": [
     {
@@ -1298,24 +1538,24 @@
     }
   ],
   "summary": {
-    "entities": 23,
-    "drawable": 23,
+    "entities": 26,
+    "drawable": 26,
     "unrepresented": 3,
-    "excluded": 40,
-    "event_entities": 16,
-    "highlight_ids": 19,
-    "highlight_ids_drawable": 16,
+    "excluded": 165,
+    "event_entities": 17,
+    "highlight_ids": 20,
+    "highlight_ids_drawable": 17,
     "by_hop": {
       "observed": 1,
       "conflict": 2,
-      "resource": 9,
+      "resource": 10,
       "action": 4
     },
     "by_kind": {
-      "drainage": 6,
-      "gas": 1,
+      "drainage": 7,
+      "gas": 2,
       "incident": 2,
-      "power": 1,
+      "power": 2,
       "pump_station": 3,
       "road": 7,
       "telecom": 1,
@@ -1323,14 +1563,15 @@
     },
     "excluded_by_kind": {
       "action": 7,
+      "building": 120,
       "department": 8,
-      "incident": 1,
+      "incident": 4,
       "plan": 6,
       "region": 2,
       "resource": 9,
-      "underpass": 1,
+      "underpass": 2,
       "weather": 4,
-      "work_site": 2
+      "work_site": 3
     }
   },
   "disclaimers": [

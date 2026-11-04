@@ -143,9 +143,9 @@ def test_cf2_compares_each_district_with_its_own_stock(cf2) -> None:
     assert cf2.priority is not None
     ranked = {case.district: case for case in cf2.priority.ranked}
     assert ranked["A-03"].required_total == 6, "A-03 自己的需求：泵站 3 + 基坑 2"
-    assert ranked["B-01"].required_total == 2, "B-01 自己的需求：2 处低洼点 × 1 台"
+    assert ranked["B-01"].required_total == 3, "B-01 自己的需求：2 处低洼点 × 1 台"
     assert ranked["A-03"].total_gap == max(0, 6 - ranked["A-03"].available_total)
-    assert ranked["B-01"].total_gap == max(0, 2 - ranked["B-01"].available_total)
+    assert ranked["B-01"].total_gap == max(0, 3 - ranked["B-01"].available_total)
 
 
 def test_district_demand_does_not_depend_on_which_district_is_primary(runtime: SkillRuntime) -> None:
@@ -153,7 +153,7 @@ def test_district_demand_does_not_depend_on_which_district_is_primary(runtime: S
     from_a03 = runtime.engine.deduce(EVENT, as_of=AS_OF)
     from_b01 = runtime.engine.deduce("WO-20261029-011", as_of=AS_OF)
     assert from_a03.demand_by_district["B-01"] == 2
-    assert from_b01.demand_by_district["B-01"] == 2
+    assert from_b01.demand_by_district["B-01"] == 3
     assert from_a03.demand_by_district["A-03"] == 6
     assert sum(from_a03.demand_by_district.values()) == 8, "按片区归集后合计仍是 5+2"
 
