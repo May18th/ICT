@@ -51,8 +51,8 @@ def test_entities_come_from_scene_source(projection, scene_ids: set[str]) -> Non
     assert set(entity_ids) | set(unrepresented_ids) | set(projection.excluded_twin_ids) == scene_ids
     assert not (set(entity_ids) & set(unrepresented_ids))
     assert not (set(entity_ids) | set(unrepresented_ids)) & set(projection.excluded_twin_ids)
-    assert len(entity_ids) == 23
-    assert projection.summary.entities == projection.summary.drawable == 23
+    assert len(entity_ids) == 26
+    assert projection.summary.entities == projection.summary.drawable == 26
 
 
 def test_sources_agree_before_projection(projection) -> None:
@@ -80,7 +80,7 @@ def test_hop_comes_from_deduction_and_is_last_hop(projection) -> None:
             continue
         assert entity.primary_hop == entity.hops[-1]
     event_entities = [entity for entity in projection.entities if entity.hops]
-    assert len(event_entities) == projection.summary.event_entities == 16
+    assert len(event_entities) == projection.summary.event_entities == 17
     assert sum(projection.summary.by_hop.values()) == projection.summary.event_entities
     # 道路落在处置顺序、泵站与雨水口落在资源、燃气管线落在职责冲突
     by_id = {entity.twin_id: entity for entity in projection.entities}
@@ -100,8 +100,8 @@ def test_highlight_resolved_or_explicitly_unrepresented(projection) -> None:
     missing = {item.twin_id for item in projection.unrepresented}
     assert drawable | missing == set(steps_by_twin)
     assert not (drawable & missing)
-    assert projection.summary.highlight_ids == len(steps_by_twin) == 19
-    assert projection.summary.highlight_ids_drawable == len(drawable) == 16
+    assert projection.summary.highlight_ids == len(steps_by_twin) == 20
+    assert projection.summary.highlight_ids_drawable == len(drawable) == 17
     assert projection.summary.unrepresented == len(missing) == 3
     assert missing == {
         "TW-incident-WO-20261026-013",

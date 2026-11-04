@@ -70,7 +70,7 @@ SCENARIOS = {
     "normal": {"water": False, "closure": False},
     "flood": {"water": True, "closure": False},
     "closure": {"water": True, "closure": True},
-    "construction": {"water": True, "closure": True},
+    "construction": {"water": True, "closure": True, "construction": True},
 }
 
 # --- 取景 ----------------------------------------------------------------
@@ -389,6 +389,29 @@ def build_scene(
                 )
                 _tag(cone, twin_id=f"TW-cone-{road['road_id']}-{index}", kind="cone", state="closed")
                 counts["cone"] += 1
+
+    if flags.get("construction"):
+        construction_roads = {item["road_id"] for item in layout.get("states", {}).get("under_construction", [])}
+        for road in layout["roads"]:
+            if road["road_id"] not in construction_roads:
+                continue
+            start, end = road["polyline"][0], road["polyline"][1]
+            dx, dy = end["x"] - start["x"], end["y"] - start["y"]
+            length = math.hypot(dx, dy) or 1.0
+            angle = math.atan2(dy, dx)
+            for side in (-1, 1):
+                fence = _box(
+                    f"ConstructionFence_{road['road_id']}_{side}",
+                    ((start["x"] + end["x"]) / 2, (start["y"] + end["y"]) / 2 + side * road["width_m"] * 1.4, road["z"] + 2.0),
+                    (length * 0.55, 0.35, 4.0), angle, cone_material, "Construction",
+                )
+                _tag(fence, twin_id=f"TW-work_site-fence-{road['road_id']}-{side}", kind="construction_fence", state="active")
+            pit = _box(
+                f"Excavation_{road['road_id']}",
+                ((start["x"] + end["x"]) / 2, (start["y"] + end["y"]) / 2, road["z"] - 1.2),
+                (length * 0.35, road["width_m"] * 1.8, 2.4), angle, ground_material, "Construction",
+            )
+            _tag(pit, twin_id=f"TW-excavation-{road['road_id']}", kind="excavation", state="open")
 
     for pipeline in layout["pipelines"]:
         start, end = pipeline["polyline"][0], pipeline["polyline"][1]
