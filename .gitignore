@@ -26,6 +26,9 @@ pytest-of-*/
 artifacts/
 .tmp/
 
+# 手工导出与外部资料落地目录（如官方手册 PDF 及其解析副本），本质是输出物，不进仓库
+out/
+
 # Blender 自动备份与场景目录快照
 *.blend1
 visualization/blender/scenes.bak-*/
