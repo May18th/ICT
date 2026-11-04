@@ -1,7 +1,7 @@
 {
   "schema_version": "urban-twin-assets-v1",
   "layout": "samples/assets/urban/scene_layout.json",
-  "layout_snapshot": "3791062782309aff172b4cf8ccff6fe020cdfef816e291700a0d58bafb929712",
+  "layout_snapshot": "438d4cc786ba4f227a266ddff1037f4e828d93b189b78c40411d893c046262a9",
   "blender": "5.4.0 Alpha",
   "scenarios": [
     {
@@ -10,13 +10,12 @@
       "glb": "visualization/blender/scenes/urban_twin_normal.glb",
       "objects": {
         "road": 7,
-        "pipeline": 8,
-        "facility": 6,
+        "pipeline": 10,
+        "facility": 7,
         "building": 120,
         "water": 0,
         "cone": 0
-      },
-      "preview": "visualization/blender/scenes/preview_normal.png"
+      }
     },
     {
       "scenario": "flood",
@@ -24,13 +23,12 @@
       "glb": "visualization/blender/scenes/urban_twin_flood.glb",
       "objects": {
         "road": 7,
-        "pipeline": 8,
-        "facility": 6,
+        "pipeline": 10,
+        "facility": 7,
         "building": 120,
         "water": 2,
         "cone": 0
-      },
-      "preview": "visualization/blender/scenes/preview_flood.png"
+      }
     },
     {
       "scenario": "closure",
@@ -38,13 +36,12 @@
       "glb": "visualization/blender/scenes/urban_twin_closure.glb",
       "objects": {
         "road": 7,
-        "pipeline": 8,
-        "facility": 6,
+        "pipeline": 10,
+        "facility": 7,
         "building": 120,
         "water": 2,
         "cone": 18
-      },
-      "preview": "visualization/blender/scenes/preview_closure.png"
+      }
     },
     {
       "scenario": "construction",
@@ -52,13 +49,12 @@
       "glb": "visualization/blender/scenes/urban_twin_construction.glb",
       "objects": {
         "road": 7,
-        "pipeline": 8,
-        "facility": 6,
+        "pipeline": 10,
+        "facility": 7,
         "building": 120,
         "water": 2,
         "cone": 18
-      },
-      "preview": "visualization/blender/scenes/preview_construction.png"
+      }
     }
   ]
 }
