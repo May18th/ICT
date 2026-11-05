@@ -3,7 +3,7 @@
 ## 结论：**已真机注册并跑通**（2026-10-30 更新）
 
 > 历史：本文档较早版本记录的是"Docker 起不来、未真机注册"的阻塞状态。该阻塞已解除：
-> Docker Desktop 恢复后，MCP 服务以 SSE 方式跑在 `nexent_network` 容器里，13 个工具已注册进平台
+> Docker Desktop 恢复后，MCP 服务以 SSE 方式跑在 `nexent_network` 容器里，14 个工具已注册进平台
 > （tool_id 41–53）、挂到 Agent `urban_deduction_agent`（agent_id=3）并发布 v10；
 > 真机对话 **conversation_id=78**，六跳结论与离线 **8/8 一致**，平台调用日志含
 > `event_deduce`（含一次协议修复重试）。
@@ -109,7 +109,7 @@ $env:PYTHONPATH = "src"
 ## 表述边界（答辩时不要越界）
 
 - ✅ 可以说：14 个 MCP 工具已实现并可被任意 MCP 客户端调用；注册清单由代码生成并有一致性测试。
-- ✅ 可以说：已在本机 Nexent v2.7.0 真机注册 13 个工具并跑通内涝主链路（conversation_id=78，8/8 一致）。
+- ✅ 可以说：已在本机 Nexent v2.7.0 真机注册 14 个工具并跑通内涝主链路（conversation_id=78，8/8 一致）。
 - ✅ 可以说：2 个 SKILL.md 已上传到本机 Nexent 技能仓库（skill_id=2/3，正文逐位一致，见 `samples/nexent/live/skills.json`）。
 
 真机证据已留档：`samples/nexent/live/`（Agent 列表、会话、MCP 调用日志、汇总 JSON）+

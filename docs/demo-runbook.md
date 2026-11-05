@@ -69,7 +69,7 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py --out docs/
 ```
 
 期望：技能末行 `缺失 []；正文逐位一致=True`；截图三行 `OK`，产物在 `docs/reports/captures/nexent/`。
-答辩时直接打开 `skill-space.png`（两个技能在平台技能仓库里）与 `mcp-space.png`（连通性校验成功 + 13 个工具）。
+答辩时直接打开 `skill-space.png`（两个技能在平台技能仓库里）与 `mcp-space.png`（连通性校验成功 + 14 个工具）。
 
 ## 3. 跑一次决策（约 60–90 秒）
 
@@ -216,7 +216,7 @@ uv run --locked python -m decision_poc.web_demo --port 8787
 
 - 未配置 `DECISION_LLM_PROVIDER=deepseek` + `DEEPSEEK_API_KEY` 时返回 `configured=false`，页面显示"未配置"，不影响其余演示；
 - 卡片顶部固定显示 Nexent 平台真机验证行（`/api/platform-evidence`，只读 `samples/nexent/live/llm_decision_platform.json`）；
-- 平台侧模型温度无法钉 0，真机会漂移（N01 三次分别选 opt-2 / opt-1），页面按"与参照不一致"如实展示——
+- 平台侧模型温度无法钉 0，真机会漂移（N01 实测 4 条入仓：1 次 opt-1、3 次 opt-2，均未命中参照 opt-3），页面按"与参照不一致"如实展示——
   这正是"优先级必须由确定性推演掌握"的证据，不要改成全部一致的口径。
 
 #### 公网演示地址（已发布）
