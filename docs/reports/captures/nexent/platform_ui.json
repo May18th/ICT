@@ -1,6 +1,6 @@
 {
   "schema_version": "platform-ui-capture-1",
-  "captured_at": "2026-11-05T17:47:14+0800",
+  "captured_at": "2026-11-05T17:52:40+0800",
   "web_url": "http://127.0.0.1:3000",
   "pages": [
     {
@@ -44,13 +44,15 @@
     {
       "name": "mcp-space",
       "path": "/zh/mcp-space",
-      "purpose": "平台 MCP「我的MCP」：urban-twin-mcp 连通性校验通过（卡片角标为注册时快照，实时工具数以 /health=14 为准）",
+      "purpose": "平台 MCP「我的MCP」：urban-twin-mcp 连通性校验通过，14 个工具可用",
       "expect": [
         "urban-twin-mcp",
+        "14 个工具",
         "连接成功"
       ],
       "hit": [
         "urban-twin-mcp",
+        "14 个工具",
         "连接成功"
       ],
       "missing": [],
@@ -58,8 +60,8 @@
       "url": "http://127.0.0.1:3000/zh/mcp-space",
       "title": "AI Agent Platform",
       "screenshot": "docs/reports/captures/nexent/mcp-space.png",
-      "screenshot_bytes": 78638,
-      "screenshot_sha256": "a2fb969fe0bbf62ca799abf566c0c193131c966844a23db6d8a4029bf257c114"
+      "screenshot_bytes": 77913,
+      "screenshot_sha256": "08fb821ec58bc32a88de2a2bd53f5e4e22613f667fed4f7968ea53bfffd668a4"
     }
   ],
   "all_expectations_met": true,

@@ -205,7 +205,7 @@ NexentAdapter(invoke=transport).run(request)
    请求头参数 `Idempotency-Key` 存在且非必填。**与传输层实现逐字段一致。**
 4. `GET /nb/v1/agents` 无 Bearer → `401`，与 `NexentAuthError` 映射一致。
 5. 数据库 `nexent.user_token_info_t` 为空 → 未生成过 API Key；`nexent.ag_tenant_agent_t`
-   已有 `equipment_decision_agent`（设备故障决策智能体，`current_version_no=2`）与
+   已有 `equipment_decision_agent`（设备故障决策智能体，`current_version_no=2`；**已于 2026-11-05 从平台下线，本节为历史观测**）与
    `workbench_main`。
 
 待办只有一步：在前端「智能体开发 → 发布 → 生成 API 密钥」拿到 Access Key，或者用平台自身函数
@@ -220,7 +220,7 @@ $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.nexent_smoke
 ```
 
-### 8.1 真机调用结果（三次，实测）
+### 8.1 真机调用结果（三次，实测；其中 `equipment_decision_agent` 已于 2026-11-05 下线，结论按历史记录保留）
 
 | # | Agent | 结果 |
 | --- | --- | --- |
@@ -236,7 +236,7 @@ uv run --locked python -m decision_poc.nexent_smoke
 
 ### 8.2 结论：Agent 提示词是最后一道门
 
-`equipment_decision_agent` 的 `duty_prompt` 强制「检索 → 推理 → 结论」三步且要求先调工具，
+`equipment_decision_agent`（已下线）的 `duty_prompt` 强制「检索 → 推理 → 结论」三步且要求先调工具，
 `constraint_prompt` 又限定“500 字以内、结论/依据/推理链/建议四段”，**与 JSON 输出契约直接冲突**，
 所以它永远不会返回我们的结构。`workbench_main` 没有这些约束，一次就吐出了合规 JSON。
 
@@ -249,7 +249,7 @@ uv run --locked python -m decision_poc.nexent_smoke
 ```
 
 不改提示词也能演示：对外统一用 `workbench_main` 走决策契约，`equipment_decision_agent`
-保留原来的中文决策报告能力，两者各自成立。
+（已下线）原保留的中文决策报告能力仅作历史参照，内部 JSON 契约以 `workbench_main` 为准。
 
 ### 8.3 换 Key 后的回归（2026-10-29 10:45）
 

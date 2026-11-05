@@ -12,7 +12,7 @@
 
 ## 项目目标
 
-外部知识引用可通过 `external_items_to_tool_result` 转成现有证据信封后再进入决策校验；`equipment_decision_agent` 的四段式报告则通过 `parse_business_report` 独立解析，不与 JSON 决策契约混用。
+外部知识引用可通过 `external_items_to_tool_result` 转成现有证据信封后再进入决策校验；`equipment_decision_agent`（历史对照，已于 2026-11-05 从本机平台下线，以下为历史观测）的四段式报告则通过 `parse_business_report` 独立解析，不与 JSON 决策契约混用。
 
 - 用通用 Schema 表达决策请求、证据、选项、风险、审批和反馈。
 - 用状态图串联“证据 → 决策 → 校验 → 审批 → 执行 → 反馈 → 进化”。
@@ -253,7 +253,7 @@ uv run --locked python -m decision_poc.nexent_smoke
 缺凭据时脚本直接列出缺失项并返回退出码 2，不会发请求。
 
 本机实测（Nexent v2.7.0）用 `workbench_main` 一次即返回可校验的 `DecisionOutput`；
-`equipment_decision_agent` 的提示词强制「检索→推理→结论」四段中文报告，与 JSON 契约冲突，
+`equipment_decision_agent`（已下线）的提示词强制「检索→推理→结论」四段中文报告，与 JSON 契约冲突，
 因此对外统一走 `workbench_main`，业务报告仍由该 Agent 自己承担。原因见
 [设计文档 8.2 节](docs/nexent-northbound-transport-design.md)。
 
