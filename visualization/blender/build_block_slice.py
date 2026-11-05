@@ -2,16 +2,17 @@
 
 为什么先做切片
 --------------
-正式资产由 `generate_urban_twin.py` 从 `scene_layout.json` 批量生成（7 路 / 8 管线 /
-6 设施 / 120 建筑 / 4 套场景）。改正式脚本前先用一个 ~30 对象的切片验证约定是否成立：
+正式资产由 `generate_urban_twin.py` 从 `scene_layout.json` 批量生成（7 路 / 10 管线 /
+7 设施 / 120 建筑 / 4 套场景）。改正式脚本前先用一个 ~30 对象的切片验证约定是否成立：
 
 - 对象名 → 自定义属性 `twin_id` / `kind` / `state` / `evidence`（导出 glTF 进 extras）；
 - 集合按 kind 分组（Roads / Pipelines / Facilities / Water / Buildings / Labels）；
 - 材质名与正式脚本一致（Road_Normal / Road_Closed / FloodWater / PumpStation …）；
 - 相机取景与正式脚本同一套算法（对准"有事的那块"，不是把整城塞进一帧）。
 
-本文件与正式脚本的差别只有一处：几何来自写死的切片常量，不读 layout。两者共享
-同样的约定，所以切片通过 = 正式脚本的约定成立。
+本文件是独立切片：几何来自写死的切片常量、不读 layout；辅助函数（COLORS/_material 等）与
+`generate_urban_twin.py` 存在重复，属已知技术债，待合并到共享模块后再统一。约定一致，
+所以切片通过 = 正式脚本的约定成立。
 
 用法：
     # 无头（推荐，不占界面）
