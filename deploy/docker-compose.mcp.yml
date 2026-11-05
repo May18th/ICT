@@ -53,7 +53,7 @@ services:
         - |
           import json, sys, urllib.request
           data = json.loads(urllib.request.urlopen("http://127.0.0.1:8000/health", timeout=4).read())
-          sys.exit(0 if data.get("tools_count") == 13 else 1)
+          sys.exit(0 if data.get("tools_count") == 14 else 1)
       interval: 30s
       timeout: 8s
       retries: 3
