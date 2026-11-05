@@ -1,6 +1,6 @@
 {
   "schema_version": "platform-ui-capture-1",
-  "captured_at": "2026-11-02T21:07:45+0800",
+  "captured_at": "2026-11-05T17:37:06+0800",
   "web_url": "http://127.0.0.1:3000",
   "pages": [
     {
@@ -20,13 +20,13 @@
       "url": "http://127.0.0.1:3000/zh/skill-space",
       "title": "AI Agent Platform",
       "screenshot": "docs/reports/captures/nexent/skill-space.png",
-      "screenshot_bytes": 87540,
-      "screenshot_sha256": "5550aa2a28cdf81074e7026d79e6a106e2780a33a024164e4fd6b0d45f65d2b8"
+      "screenshot_bytes": 88413,
+      "screenshot_sha256": "91739eeadc2edce0d5d0f6f777588bebbfed7348d6ae5f31a9cabf46ba617b68"
     },
     {
       "name": "agents",
       "path": "/zh/agents",
-      "purpose": "平台智能体列表：已发布的城市内涝决策 Agent（当前版本 V3 / 已发布）",
+      "purpose": "平台智能体列表：已发布的城市内涝决策 Agent（版本号以截图为准）",
       "expect": [
         "城市内涝跨部门决策智能体"
       ],
@@ -38,21 +38,19 @@
       "url": "http://127.0.0.1:3000/zh/agents",
       "title": "AI Agent Platform",
       "screenshot": "docs/reports/captures/nexent/agents.png",
-      "screenshot_bytes": 78321,
-      "screenshot_sha256": "722315fceda9bfa4a21d7f7c61b5d31a3bade3fc6a51a84b061115880ef3705f"
+      "screenshot_bytes": 99223,
+      "screenshot_sha256": "9656cc67e0a664cb21f199ffe6d2982da0276fdc61c00585197942c0b002be28"
     },
     {
       "name": "mcp-space",
       "path": "/zh/mcp-space",
-      "purpose": "平台 MCP「我的MCP」：urban-twin-mcp 连通性校验通过，12 个工具可用",
+      "purpose": "平台 MCP「我的MCP」：urban-twin-mcp 连通性校验通过（卡片角标为注册时快照，实时工具数以 /health=14 为准）",
       "expect": [
         "urban-twin-mcp",
-        "12 个工具",
         "连接成功"
       ],
       "hit": [
         "urban-twin-mcp",
-        "12 个工具",
         "连接成功"
       ],
       "missing": [],
@@ -60,8 +58,8 @@
       "url": "http://127.0.0.1:3000/zh/mcp-space",
       "title": "AI Agent Platform",
       "screenshot": "docs/reports/captures/nexent/mcp-space.png",
-      "screenshot_bytes": 91083,
-      "screenshot_sha256": "111e88a3dfe0c5360e9c728ef6932100d2db4a6857f1a2adaf91404b9978b8a5"
+      "screenshot_bytes": 91676,
+      "screenshot_sha256": "d4f0a8f84207e290f115f180e192247177133c06c171c66eb82465106feb72ce"
     }
   ],
   "all_expectations_met": true,
