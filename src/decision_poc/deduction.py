@@ -36,6 +36,7 @@ from pydantic import Field, field_validator, model_validator
 from .contracts import StrictModel
 from .governance import KNOWLEDGE_VERSION_PATTERN
 from .provenance import Claim
+from .hydro_contracts import HydrographResult
 from .semantic import (
     ObjectKind,
     Predicate,
@@ -281,6 +282,8 @@ class DeductionResult(StrictModel):
     decision_inputs: dict[str, DistrictSignal] = Field(default_factory=dict)
     rules_version: str = ""
     snapshot_hash: str = ""
+    # 可选的过程线输入：只补充事实状态，不改资源缺口的 v1 口径。
+    hydrograph: HydrographResult | None = None
 
     def stage(self, name: str) -> list[DeductionStep]:
         return [step for step in self.steps if step.stage == name]
@@ -583,6 +586,7 @@ class DeductionEngine:
         as_of: datetime | str,
         caller_labels: Sequence[str] = (),
         event_window: timedelta = timedelta(hours=3),
+        hydrograph: HydrographResult | None = None,
     ) -> DeductionResult:
         # MCP 传进来的是 ISO 字符串；统一在这里归一，避免下游拿字符串做时间比较
         if isinstance(as_of, str):
@@ -593,9 +597,9 @@ class DeductionEngine:
 
         refusal = self._temporal_refusal(incident, as_of)
         if refusal is not None:
-            return refusal
+            return refusal.model_copy(update={"hydrograph": hydrograph})
 
-        context, root = self._stage_observed(incident, as_of)
+        context, root = self._stage_observed(incident, as_of, hydrograph)
         steps: list[DeductionStep] = [self._step_observed(context, root)]
 
         affected_step, affected = self._stage_affected(incident, context, as_of, event_window)
@@ -645,16 +649,26 @@ class DeductionEngine:
             decision_inputs=dict(resource_plan.get("decision_inputs", {})),
             rules_version=self.rules.version,
             snapshot_hash=self.store.snapshot_hash(),
+            hydrograph=hydrograph,
         )
 
     # 跳 1 ---------------------------------------------------------------
     def _stage_observed(
-        self, incident: TwinObject, as_of: datetime
+        self,
+        incident: TwinObject,
+        as_of: datetime,
+        hydrograph: HydrographResult | None = None,
     ) -> tuple[dict[str, Any], EventContext]:
         district = self._district_of(incident)
         description = incident.attributes.get("description", "")
         match = DEPTH_PATTERN.search(description)
         depth = float(match.group(1)) if match else None
+        depth_source = "incident" if depth is not None else ""
+        hydrograph_depth_cm: float | None = None
+        if depth is None and hydrograph is not None and hydrograph.computable and hydrograph.values:
+            if hydrograph.unit.strip().lower() in {"m", "meter", "metre"}:
+                hydrograph_depth_cm = hydrograph.peak * 100.0
+                depth_source = "hydrograph_peak"
 
         weather = None
         warning_level = None
@@ -676,6 +690,11 @@ class DeductionEngine:
             "district": district,
             "incident_type": incident.attributes.get("order_type"),
             "area_m2": None,
+            "depth_source": depth_source,
+            # 水动力峰值只作为事实补充；资源缺口仍读取工单深度，保持 v1 口径。
+            "hydrograph_depth_cm": hydrograph_depth_cm,
+            "hydrograph_peak_m": hydrograph.peak if hydrograph is not None and hydrograph.computable else None,
+            "hydrograph_peak_time_h": hydrograph.peak_time_h if hydrograph is not None and hydrograph.computable else None,
         }
         level, level_rule = self._response_level(context)
         context["response_level"] = level
@@ -728,11 +747,18 @@ class DeductionEngine:
     def _step_observed(self, context: Mapping[str, Any], root: EventContext) -> DeductionStep:
         level, rule = self._response_level(context)
         incident = self._by_id[root.incident_twin_id]
+        hydro_fields: dict[str, str] = {}
+        if context.get("hydrograph_peak_m") is not None:
+            hydro_fields = {
+                "hydro_peak_m": f"{float(context['hydrograph_peak_m']):g}",
+                "hydro_peak_time_h": f"{float(context.get('hydrograph_peak_time_h') or 0.0):g}",
+                "depth_source": str(context.get("depth_source") or ""),
+            }
         if level is None:
             return DeductionStep(
                 step_id="S1-observed",
                 stage="observed",
-                conclusion={"event": root.event_id, "depth_cm": str(root.depth_cm)},
+                conclusion={"event": root.event_id, "depth_cm": str(root.depth_cm), **hydro_fields},
                 status=StageStatus.INSUFFICIENT,
                 detail="响应分级规则缺失或条件不匹配，无法定级",
                 evidence_refs=self._refs_of(incident.twin_id),
@@ -747,6 +773,7 @@ class DeductionEngine:
                 "warning_level": root.warning_level or "",
                 "district": root.district or "",
                 "trigger": rule.then.get("trigger", ""),
+                **hydro_fields,
             },
             rule_ids=[rule.rule_id],
             evidence_refs=self._refs_of(incident.twin_id),

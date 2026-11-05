@@ -310,4 +310,6 @@ def orchestrate(deduction: DeductionResult) -> CollabResult:
         kernel_fingerprint=fingerprint,
         snapshot_hash=deduction.snapshot_hash or f"event:{deduction.event_id}",
         rules_version=deduction.rules_version or "unknown",
+        hydrograph=deduction.hydrograph,
+        resource_gaps=list(deduction.resource_gaps),
     )

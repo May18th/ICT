@@ -42,6 +42,7 @@ from .allocation import (
     default_policy,
 )
 from .contracts import StrictModel
+from .hydro_contracts import HydrographResult
 from .replay_export import ReplayAction, ReplayStep, build_replay_from_report
 from .scene_export import build_scene_payload
 from .skills import SkillPipeline, SkillRuntime
@@ -211,6 +212,7 @@ def build_visual_snapshot(
     caller_labels: Sequence[str] | None = None,
     policy: AllocationPolicy | Mapping[str, Any] | None = None,
     runtime: SkillRuntime | None = None,
+    hydrograph: HydrographResult | None = None,
 ) -> VisualSnapshot:
     """跑一次决策并组装快照。只跑一遍 pipeline，六跳与分配共用同一份报告。"""
     labels = list(caller_labels or ["ORG-EMERG"])
@@ -218,9 +220,14 @@ def build_visual_snapshot(
     runtime = runtime or SkillRuntime()
     resolved = _resolve_policy(policy)
 
-    report = SkillPipeline(runtime).run(event_id, as_of_dt, caller_labels=labels, persist=False)
-    engine_steps = runtime.engine.deduce(event_id, as_of=as_of_dt, caller_labels=labels).steps
-    script = build_replay_from_report(report, engine_steps, event_id=event_id, as_of=as_of_dt)
+    report = SkillPipeline(runtime).run(
+        event_id,
+        as_of_dt,
+        caller_labels=labels,
+        persist=False,
+        hydrograph=hydrograph,
+    )
+    script = build_replay_from_report(report, None, event_id=event_id, as_of=as_of_dt)
 
     warnings: list[str] = []
     allocation: dict[str, Any] | None = None

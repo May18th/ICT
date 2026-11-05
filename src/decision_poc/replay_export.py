@@ -29,6 +29,7 @@ from pathlib import Path
 from pydantic import Field
 
 from .contracts import StrictModel
+from .hydro_contracts import HydrographResult
 from .skills import SkillPipeline, SkillRuntime
 from .urban_dataset import DEFAULT_DATASET_ROOT
 
@@ -80,18 +81,24 @@ def build_replay(
     *,
     caller_labels: list[str] | None = None,
     runtime: SkillRuntime | None = None,
+    hydrograph: HydrographResult | None = None,
 ) -> ReplayScript:
     runtime = runtime or SkillRuntime()
     labels = list(caller_labels or ["ORG-EMERG"])
-    report = SkillPipeline(runtime).run(event_id, as_of, caller_labels=labels, persist=False)
-    # 动作对应的规则 id 只在引擎层有（Skill 的 StageView 不重复存一遍），单独取一次
-    engine_steps = runtime.engine.deduce(event_id, as_of=as_of, caller_labels=labels).steps
-    return build_replay_from_report(report, engine_steps, event_id=event_id, as_of=as_of)
+    report = SkillPipeline(runtime).run(
+        event_id,
+        as_of,
+        caller_labels=labels,
+        persist=False,
+        hydrograph=hydrograph,
+    )
+    # 规则 id 已随同一次 pipeline 的 StageView 返回；不再重复调用引擎。
+    return build_replay_from_report(report, None, event_id=event_id, as_of=as_of)
 
 
 def build_replay_from_report(
     report,
-    engine_steps,
+    engine_steps=None,
     *,
     event_id: str,
     as_of: str | datetime,
@@ -103,11 +110,19 @@ def build_replay_from_report(
     逻辑单独暴露出来，调用方传同一份报告进来即可。
     """
     deduction = report.deduction
-    rules_by_action = {
-        step.conclusion.get("action", ""): list(step.rule_ids)
-        for step in engine_steps
-        if step.stage == "action"
-    }
+    if engine_steps is None:
+        rules_by_action = {
+            step.conclusion.get("action", ""): list(step.rule_ids)
+            for step in deduction.stages
+            if step.stage == "action"
+        } if deduction else {}
+    else:
+        # 兼容旧调用方传入引擎步骤；新路径只使用同一份 pipeline 结果。
+        rules_by_action = {
+            step.conclusion.get("action", ""): list(step.rule_ids)
+            for step in engine_steps
+            if step.stage == "action"
+        }
 
     highlights_by_kind: dict[str, list[str]] = {}
     if report.impact:
@@ -172,6 +187,8 @@ def build_replay_from_report(
         "status": report.status,
         "water_twin": water_twin,
     }
+    if deduction and deduction.hydrograph is not None:
+        metrics["hydrograph"] = deduction.hydrograph.model_dump(mode="json")
     return ReplayScript(
         event_id=event_id,
         as_of=datetime.fromisoformat(as_of) if isinstance(as_of, str) else as_of,

@@ -28,6 +28,7 @@ from pydantic import ValidationError
 from .contracts import ToolContext, ToolError, ToolResult, ToolStats
 from .governance import ErrorCode, blocked_by_visibility, is_retryable
 from .provenance import ProvenanceLedger, build_ledger, split_ref
+from .hydro_contracts import HydrographResult
 from .semantic import (
     ObjectKind,
     Predicate,
@@ -276,6 +277,10 @@ class UrbanToolkit:
                         "event_id": {"type": "string", "description": "工单编号，如 WO-20261029-007"},
                         "as_of": {"type": "string", "description": "ISO 8601 带时区"},
                         "caller_labels": {"type": "array", "items": {"type": "string"}},
+                        "hydrograph": {
+                            "type": "object",
+                            "description": "可选的 P13 简化水动力过程线；只补充事实状态，不改资源缺口 v1 口径",
+                        },
                     },
                     "required": ["event_id", "as_of", "caller_labels"],
                 },
@@ -346,6 +351,10 @@ class UrbanToolkit:
                         "event_id": {"type": "string", "description": "工单编号，缺省 WO-20261029-007"},
                         "as_of": {"type": "string", "description": "ISO 8601 带时区"},
                         "caller_labels": {"type": "array", "items": {"type": "string"}},
+                        "hydrograph": {
+                            "type": "object",
+                            "description": "可选的 P13 简化水动力过程线；只补充事实状态，不改资源缺口 v1 口径",
+                        },
                         "policy": {
                             "type": "object",
                             "description": "可选策略参数（P9 进化后的版本）；换策略即换 snapshot_id",
@@ -414,6 +423,10 @@ class UrbanToolkit:
                         "event_id": {"type": "string", "description": "工单编号，如 WO-20261029-007"},
                         "as_of": {"type": "string", "description": "ISO 8601 带时区"},
                         "caller_labels": {"type": "array", "items": {"type": "string"}},
+                        "hydrograph": {
+                            "type": "object",
+                            "description": "可选的 P13 简化水动力过程线；只补充事实状态，不改资源缺口 v1 口径",
+                        },
                     },
                     "required": ["event_id", "as_of", "caller_labels"],
                 },
@@ -701,9 +714,17 @@ class UrbanToolkit:
     def _event_deduce(self, args: Mapping[str, Any]) -> ToolResult:
         caller_labels = [str(item) for item in args.get("caller_labels", [])]
         event_id = str(args["event_id"])
+        hydrograph = (
+            HydrographResult.model_validate(args["hydrograph"])
+            if args.get("hydrograph") is not None
+            else None
+        )
         try:
             outcome = self._deduction_engine().deduce(
-                event_id, as_of=args["as_of"], caller_labels=caller_labels
+                event_id,
+                as_of=args["as_of"],
+                caller_labels=caller_labels,
+                hydrograph=hydrograph,
             )
         except KeyError:
             return _error(
@@ -733,9 +754,17 @@ class UrbanToolkit:
     def _collab_run(self, args: Mapping[str, Any]) -> ToolResult:
         caller_labels = [str(item) for item in args.get("caller_labels", [])]
         event_id = str(args["event_id"])
+        hydrograph = (
+            HydrographResult.model_validate(args["hydrograph"])
+            if args.get("hydrograph") is not None
+            else None
+        )
         try:
             outcome = self._deduction_engine().deduce(
-                event_id, as_of=args["as_of"], caller_labels=caller_labels
+                event_id,
+                as_of=args["as_of"],
+                caller_labels=caller_labels,
+                hydrograph=hydrograph,
             )
         except KeyError:
             return _error(
@@ -980,6 +1009,11 @@ class UrbanToolkit:
                     self.version,
                 )
             labels = [str(item) for item in args.get("caller_labels", [])] or ["ORG-EMERG"]
+            hydrograph = (
+                HydrographResult.model_validate(args["hydrograph"])
+                if args.get("hydrograph") is not None
+                else None
+            )
             try:
                 snapshot = viz.build_visual_snapshot(
                     str(args.get("event_id") or viz.DEFAULT_EVENT_ID),
@@ -987,6 +1021,7 @@ class UrbanToolkit:
                     caller_labels=labels,
                     policy=raw_policy,
                     runtime=self._skill_runtime(),
+                    hydrograph=hydrograph,
                 )
             except Exception as exc:  # 规则来源校验失败等：渲染失败不能把决策层拖挂
                 return _error(

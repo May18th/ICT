@@ -69,6 +69,7 @@ from .deduction import (
 )
 from .governance import ErrorCode, blocked_by_visibility, make_tool_error
 from .provenance import ProvenanceLedger
+from .hydro_contracts import HydrographResult
 from .semantic import ObjectKind, SemanticQuery, TwinObject, TwinSemanticStore
 
 SKILL_MANIFEST_VERSION = "1.2"
@@ -102,6 +103,7 @@ class SkillRequest(StrictModel):
     event_id: str = Field(min_length=1)
     as_of: datetime
     caller_labels: list[str] = Field(default_factory=list)
+    hydrograph: HydrographResult | None = None
 
     @field_validator("as_of", mode="before")
     @classmethod
@@ -191,6 +193,7 @@ class StageView(StrictModel):
     stage: str
     status: str
     conclusion: dict[str, str] = Field(default_factory=dict)
+    rule_ids: list[str] = Field(default_factory=list)
     evidence_refs: list[str] = Field(default_factory=list)
     detail: str = ""
 
@@ -210,6 +213,7 @@ class DeductionView(StrictModel):
     snapshot_hash: str = ""
     # 策略层（P9）的决策输入：编排层直接用，不必回读推演结论字符串
     decision_inputs: dict[str, DistrictSignal] = Field(default_factory=dict)
+    hydrograph: HydrographResult | None = None
 
 
 class ClaimAudit(StrictModel):
@@ -279,7 +283,7 @@ class SkillRuntime:
             obj.twin_id: obj for obj in self.store.objects()
         }
 
-        self._deductions: dict[tuple[str, str, tuple[str, ...]], DeductionResult] = {}
+        self._deductions: dict[tuple[str, str, tuple[str, ...], str], DeductionResult] = {}
         self.ledger: ProvenanceLedger | None = ledger
         if self.ledger is None and ledger_dir is not None and Path(ledger_dir).is_dir():
             self.ledger = self._load_ledger(Path(ledger_dir))
@@ -326,12 +330,20 @@ class SkillRuntime:
         return district_of(self.objects, obj)
 
     def deduce(
-        self, event_id: str, as_of: datetime, caller_labels: Sequence[str] = ()
+        self,
+        event_id: str,
+        as_of: datetime,
+        caller_labels: Sequence[str] = (),
+        hydrograph: HydrographResult | None = None,
     ) -> DeductionResult:
-        key = (event_id, as_of.isoformat(), tuple(sorted(caller_labels)))
+        hydro_key = hydrograph.model_dump_json() if hydrograph is not None else ""
+        key = (event_id, as_of.isoformat(), tuple(sorted(caller_labels)), hydro_key)
         if key not in self._deductions:
             self._deductions[key] = self.engine.deduce(
-                event_id, as_of=as_of, caller_labels=list(caller_labels)
+                event_id,
+                as_of=as_of,
+                caller_labels=list(caller_labels),
+                hydrograph=hydrograph,
             )
         return self._deductions[key]
 
@@ -531,7 +543,12 @@ class UnderstandSkill(Skill):
         # 量级与响应等级必须与推演引擎同源：积水深度是从工单描述里解析出来的，
         # 在这里再写一遍正则就是第二套口径，两处迟早不一致。
         try:
-            root = runtime.deduce(request.event_id, request.as_of, request.caller_labels).root
+            root = runtime.deduce(
+                request.event_id,
+                request.as_of,
+                request.caller_labels,
+                request.hydrograph,
+            ).root
         except KeyError:
             return _fail(ErrorCode.NOT_FOUND, f"未知事件: {request.event_id}")
 
@@ -642,7 +659,12 @@ class ResourceSkill(Skill):
         if obj is None:
             return _fail(ErrorCode.NOT_FOUND, f"未知事件: {request.event_id}")
 
-        outcome = runtime.deduce(request.event_id, request.as_of, request.caller_labels)
+        outcome = runtime.deduce(
+            request.event_id,
+            request.as_of,
+            request.caller_labels,
+            request.hydrograph,
+        )
         stage_steps = outcome.stage("resource")
         if not stage_steps:
             return _fail(ErrorCode.EVIDENCE_INSUFFICIENT, "推演未产出资源跳")
@@ -707,7 +729,12 @@ class DeduceSkill(Skill):
         if obj is None:
             return _fail(ErrorCode.NOT_FOUND, f"未知事件: {request.event_id}")
 
-        outcome = runtime.deduce(request.event_id, request.as_of, request.caller_labels)
+        outcome = runtime.deduce(
+            request.event_id,
+            request.as_of,
+            request.caller_labels,
+            request.hydrograph,
+        )
         cited = _cited_refs(outcome)
         blocked = runtime.blocked_assets(cited, request.caller_labels)
         if blocked:
@@ -724,6 +751,7 @@ class DeduceSkill(Skill):
                     stage=step.stage,
                     status=step.status.value,
                     conclusion=dict(step.conclusion),
+                    rule_ids=list(step.rule_ids),
                     evidence_refs=list(step.evidence_refs),
                     detail=step.detail,
                 )
@@ -741,6 +769,7 @@ class DeduceSkill(Skill):
             rules_version=outcome.rules_version,
             snapshot_hash=outcome.snapshot_hash,
             decision_inputs=dict(outcome.decision_inputs),
+            hydrograph=outcome.hydrograph,
         )
         insufficient = [
             step.stage for step in outcome.steps if step.status is StageStatus.INSUFFICIENT
@@ -769,7 +798,12 @@ class AuditSkill(Skill):
         if obj is None:
             return _fail(ErrorCode.NOT_FOUND, f"未知事件: {request.event_id}")
 
-        outcome = runtime.deduce(request.event_id, request.as_of, request.caller_labels)
+        outcome = runtime.deduce(
+            request.event_id,
+            request.as_of,
+            request.caller_labels,
+            request.hydrograph,
+        )
         claims = claims_from(outcome)
         if not claims:
             return _fail(ErrorCode.EVIDENCE_INSUFFICIENT, "推演未产出可追溯的结论")
@@ -927,9 +961,13 @@ class SkillPipeline:
         *,
         caller_labels: Sequence[str] = (),
         persist: bool = True,
+        hydrograph: HydrographResult | None = None,
     ) -> PipelineReport:
         request = SkillRequest(
-            event_id=event_id, as_of=as_of, caller_labels=list(caller_labels)
+            event_id=event_id,
+            as_of=as_of,
+            caller_labels=list(caller_labels),
+            hydrograph=hydrograph,
         )
         report = PipelineReport(
             event_id=request.event_id,

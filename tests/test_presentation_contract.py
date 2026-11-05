@@ -20,6 +20,7 @@ import pytest
 
 from decision_poc import visualize
 from decision_poc.replay_export import build_replay, resolve_flood_twin
+from decision_poc.hydro_contracts import HydrographResult
 from decision_poc.scene_layout import build_layout
 from decision_poc.urban_dataset import DEFAULT_DATASET_ROOT
 
@@ -84,6 +85,20 @@ def test_replay_first_hop_highlights_real_scene_twin() -> None:
     for twin_id in observed.highlights:
         assert twin_id in twins
 
+    hydrograph = HydrographResult(
+        times_h=[0.0, 0.5, 1.0],
+        values=[0.2, 0.8, 1.1],
+        unit="m",
+        formula_id="test-hydrograph",
+        formula_source="tests/test_presentation_contract.py",
+        assumptions=["测试过程线"],
+        error_bound="测试时段 0.5 h",
+        peak=1.1,
+        peak_time_h=1.0,
+    )
+    hydro_script = build_replay(EVENT_ID, AS_OF, hydrograph=hydrograph)
+    assert hydro_script.metrics["hydrograph"] == hydrograph.model_dump(mode="json")
+
 
 def test_render_job_highlights_resolve_to_truth_and_layout() -> None:
     snapshot = visualize.build_visual_snapshot(EVENT_ID, AS_OF)
@@ -106,3 +121,17 @@ def test_render_job_highlights_resolve_to_truth_and_layout() -> None:
     ]
     unrendered = sorted(twin for twin in physical if twin not in layout_twins)
     assert not unrendered, f"物理对象高亮在布局里没有 Actor: {unrendered}"
+
+    hydrograph = HydrographResult(
+        times_h=[0.0, 0.5, 1.0],
+        values=[0.2, 0.8, 1.1],
+        unit="m",
+        formula_id="test-hydrograph",
+        formula_source="tests/test_presentation_contract.py",
+        assumptions=["测试过程线"],
+        error_bound="测试时段 0.5 h",
+        peak=1.1,
+        peak_time_h=1.0,
+    )
+    hydro_snapshot = visualize.build_visual_snapshot(EVENT_ID, AS_OF, hydrograph=hydrograph)
+    assert hydro_snapshot.metrics["hydrograph"] == hydrograph.model_dump(mode="json")

@@ -10,7 +10,7 @@
 
 | 模块 | 内容 |
 | --- | --- |
-| `src/decision_poc/quant/contracts.py` | 新增 `HydrographResult`（过程线 + 峰值/峰现时刻 + 公式/出处/假设/误差界 + 算不出来时显式声明）、`uncomputable_hydrograph()` |
+| `src/decision_poc/hydro_contracts.py`（由 `quant/contracts.py` 兼容重导出） | 新增 `HydrographResult`（过程线 + 峰值/峰现时刻 + 公式/出处/假设/误差界 + 算不出来时显式声明）、`uncomputable_hydrograph()` |
 | `src/decision_poc/quant/hydrodynamics.py` | 马斯京根系数与稳定性判定、马斯京根汇流演进、修正 Puls 调蓄演进（含抽排与溢流堰）、到阈时刻、超阈时长 |
 | `src/decision_poc/quant/__init__.py` | 导出新契约与 6 个新函数 |
 
@@ -56,6 +56,7 @@
 本层落地后，它变成一条**可算但有前提**的链路：
 
 ```
+
 前池库容曲线（水位-容积表）+ 来水过程线 + 抽排能力（含停机序列）
   → level_pool_route → 水位过程线
   → time_to_level       → 到警戒水位的时刻（封控/调度的提前量）
@@ -98,3 +99,9 @@ uv lock --check                                            # 通过
 uv run --locked python -m compileall -q src tests           # 通过
 uv pip check --python .venv\Scripts\python.exe              # 通过
 ```
+
+## 8 后续接入说明
+
+P13 报告记录的是内核落地时的范围；随后 P14 已将可选 `HydrographResult` 接入六跳、Skills、
+`collab_run` 与三维回放。P14 只补充过程线事实状态，仍不重算“需 8 台、可用 6 台、缺口 2 台”等
+资源缺口 v1 口径，完整二维浅水求解与真实场景率定仍不在范围内。
