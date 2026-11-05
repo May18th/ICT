@@ -13,11 +13,14 @@
         "pipeline": 10,
         "facility": 7,
         "building": 120,
-        "water": 0,
+        "water": 2,
         "cone": 0,
         "construction_fence": 0,
         "excavation": 0,
-        "exposed_pipeline": 0
+        "trench_opening": 0,
+        "excavated_soil": 0,
+        "gas_exposed": 0,
+        "hazard_sign": 0
       },
       "preview": "visualization/blender/scenes/preview_normal.png"
     },
@@ -30,11 +33,14 @@
         "pipeline": 10,
         "facility": 7,
         "building": 120,
-        "water": 2,
+        "water": 4,
         "cone": 0,
         "construction_fence": 0,
         "excavation": 0,
-        "exposed_pipeline": 0
+        "trench_opening": 0,
+        "excavated_soil": 0,
+        "gas_exposed": 0,
+        "hazard_sign": 0
       },
       "preview": "visualization/blender/scenes/preview_flood.png"
     },
@@ -47,11 +53,14 @@
         "pipeline": 10,
         "facility": 7,
         "building": 120,
-        "water": 2,
+        "water": 4,
         "cone": 18,
         "construction_fence": 0,
         "excavation": 0,
-        "exposed_pipeline": 0
+        "trench_opening": 0,
+        "excavated_soil": 0,
+        "gas_exposed": 0,
+        "hazard_sign": 0
       },
       "preview": "visualization/blender/scenes/preview_closure.png"
     },
@@ -64,11 +73,14 @@
         "pipeline": 10,
         "facility": 7,
         "building": 120,
-        "water": 2,
+        "water": 4,
         "cone": 18,
         "construction_fence": 8,
         "excavation": 4,
-        "exposed_pipeline": 2
+        "trench_opening": 4,
+        "excavated_soil": 8,
+        "gas_exposed": 2,
+        "hazard_sign": 8
       },
       "preview": "visualization/blender/scenes/preview_construction.png"
     }

@@ -14,7 +14,7 @@
 - `normal`：不铺水面、不画封路，用作对照；
 - `flood`：把工单里的积水铺成水面，标注深度；
 - `closure`：积水 + 封路（红色路面 + 锥桶）；
-- `construction`：在 closure 基础上保留占道施工段（黄色路面色带）。
+- `construction`：在 closure 基础上表达占道施工段、围挡、开挖、土方、警示牌和暴露管线。
 
 用法（不用开界面）：
 
@@ -45,26 +45,26 @@ from pathlib import Path
 
 import bpy
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from _common import (
+    COLORS,
+    _box,
+    _camera_and_light,
+    _cylinder,
+    _label,
+    _link,
+    _material,
+    _reset,
+    _tag,
+    render_preview as _render_preview,
+)
+
 ROOT = Path(__file__).resolve().parents[2]
 LAYOUT_PATH = ROOT / "samples" / "assets" / "urban" / "scene_layout.json"
 OUT_DIR = ROOT / "visualization" / "blender" / "scenes"
-
-COLORS = {
-    "road_normal": (0.13, 0.14, 0.16, 1.0),
-    "road_closed": (0.72, 0.10, 0.10, 1.0),
-    "road_construction": (0.78, 0.62, 0.08, 1.0),
-    "water": (0.04, 0.42, 0.95, 0.92),
-    "building": (0.62, 0.65, 0.70, 1.0),
-    "ground": (0.15, 0.16, 0.19, 1.0),
-    "drainage": (0.10, 0.65, 0.85, 1.0),
-    "gas": (0.95, 0.55, 0.05, 1.0),
-    "power": (0.85, 0.20, 0.75, 1.0),
-    "telecom": (0.25, 0.80, 0.35, 1.0),
-    "water_pipe": (0.15, 0.35, 0.95, 1.0),
-    "pump_station": (0.95, 0.95, 0.95, 1.0),
-    "intake": (0.60, 0.85, 0.95, 1.0),
-    "cone": (0.95, 0.35, 0.10, 1.0),
-}
 
 SCENARIOS = {
     "normal": {"water": False, "closure": False},
@@ -148,66 +148,6 @@ def _argv() -> dict[str, object]:
     return options
 
 
-def _material(name: str, color: tuple[float, float, float, float], *, emission: float = 0.0):
-    material = bpy.data.materials.get(name) or bpy.data.materials.new(name)
-    # 按节点类型找，不按名字找：中文界面下节点名是"原理化 BSDF"，写死英文名会拿到 None
-    bsdf = next((node for node in material.node_tree.nodes if node.type == "BSDF_PRINCIPLED"), None)
-    if bsdf is None:
-        material.use_nodes = True
-        bsdf = next(node for node in material.node_tree.nodes if node.type == "BSDF_PRINCIPLED")
-    for key, value in (
-        ("Base Color", color),
-        ("Alpha", color[3]),
-        ("Roughness", 0.65),
-    ):
-        socket = bsdf.inputs.get(key)
-        if socket is not None:
-            socket.default_value = value
-    if emission:
-        for key, value in (("Emission Color", color), ("Emission Strength", emission)):
-            socket = bsdf.inputs.get(key)
-            if socket is not None:
-                socket.default_value = value
-    if color[3] < 1.0 and hasattr(material, "surface_render_method"):
-        material.surface_render_method = "DITHERED"
-    return material
-
-
-def _collection(name: str):
-    collection = bpy.data.collections.get(name)
-    if collection is None:
-        collection = bpy.data.collections.new(name)
-        bpy.context.scene.collection.children.link(collection)
-    return collection
-
-
-def _link(obj, collection_name: str) -> None:
-    collection = _collection(collection_name)
-    for existing in list(obj.users_collection):
-        existing.objects.unlink(obj)
-    collection.objects.link(obj)
-
-
-def _tag(obj, *, twin_id: str, kind: str, state: str, evidence: str = "") -> None:
-    obj["twin_id"] = twin_id
-    obj["kind"] = kind
-    obj["state"] = state
-    if evidence:
-        obj["evidence"] = evidence
-
-
-def _box(name: str, center: tuple[float, float, float], size: tuple[float, float, float],
-         rotation_z: float, material, collection: str):
-    bpy.ops.mesh.primitive_cube_add(size=1.0, location=center)
-    obj = bpy.context.object
-    obj.name = name
-    obj.scale = size
-    obj.rotation_euler = (0.0, 0.0, rotation_z)
-    obj.data.materials.append(material)
-    _link(obj, collection)
-    return obj
-
-
 def _plane_polygon(name: str, points: list[dict], z: float, material, collection: str):
     """水面是任意四边形，直接建面；用缩放 cube 会带出多余的厚度和法线问题。"""
     mesh = bpy.data.meshes.new(f"{name}_mesh")
@@ -218,51 +158,6 @@ def _plane_polygon(name: str, points: list[dict], z: float, material, collection
     obj.data.materials.append(material)
     _link(obj, collection)
     return obj
-
-
-def _cylinder(name: str, start: tuple[float, float, float], end: tuple[float, float, float],
-              radius: float, material, collection: str):
-    """两点之间的圆柱：管线沿道路中线铺，竖向位置取台账 depth_m 的负值。"""
-    dx, dy, dz = (end[0] - start[0], end[1] - start[1], end[2] - start[2])
-    length = math.sqrt(dx * dx + dy * dy + dz * dz) or 0.001
-    location = ((start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2)
-    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=length, vertices=16, location=location)
-    obj = bpy.context.object
-    obj.name = name
-    obj.rotation_euler = (
-        0.0,
-        math.acos(max(-1.0, min(1.0, dz / length))),
-        math.atan2(dy, dx),
-    )
-    obj.data.materials.append(material)
-    _link(obj, collection)
-    return obj
-
-
-def _label(name: str, text: str, location: tuple[float, float, float], size: float = 12.0):
-    curve = bpy.data.curves.new(name, type="FONT")
-    curve.body = text
-    curve.size = size
-    curve.align_x = "CENTER"
-    curve.align_y = "CENTER"
-    obj = bpy.data.objects.new(name, curve)
-    obj.location = location
-    obj.data.materials.append(_material("Label", (1.0, 1.0, 1.0, 1.0), emission=1.2))
-    # 文字是自发光标牌，不该投影：悬空的大字会在路面投出"第二个标签"，看图时会被
-    # 误读成重复对象（实测过一次，A-03 在画面里出现了两遍）。
-    obj.visible_shadow = False
-    _link(obj, "Labels")
-    return obj
-
-
-def _reset() -> None:
-    bpy.ops.object.select_all(action="SELECT")
-    bpy.ops.object.delete(use_global=False)
-    for collection in list(bpy.data.collections):
-        if collection.name != "Collection":
-            bpy.data.collections.remove(collection)
-    for material in list(bpy.data.materials):
-        bpy.data.materials.remove(material)
 
 
 def build_scene(
@@ -277,7 +172,10 @@ def build_scene(
         "cone": 0,
         "construction_fence": 0,
         "excavation": 0,
-        "exposed_pipeline": 0,
+        "trench_opening": 0,
+        "excavated_soil": 0,
+        "gas_exposed": 0,
+        "hazard_sign": 0,
     }
     # 标签与锥桶的尺寸随取景窗口缩放：窗口 1000m 时按 1.0 倍，600m 时按 0.6 倍。
     # 写死绝对尺寸的话，换个取景尺度就有的是天那么大、有的是看不见。
@@ -295,6 +193,8 @@ def build_scene(
     lane_material = _material("Road_Lane", (0.88, 0.90, 0.94, 1.0), emission=0.4)
     water_material = _material("FloodWater", COLORS["water"], emission=0.25)
     cone_material = _material("Cone", COLORS["cone"], emission=0.2)
+    soil_material = _material("ExcavatedSoil", COLORS["soil"])
+    trench_material = _material("TrenchVoid", COLORS["trench"])
     pipe_materials = {
         "drainage": _material("Pipe_Drainage", COLORS["drainage"]),
         "gas": _material("Pipe_Gas", COLORS["gas"]),
@@ -416,7 +316,7 @@ def build_scene(
             for side in (-1, 1):
                 fence = _box(
                     f"ConstructionFence_{road['road_id']}_{side}",
-                    ((start["x"] + end["x"]) / 2, (start["y"] + end["y"]) / 2 + side * road["width_m"] * 1.4, road["z"] + 2.0),
+                    ((start["x"] + end["x"]) / 2, (start["y"] + end["y"]) / 2 + side * road["width_m"] * 0.9, road["z"] + 2.0),
                     (length * 0.55, 0.35, 4.0), angle, cone_material, "Construction",
                 )
                 _tag(fence, twin_id=f"TW-work_site-fence-{road['road_id']}-{side}", kind="construction_fence", state="active")
@@ -429,14 +329,41 @@ def build_scene(
             _tag(pit, twin_id=f"TW-excavation-{road['road_id']}", kind="excavation", state="open")
             counts["excavation"] += 1
 
+            # 让开挖在鸟瞰和近景都可读。道路面上先放一块深色坑底，再用两侧土壁表达剖面，
+            # 避免地下 box 被整块地面遮住而只剩围挡。
+            trench = _box(
+                f"TrenchOpening_{road['road_id']}",
+                ((start["x"] + end["x"]) / 2, (start["y"] + end["y"]) / 2, road["z"] + 0.24),
+                (length * 0.35, road["width_m"] * 1.55, 0.08), angle, trench_material, "Construction",
+            )
+            _tag(trench, twin_id=f"TW-trench-{road['road_id']}", kind="trench_opening", state="open")
+            counts["trench_opening"] += 1
+            for side in (-1, 1):
+                soil = _box(
+                    f"TrenchSoil_{road['road_id']}_{side}",
+                    ((start["x"] + end["x"]) / 2, (start["y"] + end["y"]) / 2 + side * road["width_m"] * 0.95, road["z"] + 0.65),
+                    (length * 0.35, 0.45, 0.9), angle, soil_material, "Construction",
+                )
+                _tag(soil, twin_id=f"TW-soil-{road['road_id']}-{side}", kind="excavated_soil", state="stockpiled")
+                counts["excavated_soil"] += 1
+
+            for index, ratio in enumerate((0.28, 0.72)):
+                sign = _box(
+                    f"HazardSign_{road['road_id']}_{index}",
+                    (start["x"] + dx * ratio, start["y"] + dy * ratio, road["z"] + 3.0),
+                    (2.0, 0.18, 1.2), angle, cone_material, "Construction",
+                )
+                _tag(sign, twin_id=f"TW-hazard-sign-{road['road_id']}-{index}", kind="hazard_sign", state="active")
+                counts["hazard_sign"] += 1
+
             for pipeline in layout["pipelines"]:
                 if pipeline["road_id"] != road["road_id"] or pipeline["kind"] != "gas":
                     continue
                 start, end = pipeline["polyline"][0], pipeline["polyline"][1]
                 exposed = _cylinder(
                     f"ExposedGas_{pipeline['pipeline_id']}",
-                    (start["x"], start["y"], road["z"] + 1.1),
-                    (end["x"], end["y"], road["z"] + 1.1),
+                    (start["x"], start["y"], road["z"] + 1.45),
+                    (end["x"], end["y"], road["z"] + 1.45),
                     max(0.5, pipeline["diameter_mm"] / 1800),
                     pipe_materials["gas"],
                     "Construction",
@@ -448,7 +375,7 @@ def build_scene(
                     state="exposed",
                     evidence=pipeline["evidence"],
                 )
-                counts["exposed_pipeline"] += 1
+                counts["gas_exposed"] += 1
 
     for pipeline in layout["pipelines"]:
         start, end = pipeline["polyline"][0], pipeline["polyline"][1]
@@ -468,9 +395,14 @@ def build_scene(
             evidence=pipeline["evidence"],
         )
         counts["pipeline"] += 1
+        # `water` 同时是管线 kind 和积水面 kind；manifest 记录实际对象总数，
+        # `pipeline` 仍保留全部管线聚合数，便于按资产类别核对。
+        if pipeline["kind"] == "water":
+            counts["water"] += 1
 
     for facility in layout["facilities"]:
-        is_pump = facility["facility_type"] == "pump_station"
+        facility_type = facility["facility_type"].strip()
+        is_pump = facility_type == "pump_station"
         obj = _cylinder(
             f"Facility_{facility['facility_id']}",
             (facility["xy"]["x"], facility["xy"]["y"], facility["z"] + 0.2),
@@ -482,8 +414,8 @@ def build_scene(
         )
         _tag(
             obj,
-            twin_id=f"TW-{facility['facility_type']}-{facility['facility_id']}",
-            kind=facility["facility_type"],
+            twin_id=f"TW-{facility_type}-{facility['facility_id']}",
+            kind=facility_type,
             state=facility["state"],
             evidence=facility["evidence"],
         )
@@ -531,78 +463,25 @@ def build_scene(
             )
             counts["water"] += 1
 
-    _camera_and_light(layout, scenario, focus_district, center_x, center_y, span)
-    return counts
-
-
-def _camera_and_light(
-    layout: dict,
-    scenario: str,
-    focus_district: str,
-    center_x: float,
-    center_y: float,
-    span: float,
-) -> None:
-    """相机站在取景窗口外做东南 3/4 俯视，仰角约 38°。
-
-    三条实测教训：
-    1. 相机必须在窗口外——放进场景里会被前景建筑挡住路口；
-    2. 50mm 在 1.5 倍窗口距离上横向覆盖约 1.1 倍窗口宽，窗口刚好占满画面；
-    3. 默认裁切面 1000m，相机在两千米外会把整座城裁掉，只剩背景色。
-    """
-    location = (center_x + span * 0.50, center_y - span * 1.10, span * 0.95)
-    bpy.ops.object.camera_add(location=location)
-    camera = bpy.context.object
-    camera.name = "DemoCamera"
-    camera.data.lens = 50
-    camera.data.clip_start = 1.0
-    camera.data.clip_end = span * 12
-    # 用 track quat 对准场景中心：手写欧拉角极易把镜头抬到城市上方看天空
-    from mathutils import Vector
-
-    direction = Vector((center_x, center_y, 0.0)) - Vector(location)
-    camera.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
-    bpy.context.scene.camera = camera
-
-    bpy.ops.object.light_add(type="SUN", location=(center_x, center_y - span * 0.4, span))
-    sun = bpy.context.object
-    sun.name = "DemoSun"
-    sun.data.energy = 3.4
-    sun.rotation_euler = (math.radians(52), 0.0, math.radians(35))
-
-    world = bpy.context.scene.world
-    if world is None:
-        world = bpy.data.worlds.new("UrbanTwinWorld")
-        bpy.context.scene.world = world
-    world.use_nodes = True
-    background = next(
-        (node for node in world.node_tree.nodes if node.type == "BACKGROUND"), None
+    _camera_and_light(
+        center_x=center_x,
+        center_y=center_y,
+        span=span,
+        camera_name="DemoCamera",
+        sun_name="DemoSun",
+        lens=50,
+        camera_offset=(0.50, -1.10, 0.95),
+        clip_end_multiplier=12,
+        world_name="UrbanTwinWorld",
+        scene_props={
+            "scenario": scenario,
+            "layout_snapshot": layout.get("snapshot_hash", ""),
+            "focus_district": focus_district,
+            "focus_span_m": span,
+            "camera_lens_mm": 50,
+        },
     )
-    if background is not None:
-        background.inputs["Color"].default_value = (0.28, 0.36, 0.46, 1.0)
-        background.inputs["Strength"].default_value = 1.5
-
-    scene = bpy.context.scene
-    scene.render.resolution_x = 1600
-    scene.render.resolution_y = 900
-    scene.render.resolution_percentage = 100
-    # 场景自定义属性跟着 .blend 一起存，引擎侧/复核者能直接看出这张图对准了谁
-    scene["scenario"] = scenario
-    scene["layout_snapshot"] = layout.get("snapshot_hash", "")
-    scene["focus_district"] = focus_district
-    scene["focus_span_m"] = span
-    scene["camera_lens_mm"] = 50
-
-
-def render_preview(scenario: str) -> str:
-    """渲一张预览图，相对路径返回，供清单引用。"""
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    target = OUT_DIR / f"preview_{scenario}.png"
-    scene = bpy.context.scene
-    scene.render.image_settings.file_format = "PNG"
-    scene.render.filepath = str(target)
-    bpy.ops.render.render(write_still=True)
-    return str(target.relative_to(ROOT)).replace("\\", "/")
+    return counts
 
 
 def export(scenario: str, counts: dict[str, int], with_glb: bool) -> dict[str, object]:
@@ -643,11 +522,11 @@ def build_all(
         counts = build_scene(layout, SCENARIOS[name], name, focus=focus)
         entry = export(name, counts, with_glb)
         if preview:
-            entry["preview"] = render_preview(name)
+            entry["preview"] = _render_preview(OUT_DIR / f"preview_{name}.png", root=ROOT)
         manifest.append(entry)
         print(
             f"[{name}] 道路 {counts['road']} / 管线 {counts['pipeline']} / 设施 {counts['facility']} / "
-            f"建筑 {counts['building']} / 水面 {counts['water']} / 锥桶 {counts['cone']} → {entry['blend']}"
+            f"建筑 {counts['building']} / 水对象 {counts['water']} / 锥桶 {counts['cone']} → {entry['blend']}"
         )
     return manifest
 
