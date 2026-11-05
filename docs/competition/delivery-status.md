@@ -32,7 +32,7 @@
 | 负例正式演示 | 反"瞎编" | 两条负例数据层 + 四张画面证据已入仓；**未进正式演示脚本** | 部分完成 | `docs/reports/captures/S31-ue-negative-*.png` | 我方 | 演示脚本第 5 步固定插入，30 秒讲完 |
 | 业务价值量化 | 应用价值 | 40 分钟 / 3040 m / 0.2264→0 等可复算；**"人工协同耗时"未实测** | 部分完成 | [业务价值证据](value-evidence.md) §2–§4 | 我方（15 分钟实测） | 3 人测一次，回填对照表 |
 | 多智能体协同进主链路 | 创新性 | 内核 + 32 测试已落地；MCP 工具、Nexent 未接 | **设计中** | `src/decision_poc/collab/`；`docs/reports/p12-collab-layer-report.md` | 我方 | `collab_run` 注册为 MCP 工具并在平台真机调用一次 |
-| 定量层进主链路 | 专业性 | 水文/水力/不确定性内核 + 39 测试 + 手算对拍；**六跳缺口仍走 v1"80% 折算"** | **设计中** | `src/decision_poc/quant/`；`docs/reports/p12-quant-layer-report.md` | 我方（需先补台账字段，见下） | 六跳跳 5 的缺口由 `Q=ψqF` + `能力=额定−故障` 算出，且对外数字一次改全 |
+| 定量层进主链路 | 专业性 | 水文/水力/简化水动力/不确定性内核 + 93 测试 + 手算对拍；**六跳缺口仍走 v1"80% 折算"** | **设计中** | `src/decision_poc/quant/`；`docs/reports/p12-quant-layer-report.md`、`docs/reports/p13-simplified-hydrodynamics-report.md` | 我方（需先补台账字段，见下） | 六跳跳 5 的缺口由 `Q=ψqF` + `能力=额定−故障` 算出，且对外数字一次改全 |
 
 ## 2. 本轮核对发现的"口径已过期"（必须改，否则自检会红）
 

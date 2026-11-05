@@ -42,6 +42,55 @@ class QuantResult(StrictModel):
         return self
 
 
+class HydrographResult(StrictModel):
+    """一条可复核的过程线（水位或流量随时间的离散序列）。
+
+    与 `QuantResult` 的分工：`QuantResult` 是单点数值（"多少 m³/h"、"再多久"），
+    本契约是过程（"水位怎么走"）。两者共用同一套纪律：公式与出处必填、假设非空、
+    算不出来时不给过程线且必须说明原因——不允许截断、外推或拿近似序列冒充结果。
+    """
+
+    times_h: list[float] = []
+    values: list[float] = []
+    unit: str = Field(min_length=1)
+    formula_id: str = Field(min_length=1)
+    formula_source: str = Field(min_length=1)
+    assumptions: list[str] = Field(min_length=1)
+    inputs: dict[str, float] = {}
+    summary: dict[str, float] = {}
+    error_bound: str = Field(min_length=1)
+    peak: float = 0.0
+    peak_time_h: float = 0.0
+    computable: bool = True
+    uncomputable_reason: str = ""
+
+    @model_validator(mode="after")
+    def _check_invariants(self) -> HydrographResult:
+        if any(not item.strip() for item in self.assumptions):
+            raise ValueError("assumptions 不允许出现空条目")
+        if not self.computable:
+            if self.times_h or self.values:
+                raise ValueError("computable=False 时不得给出过程线")
+            if not self.uncomputable_reason.strip():
+                raise ValueError("computable=False 时必须给出 uncomputable_reason")
+            return self
+        if self.uncomputable_reason.strip():
+            raise ValueError("computable=True 时不应带 uncomputable_reason")
+        if len(self.times_h) != len(self.values):
+            raise ValueError("times_h 与 values 长度必须一致")
+        if len(self.times_h) < 2:
+            raise ValueError("过程线至少需要两个时段")
+        if any(later <= earlier for earlier, later in zip(self.times_h, self.times_h[1:])):
+            raise ValueError("times_h 必须严格递增")
+        expected_peak = max(self.values)
+        expected_index = self.values.index(expected_peak)
+        if abs(expected_peak - self.peak) > 1e-9:
+            raise ValueError("peak 必须等于 values 的最大值")
+        if abs(self.times_h[expected_index] - self.peak_time_h) > 1e-9:
+            raise ValueError("peak_time_h 必须等于峰值出现的时刻")
+        return self
+
+
 class SpreadResult(StrictModel):
     """带区间的结果：低/标称/高三点，且三点顺序必须成立。"""
 
@@ -79,6 +128,30 @@ def uncomputable(
 
     return QuantResult(
         value=0.0,
+        unit=unit,
+        formula_id=formula_id,
+        formula_source=formula_source,
+        assumptions=assumptions,
+        inputs=inputs,
+        error_bound=error_bound,
+        computable=False,
+        uncomputable_reason=reason,
+    )
+
+
+def uncomputable_hydrograph(
+    *,
+    formula_id: str,
+    formula_source: str,
+    assumptions: list[str],
+    inputs: dict[str, float],
+    reason: str,
+    unit: str = "n/a",
+    error_bound: str = "不可计算",
+) -> HydrographResult:
+    """构造一个"明确给不出过程线"的结果，而不是截断/外推一段假过程。"""
+
+    return HydrographResult(
         unit=unit,
         formula_id=formula_id,
         formula_source=formula_source,

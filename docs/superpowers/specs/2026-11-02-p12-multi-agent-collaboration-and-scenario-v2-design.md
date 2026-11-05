@@ -282,7 +282,7 @@ load_state       = normal | high_load | overload  # inflow/capacity_avail ≤0.8
 
 | 不做 | 原因 |
 | --- | --- |
-| 圣维南非恒定流、2D 浅水、1D/2D 耦合内涝推演 | 需 EPA SWMM 级模型 + 率定数据，硬做就是假精确 |
+| 圣维南非恒定流**完整方程**、2D 浅水、1D/2D 耦合内涝推演 | 需 EPA SWMM 级模型 + 率定数据，硬做就是假精确。过程线级别的一阶近似（马斯京根汇流 / 修正 Puls 调蓄）不在本条内，见 [P13 简化水动力演进设计](2026-11-05-p13-simplified-hydrodynamics-design.md) |
 | 让 LLM 现场推导流体公式 | 违反 §4「断言权在内核」 |
 | 把定量计算塞进推演主循环做迭代求解 | 时延不可控；准静态 + 缓存足够 |
 
@@ -292,6 +292,7 @@ load_state       = normal | high_load | overload  # inflow/capacity_avail ≤0.8
 src/decision_poc/quant/
 ├─ hydrology.py     产流 Q=ψqF，暴雨强度分档
 ├─ hydraulics.py    Manning、积水速率与提前量、堰流倒灌
+├─ hydrodynamics.py 简化演进：马斯京根汇流 / 修正 Puls 调蓄 / 过程线查询（P13 补）
 ├─ graphopt.py      封控点选择（图论）
 └─ uncertainty.py   区间算术 / 固定种子 Monte Carlo
 ```

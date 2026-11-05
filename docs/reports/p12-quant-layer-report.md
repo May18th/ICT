@@ -50,7 +50,7 @@
 | 图论封控优化 `graphopt.py` | 需要与既有 `road_graph.py` 的连通语义对齐，单独一轮更安全 |
 | 最优分配上界 / 可靠性 `optimize.py`、`reliability.py` | **已补完，见 §7**（不依赖 T1 也能算，因为输入就是 DistrictSignal） |
 | MCP `quant` 工具组（T7 工具注册） | 会让 `mcp.tools_count` 从 12 变 13，属于对外数字变更，并入 T5 一次改全 |
-| 非恒定流 / 2D 浅水 | 需 EPA SWMM 级模型与率定数据，设计规格已列为"不做" |
+| 非恒定流 / 2D 浅水 | 需 EPA SWMM 级模型与率定数据，设计规格已列为"不做"；过程线级别的一阶近似（马斯京根 / 修正 Puls）已在 [P13](p13-simplified-hydrodynamics-report.md) 补齐，但**仍不是 SWMM 级推演** |
 
 ## 5 对外数字变化
 
