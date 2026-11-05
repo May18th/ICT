@@ -39,7 +39,7 @@ uv run --locked python -m decision_poc.skills --manifest > samples/nexent/skills
    ```powershell
    $env:PYTHONPATH = "src"
    uv run --locked python -m decision_poc.mcp_sse --port 8000
-   # MCP SSE：http://127.0.0.1:8000/sse；/health 可查 13 个工具
+   # MCP SSE：http://127.0.0.1:8000/sse；/health 可查 14 个工具
    ```
 
    Nexent 里填 `http://host.docker.internal:8000/sse`（Docker 部署访问宿主机）。

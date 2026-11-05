@@ -44,7 +44,7 @@ services:
     volumes:
       - ../artifacts/visual:/app/artifacts/visual
     healthcheck:
-      # 判据是"13 个工具都在"，而不是"进程没死"：容器活着但工具没注册
+      # 判据是"14 个工具都在"，而不是"进程没死"：容器活着但工具没注册
       # 时平台侧只会表现为"智能体变笨"，不会报错
       test:
         - CMD

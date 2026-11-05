@@ -54,7 +54,7 @@ TOOL_GROUPS: dict[str, tuple[str, ...]] = {
         "conflict_check",
         "allocation_plan",
     ),
-    "presentation": ("scene_render", "scene_compare"),
+    "presentation": ("scene_render", "scene_status", "scene_compare"),
     "bootstrap": ("asset_lookup",),
     # 多智能体协同：总控一次调用拿到 6 个角色的动作卡、联合发布对与裁决后的处置顺序
     "collaboration": ("collab_run",),
@@ -363,6 +363,21 @@ class UrbanToolkit:
                 },
             },
             {
+                "name": "scene_status",
+                "description": "查一次渲染作业的出片状态：pending（还没渲）还是 acked（已有成片）。"
+                "acked 时返回成片路径、大小与 sha256，用于核对'平台拿到的片子就是那一份结论'。"
+                "只读，不触发渲染。",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "snapshot_id": {
+                            "type": "string",
+                            "description": "快照 id；缺省取最近一次作业",
+                        },
+                    },
+                },
+            },
+            {
                 "name": "scene_compare",
                 "description": "对比两份推演快照（基线 vs 进化后策略）：策略改了哪些参数、各片区分配怎么变、调拨与未满足怎么变，给一句可直接讲给评委的结论。",
                 "inputSchema": {
@@ -437,6 +452,7 @@ class UrbanToolkit:
             "counterfactual_run": self._counterfactual_run,
             "allocation_plan": self._allocation_plan,
             "scene_render": self._scene_render,
+            "scene_status": self._scene_status,
             "scene_compare": self._scene_compare,
             "asset_lookup": self._asset_lookup,
             "collab_run": self._collab_run,
@@ -1016,6 +1032,51 @@ class UrbanToolkit:
             "warnings": list(snapshot.warnings),
         }
         return _ok("scene_render", data, self.version)
+
+    def _scene_status(self, args: Mapping[str, Any]) -> ToolResult:
+        """只读出片状态。不触发渲染：渲不渲由 `decision_poc.render_worker` 决定。"""
+        viz = self._visual()
+        raw_id = args.get("snapshot_id")
+        if raw_id:
+            snapshot_id = str(raw_id)
+            if not viz.job_path(snapshot_id, self.visual_root).is_file():
+                return _error(
+                    "scene_status",
+                    {"snapshot_id": snapshot_id},
+                    ErrorCode.NOT_FOUND,
+                    f"未知渲染作业: {snapshot_id}（先调 scene_render）",
+                    self.version,
+                )
+        else:
+            snapshot_id = viz.latest_snapshot_id(self.visual_root)
+            if not snapshot_id:
+                return _error(
+                    "scene_status",
+                    {},
+                    ErrorCode.NOT_FOUND,
+                    "作业目录为空（先调 scene_render）",
+                    self.version,
+                )
+
+        ack = viz.read_ack(snapshot_id, self.visual_root) or {}
+        artifact = dict(ack.get("artifact") or {})
+        data = {
+            "snapshot_id": snapshot_id,
+            "job_id": f"render-{snapshot_id}",
+            "delivery": viz.delivery_state(snapshot_id, self.visual_root),
+            "engine": ack.get("engine"),
+            "acked_at": ack.get("acked_at"),
+            "artifact": artifact,
+            "fetch_url": f"/api/scene/{snapshot_id}",
+            # 给平台侧一句话说清"接下来该干什么"
+            "next_action": (
+                "已出片，可直接取 artifact.path / fetch_url"
+                if artifact
+                else "作业已落盘但引擎未认领：跑 decision_poc.render_worker --snapshot-id "
+                     f"{snapshot_id} --mode asset"
+            ),
+        }
+        return _ok("scene_status", data, self.version)
 
     def _scene_compare(self, args: Mapping[str, Any]) -> ToolResult:
         """基线 vs 进化后策略的差异。两份快照必须都已落盘。"""

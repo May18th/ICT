@@ -23,7 +23,7 @@ Nexent 的「MCP 服务接入」只支持 HTTP/SSE（远程链接 / 容器 / API
 ┌──────────────────────────── Nexent（Docker，v2.7.0 本机） ────────────────────────────┐
 │  Agent「urban-deduction-agent」                                                      │
 │    ├─ 模型：openPangu / 平台已配置模型                                                │
-│    ├─ 工具：MCP「urban-twin-mcp」→ http://host.docker.internal:8000/sse（13 个工具）  │
+│    ├─ 工具：MCP「urban-twin-mcp」→ http://host.docker.internal:8000/sse（14 个工具）  │
 │    ├─ 技能：urban-six-hop-deduction（六跳 SOP）                                       │
 │    │        scarcity-allocation-evolution（分配/进化/回滚 SOP）                       │
 │    └─ 提示词：要求调工具取证、按 JSON 作答、错误码不得降级                            │
@@ -31,7 +31,7 @@ Nexent 的「MCP 服务接入」只支持 HTTP/SSE（远程链接 / 容器 / API
                                        │ /nb/v1/chat/run（SSE）
                                        ▼
 ┌──────────────────── 本仓库（宿主机，离线内核） ────────────────────┐
-│  mcp_sse（HTTP/SSE 传输）→ McpServer → 13 个工具                    │
+│  mcp_sse（HTTP/SSE 传输）→ McpServer → 14 个工具                    │
 │  （semantic_query / event_deduce / conflict_check / allocation_plan │
 │    / scene_render / scene_compare / ...）                            │
 │  工具日志：artifacts/visual/tool_log.jsonl                            │
@@ -58,7 +58,7 @@ uv run --locked python -m decision_poc.mcp_sse --port 8000
 # MCP SSE 已启动：http://127.0.0.1:8000/sse
 ```
 
-健康检查（应返回 13 个工具、含 `event_deduce` / `allocation_plan`）：
+健康检查（应返回 14 个工具、含 `event_deduce` / `allocation_plan`）：
 
 ```powershell
 curl.exe http://127.0.0.1:8000/health
@@ -69,7 +69,7 @@ curl.exe http://127.0.0.1:8000/health
 1. 智能体开发 → 选择 Agent 的工具 → 右侧「MCP 配置」；
 2. 名称 `urban-twin-mcp`，URL 填 `http://host.docker.internal:8000/sse`
    （Docker 里的 Nexent 访问宿主机必须用 `host.docker.internal`，不能用 127.0.0.1）；
-3. 「连通性校验」→ 保存；工具列表应出现 13 个工具。
+3. 「连通性校验」→ 保存；工具列表应出现 14 个工具。
 
 ### 3.3 上传 Skills
 
@@ -80,7 +80,7 @@ curl.exe http://127.0.0.1:8000/health
 
 ### 3.4 创建并发布 Agent
 
-- 工具：勾选 13 个 MCP 工具 + 2 个 Skills；
+- 工具：勾选 14 个 MCP 工具 + 2 个 Skills；
 - 提示词（最小可用版本，可直接粘贴）：
 
 ```
@@ -135,7 +135,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 
 ## 6 验收口径
 
-- [ ] `/health` 返回 13 个工具，SSE 握手可被独立的 MCP 客户端完成（已离线测试：10 项）。
+- [ ] `/health` 返回 14 个工具，SSE 握手可被独立的 MCP 客户端完成（已离线测试：10 项）。
 - [ ] Nexent MCP 配置「连通性校验」通过，工具列表可见。
 - [ ] Agent 一次对话产出六跳 JSON，且 8/8 与离线一致（conversation_id 留档）。
 - [ ] 工具日志里能看到 `event_deduce`、`conflict_check`、`allocation_plan` 至少各一次。

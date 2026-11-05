@@ -99,7 +99,7 @@
 
 ```powershell
 uv run --locked pytest -q                            # 696 passed
-uv run --locked python -m decision_poc.evidence_check # 106/106（指纹 f9c0c592703a449f）
+uv run --locked python -m decision_poc.evidence_check # 106/106（指纹 3e01b8b1d25523d5）
 ```
 
 > **2026-11-02 落地**：方案 A 已实施——资源跳产出 `pump_load` 结论字段，实测

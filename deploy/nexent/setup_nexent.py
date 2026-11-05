@@ -15,7 +15,7 @@
 子命令：
     register-mcp   注册 MCP 服务（SSE 地址指向 urban-twin-mcp 容器）
     sync-tools     scan_tool 同步 MCP 工具到平台工具库
-    create-agent   创建/复用 Agent，挂 13 个工具，发布版本
+    create-agent   创建/复用 Agent，挂 14 个工具，发布版本
     mint-key       生成北向 API Key（打印一次）
     status         打印当前 MCP / Agent / 工具现状
     all            依次执行 register-mcp → sync-tools → create-agent → mint-key
@@ -150,7 +150,7 @@ class Platform(PlatformClient):
                 payload={
                     "name": MCP_NAME,
                     "server_url": MCP_URL,
-                    "description": "城市孪生决策工具：六跳推演/冲突/溯源/分配/渲染（13 个工具）",
+                    "description": "城市孪生决策工具：六跳推演/冲突/溯源/分配/渲染（14 个工具）",
                     "source": "local",
                     "enabled": True,
                     "skip_health_check": False,

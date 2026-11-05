@@ -1,6 +1,6 @@
 {
   "schema_version": "evidence-check-1",
-  "expectations_digest": "f9c0c592703a449f97fac199fc645157c8c08abc28ea5d178f34ccbd7df3207c",
+  "expectations_digest": "3e01b8b1d25523d58ef38079ec01d4bec05554035ab46435d7455be477467b38",
   "total": 106,
   "passed_count": 106,
   "failed_count": 0,
@@ -101,8 +101,8 @@
     },
     {
       "path": "mcp.tools_count",
-      "expected": 13,
-      "actual": 13,
+      "expected": 14,
+      "actual": 14,
       "passed": true,
       "note": ""
     },
@@ -494,10 +494,10 @@
     {
       "path": "test_suite.docs_declared",
       "expected": [
-        769
+        776
       ],
       "actual": [
-        769
+        776
       ],
       "passed": true,
       "note": ""

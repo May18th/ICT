@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VD02 事件现场 · 渲染证据页</title>
+<style>
+  :root{
+    --ink:#16181d; --muted:#5b6270; --line:#e2e5ea; --bg:#fbfbfc;
+    --accent:#1f5fbf; --warn:#b3261e;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.75 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:56px 28px 96px}
+  header{border-bottom:1px solid var(--line);padding-bottom:28px;margin-bottom:44px}
+  h1{font-size:27px;line-height:1.4;margin:0 0 10px;font-weight:650;letter-spacing:-.01em}
+  .lede{margin:0;color:var(--muted);font-size:15px}
+  .facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .fact{
+    border:1px solid var(--line);border-radius:6px;padding:7px 12px;
+    font-size:12.5px;color:var(--muted);background:#fff;
+  }
+  .fact b{color:var(--ink);font-weight:600}
+  section{margin:0 0 52px}
+  h2{font-size:15px;font-weight:650;margin:0 0 6px;letter-spacing:.01em}
+  h2 .idx{color:var(--accent);margin-right:8px;font-variant-numeric:tabular-nums}
+  .note{color:var(--muted);font-size:13.5px;margin:0 0 16px}
+  video{width:100%;border:1px solid var(--line);border-radius:8px;background:#000;display:block}
+  .cap{color:var(--muted);font-size:12.5px;margin-top:9px}
+  pre{
+    background:#12151b;color:#dfe4ec;border-radius:8px;padding:18px 20px;
+    overflow-x:auto;font:12.5px/1.85 "Cascadia Mono",Consolas,"SF Mono",monospace;
+    margin:0;border:1px solid #1f242c;
+  }
+  pre .c{color:#7e8899}
+  pre .g{color:#6fc48a}
+  pre .y{color:#d9b56a}
+  img{width:100%;border:1px solid var(--line);border-radius:8px;display:block;background:#fff}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-weight:600;color:var(--muted);font-size:12.5px;text-transform:none}
+  td code,code{font:12.5px "Cascadia Mono",Consolas,monospace;background:#f0f2f5;padding:1px 5px;border-radius:3px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  @media (max-width:760px){.two{grid-template-columns:1fr}}
+  ul{margin:0;padding-left:20px}
+  li{margin:5px 0}
+  .bound{border-left:3px solid var(--warn);padding:2px 0 2px 16px;color:var(--muted);font-size:13.5px}
+  .bound strong{color:var(--ink)}
+  footer{border-top:1px solid var(--line);padding-top:20px;color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>VD02 事件现场 · 渲染证据页</h1>
+  <p class="lede">从"决策快照"到"可播放成片"的完整链路上，平台侧实际拿到了什么。所有数字都是本机真跑出来的，没有估计值。</p>
+  <div class="facts">
+    <span class="fact">工具总数 <b>14</b>（4 分组）</span>
+    <span class="fact">成片 <b>1920×1080 / 24fps / 8.79s</b></span>
+    <span class="fact">出片耗时 <b>0.02s</b>（asset 档）</span>
+    <span class="fact">产物 <b>8,564,103 B</b></span>
+    <span class="fact">sha256 <b>76f27649…</b></span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="idx">01</span>成片</h2>
+  <p class="note">四镜：S1 建立 → S2 封路与处置 → S3 抽排细节 → S5 街面视角。Cycles CPU 离线渲染，片内已标注"非实时引擎"。</p>
+  <video src="VD02-B-incident-P9.mp4" controls preload="metadata" playsinline></video>
+  <p class="cap">VD02-B-incident-P9.mp4 · 60 帧/镜 × 4 镜 · 12spp · 单帧 9.4–10.6 秒 · 四镜合计约 41 分钟</p>
+</section>
+
+<section>
+  <h2><span class="idx">02</span>平台调用链（真实输出）</h2>
+  <p class="note">下面这段是终端原样复制，未做修饰。注意第 1 步交付状态是 <code>pending</code>——工具不谎报"已渲染"；第 2 步执行器出片后才翻成 <code>acked</code>。</p>
+<pre><span class="c">$ python -m decision_poc.mcp_server …  # scene_render</span>
+1) scene_render  -&gt; snap-c9f48b739b49ca7a   delivery = <span class="y">pending</span>
+<span class="c">$ python -m decision_poc.render_worker --latest --mode asset</span>
+2) render_worker -&gt; <span class="g">acked</span>  asset  0.02s
+   artifact: clips\snap-c9f48b739b49ca7a.mp4
+             8,564,103 B
+             sha256=76f27649ee84384f622503c9a53f40b8c36c728bd1f750ec19df3016bce9fa88
+<span class="c"># scene_status（平台侧复查）</span>
+3) scene_status  -&gt; <span class="g">acked</span> | engine: blender-asset
+   next_action: 已出片，可直接取 artifact.path / fetch_url
+<span class="c"># 同快照再调一次（幂等）</span>
+4) render_worker -&gt; <span class="g">reused</span></pre>
+</section>
+
+<section>
+  <h2><span class="idx">03</span>画质：改前 / 改后</h2>
+  <p class="note">左列为原版，右列为本轮重做。四镜逐一对照，含重排取景后的 S1 / S2 / S3。</p>
+  <img src="p8-vs-p9-compare.png" alt="P8 与 P9 四镜对照">
+  <p class="cap">亮度均值(p95)：S1 0.088→0.194、S2 0.165→0.153、S3 0.172→0.172、S5 0.140→0.271。S2/S3 因背景压成剪影而略降，属取舍不是回退。</p>
+</section>
+
+<section>
+  <h2><span class="idx">04</span>契约与红线</h2>
+  <div class="two">
+    <table>
+      <tr><th>环节</th><th>落盘物</th></tr>
+      <tr><td><code>scene_render</code></td><td>snapshots/&lt;id&gt;.json、jobs/&lt;id&gt;.json</td></tr>
+      <tr><td><code>render_worker</code></td><td>clips/&lt;id&gt;.mp4、acks/&lt;id&gt;.json</td></tr>
+      <tr><td><code>scene_status</code></td><td>只读，不改任何文件</td></tr>
+      <tr><td>交付状态</td><td>读 <code>acks/</code> 目录是否存在</td></tr>
+    </table>
+    <table>
+      <tr><th>红线</th><th>实现方式</th></tr>
+      <tr><td>不收位姿/材质/镜头</td><td>schema 里没有这些字段；ack 里也不许出现</td></tr>
+      <tr><td>不谎报渲染完成</td><td>没出片就 <code>pending</code>；失败不写 ack</td></tr>
+      <tr><td>同决策同 id</td><td><code>snapshot_id</code> = 内容哈希</td></tr>
+      <tr><td>可重复</td><td>重跑 <code>reused</code>，不重渲</td></tr>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="idx">05</span>边界（不回避）</h2>
+  <p class="bound">
+    <strong>这是"可读的应急决策示意动画"，不是拟真实拍。</strong>
+    三条已知差距：人物是剪影、动作僵硬；水与铺装之间没有水线（需加路缘石几何）；六栋楼底层店招同一套。
+    另外 <strong>UE 通道尚未打通</strong>（白模 + 合并网格黑面未解），当前成片由 Blender Cycles 离线渲染。
+  </p>
+</section>
+
+<section>
+  <h2><span class="idx">06</span>复现</h2>
+<pre><span class="c"># 1. 导出平台工具清单（14 工具 / 4 分组）</span>
+PYTHONPATH=src uv run python -m decision_poc.mcp_server --export-tools samples/nexent/tools.json
+
+<span class="c"># 2. 发起渲染作业（平台侧调 MCP 工具，效果等价）</span>
+PYTHONPATH=src uv run python -m decision_poc.render_worker --latest --mode asset --json
+
+<span class="c"># 3. 核对产物</span>
+python -c "import hashlib,pathlib;p=pathlib.Path('artifacts/visual/clips/snap-c9f48b739b49ca7a.mp4');print(p.stat().st_size, hashlib.sha256(p.read_bytes()).hexdigest())"</pre>
+</section>
+
+<footer>
+  生成于 2026-11-05 · 本页不含模拟数据，所有数值来自本机实际执行输出。
+</footer>
+
+</div>
+</body>
+</html>
