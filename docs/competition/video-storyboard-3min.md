@@ -142,7 +142,7 @@
 - **旁白**（≈18 + 10 = 28 字）：
   > Nexent 平台真机，独立智能体也跑通。
   > 六跳结论八比八一致。
-- **屏幕证据**：`docs/reports/captures/nexent/agents.png`（Agent 在平台里）、`docs/reports/captures/nexent/mcp-space.png`（连通性校验成功 + 13 个工具）、`docs/reports/captures/nexent/skill-space.png`（2 个 Skill 在平台技能仓库）；`conversation_id=78` 见 `samples/nexent/live/conversation_78.json`；`python -m decision_poc.nexent_urban` 可本机复跑（需 Docker 平台在线）。
+- **屏幕证据**：`docs/reports/captures/nexent/agents.png`（Agent 在平台里）、`docs/reports/captures/nexent/mcp-space.png`（连通性校验成功 + 14 个工具）、`docs/reports/captures/nexent/skill-space.png`（2 个 Skill 在平台技能仓库）；`conversation_id=78` 见 `samples/nexent/live/conversation_78.json`；`python -m decision_poc.nexent_urban` 可本机复跑（需 Docker 平台在线）。
 - **失败兜底**：平台没起 → **明说**「这是之前那台机器上的平台录屏/截图，不是现场跑」，然后放截图；这句必须说出来，比假装现跑安全得多。
 
 #### 镜 11 · 2:10–2:20 · 漂移如实说明（本段的高光，不要藏）
@@ -226,7 +226,7 @@
 | `docs/competition/video-clips/VD02-A-incident-stills.mp4` | 10.8s / 1920×1080 / 30fps / H.264 | 镜 04 | 4 张静帧 2.5D 推拉 + 六跳冲突高亮；同场景 P6 版本 |
 | 公网 Demo（首页 / 演进页） | 在线 | 镜 05、09、12、13 | `https://urban-twin-demo.app.workbuddy.host/?sharecode=K4MXY6WYTS`；`/api/demo`、`/api/llm-decision`、`/api/platform-evidence`、`/api/evolution` 全通 |
 | `docs/reports/captures/nexent/agents.png` | 截图 | 镜 10 | 平台 Agent 列表（含 `urban_llm_decision_agent`） |
-| `docs/reports/captures/nexent/mcp-space.png` | 截图 | 镜 10 | 连通性校验成功 + 13 个工具 |
+| `docs/reports/captures/nexent/mcp-space.png` | 截图 | 镜 10 | 连通性校验成功 + 14 个工具 |
 | `docs/reports/captures/nexent/skill-space.png` | 截图 | 镜 10 | 2 个 Skill 在平台技能仓库 |
 | `samples/nexent/live/conversation_78.json` | JSON | 镜 10 | `conversation_id=78`，六跳真机对话原文 |
 | `samples/nexent/live/llm_decision_platform.json` | JSON | 镜 11 | 平台真机漂移的唯一落盘记录（选 `opt-1`，参照 `opt-3`） |
@@ -240,7 +240,7 @@
 | --- | --- | --- | --- |
 | 公网页面操作录屏（推演 / LLM / evolution 三页，1080p，各 20–30s） | 05、09、12、13 | 见第 4 节，一条 OBS 录三段，合计 ≤2 分钟 | 用静态截图 + 2.5D 推拉，旁白说明「画面为录屏截帧」 |
 | Nexent 平台真机对话录屏（Agent 配置页 + 对话窗口） | 10、11 | 平台在跑时录 40 秒；平台不在就用已入仓截图 | 明说「这是平台录屏/截图，不是现场跑」 |
-| **三次调用漂移的另两次原始记录**（`opt-2` 与「空证据解析失败」两次） | 11 | 平台在线时重跑 N01 三次，每次 `--json samples/nexent/live/llm_decision_platform_run{1,2,3}.json`（**新增文件，不改旧文件**） | 只讲「跑三次不一致」+ 展示现有那一份，不列具体选项号 |
+| ~~三次调用漂移的另两次原始记录~~ **已补齐**：`llm_decision_platform_run1/2/3.json`（2026-11-05 平台实跑，均选 `opt-2`） | 11 | 已完成，无需再录 | 直接展示 4 条原始记录（1×opt-1 + 3×opt-2，均未命中 opt-3） |
 | **真实用户评分**（3–5 人，进化前后各一次） | 备选（不进 3 分钟主线） | `/evolution` 页「真实用户评分」表单，填完即汇总；口径是个人意见、不参与门禁 | 3 分钟视频**不讲评分**，被问答「评分通道就绪、样本待组织」 |
 | 人工协同 vs 智能体辅助的实测计时 | 备选（不进主线） | `docs/competition/value-evidence.md` §4 的 15 分钟流程，3 人各一次 | 不宣称节省百分比，只讲可复算的 3040 m / 5.1 分钟与 40 分钟调拨锚点 |
 | 配音 + 字幕（`.srt`） | 全部 | 本文件第 1 节即配音稿；字幕一句话一条 | 用 TTS 先出粗剪，再用真人替换 |
@@ -293,9 +293,9 @@
 ## 5. [待核实] 清单（这些不进配音，只进备注）
 
 1. **测试数口径冲突**：本任务简报写「测试 745 项」，但仓库冻结口径是 **776 项**（`samples/eval/evidence_expectations.json` 的 `test_baseline.collected=776`、`docs_declared=[776]`，README 与 5 份文档一致）。→ 3 分钟视频里**不出现测试数**；若答辩必须说，先跑 `python -m decision_poc.evidence_check` 以输出为准。
-2. **真机三次漂移的具体记录**：简报写「opt-2 / 空证据解析失败 / opt-1」，但仓库只有 1 份落盘记录 `samples/nexent/live/llm_decision_platform.json`（`selected=opt-1`，`selected_match=false`）；`docs/demo-runbook.md` 第 219 行的表述是「三次分别选 opt-2 / opt-1」（三次两个值）。→ 三次的逐次原始记录 **未见文件**，镜 11 只说"跑三次不一致"，不列全部选项号。
+2. **真机漂移记录**：已入仓 4 条——`llm_decision_platform.json`（selected=opt-1）+ `llm_decision_platform_run1/2/3.json`（均 selected=opt-2），全部 `selected_match=false`、`schema_valid=true`（2026-11-05 平台实跑补入）。**没有"空证据解析失败"那一条**，镜头 11 只讲"多次不一致、出现 opt-1/opt-2"，不编造解析失败。
 3. **`VD02-A` 的静帧张数**：`video-clips/README.md` 与简报都是 **4 张 / 10.8s**，但 `winning-gap-audit.md` §8.2 写「A 版从 4 张加为 5 张（含 S5 街面视角）」。→ 剪辑前用播放器确认实际张数与时长，以文件为准。
-4. **`action_count` 与「处置顺序条数」**：冻结期望 `p6_deduction.action_count=10`，而 `delivery-status.md` 写「处置顺序 9 条」。→ 视频不报条数，只报"有顺序、有责任部门"。
-5. **`docs/competition/answer-mainline.md` §5 资源缺口行**仍是旧口径「需 7 台 / 库存 6 台 / 缺口 1 台（含 80% 折算）」，与当前冻结值 `resource_gap=2`、`urban-scenario-ground-truth.md`（需求 8 = A-03 6 + B-01 2）不一致。→ 视频按 **8 / 6 / 2** 讲；该行需要数字 owner 单独修，本文件不动它。
+4. **`action_count` 与「处置顺序条数」**：冻结期望 `p6_deduction.action_count=10`，`delivery-status.md` 已统一为「处置顺序 10 条」（2026-11-05 修正）。→ 视频可按 10 条讲，或只报"有顺序、有责任部门"。
+5. **资源缺口口径**：`answer-mainline.md` 已统一为「需 8 台 / 可用 6 台 / 缺口 2 台」（2026-11-05 修正），与冻结值 `resource_gap=2`、`urban-scenario-ground-truth.md`（需求 8 = A-03 6 + B-01 2）一致。→ 视频按 **8 / 6 / 2** 讲。
 6. **评分权重**：初赛四维各 25% 已核实可引用，中国总决赛剩余维度百分比 **截断、仍标 `[待官方复核]`**（见 `winning-gap-audit.md` §4.1）。→ 本分镜不出现任何权重数字。
 7. **UE 侧**：仍是白模/黑面未解，**不进视频、不进 PPT 承诺**；任何"引擎实时"表述一律删除。

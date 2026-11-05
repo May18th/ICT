@@ -49,7 +49,7 @@
 | --- | --- | --- |
 | `/zh/skill-space` →「我的 Skill」 | `urban-six-hop-deduction`、`scarcity-allocation-evolution` | `skill-space.png` |
 | `/zh/agents` | `城市内涝跨部门决策智能体` | `agents.png` |
-| `/zh/mcp-space` →「我的MCP」→ 连通性校验 | `urban-twin-mcp`、`13 个工具`、`连接成功` | `mcp-space.png` |
+| `/zh/mcp-space` →「我的MCP」→ 连通性校验 | `urban-twin-mcp`、`14 个工具`、`连接成功` | `mcp-space.png` |
 
 - 任一断言不成立即退出码 1，截图不能冒充通过；
 - `platform_ui.json` 记每页 URL、命中/缺失文字、PNG 字节数与 sha256；

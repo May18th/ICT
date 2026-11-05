@@ -15,7 +15,7 @@ Nexent 的「MCP 服务接入」只支持 HTTP/SSE（远程链接 / 容器 / API
 平台：Nexent Agent（LLM 编排）→ MCP 工具（必须 HTTP/SSE）→ 结论
 ```
 
-补上 `mcp_sse` 传输后，Nexent 侧看到的就是**同一份工具定义**（12 个），不存在第二套实现。
+补上 `mcp_sse` 传输后，Nexent 侧看到的就是**同一份工具定义**（14 个），不存在第二套实现。
 
 ## 2 目标架构
 
@@ -155,7 +155,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 
 - 已完成（离线可验证）：SSE 传输（`mcp_sse.py` + 10 项测试）、2 个 SKILL.md、`nexent_urban` 查询/解析/比对（11 项测试）、
   `NexentHttpTransport` 支持注入 `query_builder`（默认行为不变）、`trust_env=False` 避免系统代理打挂本地调用。
-- **已完成（真机）**：本机 Nexent v2.7.0 上注册 13 个 MCP 工具（tool_id 41–53）、创建并发布 Agent
+- **已完成（真机）**：本机 Nexent v2.7.0 上注册 14 个 MCP 工具（tool_id 41–53）、创建并发布 Agent
   `urban_deduction_agent`（agent_id=3，v10）、一次真实对话六跳结论与离线 **8/8 一致**（conversation_id=78），
   平台调用日志含 `event_deduce`（含一次协议修复重试）。
   证据：`samples/nexent/live/`；报告：[真机集成报告](reports/nexent-live-integration-report.md)。
@@ -175,7 +175,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 
 ## 9 多智能体协同 Agent（P12 / T5，路径 B）
 
-- 工具：13 个（新增 `collab_run`，分组 `collaboration`）；`tools.json` 由代码导出，4 个互斥分组。
+- 工具：14 个（新增 `collab_run`、`scene_status`；分组 `collaboration`/`presentation`）；`tools.json` 由代码导出，4 个互斥分组。
 - 新增 Agent `urban_collab_agent`（`deploy/nexent/setup_nexent.py create-collab-agent`）：
   挂 `collab_run` + `event_deduce` + `conflict_check` + `allocation_plan` + `twin_neighbors` + `evidence_locate`。
 - 提示词两步式：先 `collab_run`，再转述 `cards / co_sign_pairs / merge_order / conflicts / kernel_fingerprint`。

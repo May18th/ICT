@@ -164,7 +164,7 @@
 - **要点（≤5 条）**
   1. 边界设计：**LLM 负责理解与表达，优先级与冲突裁决归确定性推演**
   2. 平台侧温度钉不住：同一道题（N01，参照 `opt-3`）多次调用分别选中 `opt-2` / `opt-1`，**均未命中参照**
-  3. 入仓原始记录：`samples/nexent/live/llm_decision_platform.json` 固化了其中 1 条——选中 `opt-1`、`selected_match:false`、`schema_valid:true`。**页面上如实展示"与参照不一致"，不修图**
+  3. 入仓原始记录：`llm_decision_platform.json`（1 条 opt-1）+ `llm_decision_platform_run1/2/3.json`（3 条均为 opt-2），共 **4 条**、全部 `selected_match:false`、`schema_valid:true`。**页面上如实展示"与参照不一致"，不修图**
   4. 直调端点对照：公网 `/api/llm-decision` 公网真调 DeepSeek（`t=0`）→ 命中 `opt-3`，约 4.1 s
   5. 失败降级：未配置密钥时返回 `configured=false`，页面显示"未配置"，其余演示不受影响
 - **截图 / 证据**：

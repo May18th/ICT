@@ -1,0 +1,50 @@
+{
+  "schema_version": "nexent-llm-decision-live-1",
+  "generated_at": "2026-11-05T17:59:02+08:00",
+  "method": "北向 /nb/v1/chat/run 实测；Agent=urban_llm_decision_agent（DeepSeek-Chat，独立 Agent，不动 v10）",
+  "nexent_base_url": "http://localhost:5013",
+  "agent_name": "urban_llm_decision_agent",
+  "case_id": "N01",
+  "event_id": "WO-20261029-007",
+  "as_of": "2026-10-29T09:40:00+08:00",
+  "request_id": "req-ab-N01",
+  "expected_option_id": "opt-3",
+  "options": [
+    {
+      "option_id": "opt-1",
+      "description": "隔离风险源：确认无泄漏后关阀或断电，未确认不得进入下一步",
+      "expected_impact": "按确定性推演优先级执行"
+    },
+    {
+      "option_id": "opt-2",
+      "description": "封闭积水路段全幅（深度 ≥25cm 或面积 ≥200m²），范围覆盖积水区上下游各 50m",
+      "expected_impact": "按确定性推演优先级执行"
+    },
+    {
+      "option_id": "opt-3",
+      "description": "停止基坑开挖并覆盖或围堰，燃气浓度检测提升至每 2 小时一次",
+      "expected_impact": "按确定性推演优先级执行"
+    },
+    {
+      "option_id": "opt-4",
+      "description": "封闭下穿隧道洞口全幅（外部积水漫过入口挡水槛或洞内积水达封控阈值），由 ORG-ROAD 与 ORG-TRAFFIC 联合发布；封控水深阈值沿用道路 25cm（假设值，待核实）",
+      "expected_impact": "按确定性推演优先级执行"
+    }
+  ],
+  "task_digest": "44a7720dcbdf3adb",
+  "latency_ms": 6584.5,
+  "schema_valid": true,
+  "selected_option_id": "opt-2",
+  "confidence": 0.86,
+  "summary": "2026-10-29T09:40:00+08:00 时点，N01 常规事件橙色预警，实测积水深度 30.0cm，已达到道路封控阈值（≥25cm）。按确定性推演优先级，最优先动作为 opt-2：封闭积水路段全幅，范围覆盖积水区上下游各 50m，以阻断车辆与行人进入深水区；opt-1 风险源隔离、opt-3 基坑处置、opt-4 下穿隧道封控在本时点缺乏对应证据支撑（无泄漏/断电、基坑开挖、下穿隧道洞口漫水等证据），暂不优先启用。",
+  "risks": [
+    "固定上下游各 50m 封闭边界可能不足以覆盖实际积水漫延范围，需现场动态复核并适时扩大封控范围",
+    "积水深度 30cm 持续上涨时车辆涉水熄火与人员跌入风险上升，需同步设置警示与绕行引导",
+    "封闭路段可能造成周边路网拥堵与应急车辆通行受阻，需与交通部门联动开辟应急通道",
+    "本次事件为常规橙色预警，如后续出现泄漏、基坑或下穿隧道相关证据，应重新推演并追加 opt-1/opt-3/opt-4"
+  ],
+  "evidence_cited": 4,
+  "decision_error": null,
+  "answer_length": 1431,
+  "selected_match": false
+}
