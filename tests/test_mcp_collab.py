@@ -61,6 +61,59 @@ def test_collab_run_covers_six_roles_and_keeps_kernel_conflicts(toolkit: UrbanTo
     assert len(data["kernel_fingerprint"]) == 16
     assert data["co_sign_pairs"]
 
+    hydrograph = {
+        "times_h": [0.0, 0.5, 1.0],
+        "values": [0.2, 0.8, 1.1],
+        "unit": "m",
+        "formula_id": "test-hydrograph",
+        "formula_source": "tests/test_mcp_collab.py",
+        "assumptions": ["测试过程线"],
+        "error_bound": "测试时段 0.5 h",
+        "peak": 1.1,
+        "peak_time_h": 1.0,
+    }
+    hydro_result = toolkit.call(
+        "collab_run",
+        {
+            "event_id": EVENT,
+            "as_of": AS_OF,
+            "caller_labels": ["ORG-EMERG"],
+            "hydrograph": hydrograph,
+        },
+    )
+    assert hydro_result.status == "ok"
+    assert hydro_result.data["hydrograph"]["peak"] == 1.1
+    assert hydro_result.data["resource_gaps"] == data["resource_gaps"]
+    event_result = toolkit.call(
+        "event_deduce",
+        {
+            "event_id": EVENT,
+            "as_of": AS_OF,
+            "caller_labels": ["ORG-EMERG"],
+            "hydrograph": hydrograph,
+        },
+    )
+    assert event_result.status == "ok"
+    assert event_result.data["hydrograph"]["peak"] == 1.1
+
+    # 无工单深度时，过程线只补充事实状态，不能改写资源缺口 v1。
+    no_depth_event = "WO-20261029-009"
+    base_no_depth = toolkit.call(
+        "collab_run",
+        {"event_id": no_depth_event, "as_of": AS_OF, "caller_labels": ["ORG-EMERG"]},
+    )
+    hydro_no_depth = toolkit.call(
+        "collab_run",
+        {
+            "event_id": no_depth_event,
+            "as_of": AS_OF,
+            "caller_labels": ["ORG-EMERG"],
+            "hydrograph": hydrograph,
+        },
+    )
+    assert base_no_depth.status == hydro_no_depth.status == "ok"
+    assert hydro_no_depth.data["resource_gaps"] == base_no_depth.data["resource_gaps"]
+
 
 def test_collab_run_unknown_event_is_reported_not_invented(toolkit: UrbanToolkit) -> None:
     result = toolkit.call(

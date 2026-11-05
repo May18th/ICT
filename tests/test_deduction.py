@@ -30,6 +30,7 @@ from decision_poc.deduction import (
     load_rules,
     verify_rules,
 )
+from decision_poc.hydro_contracts import HydrographResult
 from decision_poc.urban_dataset import DEFAULT_DATASET_ROOT
 
 AS_OF = datetime.fromisoformat("2026-10-29T09:40:00+08:00")
@@ -270,6 +271,21 @@ def test_deduction_is_deterministic(engine: DeductionEngine) -> None:
     first = engine.deduce(EVENT, as_of=AS_OF).model_dump(mode="json")
     second = engine.deduce(EVENT, as_of=AS_OF).model_dump(mode="json")
     assert first == second
+
+    hydrograph = HydrographResult(
+        times_h=[0.0, 0.5, 1.0],
+        values=[0.2, 0.8, 1.1],
+        unit="m",
+        formula_id="test-hydrograph",
+        formula_source="tests/test_deduction.py",
+        assumptions=["测试过程线"],
+        error_bound="测试时段 0.5 h",
+        peak=1.1,
+        peak_time_h=1.0,
+    )
+    hydro = engine.deduce(EVENT, as_of=AS_OF, hydrograph=hydrograph)
+    assert hydro.hydrograph == hydrograph
+    assert hydro.stage("observed")[0].conclusion["hydro_peak_m"] == "1.1"
 
 
 def test_result_is_anchored_to_a_snapshot(engine: DeductionEngine, result) -> None:

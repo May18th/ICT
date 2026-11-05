@@ -16,6 +16,7 @@ import pytest
 
 from decision_poc.governance import ErrorCode
 from decision_poc.mcp_server import UrbanToolkit
+from decision_poc.hydro_contracts import HydrographResult
 from decision_poc.provenance import ProvenanceLedger, build_ledger
 from decision_poc.skills import (
     ImpactRequest,
@@ -296,9 +297,26 @@ def test_pipeline_is_deterministic(runtime: SkillRuntime) -> None:
             step.pop("elapsed_ms")
         return payload
 
-    left = SkillPipeline(runtime).run(EVENT, AS_OF, caller_labels=LABELS, persist=False)
-    right = SkillPipeline(SkillRuntime()).run(EVENT, AS_OF, caller_labels=LABELS, persist=False)
+    hydrograph = HydrographResult(
+        times_h=[0.0, 0.5, 1.0],
+        values=[0.2, 0.8, 1.1],
+        unit="m",
+        formula_id="test-hydrograph",
+        formula_source="tests/test_skills.py",
+        assumptions=["测试过程线"],
+        error_bound="测试时段 0.5 h",
+        peak=1.1,
+        peak_time_h=1.0,
+    )
+    left = SkillPipeline(runtime).run(
+        EVENT, AS_OF, caller_labels=LABELS, persist=False, hydrograph=hydrograph
+    )
+    right = SkillPipeline(SkillRuntime()).run(
+        EVENT, AS_OF, caller_labels=LABELS, persist=False, hydrograph=hydrograph
+    )
     assert flat(left) == flat(right)
+    assert left.deduction is not None
+    assert left.deduction.hydrograph == hydrograph
 
 
 def test_no_persist_still_audits_but_leaves_no_record(runtime: SkillRuntime) -> None:

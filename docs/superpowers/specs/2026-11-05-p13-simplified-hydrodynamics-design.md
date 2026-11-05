@@ -85,7 +85,7 @@ Q_溢流(h) = C·b·max(0, h − h_堰顶)^(3/2)   （宽顶堰，C 取 1.7，SI
 
 ## 4 契约
 
-- 新增 `quant/contracts.py::HydrographResult`：过程线（`times_h` / `values` / `unit`）+
+- 新增 `decision_poc.hydro_contracts.HydrographResult`（由 `quant/contracts.py` 兼容重导出）：过程线（`times_h` / `values` / `unit`）+
   峰值与峰现时刻 + `formula_id` / `formula_source` / `assumptions` / `error_bound` / `inputs` / `summary`
   + `computable` / `uncomputable_reason`；
 - 标量结论（到阈时刻、超阈时长）仍用 `QuantResult`，与既有 33 个定量结果同一套口径；
@@ -102,8 +102,8 @@ src/decision_poc/quant/
 tests/test_quant_hydrodynamics.py   手算对拍 + 边界 + 契约校验
 ```
 
-本轮**不**做：接六跳推演、注册 MCP `quant` 工具组、改任何既有推演数字。
-因此对外数字只有"测试数"与"期望指纹"两处随测试新增而变，106 项自检项数不变。
+本轮设计阶段**不**做：接六跳推演、注册 MCP `quant` 工具组、改任何既有推演数字。
+后续 P14 已在不新增工具的前提下接入可选过程线；资源缺口 v1 与 106 项自检口径保持不变。
 
 ## 6 验收
 

@@ -19,7 +19,8 @@ from enum import StrEnum
 from pydantic import Field, field_validator, model_validator
 
 from decision_poc.contracts import StrictModel
-from decision_poc.deduction import DEDUCTION_STAGES, DepartmentConflict
+from decision_poc.deduction import DEDUCTION_STAGES, DepartmentConflict, ResourceGap
+from decision_poc.hydro_contracts import HydrographResult
 
 
 class CardStatus(StrEnum):
@@ -136,6 +137,8 @@ class CollabResult(StrictModel):
     kernel_fingerprint: str = Field(min_length=1)
     snapshot_hash: str = Field(min_length=1)
     rules_version: str = Field(min_length=1)
+    hydrograph: HydrographResult | None = None
+    resource_gaps: list[ResourceGap] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _merge_order_must_name_cards(self) -> CollabResult:
