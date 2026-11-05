@@ -54,6 +54,15 @@
       "failure_mode": "作业落盘失败 -> UPSTREAM_UNAVAILABLE；引擎未认领只体现为 delivery=pending，不算失败，决策照出"
     },
     {
+      "name": "scene_status",
+      "group": "presentation",
+      "when": "已经发起过 scene_render，需要确认这段片子渲出来没有、平台拿到的是不是那一版",
+      "mcp_tools": [
+        "scene_status"
+      ],
+      "failure_mode": "快照不存在 -> NOT_FOUND；未出片只体现为 delivery=pending + next_action，不谎报已完成"
+    },
+    {
       "name": "scene_compare",
       "group": "presentation",
       "when": "已各自渲染过基线快照与进化后策略快照，需要给出“策略改了、分配怎么变”的差异结论",

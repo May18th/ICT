@@ -37,7 +37,7 @@
 - [对外数字自检报告](reports/evidence-check-report.md)：106 项对外宣称数字的期望/实际逐项对照（含漂移检测，由 `decision_poc.evidence_check` 生成，勿手改）。
 - [P10 可视化工具层设计](p10-visualization-tools-design.md)：决策快照 → UE 渲染作业 → 引擎 ack 的异步闭环、3 个 MCP 工具（`scene_render`/`scene_compare`/`asset_lookup`）、工具分组 allowlist 与演示时序；说明为什么不宣称做成实时闭环、Blender 为什么只在离线跑。
 - [实体重投影与绑定表](scene-binding.md)：决策层 `TW-*` 如何对齐到场景几何与 Actor tag、`primary_hop` 为什么取"最后一跳"、19 个高亮里 3 个无几何为什么显式列出而不补；生成物见 [绑定表报告](reports/scene-binding-report.md)（由 `decision_poc.scene_binding` 生成，勿手改）。
-- [Nexent 工具注册](nexent-tool-registration.md)：13 个工具的注册清单（`samples/nexent/tools.json`，由代码导出）、三阶段分组挂载与验收标准；**真机注册已完成**，结果见 [真机报告](reports/nexent-live-integration-report.md)。
+- [Nexent 工具注册](nexent-tool-registration.md)：14 个工具的注册清单（`samples/nexent/tools.json`，由代码导出）、三阶段分组挂载与验收标准；**真机注册已完成**，结果见 [真机报告](reports/nexent-live-integration-report.md)。
 - [四个创新点：机制、证据、答辩口径](innovation-and-evidence.md)：语义层自动演化、因果推演与反事实、血缘影响分析、决策策略受控进化，以及不作为创新宣传的清单。
 - [核心事件 Ground Truth](urban-scenario-ground-truth.md)：六跳标准答案、三类职责冲突、5 个安全拦截用例、3 个反事实问题。
 - [通用内核设计](superpowers/specs/2026-10-26-generic-evolution-kernel-design.md)：目标、边界、架构和验收范围。

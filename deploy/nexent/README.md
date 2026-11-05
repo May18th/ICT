@@ -22,7 +22,7 @@ docker build -t urban-twin-mcp:dev -f deploy/mcp_sse/Dockerfile .
 docker rm -f urban-twin-mcp 2>$null
 docker run -d --name urban-twin-mcp --network nexent_network --restart unless-stopped urban-twin-mcp:dev
 
-# 健康检查：应返回 13 个工具
+# 健康检查：应返回 14 个工具
 docker exec urban-twin-mcp python -c "import urllib.request;print(urllib.request.urlopen('http://127.0.0.1:8000/health').read().decode()[:160])"
 ```
 
@@ -45,7 +45,7 @@ docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_
 | 步骤 | 作用 | 幂等策略 |
 | --- | --- | --- |
 | `register-mcp` | 注册 MCP 服务 `urban-twin-mcp`（URL `http://urban-twin-mcp:8000/sse`） | 同名已存在则复用 |
-| `sync-tools` | `scan_tool` 把 13 个 MCP 工具同步进平台工具库 | 已存在则覆盖状态 |
+| `sync-tools` | `scan_tool` 把 14 个 MCP 工具同步进平台工具库 | 已存在则覆盖状态 |
 | `create-agent` | 创建/复用 `urban_deduction_agent`（**upsert**：带 `agent_id` 回写提示词），挂 2 个工具，发布版本 | 同名 Agent 复用；重复挂载无害 |
 | `mint-key` | 生成北向 API Key | 每次生成新 Key（旧 Key 可继续用） |
 
@@ -211,7 +211,7 @@ MCP 工具数已到 **13**（新增 `collab_run`，分组 `collaboration`）。�
 
 | 项 | 结果 |
 | --- | --- |
-| MCP 容器 | `urban-twin-mcp` 重建后 `/health` 返回 **13 个工具**（含 `collab_run`） |
+| MCP 容器 | `urban-twin-mcp` 重建后 `/health` 返回 **14 个工具**（含 `collab_run`） |
 | 平台工具库 | `scan_tool` 命中 **13/13**，缺失 0 |
 | 主 Agent | `urban_deduction_agent` 发布 **v5**，挂 12 个结论类工具（`collab_run` 显式 detach） |
 | 协同 Agent | `urban_collab_agent` agent_id=4 发布 **v1**，挂 6 个工具（含 `collab_run`） |
@@ -228,7 +228,7 @@ MCP 工具数已到 **13**（新增 `collab_run`，分组 `collaboration`）。�
 
 | 项 | 结果 |
 | --- | --- |
-| MCP 容器 | 重建后 `/health` 返回 **13 个工具**；编排见 `deploy/docker-compose.mcp.yml` |
+| MCP 容器 | 重建后 `/health` 返回 **14 个工具**；编排见 `deploy/docker-compose.mcp.yml` |
 | 平台工具库 | `scan_tool` 命中 **13/13**，缺失 0 |
 | 主 Agent | `urban_deduction_agent` 发布 **v10**，只挂 2 个工具（`event_deduce` + `evidence_locate`） |
 | 主链路 | **8/8 项一致，conversation_id=78**，退出码 0 |
@@ -287,6 +287,6 @@ Nexent 侧注册的地址就是 `http://urban-twin-mcp:8000/sse`），不能靠�
 `docker inspect` 快照存到 `out/backup/urban-twin-mcp.manual.inspect.<时间戳>.json` 再 `docker rm -f`，
 由 compose 重新接管；`compose up` 仍报冲突时再清一次重试。重复执行是幂等的（已归属本编排则只做校验）。
 
-healthcheck 判据是"13 个工具都在"，不是"进程没死"——容器活着但工具没注册时，平台侧只表现为
+healthcheck 判据是"14 个工具都在"，不是"进程没死"——容器活着但工具没注册时，平台侧只表现为
 "智能体变笨"，不会报错。日志与渲染产物挂到宿主 `artifacts/visual/`，取证不必再 `docker cp`
 （沙箱里 `docker cp` 常被 npipe 权限拦）。

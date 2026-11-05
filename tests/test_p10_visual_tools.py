@@ -223,11 +223,12 @@ def test_tool_groups_filter() -> None:
     presentation = [tool["name"] for tool in toolkit.tools(["presentation"])]
     bootstrap = [tool["name"] for tool in toolkit.tools(["bootstrap"])]
     assert decision == list(TOOL_GROUPS["decision"])
-    assert presentation == ["scene_render", "scene_compare"]
+    # P11 加了只读的 scene_status（查 out 片状态），仍属 presentation，不进推演循环
+    assert presentation == ["scene_render", "scene_status", "scene_compare"]
     assert bootstrap == ["asset_lookup"]
     # 推演循环里看不见渲染工具：这是分组的全部意义
     assert "scene_render" not in decision
-    assert len(toolkit.tools()) == 13
+    assert len(toolkit.tools()) == 14
 
 
 def test_unknown_group_raises() -> None:

@@ -80,7 +80,7 @@ def test_groups_partition_all_tools(manifest: dict) -> None:
 
 def test_presentation_and_bootstrap_split(manifest: dict) -> None:
     groups = manifest["groups"]
-    assert groups["presentation"] == ["scene_render", "scene_compare"]
+    assert groups["presentation"] == ["scene_render", "scene_status", "scene_compare"]
     assert groups["bootstrap"] == ["asset_lookup"]
     # 推演阶段不该看见渲染工具
     for name in groups["presentation"] + groups["bootstrap"]:

@@ -19,6 +19,7 @@
     ],
     "presentation": [
       "scene_render",
+      "scene_status",
       "scene_compare"
     ],
     "bootstrap": [
@@ -447,6 +448,19 @@
                 "type": "boolean"
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "name": "scene_status",
+      "description": "查一次渲染作业的出片状态：pending（还没渲）还是 acked（已有成片）。acked 时返回成片路径、大小与 sha256，用于核对'平台拿到的片子就是那一份结论'。只读，不触发渲染。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "snapshot_id": {
+            "type": "string",
+            "description": "快照 id；缺省取最近一次作业"
           }
         }
       }

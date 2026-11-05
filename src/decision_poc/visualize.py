@@ -353,6 +353,8 @@ def build_render_job(snapshot: VisualSnapshot) -> RenderJob:
         scene={
             "scene_hash": snapshot.scene_hash,
             "snapshot_hash": snapshot.snapshot_hash,
+            # P11 补：作业要自述"演的是哪个工单"，渲染执行器据此挑预渲染资产
+            "event_id": snapshot.event_id,
             "as_of": snapshot.as_of.isoformat(),
             "scenario": snapshot.scenario,
             "policy_version": snapshot.policy_version,
@@ -412,12 +414,41 @@ def acked(snapshot_id: str, root: Path | str | None = None) -> bool:
 
 
 def write_ack(
-    snapshot_id: str, *, engine: str = "unreal", root: Path | str | None = None
+    snapshot_id: str,
+    *,
+    engine: str = "unreal",
+    root: Path | str | None = None,
+    artifact: Mapping[str, Any] | None = None,
+    extra: Mapping[str, Any] | None = None,
 ) -> Path:
-    return _write_json(
-        ack_path(snapshot_id, root),
-        {"schema_version": ACK_SCHEMA, "snapshot_id": snapshot_id, "engine": engine},
-    )
+    """写认领回执。
+
+    `artifact` 是 P11 加的：真渲染器（Blender/UE）出片后要能自证"渲了什么、渲出来的是哪一版"。
+    里面只放产物事实（路径/大小/sha256/耗时），不放位姿/材质/镜头这类低层参数——
+    和 `scene_render` 的入参红线保持一致。
+    """
+    payload: dict[str, Any] = {
+        "schema_version": ACK_SCHEMA,
+        "snapshot_id": snapshot_id,
+        "engine": engine,
+        "acked_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+    }
+    if artifact:
+        payload["artifact"] = dict(artifact)
+    if extra:
+        payload.update(dict(extra))
+    return _write_json(ack_path(snapshot_id, root), payload)
+
+
+def read_ack(snapshot_id: str, root: Path | str | None = None) -> dict[str, Any] | None:
+    path = ack_path(snapshot_id, root)
+    if not path.is_file():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
 
 
 def latest_snapshot_id(root: Path | str | None = None) -> str | None:
@@ -704,4 +735,5 @@ __all__ = [
     "tool_log_path",
     "visual_root",
     "write_ack",
+    "read_ack",
 ]
