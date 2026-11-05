@@ -33,6 +33,8 @@
 - [P12 定量层落地报告](reports/p12-quant-layer-report.md)：水文/水力/不确定性内核的公式-出处对照、与稳态校核报告的手算对拍、本阶段未做项与测试数口径变更说明。
 - [P12 多智能体协同层落地报告](reports/p12-collab-layer-report.md)：1 总控 + 5 专业部门的动作卡契约、联合发布与处置顺序裁决、内核指纹稳定性实测，以及三条"多 Agent 不可自由发挥"边界的强制点。
 - [P12 场景 v2 口径标定报告](reports/p12-scenario-v2-calibration-report.md)：下穿隧道倒灌判定与堰流进水量、泵站负荷分档，以及"v2 泵站口径会让缺口 1→0 并摧毁 C3/P9"的实测证据与两条处置方案。
+- [P13 简化水动力演进设计](superpowers/specs/2026-11-05-p13-simplified-hydrodynamics-design.md)：马斯京根汇流 + 修正 Puls 调蓄的公式、稳定条件与"不是圣维南"的边界，以及过程线级分析要满足的契约。
+- [P13 简化水动力演进落地报告](reports/p13-simplified-hydrodynamics-report.md)：两种演进方法与两个过程线查询的手算对拍、"泵站停机后水位过程"缺口的可算链路、未做项与测试数口径变更。
 - [相关工作定位表](competition/related-work-positioning.md)：与已发表的 Agentic AI + 数字孪生 + 审计框架逐维度对照（真实执行 / 审计层 / 评测口径 / 可核验性）、三条答辩口径、引用格式与"不能怎么做"边界。
 - [对外数字自检报告](reports/evidence-check-report.md)：106 项对外宣称数字的期望/实际逐项对照（含漂移检测，由 `decision_poc.evidence_check` 生成，勿手改）。
 - [P10 可视化工具层设计](p10-visualization-tools-design.md)：决策快照 → UE 渲染作业 → 引擎 ack 的异步闭环、3 个 MCP 工具（`scene_render`/`scene_compare`/`asset_lookup`）、工具分组 allowlist 与演示时序；说明为什么不宣称做成实时闭环、Blender 为什么只在离线跑。

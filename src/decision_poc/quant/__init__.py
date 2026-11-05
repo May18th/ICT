@@ -11,13 +11,27 @@ MCP 工具、Agent）只能调用这里的结果，不能自己推导公式—�
 3. 算不出来时返回 `computable=False` 且 `value=0`，并给原因——不靠推测补全。
 """
 
-from decision_poc.quant.contracts import QuantResult, SpreadResult, uncomputable
+from decision_poc.quant.contracts import (
+    HydrographResult,
+    QuantResult,
+    SpreadResult,
+    uncomputable,
+    uncomputable_hydrograph,
+)
 from decision_poc.quant.hydraulics import (
     manning_full_flow,
     manning_velocity,
     orifice_inflow,
     ponding_forecast,
     weir_inflow,
+)
+from decision_poc.quant.hydrodynamics import (
+    MuskingumCoefficients,
+    level_exceedance_duration,
+    level_pool_route,
+    muskingum_coefficients,
+    muskingum_route,
+    time_to_level,
 )
 from decision_poc.quant.hydrology import (
     MM_PER_H_TO_LPS_HA,
@@ -42,6 +56,8 @@ __all__ = [
     "RAINFALL_SCENARIOS_MM_2H",
     "ClosurePlan",
     "FaultTreeResult",
+    "HydrographResult",
+    "MuskingumCoefficients",
     "OptimalAllocation",
     "OptimalityGap",
     "QuantResult",
@@ -49,10 +65,14 @@ __all__ = [
     "TransferPlan",
     "compare_with_policy",
     "intensity_from_depth",
+    "level_exceedance_duration",
+    "level_pool_route",
     "manning_full_flow",
-    "minimum_closure_set",
     "manning_velocity",
+    "minimum_closure_set",
     "monte_carlo",
+    "muskingum_coefficients",
+    "muskingum_route",
     "optimal_allocation",
     "orifice_inflow",
     "ponding_forecast",
@@ -60,6 +80,8 @@ __all__ = [
     "range_from_bounds",
     "rational_runoff",
     "runoff_from_rainfall",
+    "time_to_level",
     "uncomputable",
+    "uncomputable_hydrograph",
     "weir_inflow",
 ]
