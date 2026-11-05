@@ -67,7 +67,7 @@ PAGES: List[Dict[str, Any]] = [
         "path": "/zh/mcp-space",
         "click": "我的MCP",
         # 卡片右上角的"连通性校验"按钮：先让平台真的去连一次，截图里才是"连接成功"而不是陈旧状态。
-        # 只点第一个（列表顺序里 urban-twin-mcp 在第一位；另一个是无关的 kg-mcp-server）。
+        # 现在「我的MCP」里只剩 urban-twin-mcp 一个（无关的 kg-mcp-server 已清理），点第一个即可。
         "click_selector": 'button[aria-label="连通性校验"]',
         # 卡片角标的「N 个工具」是平台在 add 时对 registry_json 的快照（本环境 2026-10-29 为 12 个），
         # 之后 MCP 侧新增工具不会自动回写角标；因此截图只断言页面上真实存在的
