@@ -99,7 +99,7 @@ echo "exit=$LASTEXITCODE"
 | HTTP 400，提示 `allow_chat_metadata` | 请求体带了 `metadata` | 传输层已改用 `meta_data`，勿手改回 |
 | `X-Stream-Status: conflict` / 429 | 上一轮还在跑或触发限流 | 等 10 秒重试，不要自动重试 |
 | `NexentStreamError: 未产生 final_answer` | 模型/工具链中断 | 看 `events`，整轮重跑一次 |
-| `decision_error: JSONDecodeError` | Agent 回了自然语言 | 确认用的是 `workbench_main`，不是 `equipment_decision_agent` |
+| `decision_error: JSONDecodeError` | Agent 回了自然语言 | 确认用的是 `workbench_main`，不是 `equipment_decision_agent`（已下线） |
 | `decision_error: ValidationError` | 字段缺失或多余 | 看 error 明细，必要时收紧 query 结构 |
 
 ## 6. 演示收尾（可选）
@@ -109,7 +109,7 @@ echo "exit=$LASTEXITCODE"
 docker exec nexent-postgresql psql -U root -d nexent -c "delete from nexent.user_token_info_t where token_id=2;"
 ```
 
-- 换 Agent 只改 `$env:NEXENT_AGENT_NAME`：`equipment_decision_agent` 输出四段式中文报告，
+- 换 Agent 只改 `$env:NEXENT_AGENT_NAME`：`equipment_decision_agent`（已于 2026-11-05 从平台下线，此处为历史用法）输出四段式中文报告，
   **不是** JSON，不会产生 `decision`。
 - 想把记忆彻底留空，演示结束再跑一次第 2 节。
 
