@@ -103,6 +103,20 @@ def _error(source: str, data: dict[str, Any], code: ErrorCode, message: str, ver
     )
 
 
+def _hydrograph_schema() -> dict[str, Any]:
+    """返回工具入参中的可选 P13 过程线 schema。每次返回新对象，避免工具列表互相修改。"""
+    return {
+        "type": "object",
+        "description": "可选的 P13 简化水动力过程线；只补充事实状态，不改资源缺口 v1 口径",
+    }
+
+
+def _parse_hydrograph(args: Mapping[str, Any]) -> HydrographResult | None:
+    """解析可选过程线；缺省保持 None，非法对象仍交给 Pydantic 抛出原有校验错误。"""
+    raw = args.get("hydrograph")
+    return HydrographResult.model_validate(raw) if raw is not None else None
+
+
 class LocatorError(ValueError):
     pass
 
@@ -277,10 +291,7 @@ class UrbanToolkit:
                         "event_id": {"type": "string", "description": "工单编号，如 WO-20261029-007"},
                         "as_of": {"type": "string", "description": "ISO 8601 带时区"},
                         "caller_labels": {"type": "array", "items": {"type": "string"}},
-                        "hydrograph": {
-                            "type": "object",
-                            "description": "可选的 P13 简化水动力过程线；只补充事实状态，不改资源缺口 v1 口径",
-                        },
+                        "hydrograph": _hydrograph_schema(),
                     },
                     "required": ["event_id", "as_of", "caller_labels"],
                 },
@@ -351,10 +362,7 @@ class UrbanToolkit:
                         "event_id": {"type": "string", "description": "工单编号，缺省 WO-20261029-007"},
                         "as_of": {"type": "string", "description": "ISO 8601 带时区"},
                         "caller_labels": {"type": "array", "items": {"type": "string"}},
-                        "hydrograph": {
-                            "type": "object",
-                            "description": "可选的 P13 简化水动力过程线；只补充事实状态，不改资源缺口 v1 口径",
-                        },
+                        "hydrograph": _hydrograph_schema(),
                         "policy": {
                             "type": "object",
                             "description": "可选策略参数（P9 进化后的版本）；换策略即换 snapshot_id",
@@ -423,10 +431,7 @@ class UrbanToolkit:
                         "event_id": {"type": "string", "description": "工单编号，如 WO-20261029-007"},
                         "as_of": {"type": "string", "description": "ISO 8601 带时区"},
                         "caller_labels": {"type": "array", "items": {"type": "string"}},
-                        "hydrograph": {
-                            "type": "object",
-                            "description": "可选的 P13 简化水动力过程线；只补充事实状态，不改资源缺口 v1 口径",
-                        },
+                        "hydrograph": _hydrograph_schema(),
                     },
                     "required": ["event_id", "as_of", "caller_labels"],
                 },
@@ -714,11 +719,7 @@ class UrbanToolkit:
     def _event_deduce(self, args: Mapping[str, Any]) -> ToolResult:
         caller_labels = [str(item) for item in args.get("caller_labels", [])]
         event_id = str(args["event_id"])
-        hydrograph = (
-            HydrographResult.model_validate(args["hydrograph"])
-            if args.get("hydrograph") is not None
-            else None
-        )
+        hydrograph = _parse_hydrograph(args)
         try:
             outcome = self._deduction_engine().deduce(
                 event_id,
@@ -754,11 +755,7 @@ class UrbanToolkit:
     def _collab_run(self, args: Mapping[str, Any]) -> ToolResult:
         caller_labels = [str(item) for item in args.get("caller_labels", [])]
         event_id = str(args["event_id"])
-        hydrograph = (
-            HydrographResult.model_validate(args["hydrograph"])
-            if args.get("hydrograph") is not None
-            else None
-        )
+        hydrograph = _parse_hydrograph(args)
         try:
             outcome = self._deduction_engine().deduce(
                 event_id,
@@ -1009,11 +1006,7 @@ class UrbanToolkit:
                     self.version,
                 )
             labels = [str(item) for item in args.get("caller_labels", [])] or ["ORG-EMERG"]
-            hydrograph = (
-                HydrographResult.model_validate(args["hydrograph"])
-                if args.get("hydrograph") is not None
-                else None
-            )
+            hydrograph = _parse_hydrograph(args)
             try:
                 snapshot = viz.build_visual_snapshot(
                     str(args.get("event_id") or viz.DEFAULT_EVENT_ID),

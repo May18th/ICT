@@ -21,7 +21,6 @@
 
 from __future__ import annotations
 
-import math
 from collections.abc import Sequence
 
 from pydantic import Field, model_validator
