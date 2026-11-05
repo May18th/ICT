@@ -1,6 +1,7 @@
 # 初赛 PPT 10 页骨架（每页：标题 / 要点 / 截图 / 一句话）
 
 - 版本：`ppt-10p-v1`，2026-11-04
+- 成稿：`docs/competition/初赛答辩-PPT-v0.1.pptx`（由 `scripts/build_answer_ppt.py` 生成；改内容先改本文件，再重跑脚本）
 - 用途：**初赛答辩 PPT 的页序与每页内容**。话术与数字只从 [答辩主线](answer-mainline.md) 取；
   被追问怎么答见 [答辩 8 问](qa-8-questions.md)；总页序与官方「模板 2」五块结构的映射见
   [qa-and-ppt-skeleton](qa-and-ppt-skeleton.md) §2（本文件是它的**可施工版**：补了截图来源、每页口头一句话、禁用词）。
