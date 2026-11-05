@@ -83,7 +83,7 @@
 | 六跳路径 | 6 跳固定（affected/owner/conflict/resource/action/residual_risk） | v1 | `python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00` | 否（v2 明确"跳数不变"） |
 | 三类冲突 | C1/C2/C3 全命中 | v1 | 同上 | 否 |
 | 反事实代价 | 绕行多 3040 m / 慢 5.1 分钟 | v1 | `python -m decision_poc.counterfactual --case CF1` | 待确认（新增通道可能影响路径） |
-| 资源缺口 | 需 7 台 / 库存 6 台 / 缺口 1 台（**含 80% 折算，v2 将替换**） | v1 | 六跳输出跳 5 | **是**——v2 字面替换会把缺口归零（连带 C3/P9 失去对象），替换方案待裁决，见 [标定报告](../reports/p12-scenario-v2-calibration-report.md) §4 |
+| 资源缺口 | 需 8 台 / 可用 6 台 / 缺口 2 台（泵站按额定×0.8 折算 960 m³/h；含基坑 2 台等演示假设） | v1 | 六跳输出跳 5 | **是**——v2 字面替换会把缺口从 2 台归零（连带 C3/P9 失去对象），替换方案待裁决，见 [标定报告](../reports/p12-scenario-v2-calibration-report.md) §4 |
 | 交叉验证 | Nexent 真机 8/8 一致 | 单环境 | `python -m decision_poc.nexent_urban` | 否 |
 | 评测用例 | `urban_eval` 22/22 | v1 | `python -m decision_poc.urban_eval` | 是（用例期望会随 v2 重算） |
 | 引用完整率 | 100% | v1 | `python -m decision_poc.evidence_check` | 否 |

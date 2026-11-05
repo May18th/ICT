@@ -159,7 +159,7 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py `
 ## 5 现场演示顺序（约 2 分钟）
 
 1. 打开 Nexent 前端 `http://localhost:3000`，选 `urban_deduction_agent`，提问核心事件；
-2. 展示回答里的六跳 JSON + C1/C2/C3 + 缺口 1 台；
+2. 展示回答里的六跳 JSON + C1/C2/C3 + 缺口 2 台；
 3. 切到 `samples/nexent/live/mcp_tool_log.jsonl`，指出 `event_deduce` / `allocation_plan` 是平台调用的；
 4. 跑 `python -m decision_poc.nexent_urban` 输出 8/8，证明与离线结论一致；
 5. 打开 `/evolution` 面板收尾（策略进化与回滚）。

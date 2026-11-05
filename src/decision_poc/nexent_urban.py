@@ -194,7 +194,7 @@ def offline_baseline(event_id: str, as_of: str, *, labels: Sequence[str] = DEFAU
         "stages": stages,
         "isolate_before_drain": bool(isolate is not None and drain is not None and isolate < drain),
         "action_count": len(actions),
-        # 不要求逐字复述 9 条动作（LLM 会归并）；但三件事必须出现
+        # 不要求逐字复述 10 条动作（LLM 会归并）；但三件事必须出现
         "key_actions": ["隔离风险源", "抽排", "封闭积水路段"],
     }
 
