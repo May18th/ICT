@@ -69,8 +69,8 @@ PAGES: List[Dict[str, Any]] = [
         # 卡片右上角的"连通性校验"按钮：先让平台真的去连一次，截图里才是"连接成功"而不是陈旧状态。
         # 只点第一个（列表顺序里 urban-twin-mcp 在第一位；另一个是无关的 kg-mcp-server）。
         "click_selector": 'button[aria-label="连通性校验"]',
-        "expect": ["urban-twin-mcp", "13 个工具", "连接成功"],
-        "purpose": "平台 MCP「我的MCP」：urban-twin-mcp 连通性校验通过，13 个工具可用",
+        "expect": ["urban-twin-mcp", "14 个工具", "连接成功"],
+        "purpose": "平台 MCP「我的MCP」：urban-twin-mcp 连通性校验通过，14 个工具可用",
     },
 ]
 

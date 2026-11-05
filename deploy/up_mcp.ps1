@@ -15,7 +15,7 @@
 #   powershell -NoProfile -ExecutionPolicy Bypass -File deploy/up_mcp.ps1 -KeepOld   # 只体检、不动手
 #
 # 退出码：0 已就绪（健康 + 13 工具）；1 环境不满足；2 存在手工容器且 -KeepOld；
-#         3 compose up 失败；4 健康检查超时；5 工具数不是 13。
+#         3 compose up 失败；4 健康检查超时；5 工具数不是 14。
 
 [CmdletBinding()]
 param(
@@ -116,7 +116,7 @@ if ($upCode -ne 0) {
 Write-Host "[up] docker compose up -d 完成"
 
 # --- 5 等健康 -----------------------------------------------------------------
-# 判据是 healthcheck（容器内 /health 的 tools_count == 13），不是"进程没死"。
+# 判据是 healthcheck（容器内 /health 的 tools_count == 14），不是"进程没死"。
 $deadline = (Get-Date).AddSeconds($TimeoutSec)
 $status = ""
 while ((Get-Date) -lt $deadline) {
@@ -134,8 +134,8 @@ Write-Host "[up] 容器健康：healthy"
 # --- 6 工具数核对 -------------------------------------------------------------
 $count = (docker exec $Name python -c "import json,urllib.request;print(json.loads(urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=4).read())['tools_count'])" 2>$null) -join ""
 $count = $count.Trim()
-if ($count -ne "13") {
-    Fail 5 "工具数不是 13（实际 '$count'）：容器活着但工具没注册，平台侧只会表现为智能体变笨"
+if ($count -ne "14") {
+    Fail 5 "工具数不是 14（实际 '$count'）：容器活着但工具没注册，平台侧只会表现为智能体变笨"
 }
-Write-Host "[up] 工具数 13/13；SSE 地址 http://urban-twin-mcp:8000/sse"
+Write-Host "[up] 工具数 14/14；SSE 地址 http://urban-twin-mcp:8000/sse"
 exit 0

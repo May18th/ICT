@@ -47,7 +47,7 @@ COLLAB_REQUESTED_OUTPUT_TOKENS = int(os.getenv("NEXENT_COLLAB_OUTPUT_TOKENS", "8
 OUR_TOOLS = {
     "semantic_query", "twin_neighbors", "evidence_locate", "claim_trace", "provenance_verify",
     "event_deduce", "counterfactual_run", "conflict_check", "allocation_plan",
-    "scene_render", "scene_compare", "asset_lookup",
+    "scene_render", "scene_status", "scene_compare", "asset_lookup",
     "collab_run",
 }
 
