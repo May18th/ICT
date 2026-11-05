@@ -14,7 +14,7 @@
 
 | # | 业务问题 | 技术证据（可核实） | 业务含义 | 口径 | 复算方式 |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 资源什么时候会发现不够？ | 跳 5 产出"需 7 台 / 库存 6 台 / 缺口 1 台"；跨区调用需 40 分钟（`samples/assets/urban/resource_inventory.csv` 的 `capacity_note`） | 缺口在推演阶段暴露，且暴露时刻 = 可开始调拨时刻；调拨 40 分钟，故**抽排能力提前约 40 分钟到位** | 数据实测 + 换算 | 读 `resource_inventory.csv`；跳 5 输出见六跳命令 |
+| 1 | 资源什么时候会发现不够？ | 跳 5 产出"需 8 台 / 可用 6 台 / 缺口 2 台"；跨区调用需 40 分钟（`samples/assets/urban/resource_inventory.csv` 的 `capacity_note`） | 缺口在推演阶段暴露，且暴露时刻 = 可开始调拨时刻；调拨 40 分钟，故**抽排能力提前约 40 分钟到位** | 数据实测 + 换算 | 读 `resource_inventory.csv`；跳 5 输出见六跳命令 |
 | 2 | 顺序错了要付多少代价？ | CF1：封路后 J-01↔J-02 由 820 m/1.2 分钟 → 3860 m/6.3 分钟 | **多 3040 m、慢 5.1 分钟**（每次通行） | 可复算 | `python -m decision_poc.counterfactual --case CF1` |
 | 3 | 资源真不够时怎么取舍？ | CF2：库存 6→2 台时，缺口 1→5 台；优先保 A-03（积水 30 cm 已过封控阈值 + 燃气基坑 2.5 m 风险） | 取舍有依据：按"是否过阈值 + 危险源"排序，而不是谁嗓门大 | 可复算 | `python -m decision_poc.counterfactual --case CF2` |
 | 4 | 结论能不能追责？ | 每条结论带 `asset_id#locator` 引用；引用完整率 100%；哈希链账本被篡改可定位首个断点 | 汇报/复盘时能回到**原文第几行**，不是"模型说的" | 实测 | `python -m decision_poc.evidence_check`；P4 报告 |
