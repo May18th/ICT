@@ -1,0 +1,46 @@
+{
+  "kind": "collab-live-evidence",
+  "event_id": "WO-20261029-007",
+  "as_of": "2026-10-29T09:40:00+08:00",
+  "agent_name": "urban_collab_agent",
+  "captured_at": "2026-11-06T17:56:20+0800",
+  "method": "北向 /nb/v1/chat/run 实测；成功判据 = 从最终回答解析出含 kernel_fingerprint 的 JSON，且与离线逐字一致。平台两种合法外壳（裸 JSON / final_answer 包装）都认。",
+  "offline": {
+    "kernel_fingerprint": "ab94413cf94bc9a5",
+    "cards": 26,
+    "merge_order": 15,
+    "covered_agents": 6,
+    "constraint_violations": []
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "conversation_id": 137,
+      "elapsed_s": 21.8,
+      "answer_len": 8342,
+      "json_parsed": true,
+      "kernel_fingerprint": "ab94413cf94bc9a5",
+      "fingerprint_match": true,
+      "cards": 26,
+      "merge_order": 15,
+      "covered_agents": 6,
+      "constraint_violations": []
+    },
+    {
+      "attempt": 2,
+      "conversation_id": 138,
+      "elapsed_s": 9.1,
+      "answer_len": 8342,
+      "json_parsed": true,
+      "kernel_fingerprint": "ab94413cf94bc9a5",
+      "fingerprint_match": true,
+      "cards": 26,
+      "merge_order": 15,
+      "covered_agents": 6,
+      "constraint_violations": []
+    }
+  ],
+  "success": true,
+  "success_attempt": 1,
+  "success_rate": "2/2"
+}

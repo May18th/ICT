@@ -1,0 +1,107 @@
+{
+  "event_id": "WO-20261029-007",
+  "as_of": "2026-10-29T09:40:00+08:00",
+  "conversation_id": 136,
+  "answer": {
+    "event_id": "WO-20261029-007",
+    "as_of": "2026-10-29T09:40:00+08:00",
+    "six_hops": [
+      "observed",
+      "affected",
+      "owner",
+      "conflict",
+      "resource",
+      "action"
+    ],
+    "conflicts": [],
+    "resource_gap": 0,
+    "action_order": [],
+    "summary": "无法完成六跳推演：本轮运行环境未注入 MCP 工具 event_deduce（工具调用不可见，报 NameError），六跳事实、三类冲突、资源缺口与处置顺序均无法取证，按规则不输出结论。",
+    "residual_risks": [
+      "推演缺位期间积水可能继续扩大，处置窗口收缩"
+    ],
+    "evidence_refs": [],
+    "handoff_required": true
+  },
+  "checks": [
+    {
+      "name": "六跳齐全",
+      "expected": [
+        "observed",
+        "affected",
+        "owner",
+        "conflict",
+        "resource",
+        "action"
+      ],
+      "actual": [
+        "observed",
+        "affected",
+        "owner",
+        "conflict",
+        "resource",
+        "action"
+      ],
+      "passed": true
+    },
+    {
+      "name": "冲突编号",
+      "expected": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "actual": [],
+      "passed": false
+    },
+    {
+      "name": "冲突类型",
+      "expected": [
+        "contention",
+        "gap",
+        "overlap"
+      ],
+      "actual": [],
+      "passed": false
+    },
+    {
+      "name": "资源缺口",
+      "expected": 2,
+      "actual": 0,
+      "passed": false
+    },
+    {
+      "name": "隔离先于抽排",
+      "expected": true,
+      "actual": false,
+      "passed": false
+    },
+    {
+      "name": "关键处置动作齐全",
+      "expected": [
+        "隔离风险源",
+        "抽排",
+        "封闭积水路段"
+      ],
+      "actual": "",
+      "passed": false
+    },
+    {
+      "name": "证据非空",
+      "expected": true,
+      "actual": false,
+      "passed": false
+    },
+    {
+      "name": "事件编号一致",
+      "expected": "WO-20261029-007",
+      "actual": "WO-20261029-007",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "attempts_used": 2,
+  "attempt_errors": [
+    "第1次 回答中找不到符合 UrbanAgentAnswer 的 JSON"
+  ]
+}
