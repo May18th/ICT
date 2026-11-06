@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | 主链路 | **8/8 项一致**，conversation_id=134，attempts=1（协议层零重试） | `samples/nexent/live/main_v19_baseline.json` |
 | 反事实对照 | 同一提示词解绑 14 个 MCP 工具后 **2/8**；需要工具取数的 6 项全塌 | `samples/nexent/live/control_no_tools.json` |
+| 多事件回归 | 4 个事件全部 **8/8**（007/009/013/021，各自一次通过） | `samples/nexent/live/multi_event_regression.json` |
 | 协同链路 | 连跑 **2/2**，`kernel_fingerprint=ab94413cf94bc9a5` 与离线逐字一致（26 卡 / 15 序 / 6 角色） | `samples/nexent/live/collab_v7.json` |
 
 > 两段主链路对话都真实存在：**120** 是换 DeepSeek-Chat 后的首测（材料里引的是它，文件

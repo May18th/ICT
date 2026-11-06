@@ -21,6 +21,7 @@ from decision_poc.nexent_urban import (
     UrbanAgentAnswer,
     build_urban_query,
     compare_with_offline,
+    key_action_families,
     offline_baseline,
     parse_urban_answer,
     run,
@@ -234,3 +235,47 @@ def test_answer_model_ignores_extra_fields() -> None:
     payload["unexpected"] = {"nested": True}
     answer = UrbanAgentAnswer.model_validate(payload)
     assert answer.event_id == DEFAULT_EVENT_ID
+
+
+# --- 关键动作族：不能写死成 007 的三个短语 -----------------------------------
+#
+# 真实踩到的坑：`key_actions` 原来是 `["隔离风险源", "抽排", "封闭积水路段"]`，
+# 于是 WO-20261029-009（基坑+燃气场景，动作里根本没有"封闭积水路段"）被平台跑成 7/8，
+# 看起来像模型漏了动作，实际是验收脚本拿 A 事件的卷子改 B 事件。
+
+
+def test_key_action_families_derived_from_actions() -> None:
+    assert key_action_families(["隔离风险源：关阀或断电", "启动泵站抽排", "封闭积水路段全幅"]) == [
+        "隔离风险源",
+        "抽排",
+        "封控",
+    ]
+
+
+def test_key_action_families_accepts_synonyms() -> None:
+    # 009 的动作写的是"封路…联合发布"，不是"封闭积水路段"，仍应算封控族
+    assert key_action_families(["隔离风险源：关阀", "启动泵站抽排", "封路由 ORG-ROAD 发布"]) == [
+        "隔离风险源",
+        "抽排",
+        "封控",
+    ]
+
+
+def test_key_action_families_skips_absent_family() -> None:
+    # 021 没有抽排动作，就只要求两族——不能凭空要求第三族
+    assert key_action_families(["隔离风险源：关阀", "封闭积水路段全幅"]) == ["隔离风险源", "封控"]
+
+
+def test_key_action_families_empty_actions() -> None:
+    assert key_action_families([]) == []
+
+
+def test_baseline_key_actions_are_event_specific() -> None:
+    """同一套检查跑不同事件时，期望的动作族必须跟着事件走。"""
+
+    leak = offline_baseline("WO-20261029-009", "2026-10-29T09:55:00+08:00")
+    assert leak["event_id"] == "WO-20261029-009"
+    assert leak["key_actions"], "009 的动作族不该为空"
+    # 每个期望族都要有对应关键词，否则比对侧无从判断
+    for family in leak["key_actions"]:
+        assert leak["key_action_keywords"][family]

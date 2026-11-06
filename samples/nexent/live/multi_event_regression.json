@@ -1,0 +1,95 @@
+{
+  "schema_version": "nexent-multi-event-1",
+  "captured_at": "2026-11-06T18:54:26+0800",
+  "agent_name": "urban_deduction_agent",
+  "agent_version": 19,
+  "model": "DeepSeek-Chat",
+  "method": "北向 /nb/v1/chat/run 实测；每事件一次对话，与离线 DeductionEngine 逐项比对 8 项",
+  "note": "验收脚本原先只认 WO-20261029-007：key_actions 写死「隔离风险源/抽排/封闭积水路段」，009 属于基坑+燃气场景、没有封控类动作，被误判 7/8。改成按动作族从离线推演派生后，四次对话均 8/8。",
+  "events": [
+    {
+      "event_id": "WO-20261029-007",
+      "as_of": "2026-10-29T09:40:00+08:00",
+      "conversation_id": 141,
+      "attempts_used": 1,
+      "checks_passed": "8/8",
+      "offline": {
+        "conflicts": [
+          "C1",
+          "C2",
+          "C3"
+        ],
+        "resource_gap": 2,
+        "action_families": [
+          "隔离风险源",
+          "抽排",
+          "封控"
+        ],
+        "action_count": 10
+      },
+      "failed_checks": []
+    },
+    {
+      "event_id": "WO-20261029-009",
+      "as_of": "2026-10-29T09:55:00+08:00",
+      "conversation_id": 140,
+      "attempts_used": 1,
+      "checks_passed": "8/8",
+      "offline": {
+        "conflicts": [
+          "C1",
+          "C2",
+          "C3"
+        ],
+        "resource_gap": 2,
+        "action_families": [
+          "隔离风险源",
+          "抽排",
+          "封控"
+        ],
+        "action_count": 8
+      },
+      "failed_checks": []
+    },
+    {
+      "event_id": "WO-20261030-021",
+      "as_of": "2026-10-30T10:35:00+08:00",
+      "conversation_id": 142,
+      "attempts_used": 1,
+      "checks_passed": "8/8",
+      "offline": {
+        "conflicts": [
+          "C1",
+          "C2"
+        ],
+        "resource_gap": 0,
+        "action_families": [
+          "隔离风险源",
+          "封控"
+        ],
+        "action_count": 4
+      },
+      "failed_checks": []
+    },
+    {
+      "event_id": "WO-20261026-013",
+      "as_of": "2026-10-26T16:00:00+08:00",
+      "conversation_id": 143,
+      "attempts_used": 1,
+      "checks_passed": "8/8",
+      "offline": {
+        "conflicts": [
+          "C1",
+          "C2"
+        ],
+        "resource_gap": 0,
+        "action_families": [
+          "隔离风险源",
+          "封控"
+        ],
+        "action_count": 4
+      },
+      "failed_checks": []
+    }
+  ]
+}
