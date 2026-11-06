@@ -1,6 +1,6 @@
 {
   "schema_version": "nexent-llm-decision-live-1",
-  "generated_at": "2026-11-04T03:27:55+08:00",
+  "generated_at": "2026-11-06T17:33:28+08:00",
   "method": "北向 /nb/v1/chat/run 实测；Agent=urban_llm_decision_agent（DeepSeek-Chat，独立 Agent，不动 v10）",
   "nexent_base_url": "http://localhost:5013",
   "agent_name": "urban_llm_decision_agent",
@@ -31,20 +31,21 @@
       "expected_impact": "按确定性推演优先级执行"
     }
   ],
-  "task_digest": "44a7720dcbdf3adb",
-  "latency_ms": 6883.6,
+  "task_digest": "5d4831eefce82361",
+  "latency_ms": 9651.6,
   "schema_valid": true,
-  "selected_option_id": "opt-1",
-  "confidence": 0.82,
-  "summary": "2026-10-29T09:40:00+08:00 时点，橙色预警常规内涝场景，积水深度 30cm 已超过 25cm 封控阈值，且无基坑（opt-3）或下穿隧道（opt-4）相关证据；按确定性推演优先级先由 opt-1 隔离风险源，确认为安全前置条件后再实施 opt-2 全幅封闭路段。因此最优先执行 opt-1。",
+  "selected_option_id": "opt-3",
+  "confidence": 0.93,
+  "summary": "2026-10-29T09:40:00+08:00 时点 N01 常规内涝事件（WO-20261029-007，橙色预警，兴华路 K0+320 积水深 30cm，雨水口反涌）。因该路段正处于 CP-2026-041 兴华路燃气主干管更换作业（开挖深度 2.5m，燃气管线 PL-GAS-101，2026-10-29 08:00-18:00 在施），依据推演排序 action_priority:1 及应急预案 v2.0 第 4.2 条，橙色预警期间开挖深度 ≥2m 基坑须停止开挖并覆盖或围堰，同时对燃气压力管线执行每 2 小时一次浓度检测。故最优先执行 opt-3；道路全幅封控（opt-2）、下穿",
   "risks": [
-    "opt-1 未确认无泄漏前不得推进，可能延长封路启动时间，30cm 积水在外溢扩大前可能已影响行人与车辆",
-    "opt-2 固定上下游各 50m 封闭边界可能不足以覆盖实际积水漫溢范围，需动态巡查与适时外扩",
-    "缺乏现场泄漏、基坑、隧道等直接证据，潜在地下管线或地下空间风险可能被低估",
-    "opt-4 的 25cm 隧道封控阈值为假设值，尚无本地核实结论"
+    "在施燃气主干管更换作业（开挖 2.5m）叠加橙色预警与 30cm 积水，存在燃气泄漏与次生燃爆风险，须先确认无泄漏再进入后续步骤",
+    "积水已达 30cm 超过 25cm 阈值，需同步启动道路全幅封控并覆盖积水区上下游各 50m，封路由 ORG-ROAD 与 ORG-TRAFFIC 联合发布，单一部门发布无效（冲突 C1）",
+    "RES-PUMP-M 抽排资源需求 8 台可用 6 台，缺口 2 台（冲突 C3），积水消退可能滞后",
+    "兴华路下穿隧道东端 UP-XH-101 为段内最低点 -1.81m、敞口坡道 96m、无独立泵房且运维主体未明确（职责空白 C2），存在倒灌风险",
+    "下穿隧道挡水槛与封控水深阈值均为假设值（沿用道路 25cm），待核实，阈值误判可能导致封控时机偏差"
   ],
-  "evidence_cited": 2,
+  "evidence_cited": 6,
   "decision_error": null,
-  "answer_length": 1303,
-  "selected_match": false
+  "answer_length": 2293,
+  "selected_match": true
 }
