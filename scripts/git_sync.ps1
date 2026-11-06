@@ -83,9 +83,16 @@ if ($dirty -gt 0) {
         $addCode = $LASTEXITCODE
         foreach ($line in @($addOutput)) { if ($null -ne $line) { Write-Host "$line" } }
     } else {
-        $addCode = Invoke-Git add -A
+        # 默认只暂存"已跟踪文件"的改动：临时脚本/变体/演示产物刚生成时不会被顺手带走。
+        # 新增文件必须显式给 -PathList，脚本会把跳过的未跟踪文件列出来提醒。
+        $addCode = Invoke-Git add -u
     }
     if ($addCode -ne 0) { Write-Host "[git-sync] 失败：git add 未成功"; exit 1 }
+    $untracked = @(& git ls-files --others --exclude-standard)
+    if ($untracked.Count -gt 0) {
+        Write-Host "[git-sync] 注意：以下未跟踪文件未入库（新增文件请用 -PathList 显式指定）："
+        foreach ($line in $untracked) { Write-Host "  ? $line" }
+    }
     $staged = @(& git diff --cached --name-only).Count
     if ($staged -eq 0) {
         Write-Host "[git-sync] 暂存区为空（改动可能全被 .gitignore 忽略，或 -Paths 无匹配），跳过提交"
