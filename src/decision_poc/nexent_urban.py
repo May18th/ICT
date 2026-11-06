@@ -129,11 +129,17 @@ def build_urban_query(payload: Mapping[str, Any]) -> str:
             "2) 需要核对依据时用 evidence_locate 取原文；不得凭记忆编造。",
             "除上述两个工具外不要再调用任何工具，也不要使用 python_interpreter 或 parallel_executor。",
             "证据不足或依据不可见时，按工具返回的错误码声明，不得删除依据后照给结论。",
-            "严格按下面的 JSON 结构作答（只输出 JSON，不要 Markdown 围栏、不要解释）：",
+            "严格按下面的 JSON 结构作答（不要 Markdown 围栏、不要解释）：",
             URBAN_SCHEMA_HINT,
             "six_hops 只放六个阶段英文名本身（observed/affected/owner/conflict/resource/action），"
             "不得写成 \"stage: 描述\" 或带编号；阶段内容放在 summary 与其余字段里。",
+            "evidence_refs 只列最有代表性的 3~5 条（asset_id#locator），不要把所有依据都抄一遍——"
+            "输出过长会被运行时按截断处理（truncated_generation），整轮判失败。",
             f"event_id 固定填 \"{event_id}\"，as_of 固定填 \"{as_of}\"。",
+            "交卷方式：写一个 `<code>` 代码块，块内只有 "
+            "final_answer(json.dumps(上面那个完整对象, ensure_ascii=False)) 这一句，块外不要再写正文。"
+            "代码块只能用 `<code>` / `</code>` 标签，**不要用 ``` 三反引号围栏**（围栏不会被平台执行）；"
+            "平台只把 final_answer 当成作答，把 JSON 当普通文本吐出来会被判为没作答并整轮重跑。",
         ]
     )
 
