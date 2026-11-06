@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """用 python-pptx 生成初赛答辩 PPT（10 页），内容严格取自 docs/competition/ppt-outline-10p.md。"""
+import json
 from pathlib import Path
 
 from PIL import Image
@@ -12,6 +13,23 @@ from pptx.util import Emu, Inches, Pt
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "out" / "ppt-assets"
 OUT = ROOT / "docs" / "competition" / "初赛答辩-PPT-v0.1.pptx"
+
+# 对外数字从期望文件读，不在脚本里手写：写死的话每改一次测试数都要改脚本 + 重生成，
+# 漏一次就又是一份"数字过期的交付物"（这份 PPT 就吃过一次：776 → 844）。
+_EXPECTATIONS = json.loads(
+    (ROOT / "samples" / "eval" / "evidence_expectations.json").read_text(encoding="utf-8")
+)
+TEST_TOTAL = int(_EXPECTATIONS["test_baseline"]["collected"])
+
+
+def _leaf_count(value: object) -> int:
+    """与 evidence_check._compare 的展开方式一致：dict 递归，list 整体算一项。"""
+    if isinstance(value, dict):
+        return sum(_leaf_count(item) for item in value.values())
+    return 1
+
+
+SELFCHECK_TOTAL = _leaf_count(_EXPECTATIONS["checks"])
 
 # --- 主题 ---------------------------------------------------------------
 BG = RGBColor(0x0F, 0x1B, 0x2D)
@@ -151,7 +169,7 @@ _bullets(s, Inches(0.9), Inches(3.95), Inches(11.2), Inches(2.2), [
     "每条结论带 asset_id#locator，可回到原文行号",
     "冲突不许被「综合判断」抹平",
     "反馈过门禁才改策略，改坏可回滚",
-    "平台真机 8/8 · 839 测试 · 108 项自检",
+    f"平台真机 8/8 · {TEST_TOTAL} 测试 · {SELFCHECK_TOTAL} 项自检",
 ], size=17, gap=8)
 _text(s, Inches(0.9), Inches(6.72), Inches(11.6), Inches(0.3),
       "背景为离线渲染画面，非实时引擎", size=11, color=MUTED, font=MONO)
@@ -368,7 +386,7 @@ _bullets(s, Inches(0.62), Inches(2.0), Inches(7.2), Inches(4.5), [
     "边界：数据合成；专家反馈是角色扮演；真实用户评分样本 0；UE 未实机验收",
     "定量层未接管六跳缺口口径（仍有 80% 折算，即 v1 口径）",
     "可视化口径：3D 是「设计中有 + Blender 侧静帧/短片」，不是实时引擎",
-    "可复现四条命令：pytest(839) / evidence_check(108/108) / urban_eval(22/22) / nexent_urban(8/8)",
+    f"可复现四条命令：pytest({TEST_TOTAL}) / evidence_check({SELFCHECK_TOTAL}/{SELFCHECK_TOTAL}) / urban_eval(22/22) / nexent_urban(8/8)",
     "后续：第二场真实公开事件 → 真实用户评分 3–5 人 → 协同层接 MCP/平台（设计中）",
 ], size=14, gap=11)
 _fit_image(s, ROOT / "docs/reports/captures/S33-binding-v2.png",

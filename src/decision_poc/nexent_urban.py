@@ -182,6 +182,23 @@ def parse_urban_answer(text: str) -> UrbanAgentAnswer:
 # --- 与离线结论比对 -------------------------------------------------------
 
 
+#: 关键动作的"族"：同一条语义在材料里有多种写法，逐字比对会误伤（LLM 还会归并）。
+#: 只要求**离线推演里真实出现过的族**必须复述——007 是三族齐全，009 是基坑+燃气场景、
+#: 没有"封闭积水路段"这类封控动作，硬要它出现就是拿 A 事件的卷子改 B 事件。
+KEY_ACTION_FAMILIES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("隔离风险源", ("隔离风险源", "隔离")),
+    ("抽排", ("抽排", "排水")),
+    ("封控", ("封闭积水路段", "封路", "封闭")),
+)
+
+
+def key_action_families(actions: Sequence[str]) -> list[str]:
+    """离线动作里真实出现的动作族，作为"必须复述"的期望。"""
+
+    joined = " ".join(actions)
+    return [name for name, keywords in KEY_ACTION_FAMILIES if any(kw in joined for kw in keywords)]
+
+
 def offline_baseline(event_id: str, as_of: str, *, labels: Sequence[str] = DEFAULT_LABELS) -> dict[str, Any]:
     engine = DeductionEngine.load()
     result = engine.deduce(event_id, as_of=as_of, caller_labels=list(labels))
@@ -200,8 +217,12 @@ def offline_baseline(event_id: str, as_of: str, *, labels: Sequence[str] = DEFAU
         "stages": stages,
         "isolate_before_drain": bool(isolate is not None and drain is not None and isolate < drain),
         "action_count": len(actions),
-        # 不要求逐字复述 10 条动作（LLM 会归并）；但三件事必须出现
-        "key_actions": ["隔离风险源", "抽排", "封闭积水路段"],
+        # 不要求逐字复述全部动作（LLM 会归并）；但离线推演里出现过的动作族必须都在
+        "key_actions": key_action_families(actions),
+        # 期望族的关键词，供比对侧判断"平台答案里有没有这一族"
+        "key_action_keywords": {
+            name: list(keywords) for name, keywords in KEY_ACTION_FAMILIES
+        },
     }
 
 
@@ -246,10 +267,15 @@ def compare_with_offline(answer: UrbanAgentAnswer, baseline: Mapping[str, Any]) 
             name="关键处置动作齐全",
             expected=list(baseline["key_actions"]),
             actual="；".join(answer.action_order),
-            passed=all(
-                any(keyword in action for action in answer.action_order)
-                for keyword in baseline["key_actions"]
-            ),
+            # 按"族"判：每族命中任一关键词即算复述，不要求逐字
+            passed=not [
+                family
+                for family in baseline["key_actions"]
+                if not any(
+                    keyword in " ".join(answer.action_order)
+                    for keyword in (baseline.get("key_action_keywords") or {}).get(family, [family])
+                )
+            ],
         ),
         UrbanCheckItem(
             name="证据非空",

@@ -11,6 +11,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 
 from docx import Document
@@ -24,6 +26,35 @@ ROOT = Path(__file__).resolve().parents[1]  # agent_poc/
 WORKSPACE = ROOT.parent
 OUT = ROOT / "docs" / "competition" / "初赛作品信息收集表-内容稿-v0.1.docx"
 ASSETS = ROOT / "artifacts" / "docx-assets"
+
+# 对外数字一律从期望文件算，不在脚本里手写。写死过一次（旧测试数 / 旧自检数 / 旧指纹 /
+# 旧步骤数），结果整份交付物带着两轮前的口径进了仓库，还被守卫漏掉。
+_EXPECTATIONS = json.loads(
+    (ROOT / "samples" / "eval" / "evidence_expectations.json").read_text(encoding="utf-8")
+)
+TEST_TOTAL = int(_EXPECTATIONS["test_baseline"]["collected"])
+
+
+def _leaf_count(value: object) -> int:
+    """与 evidence_check._compare 的展开方式一致：dict 递归，list 整体算一项。"""
+    if isinstance(value, dict):
+        return sum(_leaf_count(item) for item in value.values())
+    return 1
+
+
+SELFCHECK_TOTAL = _leaf_count(_EXPECTATIONS["checks"])
+# 与 evidence_check.expectations_digest 同一算法（口径文件变了指纹就变，正是它的用途）
+FINGERPRINT = hashlib.sha256(
+    json.dumps(
+        {
+            "schema_version": _EXPECTATIONS.get("schema_version"),
+            "checks": _EXPECTATIONS.get("checks", {}),
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+).hexdigest()[:16]
 
 IMAGES = [
     (
@@ -341,14 +372,14 @@ def build() -> Path:
     h(doc, "四、可量化指标")
     p(
         doc,
-        "以下数字全部由仓库命令生成并冻结期望（evidence_check 108/108），任一数字漂移即失败；不接受为过检放宽期望。",
+        f"以下数字全部由仓库命令生成并冻结期望（evidence_check {SELFCHECK_TOTAL}/{SELFCHECK_TOTAL}），任一数字漂移即失败；不接受为过检放宽期望。",
     )
     table(
         doc,
         ["指标", "结果", "核对方式"],
         [
-            ["单元测试", "839 项通过", "uv run --locked pytest -q"],
-            ["对外数字自检", "108/108 项一致（期望指纹 fbdf58b3fefab7b1）", "python -m decision_poc.evidence_check"],
+            ["单元测试", f"{TEST_TOTAL} 项通过", "uv run --locked pytest -q"],
+            ["对外数字自检", f"{SELFCHECK_TOTAL}/{SELFCHECK_TOTAL} 项一致（期望指纹 {FINGERPRINT}）", "python -m decision_poc.evidence_check"],
             ["P8 事件评测", "22/22 通过（改进前基线 17/22）", "python -m decision_poc.urban_eval"],
             ["六跳完整率 / 引用完整率 / 检索命中率", "100% / 100% / 100%", "docs/reports/p8-evaluation-report.md"],
             ["数据资产解析", "19/19，未识别列 0", "python -m decision_poc.health"],
@@ -383,7 +414,7 @@ def build() -> Path:
 
     # 六、复现与部署
     h(doc, "六、复现与部署")
-    bullet(doc, "离线复现：python scripts/reproduce.py（17 步全过，约 30 秒）；python -m decision_poc.evidence_check（108/108）")
+    bullet(doc, f"离线复现：python scripts/reproduce.py（约 30 秒）；python -m decision_poc.evidence_check（{SELFCHECK_TOTAL}/{SELFCHECK_TOTAL}）")
     bullet(doc, "Web 演示：python -m decision_poc.web_demo --port 8787（推演面板 /，进化对比面板 /evolution）")
     bullet(doc, "Nexent 平台：deploy/nexent/README.md（本机 Docker 单环境装配与复现步骤）")
     bullet(doc, "可视化闭环：决策层写 RenderJob → 引擎侧消费者逐跳演出 → 写 ack（两套引擎实现：unreal / blender-eevee）")
