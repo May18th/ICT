@@ -37,7 +37,7 @@
 - [P13 简化水动力演进落地报告](reports/p13-simplified-hydrodynamics-report.md)：两种演进方法与两个过程线查询的手算对拍、"泵站停机后水位过程"缺口的可算链路、未做项与测试数口径变更。
 - [泵站前池库容曲线（假设值）数据说明](hydro-forebay-assumptions.md)：`samples/assets/urban/pump_forebay_curves.csv` 的列定义、假设链条、演示算例与敏感性；已注册为 `forebay_curve` 资产，来源级别由该文件的 `value_basis` 列经 loader 驱动到 `level_pool_route`。
 - [相关工作定位表](competition/related-work-positioning.md)：与已发表的 Agentic AI + 数字孪生 + 审计框架逐维度对照（真实执行 / 审计层 / 评测口径 / 可核验性）、三条答辩口径、引用格式与"不能怎么做"边界。
-- [对外数字自检报告](reports/evidence-check-report.md)：106 项对外宣称数字的期望/实际逐项对照（含漂移检测，由 `decision_poc.evidence_check` 生成，勿手改）。
+- [对外数字自检报告](reports/evidence-check-report.md)：108 项对外宣称数字的期望/实际逐项对照（含漂移检测，由 `decision_poc.evidence_check` 生成，勿手改）。
 - [P10 可视化工具层设计](p10-visualization-tools-design.md)：决策快照 → UE 渲染作业 → 引擎 ack 的异步闭环、3 个 MCP 工具（`scene_render`/`scene_compare`/`asset_lookup`）、工具分组 allowlist 与演示时序；说明为什么不宣称做成实时闭环、Blender 为什么只在离线跑。
 - [实体重投影与绑定表](scene-binding.md)：决策层 `TW-*` 如何对齐到场景几何与 Actor tag、`primary_hop` 为什么取"最后一跳"、19 个高亮里 3 个无几何为什么显式列出而不补；生成物见 [绑定表报告](reports/scene-binding-report.md)（由 `decision_poc.scene_binding` 生成，勿手改）。
 - [Nexent 工具注册](nexent-tool-registration.md)：14 个工具的注册清单（`samples/nexent/tools.json`，由代码导出）、三阶段分组挂载与验收标准；**真机注册已完成**，结果见 [真机报告](reports/nexent-live-integration-report.md)。

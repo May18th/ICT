@@ -62,7 +62,7 @@
 - 平台技能仓库：2 个 `SKILL.md` 上传到 Nexent 技能仓库（`skill_id=2/3`，正文逐位一致，幂等脚本 `deploy/nexent/upload_skills.py`）；
 - 平台界面取证：`deploy/nexent/capture_platform_ui.py` 一命令出 3 张可核对截图（技能仓库 / 智能体 / MCP 连通性校验），
   每页"必须出现的文字"写成断言，图被换过 `evidence_check` 立刻失败；
-- 对外数字自检：一条命令核对 106 项宣称证据（含漂移检测，改坏即退出码 1）；
+- 对外数字自检：一条命令核对 108 项宣称证据（含漂移检测，改坏即退出码 1）；
 - P11 消融阶梯：五档配置 × 22 用例的同口径指标、leave-one-out（逐例剔除）稳健性与**精确符号翻转检验**（2²² 全枚举、零随机、无种子）（`decision_poc.ablation`，报告 `docs/reports/p11-ablation-report.md`）；
 - P11 决策锚定包：`H(o),H(Z),H(a*),meta` 哈希链提交 + 链下原文复核，改一个字节即检出（`decision_poc.anchoring`，表述仍是哈希链审计日志，不宣称区块链）；
 - 技术基线与风险记录。
@@ -83,7 +83,7 @@ uv sync --locked
 uv run --locked pytest -q
 ```
 
-一条命令生成并核对全部对外材料（测试、数据集、数据门禁、布局、回放、实体表、推演、反事实、Skill 编排、P8 评测、MCP 契约、P9 进化、P11 消融与锚定、106 项自检）：
+一条命令生成并核对全部对外材料（测试、数据集、数据门禁、布局、回放、实体表、推演、反事实、Skill 编排、P8 评测、MCP 契约、P9 进化、P11 消融与锚定、108 项自检）：
 
 ```powershell
 uv run --locked python scripts/reproduce.py            # 全量，约 40 秒（本机实测 20/20 步通过）
@@ -99,7 +99,7 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望：对外数字自检：106/106 项一致（期望指纹 6a9030396892c48f）
+# 期望：对外数字自检：108/108 项一致（期望指纹 09ae5510d34e7b2b）
 ```
 
 期望值冻结在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/答辩口径，
@@ -117,7 +117,7 @@ uv run --locked python -m decision_poc.data_gate
 它回答的是另外三个模块都不回答的问题：这份数据里哪一条是实测、哪一条是推导、哪一条是假设。
 `deduction.verify_rules` 只校规则出处，`provenance` 只校运行时 claim，`evidence_check` 只校对外数字，
 三者都不管"CSV 里这个数到底是台账还是占位"。来源标注写在 `samples/gate/data_provenance.json`，
-**不改数据集 CSV**——改 CSV 会让 `manifest.json` 指纹和上面的 106/106 一起漂。
+**不改数据集 CSV**——改 CSV 会让 `manifest.json` 指纹和上面的 108/108 一起漂。
 眼下唯一的 warn 是「50 条未逐条标注来源，按数据集自述记为 synthetic」：这是当前真实状况，
 不是可以忽略的提示，对外材料不得把这一批说成实测值。
 
@@ -438,7 +438,7 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **817 项**测试通过；`python -m decision_poc.evidence_check` 106/106 项一致；
+当前基线：`uv run --locked pytest -q` 共 **824 项**测试通过；`python -m decision_poc.evidence_check` 108/108 项一致；
 城市内涝主链路 Nexent 真机校验 8/8（`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。
 P0-P10 的验收口径与实测数字见各阶段回传报告（`docs/reports/`）。

@@ -316,10 +316,26 @@ def docs_declared_test_counts() -> list[int]:
     return sorted(counts)
 
 
+def _rules_actuals() -> dict[str, Any]:
+    """推演规则条数：规则是数据，条数同样是**对外数字**（材料里多处引用）。
+
+    真源是 `samples/rules/urban_deduction_rules.json`（加载时逐条校验 source_ref/keyword，
+    不符即 `RuleSourceError`），这里只做计数，不复制任何规则内容。
+    """
+    from .deduction import load_rules
+
+    rules = load_rules().rules
+    return {
+        "total": len(rules),
+        "with_source_ref": sum(1 for rule in rules if rule.source_ref.strip()),
+    }
+
+
 def collect_actuals() -> dict[str, Any]:
     """重跑全部对外宣称的数字；不写文件、不落账。"""
     return {
         "p6_deduction": _deduction_actuals(),
+        "rules": _rules_actuals(),
         "mcp": _mcp_actuals(),
         "p8_eval": _p8_actuals(),
         "p9_evolution": _p9_actuals(),

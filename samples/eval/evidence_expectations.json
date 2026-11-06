@@ -28,6 +28,10 @@
       "handoff_required": true,
       "snapshot_hash_len": 64
     },
+    "rules": {
+      "total": 39,
+      "with_source_ref": 39
+    },
     "mcp": {
       "tools_count": 14,
       "has_allocation_plan": true
@@ -117,7 +121,7 @@
     },
     "test_suite": {
       "docs_declared": [
-        817
+        824
       ]
     },
     "p11_ablation": {
@@ -193,7 +197,7 @@
     }
   },
   "test_baseline": {
-    "collected": 817,
+    "collected": 824,
     "command": "python -m pytest -q",
     "verified_at": "2026-11-06"
   }

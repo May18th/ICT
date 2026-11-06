@@ -86,7 +86,7 @@
 | 反事实 CF1 | `python -m decision_poc.counterfactual --case CF1` | "J-01→J-02 从 820 m / 1.2 分钟 变为 3860 m / 6.3 分钟（+3040 m，+5.1 分钟）"；并声明"门到门到场时间/跨区路径无法计算" |
 | 评测用例 | `python -m decision_poc.urban_eval` | "用例 22/22 通过；六跳 100%，引用完整 100%，检索命中 100%；资产解析 19/19" |
 | 策略进化 | `python -m decision_poc.policy_evolution` | "训练 0.2264→0.0000；留出 0.2182→0.0000；轮次 3（采纳 2 / 拒绝 1）；第二会话起点 0.0000、轮次 1；真实事件 A-03 4→5、B-01 2→1" |
-| 对外数字自检 | `python -m decision_poc.evidence_check` | "106/106 项一致（期望指纹以命令输出为准）" |
+| 对外数字自检 | `python -m decision_poc.evidence_check` | "108/108 项一致（期望指纹以命令输出为准）" |
 | 产物存在性 | `Get-ChildItem` | `LICENSE`(MIT)、`docs/competition/初赛作品信息收集表-内容稿-v0.1.docx`、`docs/reports/captures/` 9 个证据文件均在；**全仓无 `.pptx`**；**无 `reviews/` 数据** |
 | 平台环境 | `docker ps` + 端口探测 | Nexent 全栈在线（northbound/elasticsearch/postgresql/web 等 Up）；`127.0.0.1:8787` 与 `:3000` 可连 |
 | ActionCard 字段 | 读 `src/decision_poc/collab/contracts.py` | 8 项里实现 4 项（责任部门经 `agent_id`→`ROLES` 解析、动作、证据来源、联合签发）；缺 4 项（最晚执行时间、所需资源绑定、前置条件填充、验收口径） |

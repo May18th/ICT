@@ -1,8 +1,8 @@
 {
   "schema_version": "evidence-check-1",
-  "expectations_digest": "6a9030396892c48f64bd89e31d2f76cbb757b0324a360f0053a152860b1166af",
-  "total": 106,
-  "passed_count": 106,
+  "expectations_digest": "09ae5510d34e7b2b27ab2da740ce57c969bde5c3cfbaea157e7ac11c3794e3e5",
+  "total": 108,
+  "passed_count": 108,
   "failed_count": 0,
   "passed": true,
   "items": [
@@ -96,6 +96,20 @@
       "path": "p6_deduction.snapshot_hash_len",
       "expected": 64,
       "actual": 64,
+      "passed": true,
+      "note": ""
+    },
+    {
+      "path": "rules.total",
+      "expected": 39,
+      "actual": 39,
+      "passed": true,
+      "note": ""
+    },
+    {
+      "path": "rules.with_source_ref",
+      "expected": 39,
+      "actual": 39,
       "passed": true,
       "note": ""
     },
@@ -494,10 +508,10 @@
     {
       "path": "test_suite.docs_declared",
       "expected": [
-        817
+        824
       ],
       "actual": [
-        817
+        824
       ],
       "passed": true,
       "note": ""

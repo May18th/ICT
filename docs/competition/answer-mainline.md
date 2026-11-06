@@ -87,6 +87,6 @@
 | 交叉验证 | Nexent 真机 8/8 一致 | 单环境 | `python -m decision_poc.nexent_urban` | 否 |
 | 评测用例 | `urban_eval` 22/22 | v1 | `python -m decision_poc.urban_eval` | 是（用例期望会随 v2 重算） |
 | 引用完整率 | 100% | v1 | `python -m decision_poc.evidence_check` | 否 |
-| 对外数字自检 | `106/106`（指纹以命令输出为准） | 滚动 | `python -m decision_poc.evidence_check` | 数字随场景 v2 重算，项数不变 |
+| 对外数字自检 | `108/108`（指纹以命令输出为准） | 滚动 | `python -m decision_poc.evidence_check` | 数字随场景 v2 重算，项数不变 |
 
 > 规则：本表里标"是"的行，**在 v2 重算完成前不得写进 PPT 正文**，只能作为"当前版本"出现；重算后先改本表，再改 PPT。

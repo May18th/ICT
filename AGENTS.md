@@ -43,6 +43,9 @@
   规则三条：① 临时脚本、变体、演示产物一律写到 `artifacts/`（已忽略），跑完不必删也不入库；
   ② 新增文件与并发场景一律显式路径 `-PathList "a,b,c"`；③ 提交前 `git status --porcelain` 人工过一眼，
   untracked 项非 0 就停下来查清是谁的。
+- **同一时间只允许一个写手**：开工前在 `codex/.writing-<scope>` 写 owner / 路径范围 / 时间，
+  提交推送后删除；看到锁文件就不要动同一批路径（2026-11-06 并发写撞车后补）。锁文件在
+  `codex/`（已忽略），不随提交入库。
 - 提交信息用 `<type>(<scope>): <摘要>`，type 取 `feat|fix|docs|test|chore`；一次提交讲清一件事。
 - 推完在回传里记录：分支名 + `git log -1 --oneline`（远程操作必须可追溯）。
 - 不入库：`.venv/`、`artifacts/`、`codex/`、`.worktrees/`、`pytest-of-*/`、口令与密钥
@@ -73,7 +76,7 @@
    - `scripts/reproduce.py` 的自检 `expect`（写死 `X/X`）与步骤数；
    - 重新生成 `docs/reports/evidence-check-report.md`（勿手改）。
 3. **验收只有两条**：`git status` 干净 + `python -m decision_poc.evidence_check` 输出当前口径
-   （当前 `106/106`，指纹 `6a9030396892c48f`）。**不看文档里的旧数字**，也不允许为过检放宽期望。
+   （当前 `108/108`，指纹 `09ae5510d34e7b2b`）。**不看文档里的旧数字**，也不允许为过检放宽期望。
 
 全仓扫旧数字时注意 `Get-ChildItem -Recurse`：`docs/**/*.md` 这种通配只匹配一层，
 `docs/superpowers/specs/` 这类深目录容易漏扫。

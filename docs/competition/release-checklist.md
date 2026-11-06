@@ -8,7 +8,7 @@
 | 项 | 结果 | 核验方式 |
 |---|---|---|
 | 开源许可 | 新增 `LICENSE`（MIT，著作权人 `May18th`，如需改成队伍/学校名称只动这一行） | `git check-ignore -v LICENSE` 应无输出（即未被忽略） |
-| 一条命令复现 | 新增 `scripts/reproduce.py`，17 步覆盖测试/数据集/布局/推演/反事实/Skill/P8/MCP/P9/P11 消融与锚定/106 项自检 | `uv run --locked python scripts/reproduce.py`，期望 `17/17 步通过` |
+| 一条命令复现 | 新增 `scripts/reproduce.py`，17 步覆盖测试/数据集/布局/推演/反事实/Skill/P8/MCP/P9/P11 消融与锚定/108 项自检 | `uv run --locked python scripts/reproduce.py`，期望 `17/17 步通过` |
 | 平台侧证据 | 2 个 SKILL.md 上传 Nexent 技能仓库（skill_id=2/3、幂等、正文逐位一致）；平台界面 3 张截图 + `platform_ui.json`（sha256 进自检） | `evidence_check` 的 `platform_skills` / `platform_ui` 两组；报告 [平台侧证据报告](../reports/platform-evidence-report.md) |
 | UE 场景可被智能体驱动 | `UrbanTwinDemo.uproject` 启用 `ModelContextProtocol` / `ToolsetRegistry` / `EditorToolset`，`Config/DefaultEditorPerProjectUserSettings.ini` 写入 8000 端口自动启动 | 启动编辑器后 `http://127.0.0.1:8000/mcp` 可初始化 |
 

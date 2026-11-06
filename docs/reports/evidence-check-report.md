@@ -2,8 +2,8 @@
 
 由 `python -m decision_poc.evidence_check --report <path>` 生成，**不要手改**。
 
-- 期望指纹：`6a9030396892c48f`（期望文件被改动即换指纹）
-- 检查项：106 项，通过 106，失败 0
+- 期望指纹：`09ae5510d34e7b2b`（期望文件被改动即换指纹）
+- 检查项：108 项，通过 108，失败 0
 - 结论：全部一致
 
 | 检查项 | 期望 | 实际 | 结果 |
@@ -17,6 +17,8 @@
 | `p6_deduction.isolate_before_drain` | `true` | `true` | 通过 |
 | `p6_deduction.handoff_required` | `true` | `true` | 通过 |
 | `p6_deduction.snapshot_hash_len` | `64` | `64` | 通过 |
+| `rules.total` | `39` | `39` | 通过 |
+| `rules.with_source_ref` | `39` | `39` | 通过 |
 | `mcp.tools_count` | `14` | `14` | 通过 |
 | `mcp.has_allocation_plan` | `true` | `true` | 通过 |
 | `p8_eval.cases_total` | `22` | `22` | 通过 |
@@ -71,7 +73,7 @@
 | `p9_evolution.real_event.evolved_unmet.A-03` | `0` | `0` | 通过 |
 | `p9_evolution.real_event.evolved_unmet.B-01` | `2` | `2` | 通过 |
 | `p9_evolution.real_event.evolved_transfer_count` | `1` | `1` | 通过 |
-| `test_suite.docs_declared` | `[817]` | `[817]` | 通过 |
+| `test_suite.docs_declared` | `[824]` | `[824]` | 通过 |
 | `p11_ablation.configs` | `["rules_only", "semantic_only", "single_skill", "multi_skill", "full_audited"]` | `["rules_only", "semantic_only", "single_skill", "multi_skill", "full_audited"]` | 通过 |
 | `p11_ablation.metrics.rules_only.six_hop_rate` | `0.0` | `0.0` | 通过 |
 | `p11_ablation.metrics.rules_only.safety_rate` | `0.0` | `0.0` | 通过 |
