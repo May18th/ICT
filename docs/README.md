@@ -19,7 +19,7 @@
 - [P8 评测报告](reports/p8-evaluation-report.md)：22 个用例的五类形态、七项指标口径、失败案例与改进前后对比（由 `decision_poc.urban_eval` 生成，勿手改）。
 - [P8 之上的真实模型 A/B 报告](reports/p8-llm-ab-report.md)：同一批 22 个用例上的 rule / TestModel 地板 / DeepSeek 三方对照，含"模型不能自己推断优先级"的实测结论（由 `scripts/llm_ab_eval.py` 生成，勿手改）。
 - [赛题 3 差距审计](competition-gap-audit.md)：官方五考点/提交物/赛程 vs 现状证据，逐条标出缺口与优先级（P0 的 Nexent 主链路已补齐，见真机报告）。
-- [城市内涝主链路 Nexent 真机报告](reports/nexent-live-integration-report.md)：MCP-over-SSE 注册、Agent 发布、**8/8 一致性（conversation_id=78）**、平台工具调用日志、排障与边界。
+- [城市内涝主链路 Nexent 真机报告](reports/nexent-live-integration-report.md)：MCP-over-SSE 注册、Agent 发布、**8/8 一致性（conversation_id=120，Agent v19 / DeepSeek-Chat）**、平台工具调用日志、排障与边界。
 - [Nexent 集成设计（SSE + SKILL.md）](nexent-urban-integration-design.md)：为什么必须走 SSE、装配步骤、证据清单与验收口径。
 - [Nexent 侧装配与复现手册](../deploy/nexent/README.md)：容器构建、平台装配脚本、真机校验与证据抓取；含 **SKILL.md 上传平台技能仓库（§2.1）** 与 **平台界面截图/录屏取证（§4.1）**。
 - [平台侧证据报告](reports/platform-evidence-report.md)：SKILL.md 上传平台技能仓库（skill_id=2/3、幂等、正文逐位一致）+ 平台界面三张截图断言取证，以及这两项如何进对外数字自检；含权限/凭据边界与"技能未绑定 Agent"的诚实口径。

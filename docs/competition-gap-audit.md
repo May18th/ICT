@@ -59,8 +59,8 @@
 | 项 | 实测结果 |
 | --- | --- |
 | Docker / Nexent | **可用**：Docker Desktop 启动后 Nexent v2.7.0 全栈在线（`/nb/v1/health` healthy）；MCP 服务以 `urban-twin-mcp` 容器跑在 `nexent_network` |
-| Nexent 真机 | **已跑通**：13 工具注册、Agent `urban_deduction_agent` 发布 v10、conversation_id=78、8/8 一致；证据 `samples/nexent/live/` |
-| 测试与自检 | 831 项测试通过；对外数字自检 108/108；`uv lock --check`、`compileall`、`uv pip check` 通过 |
+| Nexent 真机 | **已跑通**：14 工具注册、Agent `urban_deduction_agent` 发布 v19（DeepSeek-Chat）、conversation_id=120、8/8 一致；证据 `samples/nexent/live/` |
+| 测试与自检 | 834 项测试通过；对外数字自检 108/108；`uv lock --check`、`compileall`、`uv pip check` 通过 |
 | Git | `main` 与 `origin/main` 同步在 `6f7c559`（2026-11-02 推送 12 个提交）；工作区干净；每轮结束由 `scripts/git_sync.ps1` 自动提交推送 |
 | 开源合规 | 无 `LICENSE`；`samples/` 为合成数据、来源已标注，未发现真实私有数据；真机证据不含 API Key |
 
@@ -85,7 +85,7 @@
 
 | 优先级 | 动作 | 验收 | 状态 |
 | --- | --- | --- | --- |
-| P0 | ~~Nexent 真机跑通城市内涝主链路~~ | 六跳 + 分配 + 证据链，与离线可核对 | **已完成**：8/8 + conversation_id=78 + 2 次工具调用日志（[真机报告](reports/nexent-live-integration-report.md)） |
+| P0 | ~~Nexent 真机跑通城市内涝主链路~~ | 六跳 + 分配 + 证据链，与离线可核对 | **已完成**：8/8 + conversation_id=120 + 1 次工具调用日志（[真机报告](reports/nexent-live-integration-report.md)） |
 | P0 | **拿到官方模板 1/模板 2 与报名通知原文**，确认时间线与提交格式 | 官方文件落库到 `docs/competition/` | 阻塞在用户侧（用户称已拿到，需放入工作区） |
 | P1 | 按模板 1 写初赛作品 Word（数据集处理/关键代码/量化指标/演示截图） | 可提交的 PDF/Word | 内容草稿已备：`docs/competition/preliminary-submission-draft.md`，待套版 |
 | P1 | 提交并推送当前全部工作；补 LICENSE、部署说明、一键复现脚本 | 干净 clone 后按 README 可复现 108/108 自检 | LICENSE 与 `scripts/reproduce.py`（17/17 步）已完成；**2026-11-02 已推送 12 个分组提交到 `origin/main`（起始点 `6f7c559`）**，每轮结束由 `scripts/git_sync.ps1` 自动提交推送；HEAD 以 `git log -1` 为准 |
