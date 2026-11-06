@@ -142,7 +142,7 @@
 - **旁白**（≈18 + 10 = 28 字）：
   > Nexent 平台真机，独立智能体也跑通。
   > 六跳结论八比八一致。
-- **屏幕证据**：`docs/reports/captures/nexent/agents.png`（Agent 在平台里）、`docs/reports/captures/nexent/mcp-space.png`（连通性校验成功 + 14 个工具）、`docs/reports/captures/nexent/skill-space.png`（2 个 Skill 在平台技能仓库）；`conversation_id=120` 见 `samples/nexent/live/conversation_120.json`；`python -m decision_poc.nexent_urban` 可本机复跑（需 Docker 平台在线）。
+- **屏幕证据**：`docs/reports/captures/nexent/agents.png`（Agent 在平台里）、`docs/reports/captures/nexent/mcp-space.png`（连通性校验成功 + 15 个工具）、`docs/reports/captures/nexent/skill-space.png`（2 个 Skill 在平台技能仓库）；`conversation_id=120` 见 `samples/nexent/live/conversation_120.json`；`python -m decision_poc.nexent_urban` 可本机复跑（需 Docker 平台在线）。
 - **失败兜底**：平台没起 → **明说**「这是之前那台机器上的平台录屏/截图，不是现场跑」，然后放截图；这句必须说出来，比假装现跑安全得多。
 
 #### 镜 11 · 2:10–2:20 · 先错后对（本段的高光，不要藏）
@@ -186,7 +186,7 @@
   > 数据是合成的，定量层还没进主链路。
   > 我们不宣称实时数字孪生。
   > 一条命令自检，数字可复现。
-- **屏幕证据**：`python -m decision_poc.evidence_check`（期望末行「对外数字自检：108/108 项一致（期望指纹 05a89728b9555980）」）；本文件开头那句「数字以该命令输出为准」就是这一镜的口播依据。
+- **屏幕证据**：`python -m decision_poc.evidence_check`（期望末行「对外数字自检：108/108 项一致（期望指纹 45dcd07289954dd6）」）；本文件开头那句「数字以该命令输出为准」就是这一镜的口播依据。
 - **失败兜底**：二维码扫不开（分享网关要 sharecode）→ 画面同时打全 URL 文字，旁白加「链接在片尾字幕里」；自检跑不过 → **不演**，改为「数字口径已冻结在期望文件里，答辩时现场跑」。
 
 ---
@@ -226,7 +226,7 @@
 | `docs/competition/video-clips/VD02-A-incident-stills.mp4` | 10.8s / 1920×1080 / 30fps / H.264 | 镜 04 | 4 张静帧 2.5D 推拉 + 六跳冲突高亮；同场景 P6 版本 |
 | 公网 Demo（首页 / 演进页） | 在线 | 镜 05、09、12、13 | `https://urban-twin-demo.app.workbuddy.host/?sharecode=K4MXY6WYTS`；`/api/demo`、`/api/llm-decision`、`/api/platform-evidence`、`/api/evolution` 全通 |
 | `docs/reports/captures/nexent/agents.png` | 截图 | 镜 10 | 平台 Agent 列表（含 `urban_llm_decision_agent`） |
-| `docs/reports/captures/nexent/mcp-space.png` | 截图 | 镜 10 | 连通性校验成功 + 14 个工具 |
+| `docs/reports/captures/nexent/mcp-space.png` | 截图 | 镜 10 | 连通性校验成功 + 15 个工具 |
 | `docs/reports/captures/nexent/skill-space.png` | 截图 | 镜 10 | 2 个 Skill 在平台技能仓库 |
 | `samples/nexent/live/conversation_120.json` | JSON | 镜 10 | `conversation_id=120`，六跳真机对话原文 |
 | `samples/nexent/live/llm_decision_platform.json` | JSON | 镜 11 | 平台 LLM 决策对照落盘记录（`opt-3` 命中；修复前那轮见 git 历史与真机报告） |

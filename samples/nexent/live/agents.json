@@ -2,6 +2,37 @@
   "message": "success",
   "data": [
     {
+      "name": "urban_control_no_tools",
+      "display_name": "对照：无 MCP 工具的城市内涝智能体",
+      "description": "实验对照组。提示词/模型与主 Agent 完全相同，仅解绑 14 个 MCP 工具，用于证明 8/8 来自工具而非模型先验",
+      "author": "UrbanEvolve",
+      "model_ids": [
+        5
+      ],
+      "model_names": [
+        "DeepSeek-Chat"
+      ],
+      "model_name": "DeepSeek-Chat",
+      "is_available": true,
+      "unavailable_reasons": [],
+      "is_new": true,
+      "is_main_agent": true,
+      "group_ids": "2",
+      "permission": "EDIT",
+      "current_version_no": 1,
+      "version_name": "control-no-tools-v1",
+      "greeting_message": null,
+      "example_questions": null,
+      "allow_chat_metadata": false,
+      "model_params_override": {
+        "5": {
+          "extra_params": {}
+        }
+      },
+      "enable_protocol_repair_retry": true,
+      "tags": []
+    },
+    {
       "name": "urban_llm_decision_agent",
       "display_name": "LLM 决策对照智能体",
       "description": "类型化决策任务的 LLM 对照：在确定性推演给定的选项内选择并解释，与 P8 A/B 同口径",
@@ -101,5 +132,5 @@
       "tags": []
     }
   ],
-  "requestId": "591d0620-e1fc-4217-9ec3-cad0d292fe15"
+  "requestId": "3de0bcc2-edd8-4b0c-ba4a-5465ceaa0aa8"
 }

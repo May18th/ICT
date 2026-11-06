@@ -258,3 +258,30 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 - `evaluate_cases`（离线 A/B）默认不传解析器，保持旧行为；平台脚本才启用，
   因为它跨进程，只有它需要把出处变原文。
 
+
+## 2026-11-07 复测：工具数 14→15 后主链路仍 8/8（conversation 148）
+
+**触发原因**：RAG 检索层接成 MCP 工具 `doc_search`，平台工具数从 14 变 15，MCP 记录描述与工具名缓存都改了。
+必须确认平台侧编排没被这次变更带坏，而不是只看 `/api/tool/list` 的数字。
+
+**结果**：`python -m decision_poc.nexent_urban` → **8/8 项一致，conversation_id=148，attempts=1**。
+证据：`samples/nexent/live/conversation_148.json`（4 681 B）、`samples/nexent/live/live_evidence.json`（`checks_passed=8/8`，工具调用 `event_deduce=ok`）。
+
+### 期间发现并修复的一处平台侧故障
+
+改 MCP 描述用的是 `PUT /api/mcp/update`，只传了 `mcp_id` / `name` / `description`。
+这个接口是**覆盖语义**：没传的 `server_url` 被写成 NULL，平台连不上 MCP 服务，
+主 Agent 直接返回 `Agent execution failed`（运行时日志里表现为 `MemoryPreparationException: 'NoneType' object has no attribute 'endswith'`，
+看着像记忆模块故障，实际是工具通道断了）。
+
+修复：`update nexent.mcp_record_t set mcp_server='http://urban-twin-mcp:8000/sse' where mcp_id=3`，
+然后复测通过。**教训：这个更新接口改任一字段都要把其它字段原样带上；改完必须跑一次真机，不能只看列表回显。**
+
+### 顺带复核的平台侧证据
+
+| 项 | 结果 |
+| --- | --- |
+| 工具库 | 43 条，我方 15/15 全 `source=mcp`、全可用，无 `is_available=false` 条目 |
+| MCP 卡片 | `urban-twin-mcp`、连接成功、**15 个工具**、已启用（截图 `captures/nexent/mcp-space.png`，2026-11-07 00:10 重拍） |
+| 技能绑定 | 主 Agent v19 上 2 条实例 `enabled=true` |
+| 导出包 | 重导 7 982 B，内容指纹 `0a3aef9c61d8e5e523424ad738c93dd737772580a3b3082c3c81ee8810836221`（连导两次一致） |

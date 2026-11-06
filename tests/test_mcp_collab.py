@@ -25,7 +25,7 @@ def toolkit() -> UrbanToolkit:
 def test_collab_run_is_registered_in_the_tool_list(toolkit: UrbanToolkit) -> None:
     names = [tool["name"] for tool in toolkit.tools()]
     assert "collab_run" in names
-    assert len(names) == 14
+    assert len(names) == 15
 
 
 def test_collaboration_group_exposes_only_collab_run(toolkit: UrbanToolkit) -> None:

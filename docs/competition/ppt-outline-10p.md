@@ -74,9 +74,9 @@
   | --- | --- | --- |
   | ① 多模态数据资产认知 | 19 资产统一登记（`asset_id`+`sha256`+`locator`+版本+有效期+可见性），解析 19/19、未识别列 0 | 强（图像仅登记，不做 OCR，如实声明） |
   | ② 低资源本体半自动构建 | 种子本体 → 规则抽取 → 置信度分档 → 人工确认 → 版本发布/回滚；改 1 格只产 2 条候选，回滚哈希逐位一致 | 强 |
-  | ③ MCP / Skills 编排 | 14 个 MCP 工具 + 5 Skill 编排 + 2 个已上传 `SKILL.md`；平台 Agent 实调工具产出结论 | 强 |
+  | ③ MCP / Skills 编排 | 15 个 MCP 工具 + 5 Skill 编排 + 2 个已上传 `SKILL.md`；平台 Agent 实调工具产出结论 | 强 |
   | ④ 跨文档多跳推理与溯源 | 六跳 + 三类冲突 + 反事实重放 + 哈希链账本；引用完整率 100%、篡改可定位 | 强 |
-  | ⑤ 基于 Nexent 可运行 | 真机：14 工具注册、Agent 发布 v19（DeepSeek-Chat）、`conversation_id=120`、六跳结论 8/8 一致 | 强（单环境单事件） |
+  | ⑤ 基于 Nexent 可运行 | 真机：15 工具注册、Agent 发布 v19（DeepSeek-Chat）、`conversation_id=120`、六跳结论 8/8 一致 | 强（单环境单事件） |
 
 - **截图 / 证据**：本页表格直接套版（右侧留一列放考点徽章，不放截图，避免挤）。
   每行的可打开文件：① `docs/reports/data-gate-report.md` ② `docs/reports/p3-evolution-report.md`
@@ -125,7 +125,7 @@
 
 - **屏上标题**：不是本地脚本装智能体，是平台上真调工具
 - **要点（≤5 条）**
-  1. MCP 服务 `urban-twin-mcp` 以 SSE 注册进平台，**14 个工具**
+  1. MCP 服务 `urban-twin-mcp` 以 SSE 注册进平台，**15 个工具**
   2. Agent `urban_deduction_agent`（DeepSeek-Chat）发布 **v19**
   3. 真机对话 `conversation_id=120`，六跳结论与离线推演 **8/8 一致**，两条快照哈希一致
   4. 平台侧调用日志可查：`event_deduce` 28 ms、`attempts=1`（未触发协议修复重试）
@@ -203,7 +203,7 @@
 - **要点（≤5 条，先边界后路线）**
   1. **边界**：数据合成；专家反馈是角色扮演；真实用户评分样本 **0**；UE **未实机验收**（`docs/reports/p3-ue/ue-acceptance-checklist.md` 自记"尚未执行"）；定量层**未接管**六跳缺口口径（仍有 80% 折算）
   2. **可视化口径**：3D 是"设计中有 + Blender 侧静帧/短片"，**不是实时引擎**；引擎没起只影响 delivery，不影响决策
-  3. **可复现**：`pytest`（880）/ `evidence_check`（108/108，指纹 `05a89728b9555980`）/ `urban_eval`（22/22）/ `nexent_urban`（8/8）四条命令；`scripts/reproduce.py` 一键复跑
+  3. **可复现**：`pytest`（880）/ `evidence_check`（108/108，指纹 `45dcd07289954dd6`）/ `urban_eval`（22/22）/ `nexent_urban`（8/8）四条命令；`scripts/reproduce.py` 一键复跑
   4. **三级降级**：公网 Demo（已上线）→ 本机离线内核 + A/B → 截图与真机证据 JSON（每级都演练过）
   5. **后续**：第二场真实公开事件（P2）→ 真实用户评分 3–5 人（P1）→ 协同层接 MCP/平台（设计中）
 - **截图 / 证据**：`docs/reports/evidence-check-report.md`（108 项逐条表）；

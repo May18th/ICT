@@ -7,7 +7,7 @@
 | 项 | 结果 | 证据 |
 | --- | --- | --- |
 | 主链路 | **8/8 项一致**，conversation_id=134，attempts=1（协议层零重试） | `samples/nexent/live/main_v19_baseline.json` |
-| 反事实对照 | 同一提示词解绑 14 个 MCP 工具后 **2/8**；需要工具取数的 6 项全塌 | `samples/nexent/live/control_no_tools.json` |
+| 反事实对照 | 同一提示词解绑 15 个 MCP 工具后 **2/8**；需要工具取数的 6 项全塌 | `samples/nexent/live/control_no_tools.json` |
 | 多事件回归 | 4 个事件全部 **8/8**（007/009/013/021，各自一次通过） | `samples/nexent/live/multi_event_regression.json` |
 | 协同链路 | 连跑 **2/2**，`kernel_fingerprint=ab94413cf94bc9a5` 与离线逐字一致（26 卡 / 15 序 / 6 角色） | `samples/nexent/live/collab_v7.json` |
 
@@ -36,7 +36,7 @@ docker build -t urban-twin-mcp:dev -f deploy/mcp_sse/Dockerfile .
 docker rm -f urban-twin-mcp 2>$null
 docker run -d --name urban-twin-mcp --network nexent_network --restart unless-stopped urban-twin-mcp:dev
 
-# 健康检查：应返回 14 个工具
+# 健康检查：应返回 15 个工具
 docker exec urban-twin-mcp python -c "import urllib.request;print(urllib.request.urlopen('http://127.0.0.1:8000/health').read().decode()[:160])"
 ```
 
@@ -62,7 +62,7 @@ docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_
 | 步骤 | 作用 | 幂等策略 |
 | --- | --- | --- |
 | `register-mcp` | 注册 MCP 服务 `urban-twin-mcp`（URL `http://urban-twin-mcp:8000/sse`） | 同名已存在则复用 |
-| `sync-tools` | `scan_tool` 把 14 个 MCP 工具同步进平台工具库 | 已存在则覆盖状态 |
+| `sync-tools` | `scan_tool` 把 15 个 MCP 工具同步进平台工具库 | 已存在则覆盖状态 |
 | `create-main` | 创建/复用 `urban_deduction_agent`（**upsert**：带 `agent_id` 回写提示词），挂 2 个结论类工具并发布 | 同名 Agent 复用；重复挂载无害 |
 | `create-collab` | 创建/复用 `urban_collab_agent`，挂 6 个协同工具并发布 | 同上 |
 | `skills` | 上传 SKILL.md → 绑 Agent 草稿 → **重新发布** → 复核已发布版本 | 上传按正文哈希判 `unchanged`；绑定是覆盖写 |
@@ -84,7 +84,7 @@ docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_
 
 | 退出码 | 含义 |
 | --- | --- |
-| 0 | MCP / 14 工具 / 两个 Agent / 技能草稿与发布快照全部就位 |
+| 0 | MCP / 15 工具 / 两个 Agent / 技能草稿与发布快照全部就位 |
 | 1 | 有硬失败（缺工具、Agent 不存在、技能 verify 不过） |
 | 2 | 有项**无法断言**（如技能目录没挂进容器）——这不是通过 |
 
@@ -195,7 +195,7 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py `
 ```text
 [ui] skill-space: OK     # 平台 Skill 仓库里能看到 urban-six-hop-deduction / scarcity-allocation-evolution
 [ui] agents: OK          # 平台智能体列表里能看到 城市内涝跨部门决策智能体（V3 已发布）
-[ui] mcp-space: OK       # 「我的MCP」里 urban-twin-mcp 连通性校验成功、14 个工具
+[ui] mcp-space: OK       # 「我的MCP」里 urban-twin-mcp 连通性校验成功、15 个工具
 [ui] 证据：docs\reports\captures\nexent\platform_ui.json
 ```
 
@@ -225,10 +225,10 @@ docker cp nexent-config:/tmp/agent_export.json       samples/nexent/live/agent_e
 
 - 包结构：`agent.json` + `skills/<name>.zip`（本仓库实测 7 890 B / 2 个技能）。
 - **整包 sha256 不可复算**（zip 条目头带导出时刻时间戳，连导 5 次得 5 个值）；材料里用
-  `agent_export.json` 的 `bundle.content_sha256`（实测 `adf49c00…`，连导 5 次稳定）。
+  `agent_export.json` 的 `bundle.content_sha256`（实测 `0a3aef9c…`，连导两次稳定；MCP 记录或技能内容一变这个值就变）。
 - 导出包只存 `mcp_info` 的 **server 地址**，不含工具实现 → 复现包必须同时给
   `src/decision_poc/mcp_server.py` / `mcp_sse.py` 与容器启动方式。
-- 口径提醒：平台注册 14 个工具，但主 Agent 只挂 2 个（`MAIN_TOOLS`）、协同 Agent 挂 6 个
+- 口径提醒：平台注册 15 个工具，但主 Agent 只挂 2 个（`MAIN_TOOLS`）、协同 Agent 挂 6 个
   （`COLLAB_TOOLS`），见 `setup_nexent.py:76-134` 的注释。
 
 细节与交叉核对结论见 [`docs/reports/agent-export-evidence.md`](../../docs/reports/agent-export-evidence.md)。
@@ -312,8 +312,8 @@ MCP 工具数已到 **14**（含 `collab_run`，分组 `collaboration`）。平�
 
 | 命令 | 作用 |
 | --- | --- |
-| `python /tmp/setup_nexent.py all` | 注册 MCP → 同步 14 工具 → 建主 Agent → 建协同 Agent → **上传技能 + 绑草稿 + 重新发布 + 复核** → 签发 Key（六步任一失败即停） |
-| `python /tmp/setup_nexent.py status` | 只读自检：MCP / 14 工具 / 两个 Agent / 技能草稿与发布快照；0 全绿、1 有失败、2 无法断言 |
+| `python /tmp/setup_nexent.py all` | 注册 MCP → 同步 15 工具 → 建主 Agent → 建协同 Agent → **上传技能 + 绑草稿 + 重新发布 + 复核** → 签发 Key（六步任一失败即停） |
+| `python /tmp/setup_nexent.py status` | 只读自检：MCP / 15 工具 / 两个 Agent / 技能草稿与发布快照；0 全绿、1 有失败、2 无法断言 |
 | `python /tmp/setup_nexent.py bind-skills` | 只重跑技能链（改过 SKILL.md 后用它；会重新发布一版，版本号 +1） |
 | `python /tmp/setup_nexent.py create-collab-agent` | 只建/更新协同 Agent `urban_collab_agent` 并挂 `collab_run` 等 6 个工具 |
 
@@ -342,7 +342,7 @@ uv run --locked python scripts/nexent_collab_live.py --attempts 2 --json samples
 
 | 项 | 结果 |
 | --- | --- |
-| MCP 容器 | `urban-twin-mcp` 重建后 `/health` 返回 **14 个工具**（含 `collab_run`） |
+| MCP 容器 | `urban-twin-mcp` 重建后 `/health` 返回 **15 个工具**（含 `collab_run`） |
 | 平台工具库 | `scan_tool` 命中 **13/13**，缺失 0 |
 | 主 Agent | `urban_deduction_agent` 发布 **v5**，挂 12 个结论类工具（`collab_run` 显式 detach） |
 | 协同 Agent | `urban_collab_agent` agent_id=4 发布 **v1**，挂 6 个工具（含 `collab_run`） |
@@ -359,7 +359,7 @@ uv run --locked python scripts/nexent_collab_live.py --attempts 2 --json samples
 
 | 项 | 结果 |
 | --- | --- |
-| MCP 容器 | 重建后 `/health` 返回 **14 个工具**；编排见 `deploy/docker-compose.mcp.yml` |
+| MCP 容器 | 重建后 `/health` 返回 **15 个工具**；编排见 `deploy/docker-compose.mcp.yml` |
 | 平台工具库 | `scan_tool` 命中 **13/13**，缺失 0 |
 | 主 Agent | `urban_deduction_agent` 发布 **v10**，只挂 2 个工具（`event_deduce` + `evidence_locate`） |
 | 主链路 | **8/8 项一致，conversation_id=78**，退出码 0 |
@@ -418,6 +418,6 @@ Nexent 侧注册的地址就是 `http://urban-twin-mcp:8000/sse`），不能靠�
 `docker inspect` 快照存到 `out/backup/urban-twin-mcp.manual.inspect.<时间戳>.json` 再 `docker rm -f`，
 由 compose 重新接管；`compose up` 仍报冲突时再清一次重试。重复执行是幂等的（已归属本编排则只做校验）。
 
-healthcheck 判据是"14 个工具都在"，不是"进程没死"——容器活着但工具没注册时，平台侧只表现为
+healthcheck 判据是"15 个工具都在"，不是"进程没死"——容器活着但工具没注册时，平台侧只表现为
 "智能体变笨"，不会报错。日志与渲染产物挂到宿主 `artifacts/visual/`，取证不必再 `docker cp`
 （沙箱里 `docker cp` 常被 npipe 权限拦）。

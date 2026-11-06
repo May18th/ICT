@@ -9,6 +9,7 @@
     "decision": [
       "semantic_query",
       "twin_neighbors",
+      "doc_search",
       "evidence_locate",
       "claim_trace",
       "provenance_verify",
@@ -196,6 +197,39 @@
       }
     },
     {
+      "name": "doc_search",
+      "description": "业务资产语义检索：在预案、规程、台账、交底记录里做词法+向量混合检索，返回可直接核验的 evidence_ref。手上只有自然语言问题（没有事件号）时用它取证，再用 evidence_locate 取原文。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "自然语言检索式，如「基坑开挖遇暴雨有哪些职责冲突」"
+          },
+          "top_k": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "default": 5
+          },
+          "path_prefix": {
+            "type": "string",
+            "description": "限定资产路径前缀，如 A-03/"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "text",
+              "code"
+            ]
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
       "name": "evidence_locate",
       "description": "按 evidence_ref（asset_id#locator）取回原始片段：表格行、文段行号或图片标注区域。受限资产需调用方标签匹配。",
       "inputSchema": {
@@ -262,6 +296,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "hydrograph": {
+            "type": "object",
+            "description": "可选的 P13 简化水动力过程线；只补充事实状态，不改资源缺口 v1 口径"
           }
         },
         "required": [
@@ -417,6 +455,10 @@
               "type": "string"
             }
           },
+          "hydrograph": {
+            "type": "object",
+            "description": "可选的 P13 简化水动力过程线；只补充事实状态，不改资源缺口 v1 口径"
+          },
           "policy": {
             "type": "object",
             "description": "可选策略参数（P9 进化后的版本）；换策略即换 snapshot_id",
@@ -524,6 +566,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "hydrograph": {
+            "type": "object",
+            "description": "可选的 P13 简化水动力过程线；只补充事实状态，不改资源缺口 v1 口径"
           }
         },
         "required": [

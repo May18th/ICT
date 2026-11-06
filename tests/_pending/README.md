@@ -7,27 +7,37 @@
 
 | 文件 | 对应模块 | 暂缓原因 |
 | --- | --- | --- |
-| `test_rag.py` | `src/decision_poc/rag/`（未跟踪） | RAG 检索层未接入主链路 |
+| `test_rag.py` | `src/decision_poc/rag/`（已接入 `doc_search`） | 移回会让 `collected` 从 880 变 886，需一次改全 14 个文件的对外数字 |
 
 ## RAG 模块为什么暂不纳入主干
 
-1. **未接入主链路**——考点③要的是「检索-推理双驱动」，但六跳里的 `evidence_locate`
-   目前走的是资产台账定位符，不是语义检索，检索这半边还是空的；
-2. **依赖口径未定**——`rag/` 需要 `numpy`，而主干 `pyproject.toml` 没有这个依赖。
-   补进去等于为一个尚未被调用的模块增加一个顶层依赖，会让"主干装什么"这件事失真；
+> 2026-11-06 更新：下面第 2 条已不成立，第 1 条的接入方式也与原设想不同。保留原文划掉，改成现状。
+
+1. ~~**未接入主链路**——考点③要的是「检索-推理双驱动」，但六跳里的 `evidence_locate`
+   目前走的是资产台账定位符，不是语义检索，检索这半边还是空的；~~
+   **现状**：没有把语义检索塞进六跳内部（会破坏推演的确定性复现），而是新增了一个独立入口
+   `doc_search`——它对**台账登记的业务资产**建索引（`rag build --registered`），返回的
+   `evidence_ref` 与 `evidence_locate` 要的格式完全一致，已验证「检索 → 取回原文」闭环。
+   六跳内部仍用台账定位符，这是有意的：结论必须逐次可复现。
+2. ~~**依赖口径未定**——`rag/` 需要 `numpy`，而主干 `pyproject.toml` 没有这个依赖。~~
+   **现状**：`numpy>=2.5.4` 已进 `pyproject.toml` 与 `uv.lock`，MCP 镜像也已装。
 3. **对外数字必须可复现**——`test_baseline.collected` 是评委 clone 仓库后能当场跑出来的数。
-   把未纳入模块的测试计进去，数字就是虚高的。
+   把未纳入模块的测试计进去，数字就是虚高的。**这条仍然成立，也是当前唯一剩下的暂缓理由。**
 
 ## 恢复条件
 
-满足以下两条后，把 `test_rag.py` 移回 `tests/` 并删除本目录的 `conftest.py`：
+只剩一条：**一次改全对外数字**。
 
-1. `rag/` 接入 `evidence_locate`，六跳的检索环节换成语义检索且评测口径固定；
-2. `numpy` 作为正式依赖写进 `pyproject.toml`（连同 `uv.lock` 一起 `uv lock`）。
+6 个测试移回 `tests/` 会让 `collected` 从 880 变成 886，必须同步：
+`samples/eval/evidence_expectations.json` 的 `test_baseline.collected` 与
+`checks.test_suite.docs_declared`、README、`AGENTS.md`、`docs/competition-gap-audit.md`、
+`delivery-status.md`、`winning-gap-audit.md`、`preliminary-submission-draft.md`、`ppt-outline-10p.md`、
+`video-storyboard-3min.md`、`video-storyboard-v0.1.md`、`technical-breadth-and-presentation-boundary.md`、
+`qa-8-questions.md`、`docs/image-semantics.md`、`docs/real-feedback-channel.md`、`scripts/reproduce.py`
+（共 14 个文件 18 处），再重跑 DOCX/PPTX 生成器，最后 `evidence_check` 取新指纹并同步。
 
-移回后必须**一次改全**对外数字：`samples/eval/evidence_expectations.json` 的
-`test_baseline.collected` 与 `checks.test_suite.docs_declared`、README、`competition-gap-audit.md`、
-`preliminary-submission-draft.md`，再重跑 DOCX/PPTX 生成器，最后 `evidence_check` 取新指纹并同步。
+**注意**：`presentation-closure-report.md:52` 的 `1534×876` 是 UE 视口分辨率，PPT 里的 `cy="804862"`
+是 EMU 坐标，批量替换会改坏这两处。
 
 ## 这 6 个测试锁的是什么
 

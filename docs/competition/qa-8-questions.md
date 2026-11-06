@@ -154,7 +154,7 @@
 | 类型 | 位置 / 命令 |
 | --- | --- |
 | 文件 | `docs/reports/data-gate-report.md`（来源分级：合成 / 公开文档，逐条标注 + 基准与跨字段一致性校验） |
-| 命令 | `python -m decision_poc.evidence_check` → 108/108（指纹 `05a89728b9555980`） |
+| 命令 | `python -m decision_poc.evidence_check` → 108/108（指纹 `45dcd07289954dd6`） |
 | 数据 | `samples/assets/urban/`（16 资产；`resource_inventory.csv` 含 40 分钟调拨备注） |
 | 文件 | `docs/competition/related-work-positioning.md` §1（外部同类研究是纯仿真，我们是真机跑通） |
 | 现场演示点 | 公网首页「推理链路与证据」区块每条 claim 下的引用行；再打开 `data-gate-report.md` 的来源分级表 |
@@ -314,7 +314,7 @@
 | 项 | 写法 | 复算 |
 | --- | --- | --- |
 | 测试 | **880** 全绿（若 `evidence_check` 输出不同，以输出为准，见 [PPT 骨架](ppt-outline-10p.md) §0） | `uv run --locked pytest -q` |
-| 对外自检 | **108/108**，指纹 `05a89728b9555980` | `python -m decision_poc.evidence_check` |
+| 对外自检 | **108/108**，指纹 `45dcd07289954dd6` | `python -m decision_poc.evidence_check` |
 | 评测用例 | **22/22** | `python -m decision_poc.urban_eval` |
 | 引用完整率 | **100%** | `evidence_check` |
 | 进化偏差 | 训练 **0.2264 → 0.0000**、留出 **0.2182 → 0.0000**（A/B 全序列固定臂 **0.2237**，另一口径） | `python -m decision_poc.policy_evolution`、`scripts/evolution_ab.py` |

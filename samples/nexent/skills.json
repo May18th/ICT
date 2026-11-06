@@ -37,6 +37,17 @@
       "failure_mode": "基线越权或不可计算 -> PERMISSION_DENIED / EVIDENCE_INSUFFICIENT，不给空差异"
     },
     {
+      "name": "doc_search",
+      "when": "手上只有自然语言问题（没有事件号），需要先在预案/规程/台账里找依据",
+      "mcp_tools": [
+        "doc_search"
+      ],
+      "cases": [
+        "检索命中可直接被 evidence_locate 复核"
+      ],
+      "failure_mode": "索引未构建 -> NOT_FOUND 并给出 build 命令；命中为空 -> ok 且 hits=[]，不编造依据"
+    },
+    {
       "name": "allocation_plan",
       "when": "已有可发布推演结论，且存在跨片区资源缺口，需要给出“这几台先给谁”",
       "mcp_tools": [
@@ -125,6 +136,7 @@
         "type": "object"
       },
       "mcp_tools": [
+        "doc_search",
         "semantic_query",
         "twin_neighbors",
         "evidence_locate"
