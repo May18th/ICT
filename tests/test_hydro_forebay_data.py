@@ -8,10 +8,10 @@
 1. 曲线自洽：等截面假设下 `storage = plan_area × stage`，水位/容积严格递增，警戒水位在曲线内；
 2. 逐行标注：`value_basis=assumption`、`source_ref` 写明"待补"来源，第一条带依据指针；
 3. 引用完整：`facility_id` 必须是 `drainage_facilities.csv` 里真实存在的泵站；
-4. **未注册资产**：它现在故意不在 `URBAN_ASSETS` 里——注册会让资产数 +1 并触发一次对外数字重算。
-   资产化那一轮要连同资产数、指纹、data_gate 事实数一起改，并把这条测试反过来写。
+4. **已注册资产**：注册后资产数是 19；来源级别由 loader 从 CSV 直接读出，
+   `data_gate` 登记的事实级别必须等于 CSV 的 `value_basis`——两处真源不许漂。
 
-这一组测试只读，不写任何文件；数据被误标成 `real` 或悄悄注册时立即失败。
+这一组测试只读，不写任何文件；数据被误标成 `real` 或注册后计数没同步时立即失败。
 """
 
 from __future__ import annotations
@@ -21,7 +21,10 @@ from pathlib import Path
 
 import pytest
 
-from decision_poc.urban_dataset import URBAN_ASSETS
+from decision_poc.contracts import ProvenanceLevel
+from decision_poc.data_gate import build_facts
+from decision_poc.quant import level_pool_route, time_to_level
+from decision_poc.urban_dataset import URBAN_ASSETS, load_forebay_curves
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASET_ROOT = ROOT / "samples" / "assets" / "urban"
@@ -101,8 +104,64 @@ def test_curve_facility_is_a_real_pump_station() -> None:
     assert facilities <= station_ids
 
 
-def test_curve_is_not_registered_as_dataset_asset_yet() -> None:
-    """故意未注册：注册要走"资产数 + 指纹 + data_gate 事实"一次改全的流程。"""
+def test_curve_is_registered_as_dataset_asset() -> None:
+    """已注册：资产数必须同时是 19，别只加 spec 不同步计数。"""
 
     registered = {spec.file_name for spec in URBAN_ASSETS}
-    assert CURVE_PATH.name not in registered
+    assert CURVE_PATH.name in registered
+    assert len(URBAN_ASSETS) == 19, "注册前池曲线后资产数应为 19（原 18 + 1）"
+
+
+def test_loader_returns_provenance_without_caller_input() -> None:
+    """贯通的关键：调用方只给目录，来源自己出来。
+
+    如果哪天 loader 又变回"返回裸数组、让调用方自己写 basis"，这条会立刻红——
+    那正是"多了个 loader 但没贯通"的形态。
+    """
+
+    curves = load_forebay_curves()
+    assert set(curves) == {"DF-PS-01"}
+    curve = curves["DF-PS-01"]
+    assert curve.provenance.basis is ProvenanceLevel.ASSUMPTION
+    assert curve.provenance.ref.startswith("待补")
+    assert curve.effective_volume_m3 == 300.0
+    assert curve.warning_stage_m == 2.4
+    assert curve.stage_m[0] == 0.0 and curve.stage_m[-1] == 3.0
+
+
+def test_data_gate_fact_level_follows_csv_basis() -> None:
+    """两处真源不许漂：data_gate 登记的来源级别必须等于 CSV 的 value_basis。"""
+
+    facts, _ = build_facts()
+    [fact] = [item for item in facts if item.field == "forebay_effective_volume_m3"]
+    basis = {row["value_basis"].strip() for row in _curve_rows()}
+    assert len(basis) == 1
+    assert fact.provenance.value == basis.pop()
+    assert fact.value == 300.0
+    assert fact.entity_id == "pump:DF-PS-01"
+
+
+def test_loader_provenance_reaches_water_level_chain() -> None:
+    """最后一跳：只给设施号，来源要一路走到水位过程线与到达时刻。
+
+    "贯通"不是"loader 能返回来源"，而是"算出来的数也带着来源"。调用方在这里只做一件事：
+    把 `curve.provenance` 原样传给 `level_pool_route`，不自己写 assumption/real。
+    如果哪天 loader 不再返回来源、或 quant 把字段丢掉、或下游不再继承前缀行，这条立刻红。
+    """
+
+    curve = load_forebay_curves()["DF-PS-01"]
+    hydrograph = level_pool_route(
+        inflow_m3h=[1200.0] * 21,
+        dt_h=0.01,
+        stage_m=curve.stage_m,
+        storage_m3=curve.storage_m3,
+        initial_stage_m=0.0,
+        pump_outflow_m3h=0.0,
+        storage_provenance=curve.provenance,
+    )
+    assert hydrograph.storage_provenance is curve.provenance
+    assert any(line.startswith("库容来源：assumption") for line in hydrograph.assumptions)
+
+    reached = time_to_level(hydrograph=hydrograph, target_level_m=curve.warning_stage_m)
+    assert reached.computable, "10 分钟窗口内应能到警戒水位"
+    assert any(line.startswith("库容来源：assumption") for line in reached.assumptions)

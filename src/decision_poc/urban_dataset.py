@@ -25,6 +25,8 @@ from typing import Any
 
 from .data_asset import DataAsset, identify_asset
 from .governance import AssetGovernance, AssetStatus
+from .hydro_contracts import CurveProvenance
+from .contracts import ProvenanceLevel
 
 MANIFEST_VERSION = "urban-1"
 DEFAULT_DATASET_ROOT = Path(__file__).resolve().parents[2] / "samples" / "assets" / "urban"
@@ -259,6 +261,21 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         scope="A-03",
         note="含入口挡水槛、最低点标高、洞口宽与敞口汇水面积；封控阈值为假设值，运维主体空白（触发职责空白）",
     ),
+    UrbanAssetSpec(
+        file_name="pump_forebay_curves.csv",
+        asset_type="forebay_curve",
+        title="DF-PS-01 泵站前池库容曲线（假设值）",
+        source_org="未核实：待补 DF-PS-01 前池竣工图/设计图",
+        version="v0",
+        published_at="2026-11-06T00:00:00+08:00",
+        valid_from="2026-11-06T00:00:00+08:00",
+        scope="DF-PS-01",
+        note=(
+            "数值为 assumption（value_basis=assumption，10m×10m×有效水深 3.0m 假设，"
+            "警戒 2.4m），不是实测；来源级别由数据层 load_forebay_curves 从 CSV 直接读出，"
+            "不在这里二次声明。换实测数据时只换 CSV 与 value_basis"
+        ),
+    ),
 )
 
 
@@ -279,6 +296,80 @@ def _governance_for(spec: UrbanAssetSpec, asset: DataAsset) -> AssetGovernance:
         content_hash=asset.checksum_sha256,
         status=spec.status,
     )
+
+
+FOREBAY_CURVE_FILE = "pump_forebay_curves.csv"
+
+
+@dataclass(frozen=True)
+class ForebayCurve:
+    """泵站前池库容曲线，**自带来源标注**。
+
+    来源级别只有一处真源：CSV 的 `value_basis` 列。调用方拿到的对象里已经带好
+    `CurveProvenance`，不需要（也不允许）自己再写一遍级别——否则数值和来源会各说一套。
+    """
+
+    facility_id: str
+    stage_m: tuple[float, ...]
+    storage_m3: tuple[float, ...]
+    warning_stage_m: float
+    provenance: CurveProvenance
+
+    @property
+    def effective_volume_m3(self) -> float:
+        return self.storage_m3[-1]
+
+
+def load_forebay_curves(root: Path | str | None = None) -> dict[str, ForebayCurve]:
+    """读前池库容曲线；来源级别由 CSV 的 `value_basis` 直接转成 `CurveProvenance`。
+
+    这里是「CSV 列为唯一真源」的落点：调用方不再手写 assumption/real，
+    也就不会出现"数换了、来源没换"的漂移。曲线形状不合法或来源级别混用时直接抛错，
+    不在数据层做任何猜测性修补。
+    """
+
+    base = Path(root) if root is not None else DEFAULT_DATASET_ROOT
+    path = base / FOREBAY_CURVE_FILE
+    grouped: dict[str, list[dict[str, str]]] = {}
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            facility_id = (row.get("facility_id") or "").strip()
+            if facility_id:
+                grouped.setdefault(facility_id, []).append(row)
+
+    curves: dict[str, ForebayCurve] = {}
+    for facility_id, rows in sorted(grouped.items()):
+        bases = {(row.get("value_basis") or "").strip() for row in rows}
+        if len(bases) != 1:
+            raise ValueError(f"{FOREBAY_CURVE_FILE} 的 {facility_id} 混用来源级别：{sorted(bases)}")
+        basis_text = bases.pop()
+        try:
+            basis = ProvenanceLevel(basis_text)
+        except ValueError as exc:
+            raise ValueError(
+                f"{FOREBAY_CURVE_FILE} 的 {facility_id} 来源级别 {basis_text!r} 不在统一枚举内"
+            ) from exc
+        refs = [(row.get("source_ref") or "").strip() for row in rows]
+        ref = next((item for item in refs if item), "")
+        stages = tuple(float(row["stage_m"]) for row in rows)
+        storages = tuple(float(row["storage_m3"]) for row in rows)
+        if len(stages) < 2:
+            raise ValueError(f"{FOREBAY_CURVE_FILE} 的 {facility_id} 至少需要两个曲线点")
+        if any(later <= earlier for earlier, later in zip(stages, stages[1:])):
+            raise ValueError(f"{FOREBAY_CURVE_FILE} 的 {facility_id} 水位序列必须严格递增")
+        if any(later <= earlier for earlier, later in zip(storages, storages[1:])):
+            raise ValueError(f"{FOREBAY_CURVE_FILE} 的 {facility_id} 库容序列必须严格递增")
+        warning = float(rows[0]["warning_stage_m"])
+        if not stages[0] < warning <= stages[-1]:
+            raise ValueError(f"{FOREBAY_CURVE_FILE} 的 {facility_id} 警戒水位不在曲线范围内")
+        curves[facility_id] = ForebayCurve(
+            facility_id=facility_id,
+            stage_m=stages,
+            storage_m3=storages,
+            warning_stage_m=warning,
+            provenance=CurveProvenance(basis=basis, ref=ref),
+        )
+    return curves
 
 
 def load_urban_assets(

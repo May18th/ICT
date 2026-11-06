@@ -1,6 +1,6 @@
 {
   "schema_version": "evidence-check-1",
-  "expectations_digest": "886a4c07762cdf9628fe3afe48d62a6a593bbfb2af2241cf0e5e69d0504a36ab",
+  "expectations_digest": "6a9030396892c48f64bd89e31d2f76cbb757b0324a360f0053a152860b1166af",
   "total": 106,
   "passed_count": 106,
   "failed_count": 0,
@@ -136,15 +136,15 @@
     },
     {
       "path": "p8_eval.assets_parsed",
-      "expected": 18,
-      "actual": 18,
+      "expected": 19,
+      "actual": 19,
       "passed": true,
       "note": ""
     },
     {
       "path": "p8_eval.assets_total",
-      "expected": 18,
-      "actual": 18,
+      "expected": 19,
+      "actual": 19,
       "passed": true,
       "note": ""
     },
@@ -494,10 +494,10 @@
     {
       "path": "test_suite.docs_declared",
       "expected": [
-        814
+        817
       ],
       "actual": [
-        814
+        817
       ],
       "passed": true,
       "note": ""

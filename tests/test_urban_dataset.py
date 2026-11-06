@@ -21,9 +21,9 @@ def test_every_declared_file_exists() -> None:
 
 def test_manifest_counts_match_spec() -> None:
     payload = build_urban_manifest()
-    assert payload["asset_count"] == len(URBAN_ASSETS) == 18
+    assert payload["asset_count"] == len(URBAN_ASSETS) == 19
     assert payload["modality_counts"]["image"] == 1
-    assert payload["modality_counts"]["table"] == 9
+    assert payload["modality_counts"]["table"] == 10
     assert payload["modality_counts"]["text"] == 8
     assert len(payload["source_org_counts"]) >= 5
 

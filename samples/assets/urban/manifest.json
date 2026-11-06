@@ -1,11 +1,12 @@
 {
   "manifest_version": "urban-1",
-  "asset_count": 18,
+  "asset_count": 19,
   "type_counts": {
     "construction_plan": 1,
     "drainage_facility": 1,
     "duty_list": 1,
     "emergency_plan": 4,
+    "forebay_curve": 1,
     "pipeline_ledger": 1,
     "procedure": 2,
     "public_notice": 2,
@@ -18,7 +19,7 @@
   },
   "modality_counts": {
     "image": 1,
-    "table": 9,
+    "table": 10,
     "text": 8
   },
   "source_org_counts": {
@@ -29,7 +30,8 @@
     "市气象台": 1,
     "市燃气公司": 2,
     "成都市人民政府办公厅": 1,
-    "成都市应急管理局": 1
+    "成都市应急管理局": 1,
+    "未核实：待补 DF-PS-01 前池竣工图/设计图": 1
   },
   "assets": [
     {
@@ -678,6 +680,47 @@
         "valid_to": null,
         "visibility": [],
         "content_hash": "b410bfe994d4f21e84ac1e600a58f2223db95b99aeeb08c001f99f6f37fff6ec",
+        "status": "published"
+      },
+      "coverage": []
+    },
+    {
+      "asset_id": "AS-DF-PS-01-forebay_curve-19fd6c0b",
+      "modality": "table",
+      "parse_status": "parsed",
+      "file_name": "pump_forebay_curves.csv",
+      "doc_type": "forebay_curve",
+      "equipment_id": "DF-PS-01",
+      "version": "v0",
+      "standard_refs": [],
+      "locator": "DF-PS-01/forebay_curve/v0",
+      "checksum_sha256": "19fd6c0bdc55213dde9e02abe65cd763e76814ed913d761fd7bea2ec4c6b3f96",
+      "byte_size": 763,
+      "summary": "表格资产：7 行 × 8 列，列名 facility_id、stage_m、plan_area_m2、storage_m3、warning_stage_m、value_basis 等",
+      "structure": {
+        "rows": 7,
+        "columns": 8,
+        "headers": [
+          "facility_id",
+          "stage_m",
+          "plan_area_m2",
+          "storage_m3",
+          "warning_stage_m",
+          "value_basis",
+          "source_ref",
+          "note"
+        ]
+      },
+      "governance": {
+        "asset_type": "forebay_curve",
+        "title": "DF-PS-01 泵站前池库容曲线（假设值）",
+        "source_uri": "demo://urban/pump_forebay_curves.csv",
+        "source_org": "未核实：待补 DF-PS-01 前池竣工图/设计图",
+        "published_at": "2026-11-06T00:00:00+08:00",
+        "valid_from": "2026-11-06T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "19fd6c0bdc55213dde9e02abe65cd763e76814ed913d761fd7bea2ec4c6b3f96",
         "status": "published"
       },
       "coverage": []

@@ -33,8 +33,8 @@ from decision_poc.governance import ErrorCode
 
 #: 冻结的事实构成。数据或标注有意变更时同步改这里，并说明原因——
 #: 不允许为了让测试过而改断言。
-FACTS_TOTAL = 69
-BY_PROVENANCE = {"real": 4, "derived": 3, "assumption": 2, "synthetic": 60}
+FACTS_TOTAL = 70
+BY_PROVENANCE = {"real": 4, "derived": 3, "assumption": 3, "synthetic": 60}
 PLAN = "plan_flood_emergency_chengdu_2020.md"
 
 

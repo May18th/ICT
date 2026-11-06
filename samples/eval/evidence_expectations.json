@@ -36,8 +36,8 @@
       "cases_total": 22,
       "cases_passed": 22,
       "cases_failed": 0,
-      "assets_parsed": 18,
-      "assets_total": 18,
+      "assets_parsed": 19,
+      "assets_total": 19,
       "unmapped_columns": 0,
       "locator_hit_rate": 1.0,
       "six_hop_rate": 1.0,
@@ -117,7 +117,7 @@
     },
     "test_suite": {
       "docs_declared": [
-        814
+        817
       ]
     },
     "p11_ablation": {
@@ -193,7 +193,7 @@
     }
   },
   "test_baseline": {
-    "collected": 814,
+    "collected": 817,
     "command": "python -m pytest -q",
     "verified_at": "2026-11-06"
   }

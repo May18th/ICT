@@ -99,7 +99,7 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望：对外数字自检：106/106 项一致（期望指纹 886a4c07762cdf96）
+# 期望：对外数字自检：106/106 项一致（期望指纹 6a9030396892c48f）
 ```
 
 期望值冻结在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/答辩口径，
@@ -136,7 +136,7 @@ uv run --locked python -m decision_poc.asset_manifest       # -> samples/assets/
 uv run --locked python -m decision_poc.ontology_bootstrap   # -> samples/assets/ontology_candidates.json
 ```
 
-导入城市内涝最小数据集（18 个资产：16 合成 + 2 真实公开预案，含治理字段与版本有效期）：
+导入城市内涝最小数据集（19 个资产：17 合成 + 2 真实公开预案，含治理字段与版本有效期）：
 
 ```powershell
 $env:PYTHONPATH = "src"
@@ -391,7 +391,7 @@ uv run --locked python -m decision_poc.urban_eval --json samples/eval/latest.jso
     --baseline samples/eval/baseline_before_temporal_guard.json                        # 含改进前后对比
 ```
 
-预期：`22/22 通过`；资产解析 18/18、未识别列 0、检索命中 100%、六跳完整 100%、引用完整率 100%、
+预期：`22/22 通过`；资产解析 19/19、未识别列 0、检索命中 100%、六跳完整 100%、引用完整率 100%、
 不可支撑结论 0，单用例 p50 约 10 ms 以内。改进前基线（`samples/eval/baseline_before_temporal_guard.json`）
 是 17/22——差的 5 条全部是「as_of 早于上报时间 / 工单已闭环」被当成正常事件推演掉的，
 生成方式见 `samples/eval/make_pre_guard_baseline.py` 顶部注释。
@@ -402,7 +402,7 @@ uv run --locked python -m decision_poc.urban_eval --json samples/eval/latest.jso
 agent_poc/
 ├─ src/decision_poc/       # 契约、治理、认知、语义层、推演、溯源、MCP、Skills
 ├─ tests/                  # 契约、工具、流程、评测、基线测试
-├─ samples/assets/urban/   # 18 个资产（16 合成 + 2 真实公开预案）
+├─ samples/assets/urban/   # 19 个资产（17 合成 + 2 真实公开预案）
 ├─ samples/rules/          # 推演规则（每条带原文行号）
 ├─ samples/nexent/         # Nexent 侧绑定表（由代码生成，不手改）
 ├─ samples/eval/           # P8 评测用例 + P9 分配用例/人工评审/分层记忆/进化快照
@@ -438,7 +438,7 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **814 项**测试通过；`python -m decision_poc.evidence_check` 106/106 项一致；
+当前基线：`uv run --locked pytest -q` 共 **817 项**测试通过；`python -m decision_poc.evidence_check` 106/106 项一致；
 城市内涝主链路 Nexent 真机校验 8/8（`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。
 P0-P10 的验收口径与实测数字见各阶段回传报告（`docs/reports/`）。
