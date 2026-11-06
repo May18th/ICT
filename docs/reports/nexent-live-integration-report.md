@@ -193,9 +193,7 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
    平台层无法根治，只能在验收口径里显式允许"协议层重试"，并区分"结论不一致不重试"。
 2. **并发**：运行时按会话串行，客户端超时后服务端不会自动停，必须 `GET /nb/v1/chat/stop/{id}` 显式停，
    否则新请求排队——这是本次排查里最长的一段弯路。
-3. **LLM 决策 Agent（DeepSeek）**：3 次实测均 `selected_match=false`（期望 opt-3，实际 opt-2×2、opt-1×1）。
-   证据池 8 个槽位被 `action_priority:1..7` 占满，模型看得到排序却看不到支撑证据，于是按"积水 30cm 已过 25cm 阈值"
-   自行选了 opt-2。属证据池设计问题，不是模型随机性，下一轮单独修。
+3. ~~LLM 决策 Agent 3 次实测均 `selected_match=false`~~ —— 已于同日修复，见下节。
 
 ## 2026-11-06 追加：openPangu 欠费，主/协同 Agent 切到 DeepSeek-Chat（v19 / v7）
 
@@ -214,3 +212,49 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 结论：换模型没有改变结论一致性，也印证了前面的判断——8/8 靠的是"MCP 工具返回的事实 + 提示词约束"，
 不是某个模型的运气。副作用要记住：**模型名进了对外材料**（v18 是 openPangu，v19 起是 DeepSeek-Chat），
 引用旧截图/旧报告时不能再说"当前用 openPangu"。
+
+## 2026-11-06 追加：LLM 决策对照从 0/3 修到 3/3
+
+### 排查：不是模型随机，是证据根本没出进程
+
+平台 LLM 决策 Agent（`urban_llm_decision_agent`）原先是 3 次全错（期望 `opt-3`=停止基坑开挖，
+实际 `opt-2`×2、`opt-1`×1）。逐层查下来有三处叠加：
+
+| 层 | 问题 | 证据 |
+| --- | --- | --- |
+| 请求构造 | `build_task` 把证据放在 `task.evidence`，**没进 `request`**；平台只发 `request` | `build_decision_query()` 输出里 `action_priority` 一次都没出现过 |
+| 证据池 | `pool[:8]` 硬截断，7~15 条 `action_priority` 把冲突/资源缺口/六跳结论全挤掉 | N01 的 8 条里 7 条是排序 |
+| 表达形式 | 即使给了出处，也只是 `AS-...#line:38` 这种字符串，**没有原文** | 模型原话："evidence 中无基坑作业、无燃气泄漏相关依据" |
+
+第三层最致命：决定排序的那条依据是应急预案 4.2「开挖深度 ≥ 2m 的基坑，橙色及以上预警期间应停止开挖、
+燃气每 2 小时检测」，以及施工计划 `CP-2026-041`（兴华路燃气主干管更换、深度 2.5m）。这两段不给出，
+模型只能拿选项文本里的"30cm ≥ 25cm"当依据，于是选封路。
+
+### 修法（四件，各自有测试）
+
+1. **证据进请求**：`request.context["evidence"]` 与 `task.evidence` 同一份（`test_evidence_travels_inside_the_request`）；
+2. **按种类配额**：`EVIDENCE_QUOTA` = 事实 1 / 排序 5 / 冲突 3 / 缺口 2 / 六跳结论 3 / 第 1 优先原文 2，
+   总数上限 16，任何一类都不能吃光池子（`test_pool_reserves_slots_for_conflicts_and_gaps`）；
+3. **出处解析成原文**：新增 `evidence_resolver.make_ref_resolver()`，走 `UrbanToolkit._evidence_locate`，
+   受限资产仍取不到（回 `None`，退回旧行为），权利边界不变（`test_resolver_replaces_ref_with_excerpt`）；
+4. **职责边界写进约束**：排序是确定性推演的产出，LLM 不参与重排；若认为排序有误，出口是拒答转人工，
+   不是在 options 里自行改选。
+
+### 复测（逐层看效果）
+
+| 状态 | 命中 |
+| --- | --- |
+| 原始（证据不出进程） | 0/3 |
+| 证据进请求 + 配额 | 4/6（仍会拿 30cm 阈值覆盖排序） |
+| 再加原文解析 | 1/3（信息够了，但模型仍偶发越界改选） |
+| **再加职责边界约束** | **3/3**（`opt-3`，`task_digest=f47d541775f7756f`） |
+
+证据：`samples/nexent/live/llm_decision_platform_run{1,2,3}.json`。
+
+### 要说清的边界
+
+- 这条链路的定性从"LLM 独立判断"收窄为"LLM 把确定性排序落成决策记录"。3/3 证明的是**服从性**，
+  不是"LLM 也能独立算出同样排序"；后者没有证据，别在材料里混着说。
+- `evaluate_cases`（离线 A/B）默认不传解析器，保持旧行为；平台脚本才启用，
+  因为它跨进程，只有它需要把出处变原文。
+

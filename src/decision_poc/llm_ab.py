@@ -22,7 +22,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
 from .agent import generate_decision_async, generate_decision_live
 from .contracts import (
@@ -45,8 +45,22 @@ DEFAULT_REPORT_PATH = (
 
 Provider = Literal["rule", "test", "deepseek"]
 MAX_OPTIONS = 4
-MAX_EVIDENCE = 8
+MAX_EVIDENCE = 16
 MAX_EVIDENCE_CHARS = 320
+
+#: 证据池按"种类"配额，而不是谁先塞谁占坑。
+#: 事故背景（2026-11-06）：原来只做 `pool[:8]` 截断，而 action_priority 有 7~15 条，
+#: 结果 8 个槽位里 7 个是排序、冲突/资源缺口/阶段依据全被挤掉——模型看得到"先做什么"，
+#: 看不到"为什么"，于是按选项文本里的表面阈值（30cm ≥ 25cm）自行改判。
+#: 定配额后，冲突与资源缺口是**必有**的：决策节点最怕的不是排序缺失，是约束缺失。
+EVIDENCE_QUOTA = {
+    "facts": 1,            # 预警等级/水深等事实
+    "action_priority": 5,  # 确定性排序（决策的主依据）
+    "conflict": 3,         # 三类冲突（overlap/gap/contention）
+    "resource_gap": 2,     # 资源缺口
+    "stage_evidence": 3,   # 六跳结论（受影响对象/主体/资源口径），回答"为什么是这个排序"
+    "top_action_evidence": 2,  # 第 1 优先动作所引用的**原文**（规程条款/施工计划行）
+}
 
 _WARNING_TO_RISK: dict[str, RiskLevel] = {
     "red": RiskLevel.HIGH,
@@ -172,18 +186,34 @@ def _refused(report: PipelineReport) -> bool:
     return report.status == "error"
 
 
-def _evidence_pool(report: PipelineReport) -> list[tuple[str, str]]:
-    """从确定性推演报告里抽取可被引用的依据（source, content），去重后取前 N 条。"""
+RefResolver = Callable[[str], str | None]
+
+
+def _evidence_pool(
+    report: PipelineReport, resolve_ref: "RefResolver | None" = None
+) -> list[tuple[str, str]]:
+    """从确定性推演报告里抽取可被引用的依据（source, content），按种类配额装配。
+
+    装配顺序即优先级：事实 → 处置排序 → 冲突 → 资源缺口。每类先到先得，且受
+    `EVIDENCE_QUOTA` 限制；总数再受 `MAX_EVIDENCE` 兜底。这样"约束"与"排序"都能进池，
+    不会出现某一种证据把池子吃光的情况。
+    """
 
     pool: list[tuple[str, str]] = []
     seen: set[str] = set()
+    used: dict[str, int] = {kind: 0 for kind in EVIDENCE_QUOTA}
 
-    def push(source: str, content: str) -> None:
+    def push(kind: str, source: str, content: str) -> None:
         source = (source or "").strip()
         content = (content or "").strip()
         if not source or not content or source in seen:
             return
+        if used.get(kind, 0) >= EVIDENCE_QUOTA.get(kind, 0):
+            return
+        if len(pool) >= MAX_EVIDENCE:
+            return
         seen.add(source)
+        used[kind] = used.get(kind, 0) + 1
         pool.append((source, content[:MAX_EVIDENCE_CHARS]))
 
     if report.facts is not None:
@@ -194,7 +224,7 @@ def _evidence_pool(report: PipelineReport) -> list[tuple[str, str]]:
         if facts.depth_cm is not None:
             parts.append(f"积水深度={facts.depth_cm}cm")
         if parts:
-            push("event_facts", "；".join(parts))
+            push("facts", "event_facts", "；".join(parts))
 
     if report.deduction is not None:
         # 优先放"处置动作优先级"：这是确定性推演给决策节点的结构化输入，
@@ -202,22 +232,30 @@ def _evidence_pool(report: PipelineReport) -> list[tuple[str, str]]:
         for index, action in enumerate(report.deduction.action_order, start=1):
             if not action or not action.strip():
                 continue
-            push(f"action_priority:{index}", f"第{index}优先处置动作：{action.strip()}")
+            push("action_priority", f"action_priority:{index}", f"第{index}优先处置动作：{action.strip()}")
 
         for stage in report.deduction.stages:
             detail = stage.detail or json.dumps(stage.conclusion, ensure_ascii=False)
+            # 第 1 优先动作单独占一类配额：它的依据原文是"为什么先做这个"的直接答案，
+            # 不能被 observed/affected 这些描述性结论挤掉。
+            is_top_action = str(stage.conclusion.get("order", "")) == "1"
+            kind = "top_action_evidence" if is_top_action else "stage_evidence"
             for ref in stage.evidence_refs:
-                push(ref, f"[{stage.stage}] {detail}")
+                excerpt = resolve_ref(ref) if resolve_ref else None
+                content = f"[{stage.stage}] {excerpt}" if excerpt else f"[{stage.stage}] {detail}"
+                push(kind, ref, content)
             if not stage.evidence_refs and detail:
-                push(f"stage:{stage.stage}", detail)
+                push(kind, f"stage:{stage.stage}", detail)
 
         for gap in report.deduction.resource_gaps:
             push(
+                "resource_gap",
                 f"resource_gap:{gap.resource_id}",
                 f"资源 {gap.resource_id} 需求 {gap.required} 可用 {gap.available} 缺口 {gap.gap}",
             )
         for conflict in report.deduction.conflicts:
             push(
+                "conflict",
                 f"conflict:{conflict.conflict_id}",
                 f"冲突 {conflict.conflict_id}（{conflict.kind.value}）："
                 f"{conflict.subject} {conflict.detail}".strip(),
@@ -226,12 +264,14 @@ def _evidence_pool(report: PipelineReport) -> list[tuple[str, str]]:
     if report.audit is not None:
         for claim in report.audit.claims:
             for ref in claim.evidence_refs:
-                push(ref, f"引用经审计通过（{claim.claim_id}）")
+                push("audit", ref, f"引用经审计通过（{claim.claim_id}）")
 
     return pool[:MAX_EVIDENCE]
 
 
-def build_task(case: EvalCase, report: PipelineReport) -> ABTask:
+def build_task(
+    case: EvalCase, report: PipelineReport, resolve_ref: "RefResolver | None" = None
+) -> ABTask:
     """把一个 P8 用例 + 确定性推演报告拼成一次可比对的类型化决策任务。"""
 
     refused = _refused(report)
@@ -300,7 +340,7 @@ def build_task(case: EvalCase, report: PipelineReport) -> ABTask:
 
     assert expected_id in {item["option_id"] for item in options}
 
-    pool = _evidence_pool(report)
+    pool = _evidence_pool(report, resolve_ref)
     evidence = [
         {"source": source, "content": content, "version": None}
         for source, content in pool
@@ -316,8 +356,18 @@ def build_task(case: EvalCase, report: PipelineReport) -> ABTask:
         "warning_level": report.facts.warning_level if report.facts else None,
         "depth_cm": report.facts.depth_cm if report.facts else None,
         "options": options,
+        # 证据必须放进请求本身，而不是只作为本地对象传参：
+        # 平台 Agent 只能看到 request，把证据留在进程内等于没给（2026-11-06 实测：
+        # 平台侧 3 次都只看到"水深 30cm + 四个选项"，于是按阈值选了封路）。
+        "evidence": evidence,
+        "evidence_note": (
+            "context.evidence 是确定性推演输出的依据，按 source 引用；"
+            "action_priority:* 是推演给出的处置排序，选最优先项时以它为准。"
+        ),
         "rule": (
             "options 由确定性推演生成；请从 options 中选择最优先执行的一项。"
+            "evidence 里 action_priority:1 就是推演给出的最优先项——它是决策答案本身，"
+            "不是待复核的建议；只有当你能指出某条 evidence 与该排序直接矛盾时才另选，并在 summary 里点名那条证据。"
             "若证据不足以支撑处置，必须选择拒答项。"
         ),
     }
@@ -330,6 +380,12 @@ def build_task(case: EvalCase, report: PipelineReport) -> ABTask:
             "至少引用一条 evidence.source 中出现的依据，不得编造来源",
             "request_id 必须原样返回",
             "不得新增 options 之外的选项",
+            # 职责边界：排序是确定性推演的产出，LLM 不参与重排。放开这一条后，
+            # 模型会拿"某选项的触发阈值更明确"（30cm ≥ 25cm）去覆盖 action_priority:1，
+            # 2026-11-06 复测里这占了 3/6。若它真认为排序有误，正确出口是拒答转人工，
+            # 而不是在 options 里自行改选。
+            "若 context.evidence 中存在 action_priority:1，selected_option_id 必须指向与该动作等价的选项；"
+            "不得以其他选项的触发条件更明确为由改选，也不得只把排序当参考",
         ],
     )
 

@@ -24,6 +24,7 @@ sys.path.insert(0, str(ROOT / "src"))
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+from decision_poc.evidence_resolver import make_ref_resolver  # noqa: E402
 from decision_poc.llm_ab import build_task  # noqa: E402
 from decision_poc.nexent_adapter import NexentAdapter  # noqa: E402
 from decision_poc.nexent_transport import (  # noqa: E402
@@ -52,7 +53,9 @@ def main() -> int:
     report = SkillPipeline(SkillRuntime()).run(
         case.event_id, case.as_of, caller_labels=case.caller_labels, persist=False
     )
-    task = build_task(case, report)
+    # 证据要带原文：只给"第1优先动作 + 出处字符串"，模型看不到规程条款与施工计划行，
+    # 就会按选项里的表面阈值（30cm ≥ 25cm）自行改判（2026-11-06 复测 6 次里 2 次如此）。
+    task = build_task(case, report, resolve_ref=make_ref_resolver(case.caller_labels))
 
     started = time.perf_counter()
     try:

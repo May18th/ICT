@@ -1,6 +1,6 @@
 {
   "schema_version": "nexent-llm-decision-live-1",
-  "generated_at": "2026-11-05T17:58:52+08:00",
+  "generated_at": "2026-11-06T17:33:16+08:00",
   "method": "北向 /nb/v1/chat/run 实测；Agent=urban_llm_decision_agent（DeepSeek-Chat，独立 Agent，不动 v10）",
   "nexent_base_url": "http://localhost:5013",
   "agent_name": "urban_llm_decision_agent",
@@ -31,19 +31,21 @@
       "expected_impact": "按确定性推演优先级执行"
     }
   ],
-  "task_digest": "44a7720dcbdf3adb",
-  "latency_ms": 7476.2,
+  "task_digest": "5d4831eefce82361",
+  "latency_ms": 8309.6,
   "schema_valid": true,
-  "selected_option_id": "opt-2",
+  "selected_option_id": "opt-3",
   "confidence": 0.86,
-  "summary": "2026-10-29T09:40:00+08:00 时点事件 WO-20261029-007（橙色预警）积水深度达 30cm，已超过道路封闭阈值 25cm，且无基坑或下穿隧道场景证据，故最优先执行为封闭积水路段全幅并覆盖上下游各 50m。",
+  "summary": "橙色预警期间，兴华路 K0+320 积水深度 30.0cm，已超 25cm 封路阈值（假设值，待核实），且该点受兴华路燃气主干管更换工程（CP-2026-041，半幅封闭）影响。按确定性推演，action_priority:1 为最优先项，等价于 opt-3：停止开挖作业、对基坑覆盖或围堰，并将燃气管道浓度检测提升至每 2 小时一次，检测异常立即通知权属单位并撤离周边人员；同期并行推进 opt-2 全幅封路（含上下游各 50m）与 opt-4 下穿隧道洞口封控，并注意封路须由 ORG-ROAD 与 ORG-TRAFFIC 联合发布。",
   "risks": [
-    "固定 50m 封闭边界可能不足以覆盖实际积水蔓延范围，需动态监测并按实际水深与面积扩展封控",
-    "封控期间交通分流压力可能向周边路网转移，需与交通部门联动发布绕行信息",
-    "积水可能持续上涨，若水深进一步增加或出现基坑、下穿隧道证据，应及时升级并启用 opt-3 / opt-4"
+    "封路须由 ORG-ROAD 与 ORG-TRAFFIC 联合发布（冲突 C1），单一部门发布无效，审批或存在时延",
+    "DF-PS-01 无书面运维主体（冲突 C2），下穿隧道 UP-XH-101 无独立泵房，抽排与封控责任落空",
+    "RES-PUMP-M 需求 8 台、可用 6 台，缺口 2 台（冲突 C3），积水抽排能力不足可能延后封控效果",
+    "25cm 封控阈值与下穿隧道挡水槛为假设值待核实，阈值偏差可能造成误封或漏封",
+    "燃气主干管更换施工与积水叠加，存在泄漏与次生爆燃风险，需确认无泄漏后方可后续作业"
   ],
-  "evidence_cited": 4,
+  "evidence_cited": 7,
   "decision_error": null,
-  "answer_length": 1315,
-  "selected_match": false
+  "answer_length": 2140,
+  "selected_match": true
 }
