@@ -98,6 +98,15 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("selfcheck", re.compile(r"(\d+)\s*项(?:宣称证据|冻结期望|对外宣称数字|逐条表|证据自检)")),
     # 「834 项通过」这类验收口径。以前不扫，`553 项通过` 在两份文档里挂了两版都没人发现。
     ("testcount", re.compile(r"(\d+)\s*项通过")),
+    # 同一语义的其它写法。`(\d+)\s*项通过` 要求「项通过」连写，而材料里更常见的是
+    # 「839 测试」「839 项测试」——PPT 里那句「平台真机 8/8 · 776 测试 · 106 项自检」
+    # 因此从来没被这条正则校验过（连 STALE_SNAPSHOTS 里登记 testcount 也校验不到它），
+    # 是"打开文件扫一眼"漏得一干二净的第三类漏法。三种语序都挂上。
+    # `(?![\u4e00-\u9fff])` 只排除「§4 测试数」这类词尾接汉字的复合词，
+    # 「839 测试 ·」「839 测试、」「803 测试（」仍然照常命中。
+    ("testcount", re.compile(r"(\d+)\s*项测试")),
+    ("testcount", re.compile(r"(\d+)\s*测试(?![\u4e00-\u9fff])")),
+    ("testcount", re.compile(r"测试\s*(\d+)\s*项")),
     ("fingerprint", re.compile(r"指纹\s*`?([0-9a-f]{16})")),
 )
 
@@ -145,6 +154,52 @@ ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
         "docs/ICT-赛题3-城市内涝事件推演-WorkBuddy任务单.md",
         370,
     ): (1, "赛题任务单记录的是当时验收（370 项），属于任务书原文，不改写成当前值"),
+    # 以下是子系统/历史验收的用例数，不是全仓总数。补上「N 测试」「N 项测试」两种写法后才显形。
+    (
+        "testcount",
+        "docs/competition/answer-mainline.md",
+        32,
+    ): (1, "「32 项测试已落地」是多智能体协同子系统的用例数，不是全仓总数"),
+    (
+        "testcount",
+        "docs/competition/answer-mainline.md",
+        93,
+    ): (1, "「93 项测试」是物理/数学定量层的用例数，不是全仓总数"),
+    (
+        "testcount",
+        "docs/competition/delivery-status.md",
+        93,
+    ): (1, "同上，定量层自身的用例数"),
+    (
+        "testcount",
+        "docs/competition/delivery-status.md",
+        521,
+    ): (1, "引用真机报告「写死 521 项测试」的缺陷描述，不是当前口径"),
+    (
+        "testcount",
+        "docs/competition/video-storyboard-3min.md",
+        745,
+    ): (1, "引述任务简报里的旧测试数「测试 745 项」，用于说明口径冲突"),
+    (
+        "testcount",
+        "docs/hydro-integration-refactor-candidates.md",
+        803,
+    ): (1, "「删除后 803 测试（当轮口径）」是当时回归基线，原文已注明以当前口径为准"),
+    (
+        "testcount",
+        "docs/nexent-urban-integration-design.md",
+        10,
+    ): (1, "「SSE 传输 + 10 项测试」是该模块自己的用例数"),
+    (
+        "testcount",
+        "docs/nexent-urban-integration-design.md",
+        11,
+    ): (1, "「nexent_urban 查询/解析/比对（11 项测试）」是该模块自己的用例数"),
+    (
+        "testcount",
+        "docs/p0-interface-freeze.md",
+        12,
+    ): (1, "P0 阶段验收时的用例数（12 项测试通过），属历史验收值"),
 }
 
 
