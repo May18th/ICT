@@ -1,0 +1,149 @@
+{
+  "event_id": "WO-20261029-007",
+  "as_of": "2026-10-29T09:40:00+08:00",
+  "conversation_id": 134,
+  "answer": {
+    "event_id": "WO-20261029-007",
+    "as_of": "2026-10-29T09:40:00+08:00",
+    "six_hops": [
+      "observed",
+      "affected",
+      "owner",
+      "conflict",
+      "resource",
+      "action"
+    ],
+    "conflicts": [
+      {
+        "conflict_id": "C1",
+        "kind": "overlap",
+        "subject": "封路权限"
+      },
+      {
+        "conflict_id": "C2",
+        "kind": "gap",
+        "subject": "DF-PS-01"
+      },
+      {
+        "conflict_id": "C3",
+        "kind": "contention",
+        "subject": "RES-PUMP-M"
+      }
+    ],
+    "resource_gap": 2,
+    "action_order": [
+      "停止基坑开挖并覆盖或围堰，燃气浓度检测提升至每 2 小时一次",
+      "封闭下穿隧道洞口全幅，由 ORG-ROAD 与 ORG-TRAFFIC 联合发布",
+      "隔离风险源：确认无泄漏后关阀或断电",
+      "封闭积水路段全幅，范围覆盖积水区上下游各 50m，由 ORG-ROAD 与 ORG-TRAFFIC 联合发布",
+      "先清掏反涌雨水口再抽排",
+      "启动泵站抽排，泵站不可用时按 400 m³/h 折算投入移动泵并上报跨区调配",
+      "绕行方案避开占道施工路段，无法避开时通知施工单位并增设现场疏导",
+      "全程同步交通管制与信息发布",
+      "水位降至基坑底以下 0.3m 后复检管道悬空与泄漏，方可恢复作业"
+    ],
+    "summary": "A-03片区积水30cm达橙色响应，影响下穿隧道、燃气/电力管线及在建基坑，存在封路权限重叠、DF-PS-01职责空白与移动泵缺口2台，须先停挖隔离、封隧道封路、再清掏抽排并同步绕行。",
+    "residual_risks": [
+      "可燃气体浓度达爆炸下限10%须停工断电撤离",
+      "基坑浸泡致管周土体流失、燃气管悬空或泄漏",
+      "外部积水漫过挡水槛导致隧道倒灌",
+      "绕行路线自身占道施工易形成二次拥堵",
+      "泵站无备用电源，上级电源浸水即失电"
+    ],
+    "evidence_refs": [
+      "AS-A-03-work_order-6a1282a1#A-03/work_order/v1#row:2",
+      "AS-A-03-underpass-d4ae624c#A-03/underpass/v1#row:2",
+      "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:31",
+      "AS-A-03-resource_inventory-8133c741#A-03/resource_inventory/v1#row:2",
+      "AS-A-03-construction_plan-9d16ae32#A-03/construction_plan/v3#row:2"
+    ],
+    "handoff_required": true
+  },
+  "checks": [
+    {
+      "name": "六跳齐全",
+      "expected": [
+        "observed",
+        "affected",
+        "owner",
+        "conflict",
+        "resource",
+        "action"
+      ],
+      "actual": [
+        "observed",
+        "affected",
+        "owner",
+        "conflict",
+        "resource",
+        "action"
+      ],
+      "passed": true
+    },
+    {
+      "name": "冲突编号",
+      "expected": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "actual": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "passed": true
+    },
+    {
+      "name": "冲突类型",
+      "expected": [
+        "contention",
+        "gap",
+        "overlap"
+      ],
+      "actual": [
+        "contention",
+        "gap",
+        "overlap"
+      ],
+      "passed": true
+    },
+    {
+      "name": "资源缺口",
+      "expected": 2,
+      "actual": 2,
+      "passed": true
+    },
+    {
+      "name": "隔离先于抽排",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "name": "关键处置动作齐全",
+      "expected": [
+        "隔离风险源",
+        "抽排",
+        "封闭积水路段"
+      ],
+      "actual": "停止基坑开挖并覆盖或围堰，燃气浓度检测提升至每 2 小时一次；封闭下穿隧道洞口全幅，由 ORG-ROAD 与 ORG-TRAFFIC 联合发布；隔离风险源：确认无泄漏后关阀或断电；封闭积水路段全幅，范围覆盖积水区上下游各 50m，由 ORG-ROAD 与 ORG-TRAFFIC 联合发布；先清掏反涌雨水口再抽排；启动泵站抽排，泵站不可用时按 400 m³/h 折算投入移动泵并上报跨区调配；绕行方案避开占道施工路段，无法避开时通知施工单位并增设现场疏导；全程同步交通管制与信息发布；水位降至基坑底以下 0.3m 后复检管道悬空与泄漏，方可恢复作业",
+      "passed": true
+    },
+    {
+      "name": "证据非空",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "name": "事件编号一致",
+      "expected": "WO-20261029-007",
+      "actual": "WO-20261029-007",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "attempts_used": 1,
+  "attempt_errors": []
+}

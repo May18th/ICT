@@ -2,7 +2,15 @@
 
 把本仓库的城市孪生 MCP 服务接入本机 Nexent v2.7.0，并验证"平台 Agent 调 MCP 工具 → 六跳结论与离线一致"。
 
-已验证结果（2026-11-06 复测，Agent **v19**，模型 **DeepSeek-Chat**）：**8/8 项一致，conversation_id=120**，平台实际调用 `event_deduce` 1 次，工具日志与本轮一一对应（`samples/nexent/live/mcp_tool_log.jsonl` 仅 1 行，快照 `d102aa80…`）。
+已验证结果（2026-11-06 复测，主 Agent **v19** / 协同 Agent **v7**，模型 **DeepSeek-Chat**）：
+
+| 项 | 结果 | 证据 |
+| --- | --- | --- |
+| 主链路 | **8/8 项一致**，conversation_id=134，attempts=1（协议层零重试） | `samples/nexent/live/main_v19_baseline.json` |
+| 反事实对照 | 同一提示词解绑 14 个 MCP 工具后 **2/8**；需要工具取数的 6 项全塌 | `samples/nexent/live/control_no_tools.json` |
+| 协同链路 | 连跑 **2/2**，`kernel_fingerprint=ab94413cf94bc9a5` 与离线逐字一致（26 卡 / 15 序 / 6 角色） | `samples/nexent/live/collab_v7.json` |
+
+平台实际调用 `event_deduce` 1 次，工具日志与该轮一一对应（`samples/nexent/live/mcp_tool_log.jsonl` 仅 1 行）。
 > 模型切换原因：openPangu-2.0-Pro 走华为 ModelArts，2026-11-06 因账户欠费停服，改为平台已注册的 DeepSeek-Chat（`https://api.deepseek.com/v1`，独立计费）。切换后深度思考段消失，同一提示词下一轮即通过，作答预算也从 16384 回调到 8192。
 完整过程与排障见 [真机集成报告](../../docs/reports/nexent-live-integration-report.md)。
 
@@ -187,9 +195,40 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py `
   工具列表才是模型真正读的"提示词"。
 - 两个 SKILL.md 已进平台技能仓库**且已绑定到已发布版本**；但实测模型不读技能文档，
   所以只能说"技能已绑定、可在平台内浏览与复用口径"，不说"平台 Agent 会按技能文档执行流程"。
-- 协同 Agent（6 个工具）的输出格式不稳定：实测 **2/3** 次返回可解析 JSON 且指纹逐字一致，
-  失败形态是工具调用协议退化。口径是"可重跑、格式需容错"，不宣称 100%。
+- 协同 Agent（6 个工具）的输出稳定性：v6 时代实测 **2/3**（失败形态是工具调用协议退化）；
+  v7（DeepSeek + `final_answer` 交卷）连跑 **2/2**。样本量小，口径仍是"可重跑、格式需容错"，不宣称 100%。
 - 平台界面截图/录屏都来自本机 Nexent v2.7.0 前端；换环境必须重跑并重新生成证据。
+
+## 反事实对照：8/8 是工具给的，还是模型本来就会
+
+8/8 只证明"端到端一致"，不能排除"这套题模型凭常识就能答"。评审会问这句，所以留了一个对照组。
+
+做法（`no_tools_control.py`）：新建 `urban_control_no_tools`（agent_id=38），**提示词、模型、输出预算、
+发布流程与主 Agent 完全相同**，只把 14 个 urban 工具全部 `enabled=false`，再问同一个事件、同一句话。
+
+```powershell
+docker cp deploy/nexent/no_tools_control.py nexent-config:/tmp/no_tools_control.py
+docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/no_tools_control.py"
+
+# 宿主侧用同一套验收脚本，只换 Agent 名
+$env:NEXENT_AGENT_NAME = "urban_control_no_tools"
+uv run --locked python -m decision_poc.nexent_urban --attempts 2 --json samples/nexent/live/control_no_tools.json
+```
+
+实测 **2/8**（主 Agent 同一时点 8/8，conversation 134）。塌掉的是需要工具取数的 6 项：
+冲突编号、冲突类型、资源缺口、隔离先于抽排、关键处置动作、证据非空。通过的两项不需要工具——
+`事件编号一致`是把输入回填，`六跳齐全`是照抄提示词里那六个字段名。
+
+第 1 次调用连 JSON 都没产出；第 2 次模型按约束拒答，原话：
+
+> 无法完成六跳推演：本轮运行环境未注入 MCP 工具 event_deduce（工具调用不可见，报 NameError），
+> 六跳事实、三类冲突、资源缺口与处置顺序均无法取证，按规则不输出结论。
+
+这同时说明提示词里"拿不到工具返回就不输出结论"那条约束是生效的——它没有硬编一套看起来很对的答案。
+
+边界：只覆盖 `WO-20261029-007` 一个事件；结论是"这个配置下，去掉工具就拿不到那 6 项"，
+不是"任何模型没有工具都必然答错"。对照组 Agent 保留在平台上（display_name 已标"对照"），
+便于换环境后重跑同一实验，不作为业务入口。
 
 ## 多智能体协同 Agent（`collab_run`，路径 B）
 
@@ -202,6 +241,17 @@ MCP 工具数已到 **14**（含 `collab_run`，分组 `collaboration`）。平�
 
 协同 Agent 的提示词是"两步式"：先 `collab_run`，再**逐字转述**动作卡、联合发布对、处置顺序与
 `kernel_fingerprint`；不得新增卡片、不得改写冲突，指纹必须与工具返回逐位一致。
+
+验收脚本 `scripts/nexent_collab_live.py`（多次调用算成功率，不是跑通一次就宣称稳定）：
+
+```powershell
+$env:NEXENT_BASE_URL = "http://localhost:5013"
+$env:NEXENT_API_KEY  = "<mint-key 生成的 Key>"
+uv run --locked python scripts/nexent_collab_live.py --attempts 2 --json samples/nexent/live/collab_v7.json
+```
+
+判定只看一件事：从最终回答里解析出含 `kernel_fingerprint` 的 JSON，且与离线 `collab_run` 逐字一致。
+平台两种合法外壳（裸 JSON / `final_answer` 包装）都认，否则会把动作历史里的片段当结论。
 
 角色白名单 `ROLE_TOOL_GROUPS` 是**运行期视图**，不导出到 `tools.json`；部门 Agent 若单独建（路径 A），
 只能看到本组工具。Nexent v2.7 是否支持 Agent-as-Tool **未验证**，故默认走路径 B。
