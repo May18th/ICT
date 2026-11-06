@@ -45,7 +45,7 @@ from typing import Iterable, Sequence
 from pydantic import Field
 
 from .city_profile import UNITS
-from .contracts import StrictModel
+from .contracts import ProvenanceLevel, StrictModel
 from .governance import ErrorCode
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -114,13 +114,6 @@ _SYNTHETIC_CLOSURE = (
     "plan_flood_emergency_chengdu_2020.md 第 107 行明确声明该阈值「来源于合成设定，不属于本文件的真实条款」，"
     "对外不得当作公开口径引用",
 )
-
-
-class ProvenanceLevel(StrEnum):
-    REAL = "real"                    # 原文可定位（预案、公告、台账行）
-    DERIVED = "derived"              # 由真实值按明确公式算出
-    ASSUMPTION = "assumption"        # 无公开口径，按量级假设
-    SYNTHETIC = "synthetic"          # 演示/占位数据
 
 
 class Datum(StrEnum):

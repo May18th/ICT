@@ -9,7 +9,25 @@ from __future__ import annotations
 
 from pydantic import model_validator
 
-from .contracts import StrictModel
+from .contracts import ProvenanceLevel, StrictModel
+
+
+class CurveProvenance(StrictModel):
+    """过程线输入曲线（如库容曲线）的来源标注。
+
+    只约束形状：`basis` 取统一枚举，`real` 必须给出可定位的出处。
+    具体内容规则（"待补：…"、同一曲线不许混用级别）由数据层守卫负责，
+    契约层不认业务字面。
+    """
+
+    basis: ProvenanceLevel
+    ref: str = ""
+
+    @model_validator(mode="after")
+    def _check_shape(self) -> "CurveProvenance":
+        if self.basis is ProvenanceLevel.REAL and not self.ref.strip():
+            raise ValueError("basis=real 时必须给出可定位的出处")
+        return self
 
 
 class HydrographResult(StrictModel):
@@ -28,6 +46,8 @@ class HydrographResult(StrictModel):
     peak_time_h: float = 0.0
     computable: bool = True
     uncomputable_reason: str = ""
+    # 输入曲线的来源；None 表示调用方没声明（历史调用路径默认如此，dump 形状只多这一个键）
+    storage_provenance: CurveProvenance | None = None
 
     @model_validator(mode="after")
     def _check_invariants(self) -> "HydrographResult":
