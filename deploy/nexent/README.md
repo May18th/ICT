@@ -209,6 +209,30 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py `
 > （如 `admin@nexent.com`）能看智能体/技能页；总管理员只能在「资源管理」里按租户看资源。
 > 密码只放环境变量，不要写进仓库；忘记时可让平台管理员重置该账号。
 
+## 4.2 导出平台作品包（初赛「配置能力」项）
+
+官方赋能直播（`BV18Kxv6jEuF`，17:05）要求初赛交「配置能力」= 用平台导出功能导出作品。
+讲师口语说的「DSR / DCR 文件」**平台上不存在同名格式**，实际是下面这个 zip。
+
+```bash
+docker cp deploy/nexent/platform_client.py nexent-config:/tmp/platform_client.py
+docker cp deploy/nexent/export_bundle.py    nexent-config:/tmp/export_bundle.py
+docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/export_bundle.py \
+    --agent-id 3 --out /tmp/urban_deduction_agent.zip --json /tmp/agent_export.json"
+docker cp nexent-config:/tmp/urban_deduction_agent.zip samples/nexent/live/urban_deduction_agent.zip
+docker cp nexent-config:/tmp/agent_export.json       samples/nexent/live/agent_export.json
+```
+
+- 包结构：`agent.json` + `skills/<name>.zip`（本仓库实测 7 890 B / 2 个技能）。
+- **整包 sha256 不可复算**（zip 条目头带导出时刻时间戳，连导 5 次得 5 个值）；材料里用
+  `agent_export.json` 的 `bundle.content_sha256`（实测 `adf49c00…`，连导 5 次稳定）。
+- 导出包只存 `mcp_info` 的 **server 地址**，不含工具实现 → 复现包必须同时给
+  `src/decision_poc/mcp_server.py` / `mcp_sse.py` 与容器启动方式。
+- 口径提醒：平台注册 14 个工具，但主 Agent 只挂 2 个（`MAIN_TOOLS`）、协同 Agent 挂 6 个
+  （`COLLAB_TOOLS`），见 `setup_nexent.py:76-134` 的注释。
+
+细节与交叉核对结论见 [`docs/reports/agent-export-evidence.md`](../../docs/reports/agent-export-evidence.md)。
+
 ## 5 现场演示顺序（约 2 分钟）
 
 1. 打开 Nexent 前端 `http://localhost:3000`，选 `urban_deduction_agent`，提问核心事件；
