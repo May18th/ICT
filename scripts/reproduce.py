@@ -27,6 +27,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -38,6 +39,12 @@ SRC = ROOT / "src"
 EVENT = "WO-20261029-007"
 AS_OF = "2026-10-29T09:40:00+08:00"
 OUT_DIR = ROOT / "artifacts" / "reproduce"
+
+# 与 conftest.py 同样的理由：系统临时目录不可写时 gettempdir 会回退到 cwd，
+# 于是任何 mkstemp 都在仓库根留下空文件。父进程也钉到 artifacts/tmp。
+_TMP_ROOT = ROOT / "artifacts" / "tmp"
+_TMP_ROOT.mkdir(parents=True, exist_ok=True)
+tempfile.tempdir = str(_TMP_ROOT)
 
 # --- 权威源：对外数字从这些地方算，不在断言里写死 ---------------------------------
 # 起因：`"assets":\s*18` 写死之后，资产从 18 加到 19，整个 reproduce 在第 5 步就红，
