@@ -836,6 +836,58 @@ def run_counterfactual(
     )
 
 
+def rerun_with_interventions(
+    interventions: Sequence[Intervention],
+    *,
+    event_id: str,
+    as_of: datetime | str,
+    caller_labels: Sequence[str] = (),
+    runtime: SkillRuntime | None = None,
+) -> dict[str, Any]:
+    """按干预补丁重跑一次推演，返回两侧完整报告与摘要。
+
+    这与 CF1-CF3 用的是同一套机制（`_prepare` 把数据集复制到临时目录打补丁，
+    再拿一份独立的 `SkillRuntime` 重跑整条流水线），因此"改了条件以后结论怎么变"
+    永远是重算出来的，不是对基线结果做加减。页面上的"人工干预 → 重新调度"就靠它。
+
+    返回的两份 report 是 `PipelineReport.model_dump(mode="json")`，与 `/api/demo`
+    的 payload 同源，展示层可以直接拿去派生时间线与对照。
+    """
+    base_runtime = runtime or SkillRuntime()
+    moment = as_of if isinstance(as_of, datetime) else datetime.fromisoformat(as_of)
+    labels = list(caller_labels)
+
+    baseline_report = SkillPipeline(base_runtime).run(
+        event_id, moment, caller_labels=labels, persist=False
+    )
+    baseline = _summarise(baseline_report, base_runtime)
+    if baseline.error_code:
+        raise CounterfactualUnavailable(
+            _as_error_code(baseline.error_code),
+            f"基线不可比较：{baseline.failed_skill or '基线'} 返回 {baseline.error_code}",
+        )
+
+    with _prepare(base_runtime, interventions) as branch:
+        patched = SkillRuntime(
+            branch.data_root or base_runtime.dataset_root,
+            rules_path=branch.rules_path or base_runtime.rules_path,
+            knowledge_version=base_runtime.knowledge_version,
+        )
+        intervened_report = SkillPipeline(patched).run(
+            event_id, moment, caller_labels=labels, persist=False
+        )
+        intervened = _summarise(intervened_report, patched)
+
+    return {
+        "baseline": baseline_report.model_dump(mode="json"),
+        "intervened": intervened_report.model_dump(mode="json"),
+        "baseline_summary": baseline.model_dump(mode="json"),
+        "intervened_summary": intervened.model_dump(mode="json"),
+        "interventions": [item.describe() for item in interventions],
+        "mechanism": "临时数据集副本 + 独立 SkillRuntime 重跑整条流水线（与 CF1-CF3 同机制）",
+    }
+
+
 def _verdict(
     case: CounterfactualCase,
     before: BranchSummary,

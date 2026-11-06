@@ -20,10 +20,12 @@ from urllib.parse import parse_qs, urlparse
 from . import review_collect as reviews
 from . import visualize
 from . import web_llm
+from .counterfactual import CASES, Intervention, InterventionKind, rerun_with_interventions
 from .deduction import DistrictSignal
 from .evolution_demo import build_evolution_html, build_evolution_payload
 from .skills import SkillPipeline, SkillRuntime
 from .semantic import build_urban_semantic_store
+from .timeline import build_timeline, compare_branches
 
 EVENT_ID = "WO-20261029-007"
 AS_OF = "2026-10-29T09:40:00+08:00"
@@ -90,6 +92,72 @@ def build_demo_payload(*, event_id: str = EVENT_ID, as_of: str = AS_OF) -> dict[
     return payload
 
 
+# --- 微调度台：人工干预 → 重推演 -------------------------------------------
+#
+# 干预只走**白名单**：前端只能提交预设 id，不能提交任意补丁。补丁机制会复制数据集并改写
+# CSV，若允许外部传 target/field/value，这个端点就成了任意文件改写入口。
+INTERVENTIONS: dict[str, dict[str, Any]] = {
+    "pump-b01-off": {
+        "label": "B-01 跨区泵调不过来",
+        "hint": "把 B-01 的 2 台库存置 0（跨区调用要 40 分钟，车队被堵），看缺口怎么变",
+        "interventions": [
+            Intervention(
+                kind=InterventionKind.DATA_PATCH,
+                target="resource_inventory.csv",
+                match={"resource_id": "RES-PUMP-M-B01"},
+                field="qty_available",
+                value="0",
+                note="跨区移动泵未到位",
+            )
+        ],
+    },
+    "close-road-first": {
+        "label": "先封路、后隔离风险源",
+        "hint": "规则处置顺序对调（与 CF1 同一对补丁），看处置顺序怎么重排",
+        "interventions": list(CASES["CF1"].interventions),
+    },
+}
+
+
+def intervention_catalog() -> list[dict[str, Any]]:
+    """给页面列可点的干预项。补丁描述直接取 `Intervention.describe()`，不另写一套文案。"""
+    return [
+        {
+            "id": key,
+            "label": entry["label"],
+            "hint": entry["hint"],
+            "patches": [item.describe() for item in entry["interventions"]],
+        }
+        for key, entry in INTERVENTIONS.items()
+    ]
+
+
+def run_intervention(intervention_id: str) -> dict[str, Any]:
+    """跑一次「人工改条件 → 重推演」，返回干预后的时间线与前后对照。
+
+    两侧都现跑（临时数据集副本 + 独立 SkillRuntime），不是对基线结果做加减。
+    """
+    entry = INTERVENTIONS.get(intervention_id)
+    if entry is None:
+        raise KeyError(f"未登记的干预项: {intervention_id}")
+    result = rerun_with_interventions(
+        entry["interventions"],
+        event_id=EVENT_ID,
+        as_of=AS_OF,
+        caller_labels=["ORG-EMERG"],
+    )
+    return {
+        "id": intervention_id,
+        "label": entry["label"],
+        "patches": result["interventions"],
+        "mechanism": result["mechanism"],
+        "timeline": build_timeline(result["intervened"]),
+        "comparison": compare_branches(
+            result["baseline"], result["intervened"], interventions=result["interventions"]
+        ),
+    }
+
+
 # 注意：下面是普通 Python 字符串，不是 raw 字符串。写 JS 时**不要**用 "\n"——Python 会把它
 # 变成真实换行，从而截断 JS 的字符串字面量，整个 <script> 直接解析失败（页面看起来"按钮没反应"）。
 # 需要换行请用 String.fromCharCode(10)。`tests/test_web_demo.py` 里有 node --check 兜底。
@@ -97,7 +165,9 @@ def build_html() -> str:
     return """<!doctype html><html lang=zh-CN><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Urban Twin</title>
 <style>body{font:15px system-ui;margin:0;background:#0b1220;color:#e8eef7}main{max-width:1180px;margin:auto;padding:28px}h1{color:#7dd3fc;margin-bottom:4px}.sub{color:#9fb1c8}.toolbar{display:flex;gap:12px;align-items:center;margin:22px 0}button{background:#38bdf8;border:0;border-radius:6px;padding:10px 18px;font-weight:700;cursor:pointer}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.card{background:#152238;border:1px solid #263a55;border-radius:10px;padding:16px}.card h2{font-size:17px;margin:0 0 12px;color:#bae6fd}.metric{display:inline-block;background:#20344d;border-radius:7px;padding:10px;margin:0 8px 8px 0}.metric b{display:block;font-size:22px;color:#7dd3fc}.pill{display:inline-block;background:#334155;padding:3px 8px;border-radius:99px;margin:3px;font-size:12px}.warn{color:#fbbf24}.ok{color:#86efac}.trace{border-left:2px solid #38bdf8;padding-left:12px;margin:8px 0}.evidence{font-size:12px;color:#b8c7d9;word-break:break-all}svg{width:100%;height:330px;background:#0e1a2c;border-radius:8px}.road{stroke:#64748b;stroke-width:8}.pipe{stroke:#f97316;stroke-width:3;stroke-dasharray:7 5}.flood{fill:#38bdf8;opacity:.35}.node{fill:#fbbf24;stroke:#fff;stroke-width:2}.navlink{color:#7dd3fc;text-decoration:none;margin-left:auto;font-weight:600}@media(max-width:800px){.grid{grid-template-columns:1fr}}</style>
 <main><h1>城市内涝跨部门事件推演</h1><div class=sub>暴雨 + 道路封闭 + 地下管线施工冲突 · 证据链可追溯</div><div class=toolbar><button onclick="run()">运行演示</button><button class=ghost onclick="renderScene('v1')">渲染基线 v1</button><button class=ghost onclick="renderScene('v4')">渲染进化 v4</button><button class=ghost onclick="diffScenes()">对比两版</button><button class=ghost onclick="runLLM()">LLM 决策（DeepSeek）</button><span id=status>等待运行</span><a class=navlink href='/evolution'>决策进化对比 →</a></div><section id=summary class=card><h2>事件概览</h2><div id=metrics>点击“运行演示”加载推演结果</div></section><div class=grid><section class=card><h2>数字孪生影响范围</h2><svg viewBox='0 0 700 330' aria-label='影响范围示意图'><path class=road d='M40 260 L660 70 M40 80 L660 260'/><path class=pipe d='M80 250 L400 160 L630 150'/><ellipse class=flood cx=350 cy=165 rx=130 ry=80/><circle class=node cx=350 cy=165 r=8/><text x=365 y=160 fill='#e8eef7'>A-03 积水区</text></svg><div id=assets></div></section><section class=card><h2>跨部门协同</h2><div id=departments></div><h2>资源与风险</h2><div id=risks></div></section></div><section class=card style='margin-top:16px'><h2>推理链路与证据</h2><div id=trace></div></section>
-<style>.ghost{background:#1e3a55;color:#bae6fd}#log{max-height:360px;overflow:auto;font:12px ui-monospace,monospace}.logrow{padding:6px 8px;border-bottom:1px solid #1e3250;white-space:nowrap}.logrow .mcp{color:#86efac}.logrow .manual{color:#fbbf24}#panel{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}#comparebody{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}</style>
+<section class=card style='margin-top:16px'><h2>微调度台 · 决策时间线 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（每条都能对回推演字段）</span></h2><div class=toolbar style='margin:0 0 10px'><button onclick="playTimeline()">回放决策过程</button><span id=tlstatus class=sub>未加载</span></div><ol id=timeline class=tl></ol><div id=tlfoot class=sub style='margin-top:10px'></div></section>
+<section class=card style='margin-top:16px'><h2>人工干预 · 重新推演 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（改一个条件，系统重算并说明改了什么）</span></h2><div id=ivbtns class=toolbar style='margin:0 0 10px'></div><div id=ivout class=sub>点上面任一项，观察推演结果怎么变</div></section>
+<style>.ghost{background:#1e3a55;color:#bae6fd}#log{max-height:360px;overflow:auto;font:12px ui-monospace,monospace}.logrow{padding:6px 8px;border-bottom:1px solid #1e3250;white-space:nowrap}.logrow .mcp{color:#86efac}.logrow .manual{color:#fbbf24}#panel{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}#comparebody{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}.tl{list-style:none;padding:0;margin:0}.tl li{border-left:2px solid #263a55;padding:8px 0 8px 14px;opacity:.2;transition:opacity .35s,border-color .35s}.tl li.on{opacity:1;border-left-color:#38bdf8}.tl .hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.tl .seq{color:#64748b;font:12px ui-monospace,monospace}.tl .ttl{font-weight:700;color:#bae6fd}.tl .dsc{color:#cfe3f7;font-size:13px;margin-top:3px}.tl .mt{color:#7f93ab;font:11px ui-monospace,monospace;margin-top:5px;word-break:break-all}.tl ul.basis{margin:7px 0 0;padding-left:16px;color:#b8c7d9;font-size:12px}.tl ul.basis li{margin:2px 0;border:0;padding:0;opacity:1}.tag{font-size:11px;padding:1px 6px;border-radius:4px;background:#20344d;color:#9fb1c8}.k-conflict{color:#fbbf24}.k-gap{color:#fca5a5}.k-audit{color:#86efac}.ivbtn{background:#1e3a55;color:#bae6fd;border:0;border-radius:6px;padding:10px 14px;font-weight:700;cursor:pointer;text-align:left;max-width:330px}.ivbtn small{display:block;font-weight:400;color:#8fa4bd;font-size:11px;margin-top:4px;line-height:1.4}.row{display:flex;gap:12px;padding:5px 0;border-bottom:1px dashed #1e3250;font-size:13px}.row b{margin-left:auto;color:#7dd3fc}</style>
 <div class=grid style='margin-top:16px'>
 <section class=card><h2>当前渲染作业（UE 拉取的就是它）</h2><div id=panel>尚未渲染</div></section>
 <section class=card><h2>工具调用日志（谁触发了渲染）</h2><div id=log><span class=warn>暂无调用记录</span></div></section>
@@ -137,7 +207,28 @@ async function loadPlatform(){try{const r=await fetch('/api/platform-evidence');
  const agree=p.selected_match?'<span class=ok>与参照一致</span>':'<span class=warn>与参照不一致（真机温度未钉 0 会漂移，印证推演定优先级）</span>';
  llmcard.style.display='';
  llmbody.innerHTML='<b>Nexent 平台真机验证</b>（Agent '+esc(p.agent_name)+' · '+esc(p.case_id)+' · schema '+(p.schema_valid?'<span class=ok>合法</span>':'<span class=warn>失败</span>')+'）<br>选中 <b>'+esc(p.selected_option_id||'-')+'</b>（参照 '+esc(p.expected_option_id)+'）· '+agree+' · 时延 '+esc(p.latency_ms)+'ms<br><span class=evidence>'+esc(p.method||'')+'</span>';}catch(e){}}
-loadPlatform();loadLog();</script></html>"""
+async function playTimeline(){tlstatus.textContent='读取决策日志…';const r=await fetch('/api/timeline');const t=await r.json();const evs=t.events||[];timeline.innerHTML='';tlstatus.textContent='回放中 0/'+evs.length;
+ for(let i=0;i<evs.length;i++){const e=evs[i];
+  const li=document.createElement('li');
+  const basis=(e.basis&&e.basis.length)?'<ul class=basis>'+e.basis.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul>':'';
+  li.innerHTML='<div class=hd><span class=seq>'+String(e.seq).padStart(2,'0')+'</span><span class="ttl k-'+esc(e.kind)+'">'+esc(e.title)+'</span><span class=tag>'+esc(e.kind)+'</span><span class=tag>'+esc(e.status)+'</span></div><div class=dsc>'+esc(e.detail)+'</div><div class=mt>'+esc(e.source)+' · 证据 '+esc(e.ref_count)+' 条</div>'+basis;
+  timeline.appendChild(li);
+  await new Promise(done=>setTimeout(done,110));
+  li.classList.add('on');
+  tlstatus.textContent='回放中 '+(i+1)+'/'+evs.length}
+ tlstatus.textContent='回放完成：'+t.counts.events+' 条事件 · 冲突 '+t.counts.conflicts+' · 缺口 '+t.counts.gaps+' · 处置动作 '+t.counts.actions;
+ tlfoot.textContent='执行轨迹：'+(t.trace||[]).map(x=>x.skill+'('+x.elapsed_ms+'ms)').join(' → ')+' ｜ '+t.source}
+async function loadInterventions(){const r=await fetch('/api/interventions');const d=await r.json();ivbtns.innerHTML='';(d.entries||[]).forEach(e=>{const b=document.createElement('button');b.className='ivbtn';b.innerHTML=esc(e.label)+'<small>'+esc(e.hint)+'</small>';b.onclick=()=>doIntervene(e.id);ivbtns.appendChild(b)})}
+async function doIntervene(id){ivout.innerHTML='<span class=warn>重推演中：复制数据集、打补丁、重跑整条流水线…</span>';
+ const r=await fetch('/api/interventions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})});
+ const d=await r.json();
+ if(d.status==='error'){ivout.innerHTML='<span class=warn>'+esc(d.error)+'</span>';return}
+ const c=d.comparison;
+ const rows=[['可用移动泵',c.before.available+' → '+c.after.available+' 台'],['资源缺口',c.before.gap+' → '+c.after.gap+' 台'],['冲突集合',(c.before.conflicts.join('、')||'无')+' → '+(c.after.conflicts.join('、')||'无')],['处置动作',c.before.actions+' 条 · '+c.moved_actions.length+' 条挪位']];
+ const stmts='<ul style="margin:10px 0 0;padding-left:18px;font-size:13px;color:#cfe3f7">'+c.statements.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>';
+ const moved=c.moved_actions.length?'<div style="margin-top:10px;font-size:12px;color:#8fa4bd">挪位：'+c.moved_actions.map(m=>'#'+m.order).join('、')+'</div>':'';
+ ivout.innerHTML='<b style="color:#7dd3fc">'+esc(d.label)+'</b><div style="color:#7f93ab;font:11px ui-monospace,monospace;margin:6px 0 10px;word-break:break-all">'+esc(d.patches.join(' · '))+'</div>'+rows.map(x=>'<div class=row><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join('')+stmts+moved+'<div style="margin-top:10px;font-size:11px;color:#7f93ab">'+esc(d.mechanism)+'</div>'}
+loadPlatform();loadLog();loadInterventions();</script></html>"""
 
 
 # --- 可视化端点 -----------------------------------------------------------
@@ -345,6 +436,29 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return _json(review_payload())
     if segments[:2] == ["api", "demo"]:
         return _json(build_demo_payload())
+
+    if segments[:2] == ["api", "timeline"]:
+        # 决策事件流：从 /api/demo 同一份 payload 派生，只排顺序不重算。
+        return _json(build_timeline(build_demo_payload()))
+
+    if segments[:2] == ["api", "interventions"]:
+        if method.upper() == "POST":
+            try:
+                payload = json.loads((body or b"{}").decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                return _error("请求体不是合法 JSON", 400)
+            if not isinstance(payload, dict):
+                return _error("请求体必须是 JSON 对象", 400)
+            intervention_id = str(payload.get("id") or "").strip()
+            if not intervention_id:
+                return _error("缺少 id：先 GET 本端点取可选干预清单", 400)
+            try:
+                return _json(run_intervention(intervention_id))
+            except KeyError as exc:
+                # KeyError 的 str() 自带引号，直接拼进文案会出现两层引号
+                message = exc.args[0] if exc.args else str(exc)
+                return _error(f"干预项不可用：{message}", 404)
+        return _json({"entries": intervention_catalog()})
 
     if segments[:2] == ["api", "llm-decision"]:
         # 可选端点：配置了 DeepSeek 才会真调模型，否则返回 configured=false 优雅降级。
