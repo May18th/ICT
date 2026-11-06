@@ -215,12 +215,14 @@ uv run --locked python -m decision_poc.web_demo --port 8787
 （直接复用 `llm_ab.build_task`）生成，模型调用与 P8 A/B 同一条 `generate_decision_live` 路径，temperature 钉 0。
 
 - 未配置 `DECISION_LLM_PROVIDER=deepseek` + `DEEPSEEK_API_KEY` 时返回 `configured=false`，页面显示"未配置"，不影响其余演示；
-- 卡片顶部固定显示 Nexent 平台真机验证行（`/api/platform-evidence`，只读 `samples/nexent/live/llm_decision_platform.json`）；
-- 页面上的平台真机验证行由 `/api/platform-evidence` 只读 `samples/nexent/live/llm_decision_platform.json`，**按 JSON 实际字段展示，不要手改**。
-  当前入仓 4 条（`llm_decision_platform.json` + `run1/2/3`，2026-11-06 复测）：全部 `selected_option_id=opt-3`、`selected_match=true`。
+- 卡片顶部固定显示 Nexent 平台真机验证行（`/api/platform-evidence`，只读 `samples/nexent/live/llm_decision_platform.json`），**按 JSON 实际字段展示，不要手改**。
+  当前入仓 4 条（`llm_decision_platform.json` + `run1/2/3`，2026-11-06 复测）：全部 `selected_option_id=opt-3`、`selected_match=true`；公网页面已于 2026-11-06 18:26 重发并复核过。
   修复前同名的旧记录是 `opt-1` / `selected_match=false`（`git show e351027~1:samples/nexent/live/llm_decision_platform.json`）——
   讲这一段要讲"先错后对"：错在证据没进请求，对在补齐证据原文与职责边界之后；3/3 证明的是**服从性**，不是模型独立算出排序。
+- 卡片 `method` 那行原样取自证据 JSON：里面「不动 v10」是 11-06 记录时的原话，意思是这个 LLM 决策 Agent 独立、不占主 Agent 的版本号；
+  主 Agent 当前是 v19，别把这句话读成"平台还在 v10"。
 - 平台侧模型温度钉不住 0，重跑仍可能漂移，页面这时会如实显示不一致——不要为了好看去改 JSON。
+  改过发布包内容必须重新发布，否则公网 `platform-evidence` 仍是上一版快照（同步文件不等于已上线）。
 
 #### 公网演示地址（已发布）
 
