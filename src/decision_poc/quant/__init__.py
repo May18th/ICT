@@ -11,6 +11,7 @@ MCP 工具、Agent）只能调用这里的结果，不能自己推导公式—�
 3. 算不出来时返回 `computable=False` 且 `value=0`，并给原因——不靠推测补全。
 """
 
+from decision_poc.hydro_contracts import CurveProvenance
 from decision_poc.quant.contracts import (
     HydrographResult,
     QuantResult,
@@ -55,6 +56,7 @@ __all__ = [
     "MM_PER_H_TO_LPS_HA",
     "RAINFALL_SCENARIOS_MM_2H",
     "ClosurePlan",
+    "CurveProvenance",
     "FaultTreeResult",
     "HydrographResult",
     "MuskingumCoefficients",

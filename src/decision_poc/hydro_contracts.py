@@ -29,6 +29,24 @@ class CurveProvenance(StrictModel):
             raise ValueError("basis=real 时必须给出可定位的出处")
         return self
 
+    @classmethod
+    def assumption(cls, ref: str = "") -> "CurveProvenance":
+        """无公开口径的假设曲线；`ref` 建议写「待补：…」指明缺哪份资料。"""
+
+        return cls(basis=ProvenanceLevel.ASSUMPTION, ref=ref)
+
+    @classmethod
+    def derived(cls, ref: str) -> "CurveProvenance":
+        """由真实值按明确公式算出；`ref` 写公式或推导出处。"""
+
+        return cls(basis=ProvenanceLevel.DERIVED, ref=ref)
+
+    @classmethod
+    def real(cls, ref: str) -> "CurveProvenance":
+        """原文可定位（图纸、台账行）；`ref` 必填。"""
+
+        return cls(basis=ProvenanceLevel.REAL, ref=ref)
+
 
 class HydrographResult(StrictModel):
     """一条可复核的过程线（水位或流量随时间的离散序列）。"""
