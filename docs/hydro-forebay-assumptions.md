@@ -46,22 +46,34 @@ rows = list(csv.DictReader(open("samples/assets/urban/pump_forebay_curves.csv", 
 stages = [float(r["stage_m"]) for r in rows]
 storages = [float(r["storage_m3"]) for r in rows]
 
+DT_H = 0.01                        # 1 个时段 = 0.01 h = 0.6 min（见下方换算提醒）
+STOP_MIN = 10.0                    # 停机 10 分钟
+STOP_STEPS = round(STOP_MIN / (DT_H * 60))   # → 17 个时段，不是 10 个
+N = 60
+
+pump = [1200.0] + [0.0] * STOP_STEPS + [1200.0] * (N - 1 - STOP_STEPS)  # t0 仍在运行，之后停机再复机
+
 hydrograph = level_pool_route(
-    inflow_m3h=[1200.0] * 21,      # 来水过程线（这里按额定能力 1200 m³/h 示例）
-    dt_h=0.01,
+    inflow_m3h=[1200.0] * N,       # 来水过程线（这里按额定能力 1200 m³/h 示例）
+    dt_h=DT_H,
     stage_m=stages,
     storage_m3=storages,
     initial_stage_m=0.0,
-    pump_outflow_m3h=0.0,          # 停机：抽排为 0
+    pump_outflow_m3h=pump,
 )
-print(time_to_level(hydrograph=hydrograph, target_level_m=2.4).value)  # 到警戒水位的小时数
+print(hydrograph.peak, hydrograph.peak_time_h)                        # 2.04 m @ 0.18 h
+print(time_to_level(hydrograph=hydrograph, target_level_m=2.4).computable)  # False：全程未到警戒
 ```
+
+> **时长换算提醒（踩过一次的坑）**：`dt_h=0.01` 表示每时段 0.6 分钟，所以「10 分钟」是 **17 个时段**，
+> 「10 个时段」只有 6 分钟。写停机时长时一律用 `分钟 / (dt_h × 60)` 换算，别把步数当时长——
+> 本轮初稿就是把 10 个时段当成 10 分钟，峰值被低估了近一半（1.20 m vs 实际 2.04 m）。
 
 ## 5 演示算例（数字来自上面这条链路实算，非手写）
 
 | 算例 | 输入 | 结果 |
 | --- | --- | --- |
-| 停机 10 分钟后复机 | 来水 1200 m³/h、dt=0.01 h | 峰值 **1.20 m**（0.11 h），未到 2.4 m 警戒 → 10 分钟内的短时停机可容忍 |
+| 停机 10 分钟后复机 | 来水 1200 m³/h、dt=0.01 h、停机 17 个时段（=10.2 min） | 峰值 **2.04 m**（0.18 h），未到 2.4 m 警戒，但只剩 **0.36 m** 余量 → 短时停机可容忍，窗口只有约 10 分钟（12 分钟即到警戒） |
 | 持续停机 | 来水 1200 m³/h | **12 min** 到警戒（2.4 m）、**15 min** 满溢（3.0 m）；越过池顶后模块返回 `uncomputable`，不截断 |
 | 持续停机（按 A 区设计来水） | 来水 11138.4 m³/h | **1.3 min** 到警戒、**1.6 min** 满溢 —— 前池对该量级来水几乎没有缓冲 |
 
