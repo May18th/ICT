@@ -55,8 +55,12 @@ uv run --locked python -m decision_poc.skills --manifest > samples/nexent/skills
    平台界面截图见 `docs/reports/captures/nexent/skill-space.png`。
    现状（2026-11-06 实测）：技能**已绑定到 `urban_deduction_agent`**，草稿 `version_no=0` 与已发布版本
    （v6–v19）都是 `enabled=true`；只读复核命令 `bind_skills.py status` 可直接列出逐版本实例。
-   但要说清运行时作用：实测模型不会主动读技能文档，它读的是"挂了哪些工具"，
-   所以技能绑定不改变工具调用行为，口径只能到"已绑定、可在平台浏览与复用"。
+   但要说清运行时作用，分三层，别压成一句：平台会注入每份 enabled 技能的
+   `name` + `description`（`<available_skills>` 块，见
+   `Nexent/sdk/nexent/core/agents/context/formatting.py:124-144`）；正文要调
+   `read_skill_md` 才进 prompt（同文件 `:146`）；主 Agent 提示词显式禁止了该调用
+   （`deploy/nexent/setup_nexent.py:96`），所以本轮运行没有读取正文。
+   口径到"已绑定、`description` 参与任务理解"，不到"平台按技能正文执行流程"。
 
 真机验证用 `python -m decision_poc.nexent_urban`（8 项与离线结论比对，不是"返回 JSON 就算过"）。
 完整步骤、证据清单与验收见 [集成设计](../../docs/nexent-urban-integration-design.md)。
