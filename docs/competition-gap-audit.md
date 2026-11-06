@@ -35,7 +35,7 @@
 | ② 低资源 KG 本体半自动构建 | 种子本体 → 规则抽取 → 置信度分档 → 人工确认 → 版本发布/回滚；P3 报告实测（改 1 格 → 2 条候选、回滚哈希逐位一致）`[已核实]` | 候选抽取是**规则+词典基线**，没有与 LLM 抽取对比的"低资源"量化（少样本 vs 全监督） | 低 |
 | ③ MCP / Skills 编排 | 14 个 MCP 工具（9 决策语义含 `allocation_plan`，4 可视化 `scene_render`/`scene_status`/`scene_compare`/`asset_lookup`）+ 5 Skill 编排 + 绑定表；**Nexent 真机已由平台 Agent 调用 MCP 工具**（`event_deduce`/`allocation_plan`/`scene_render`，见真机报告）；**2 个 SKILL.md 已上传平台技能仓库**（skill_id=2/3，正文逐位一致，见 `samples/nexent/live/skills.json` + `captures/nexent/skill-space.png`）`[已核实]` | 技能只在仓库里可浏览，**未绑定到已发布 Agent**（平台要求草稿态建技能实例）；编排仍以单 Agent 调工具为主 | 中（原"高"已降） |
 | ④ 跨文档多跳推理与可溯源 | 六跳推演 + 三类冲突 + 反事实 + 哈希链账本 + 变更传播影响分析；引用完整率 100%、篡改可定位 `[已核实]` | 跨部门只覆盖 A-03/B-01 两片区，场景宽度偏窄 | 低 |
-| ⑤ **基于 Nexent 可运行** | **已补齐**：Nexent v2.7.0 上注册 14 个 MCP 工具（tool_id 41–53、86），创建并发布 Agent `urban_deduction_agent`（agent_id=3，**v18**），真机对话**六跳结论与离线 8/8 一致**（conversation_id=119，2026-11-06 复测），平台调用日志 2 次 `event_deduce` 与本轮一一对应；2 个技能已上传并**已绑定到该 Agent**（草稿 + 已发布版本均 enabled）；平台界面截图三张（技能/智能体/MCP 连通性校验）`[已核实：`samples/nexent/live/` + `docs/reports/captures/nexent/`]` | 仅本机 Docker 单环境、单事件；模型作答协议不稳定（需提示词约束 + 协议层重试）；真实问答录屏仍待补 | 低（原"最高"已解除） |
+| ⑤ **基于 Nexent 可运行** | **已补齐**：Nexent v2.7.0 上注册 14 个 MCP 工具（tool_id 41–53、86），创建并发布 Agent `urban_deduction_agent`（agent_id=3，**v19**，模型 DeepSeek-Chat），真机对话**六跳结论与离线 8/8 一致**（conversation_id=120，2026-11-06 复测），平台调用日志 1 次 `event_deduce` 与本轮一一对应；2 个技能已上传并**已绑定到该 Agent**（草稿 + 已发布版本均 enabled）；平台界面截图三张（技能/智能体/MCP 连通性校验）`[已核实：`samples/nexent/live/` + `docs/reports/captures/nexent/`]` | 仅本机 Docker 单环境、单事件；模型作答协议不稳定（需提示词约束 + 协议层重试）；真实问答录屏仍待补 | 低（原"最高"已解除） |
 
 结论：原"唯一可能一票否决"的考点⑤已补齐（真机 8/8 + 工具调用日志 + conversation_id）。
 剩余高风险项转移到**参赛形态**：模板 1 未按官方版式产出、开源截图/复现材料未整备、真实用户评分与 PPT/视频缺失。

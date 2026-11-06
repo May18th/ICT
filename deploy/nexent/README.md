@@ -2,8 +2,8 @@
 
 把本仓库的城市孪生 MCP 服务接入本机 Nexent v2.7.0，并验证"平台 Agent 调 MCP 工具 → 六跳结论与离线一致"。
 
-已验证结果（2026-11-06 复测，Agent **v18**）：**8/8 项一致，conversation_id=119**，平台实际调用 `event_deduce` 2 次，
-工具日志与本轮一一对应（`samples/nexent/live/mcp_tool_log.jsonl` 仅 2 行，快照 `d102aa80…`）。
+已验证结果（2026-11-06 复测，Agent **v19**，模型 **DeepSeek-Chat**）：**8/8 项一致，conversation_id=120**，平台实际调用 `event_deduce` 1 次，工具日志与本轮一一对应（`samples/nexent/live/mcp_tool_log.jsonl` 仅 1 行，快照 `d102aa80…`）。
+> 模型切换原因：openPangu-2.0-Pro 走华为 ModelArts，2026-11-06 因账户欠费停服，改为平台已注册的 DeepSeek-Chat（`https://api.deepseek.com/v1`，独立计费）。切换后深度思考段消失，同一提示词下一轮即通过，作答预算也从 16384 回调到 8192。
 完整过程与排障见 [真机集成报告](../../docs/reports/nexent-live-integration-report.md)。
 
 ## 0 前置

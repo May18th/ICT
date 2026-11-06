@@ -1,7 +1,7 @@
 {
   "schema_version": "nexent-live-evidence-1",
   "nexent_base_url": "http://localhost:5013",
-  "conversation_id": 119,
+  "conversation_id": 120,
   "agents": [
     {
       "name": "urban_llm_decision_agent",
@@ -13,15 +13,15 @@
     {
       "name": "urban_collab_agent",
       "display_name": "城市内涝应急协同总控",
-      "model_name": "openPangu-2.0-Pro",
-      "current_version_no": 6,
+      "model_name": "DeepSeek-Chat",
+      "current_version_no": 7,
       "version_name": "urban-collab-v1"
     },
     {
       "name": "urban_deduction_agent",
       "display_name": "城市内涝跨部门决策智能体",
-      "model_name": "openPangu-2.0-Pro",
-      "current_version_no": 18,
+      "model_name": "DeepSeek-Chat",
+      "current_version_no": 19,
       "version_name": "urban-mcp-v3"
     }
   ],
@@ -29,30 +29,19 @@
     {
       "error_code": null,
       "knowledge_version": "kb-v1.0.0",
-      "latency_ms": 23,
+      "latency_ms": 28,
       "origin": "mcp",
       "snapshot_hash": "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891",
       "status": "ok",
       "tool": "event_deduce",
       "trace_id": null,
-      "ts": "2026-11-06T09:08:06+0000"
-    },
-    {
-      "error_code": null,
-      "knowledge_version": "kb-v1.0.0",
-      "latency_ms": 14,
-      "origin": "mcp",
-      "snapshot_hash": "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891",
-      "status": "ok",
-      "tool": "event_deduce",
-      "trace_id": null,
-      "ts": "2026-11-06T09:10:21+0000"
+      "ts": "2026-11-06T09:20:43+0000"
     }
   ],
   "tool_log": {
     "path": "samples\\nexent\\live\\mcp_tool_log.jsonl",
-    "lines": 2,
-    "file_mtime": "2026-11-06T17:10:21",
+    "lines": 1,
+    "file_mtime": "2026-11-06T17:20:43",
     "container_started_at": "2026-11-06T08:22:30.771082027Z",
     "snapshot_hashes": [
       "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891"

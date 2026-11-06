@@ -196,3 +196,21 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 3. **LLM 决策 Agent（DeepSeek）**：3 次实测均 `selected_match=false`（期望 opt-3，实际 opt-2×2、opt-1×1）。
    证据池 8 个槽位被 `action_priority:1..7` 占满，模型看得到排序却看不到支撑证据，于是按"积水 30cm 已过 25cm 阈值"
    自行选了 opt-2。属证据池设计问题，不是模型随机性，下一轮单独修。
+
+## 2026-11-06 追加：openPangu 欠费，主/协同 Agent 切到 DeepSeek-Chat（v19 / v7）
+
+当天华为 ModelArts 账户欠费，`openpangu-2.0-pro`（model_id=2）停服，真机请求直接失败。
+平台已注册的可用对话模型只剩 `deepseek-chat`（model_id=5，`https://api.deepseek.com/v1`，独立计费），
+因此把 `MODEL_IDS` 默认值从 `2` 改成 `5`，重新发布主 Agent v19、协同 Agent v7。
+
+| 项 | openPangu（v18） | DeepSeek-Chat（v19） |
+| --- | --- | --- |
+| 结论一致性 | 8/8 | **8/8** |
+| conversation_id | 119 | **120** |
+| 协议层重试 | 偶发需要（``` 围栏 / 超长思考） | **未触发**（`attempts=1`） |
+| 作答预算 | 16384（思考占用预算） | 8192（无思考段，够用） |
+| 工具调用次数 | 2 次 `event_deduce` | **1 次** `event_deduce` |
+
+结论：换模型没有改变结论一致性，也印证了前面的判断——8/8 靠的是"MCP 工具返回的事实 + 提示词约束"，
+不是某个模型的运气。副作用要记住：**模型名进了对外材料**（v18 是 openPangu，v19 起是 DeepSeek-Chat），
+引用旧截图/旧报告时不能再说"当前用 openPangu"。
