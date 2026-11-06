@@ -24,5 +24,5 @@
 
 ```text
 pytest：803 passed
-evidence_check：106/106，指纹 a60477b1f24dcfa9
+evidence_check：106/106，指纹 6484b6add7571a85
 ```
