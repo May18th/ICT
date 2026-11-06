@@ -12,6 +12,15 @@ dependencies = [
     "pydantic-ai-slim==2.61.0",
 ]
 
+[build-system]
+# 只用于把 src/ 装成 editable：`uv sync` 之后 `python -m decision_poc.*` 才可用。
+# 不发布 wheel——samples/ 是仓库数据，不在包里（DEFAULT_DATASET_ROOT 按源码路径回推仓库根）。
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/decision_poc"]
+
 [dependency-groups]
 dev = ["pytest==9.1.1"]
 # 可选：真实语言模型（DeepSeek）需要的 OpenAI SDK；默认 `uv sync --locked` 不安装
@@ -22,4 +31,6 @@ pythonpath = ["src"]
 testpaths = ["tests"]
 
 [tool.uv]
-package = false
+# 2026-11-07 由 false 改 true：false 时 `python -m decision_poc.web_demo` 直接报
+# ModuleNotFoundError，README 里所有 `uv run ... -m decision_poc.xxx` 命令都是错的。
+package = true
