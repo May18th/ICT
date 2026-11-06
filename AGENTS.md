@@ -74,12 +74,26 @@
      `docs/competition/presentation-closure-report.md`、`docs/innovation-and-evidence.md`、`docs/README.md`、
      各 design/spec 文档、`scripts/build_preliminary_docx.py`；
    - `scripts/reproduce.py` 的自检 `expect`（写死 `X/X`）与步骤数；
+   - 二进制交付物（`.pptx` / `.docx`）：能重跑生成器就重跑；不能重跑时在
+     `tests/test_office_deliverables.py` 的 `STALE_SNAPSHOTS` 登记并在 `delivery-status` 标注时点；
    - 重新生成 `docs/reports/evidence-check-report.md`（勿手改）。
 3. **验收只有两条**：`git status` 干净 + `python -m decision_poc.evidence_check` 输出当前口径
-   （当前 `108/108`，指纹 `666d3d3c1325083d`）。**不看文档里的旧数字**，也不允许为过检放宽期望。
+   （当前 `108/108`，指纹 `fbdf58b3fefab7b1`）。**不看文档里的旧数字**，也不允许为过检放宽期望。
 
 全仓扫旧数字时注意 `Get-ChildItem -Recurse`：`docs/**/*.md` 这种通配只匹配一层，
 `docs/superpowers/specs/` 这类深目录容易漏扫。
+
+**二进制交付物（`.pptx` / `.docx`）同样受守卫约束**。它们里面的数字不在 `.md`/`.py` 里，
+人只有打开文件才看得到，最容易一路带到评委手里。`tests/test_office_deliverables.py`
+用 `zipfile` 直接读容器内 XML 的文本节点（`ppt/slides/slideN.xml`、`word/document.xml`），
+套同一套 `PATTERNS`，不引入 `python-docx` / `python-pptx`：
+
+- **当前交付物**：数字必须等于权威源；
+- **已登记快照**（`STALE_SNAPSHOTS`）：必须等于**登记时的旧值**。旧值也被钉住——再漂一次
+  （既不是当前值也不是登记值）就红；哪天重跑生成器更新到当前口径，
+  `test_stale_entries_are_still_stale` 会要求删掉登记。
+- 重跑生成器需要 `python-pptx` / `python-docx` / `Pillow`（**非默认依赖**）。不要为了过检临时装包：
+  要么在带这些依赖的环境里跑，要么保持登记 + 在 `delivery-status` 标注"数字为某日当时"。
 
 ## 运行 reproduce 后的噪声处理
 

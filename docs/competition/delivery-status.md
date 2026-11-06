@@ -17,8 +17,8 @@
 
 | 交付物 | 官方要求 | 现状 | 状态 | 证据 / 路径 | 阻塞方 | 下一步验收标准 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 模板 1 作品信息收集表（Word） | 初赛唯一提交物，需按官方版式 | 内容稿已成稿并可重生成（六页：五考点/数据集/关键代码/指标/截图/边界），**官方版式未套** | 部分完成 | `docs/competition/初赛作品信息收集表-内容稿-v0.1.docx`；`scripts/build_preliminary_docx.py` | 用户侧（官方模板原文未入仓） | 套官方模板后导出 PDF，逐项对照官方要求打勾 |
-| 项目 PPT（初赛） | 覆盖背景/价值/创新/数据/代码/指标 | **无任何 `.pptx`** | 未开始 | 全仓 `*.pptx` 检索为空 | 我方 | 10 页内，含主线三卖点 + 一屏业务价值 + 负例截图 |
+| 模板 1 作品信息收集表（Word） | 初赛唯一提交物，需按官方版式 | 内容稿已成稿并可重生成（六页：五考点/数据集/关键代码/指标/截图/边界），**官方版式未套**。**内含数字是 2026-11-05 当时的值**（639 项 / 106 项自检 / 13 工具 / v10 / conversation_id=78 / 旧指纹） | 部分完成（内容成稿，口径待重生成） | `docs/competition/初赛作品信息收集表-内容稿-v0.1.docx`；`scripts/build_preliminary_docx.py`（已是新口径 839/108/14 工具/v19/120） | 用户侧（官方模板原文未入仓） | 套官方模板后重跑生成器再导出 PDF，逐项对照官方要求打勾 |
+| 项目 PPT（初赛） | 覆盖背景/价值/创新/数据/代码/指标 | 已有 `初赛答辩-PPT-v0.1.pptx`（10 页，脚本生成）。**内含数字是 2026-11-05 当时的值**（776 测试 / 106 项自检 / 16 资产 / openPangu-2.0-Pro），提交前必须重跑 `scripts/build_answer_ppt.py` | 部分完成（内容成稿，口径待重生成） | `docs/competition/初赛答辩-PPT-v0.1.pptx`；`scripts/build_answer_ppt.py`（已是新口径 839/108/v19） | 我方 | 重跑生成器换成当前口径后再提交；重跑需 `python-pptx`+`Pillow`，非默认依赖 |
 | 模板 2 答辩 PPT | 决赛 | 无 | 未开始 | — | 我方 | 进决赛后再做，初赛不投入 |
 | 公网 Demo 地址 | 可访问演示地址 | 已发布：`https://urban-twin-demo.app.workbuddy.host/?sharecode=K4MXY6WYTS`（发布包 `agent_poc/deploy-webdemo/`，**是裁剪子集不是逐字节镜像**：`src` 60/64 个模块，只留 Web Demo 依赖；`samples` 只含演示用证据，其中 `agents.json` 仍是 openPangu） | 已完成（证据已于 2026-11-06 18:26 重发） | 重发后复核：`/api/platform-evidence` 返回 `selected_option_id=opt-3`、`selected_match=true`、`task_digest=5d4831eefce82361`、`generated_at=2026-11-06T17:33:28+08:00`，响应体 2401→2993 B；`/`、`/evolution`、`/api/demo`、`/api/llm-decision` 仍全 200，`/api/llm-decision` 真调 DeepSeek 命中 `opt-3`（t=0、约 4.1s） | — | 用**完整含 `?sharecode=`** 的链接在真实浏览器打开并录屏（卡片内嵌预览不带 sharecode，会显示 Not Found，属已知限制） |
 | 完整代码 + 数据集 | 可复现、开源 | 已推 `origin/main`；`LICENSE`（MIT）、`scripts/reproduce.py` 均在仓 | 已完成 | `git log -1`；`LICENSE`；`scripts/reproduce.py` | — | 干净 clone 后按 README 跑 `reproduce.py` 全绿 |
@@ -87,7 +87,7 @@
 | 评测用例 | `python -m decision_poc.urban_eval` | "用例 22/22 通过；六跳 100%，引用完整 100%，检索命中 100%；资产解析 19/19" |
 | 策略进化 | `python -m decision_poc.policy_evolution` | "训练 0.2264→0.0000；留出 0.2182→0.0000；轮次 3（采纳 2 / 拒绝 1）；第二会话起点 0.0000、轮次 1；真实事件 A-03 4→5、B-01 2→1" |
 | 对外数字自检 | `python -m decision_poc.evidence_check` | "108/108 项一致（期望指纹以命令输出为准）" |
-| 产物存在性 | `Get-ChildItem` | `LICENSE`(MIT)、`docs/competition/初赛作品信息收集表-内容稿-v0.1.docx`、`docs/reports/captures/` 9 个证据文件均在；**全仓无 `.pptx`**；**无 `reviews/` 数据** |
+| 产物存在性 | `Get-ChildItem` | `LICENSE`(MIT)、`docs/competition/初赛作品信息收集表-内容稿-v0.1.docx`、`docs/competition/初赛答辩-PPT-v0.1.pptx`、`docs/reports/captures/` 9 个证据文件均在；**无 `reviews/` 数据** |
 | 平台环境 | `docker ps` + 端口探测 | Nexent 全栈在线（northbound/elasticsearch/postgresql/web 等 Up）；`127.0.0.1:8787` 与 `:3000` 可连 |
 | ActionCard 字段 | 读 `src/decision_poc/collab/contracts.py` | 8 项里实现 4 项（责任部门经 `agent_id`→`ROLES` 解析、动作、证据来源、联合签发）；缺 4 项（最晚执行时间、所需资源绑定、前置条件填充、验收口径） |
 | 场景 v2 标定 | 读 `docs/reports/p12-scenario-v2-calibration-report.md` | 倒灌口径可落地（堰流 2,326 m³/h）；泵站按 v2 字面替换会把缺口 1→0 并摧毁 C3/P9 叙事，报告已固化为测试，**替换方案待用户裁决** |
