@@ -3,7 +3,8 @@
 - 日期：2026-11-05
 - 数据文件：`samples/assets/urban/pump_forebay_curves.csv`
 - 用途：给 P13 简化水动力演进（`level_pool_route`）提供"泵站停机后水位过程线"所需的**库容曲线输入**
-- 状态：**假设值，未经图纸/实测核实**；本轮只补输入数据，不接入六跳默认口径
+- 状态：**假设值，未经图纸/实测核实**；已注册为数据集资产（`forebay_curve`，资产数 18→19），
+  来源级别由 CSV 的 `value_basis` 驱动，不接入六跳默认口径
 
 ## 1 为什么需要它
 
@@ -36,34 +37,36 @@ P13 的 `level_pool_route` 需要一个"水位 → 容积"关系才能算水位�
 
 每一步都是假设，**不是**设计值、不是实测值，也不来自任何一份台账原文。
 
-## 4 怎么用（当前：手动输入模型）
+## 4 怎么用（走 loader：来源自动带上）
 
 ```python
-import csv
 from decision_poc.quant import level_pool_route, time_to_level
+from decision_poc.urban_dataset import load_forebay_curves
 
-rows = list(csv.DictReader(open("samples/assets/urban/pump_forebay_curves.csv", encoding="utf-8")))
-stages = [float(r["stage_m"]) for r in rows]
-storages = [float(r["storage_m3"]) for r in rows]
+curve = load_forebay_curves()["DF-PS-01"]   # stage_m / storage_m3 / warning_stage_m / provenance 一起回来
 
 DT_H = 0.01                        # 1 个时段 = 0.01 h = 0.6 min（见下方换算提醒）
 STOP_MIN = 10.0                    # 停机 10 分钟
 STOP_STEPS = round(STOP_MIN / (DT_H * 60))   # → 17 个时段，不是 10 个
 N = 60
-
 pump = [1200.0] + [0.0] * STOP_STEPS + [1200.0] * (N - 1 - STOP_STEPS)  # t0 仍在运行，之后停机再复机
 
 hydrograph = level_pool_route(
     inflow_m3h=[1200.0] * N,       # 来水过程线（这里按额定能力 1200 m³/h 示例）
     dt_h=DT_H,
-    stage_m=stages,
-    storage_m3=storages,
+    stage_m=curve.stage_m,
+    storage_m3=curve.storage_m3,
     initial_stage_m=0.0,
     pump_outflow_m3h=pump,
+    storage_provenance=curve.provenance,   # ← 只把来源原样传下去，不自己写 assumption/real
 )
-print(hydrograph.peak, hydrograph.peak_time_h)                        # 2.04 m @ 0.18 h
-print(time_to_level(hydrograph=hydrograph, target_level_m=2.4).computable)  # False：全程未到警戒
+print(hydrograph.assumptions[-1])          # 库容来源：assumption｜待补：DF-PS-01 前池竣工图/设计图
+print(hydrograph.peak, hydrograph.peak_time_h)                                                  # 2.04 m @ 0.18 h
+print(time_to_level(hydrograph=hydrograph, target_level_m=curve.warning_stage_m).computable)     # False：全程未到警戒
 ```
+
+**不要**自己读 CSV 拼数组再手写来源级别——数值和 `value_basis` 一旦各说一套，就是这次资产化要堵的漏。
+需要曲线形状时可以读 `curve.stage_m` / `curve.storage_m3`，但来源只认 `curve.provenance`。
 
 > **时长换算提醒（踩过一次的坑）**：`dt_h=0.01` 表示每时段 0.6 分钟，所以「10 分钟」是 **17 个时段**，
 > 「10 个时段」只有 6 分钟。写停机时长时一律用 `分钟 / (dt_h × 60)` 换算，别把步数当时长——
@@ -83,30 +86,31 @@ print(time_to_level(hydrograph=hydrograph, target_level_m=2.4).computable)  # Fa
 **敏感性**：等截面假设下，到阈时间与 `plan_area_m2 × 有效水深` 成反比；面积或水深假设偏差 20%，
 到阈时间同量级偏差约 20%。所以这些数字只能用于量级与排序，不能当成实测预警提前量。
 
-## 6 为什么本轮没有注册进 `URBAN_ASSETS`
+## 6 已注册进 `URBAN_ASSETS`（2026-11-06 资产化）
 
-`src/decision_poc/urban_dataset.py` 的 `URBAN_ASSETS` 是显式清单，注册后会连锁改变三处冻结口径：
+`src/decision_poc/urban_dataset.py` 的 `URBAN_ASSETS` 是显式清单。资产化一次改全的四处口径：
 
-- `samples/assets/urban/manifest.json` 资产数 18 → 19；
-- `evidence_check` 的 `p8_eval.assets_parsed / assets_total`（18/18）随之漂移；
-- `docs/gate` 事实数与 `data-gate-report.md` 需要重生成。
+| 项 | 变化 |
+| --- | --- |
+| 资产数 | `manifest.json` 18 → **19**（新增 `forebay_curve` 类型 1 份） |
+| 资产解析 | `p8_eval.assets_parsed / assets_total` 18/18 → **19/19**（`samples/eval/latest.json` 与 p8 报告一并重生成） |
+| 门禁事实 | `data_gate` 新增 `pump:DF-PS-01/forebay_effective_volume_m3` = 300 m³、来源 `assumption`，事实数 69 → **70**（`FACTS_TOTAL` 与期望文件同步） |
+| 来源级别 | 由数据层 `load_forebay_curves()` 从 CSV 的 `value_basis` 直接读出，**不在这里二次声明**；"登记级别 == CSV 级别"由 `test_data_gate_fact_level_follows_csv_basis` 守住 |
 
-按 AGENTS.md「对外数字：单一 owner + 一次性同步」，这属于另一次需要一次性改全的变更。
-本轮按约定**只补输入数据、不碰对外数字**，因此文件放在台账目录里但暂不注册；
-`test_committed_manifest_is_current` 只校验已注册资产，因此该文件不会被当成资产。
+**资产化真正要解决的问题不是"把文件加进清单"，而是堵住"数字换了、来源没换"**：
 
-**下一轮把它变成正式资产时需要一次做完的事**：
+1. 唯一真源是 CSV 的 `value_basis` 列；
+2. `load_forebay_curves()` 返回 `ForebayCurve(stage_m, storage_m3, warning_stage_m, provenance)`，
+   调用方不需要、也不允许自己再写 `assumption` / `real`；
+3. 把 `curve.provenance` 原样传给 `level_pool_route(storage_provenance=...)`，来源随过程线
+   一路走到 `time_to_level` 的 `assumptions`（固定前缀行 `库容来源：<basis>｜<ref>`）；
+4. 最后一跳由 `test_loader_provenance_reaches_water_level_chain` 守住：只给设施号，
+   算出来的到达时刻仍带「库容来源：assumption｜待补：DF-PS-01 前池竣工图/设计图」。
 
-1. `urban_dataset.py` 增 `UrbanAssetSpec`（含 doc_type / 版本 / 治理字段）；
-2. 重新生成 `samples/assets/urban/manifest.json`；
-3. 在 `data_gate.py` 增加 `forebay` 类事实并更新 `tests/test_data_gate.py` 的 `FACTS_TOTAL`；
-4. 同步 `evidence_check` 的资产数与指纹，按单一 owner 一次改全；
-5. 把 `tests/test_hydro_forebay_data.py` 里"尚未注册"那条守卫**反过来写**（该测试已提前落地，见下）。
-
-**负例守卫已提前落地**：`tests/test_hydro_forebay_data.py`（4 项）现在就能断言
-逐行 `value_basis=assumption`、来源可追（"待补"）、曲线自洽（容积 = 面积×水位）、
-挂靠设施在排水台账内且为泵站，并且该文件**尚未注册为数据集资产**——
-这样即使将来有人把假设值当实测值往材料里写，或者悄悄注册资产，测试会先红。
+**补齐实测资料后要做的只剩两件**：换 CSV 的数值与 `value_basis` / `source_ref`，然后跑
+`python -m decision_poc.urban_dataset`、`python -m decision_poc.urban_eval --report ...`、
+`python -m decision_poc.evidence_check`。模型、契约、测试都不用改——守卫会随 `value_basis`
+自动放行实测曲线（见 `tests/test_hydro_forebay_data.py` 文件头说明）。
 
 ## 7 待核实清单（补齐后即可从"假设输入"变成"实测输入"）
 

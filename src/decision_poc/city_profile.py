@@ -264,6 +264,13 @@ ALIASES: dict[str, tuple[str, ...]] = {
     "open_water_area_m2": ("敞口汇水面积(m2)", "敞口面积(m2)"),
     "has_pump_room": ("独立泵房", "是否有泵房"),
     "close_threshold_m": ("封控水深阈值(m)", "封控阈值(m)"),
+    # 前池库容曲线（DF-PS-01）：水位—容积成套字段，缺一个就只能说"曲线不可用"
+    "stage_m": ("水位", "前池水位", "池水位(m)"),
+    "storage_m3": ("容积", "库容", "调蓄容积(m3)"),
+    "plan_area_m2": ("水面面积", "池面积", "水平投影面积(m2)"),
+    "warning_stage_m": ("警戒水位", "警戒水位(m)"),
+    "value_basis": ("来源级别", "数据级别"),
+    "source_ref": ("依据出处", "原文出处"),
 }
 
 FLOAT_COLUMNS = frozenset(
@@ -281,6 +288,10 @@ FLOAT_COLUMNS = frozenset(
         "opening_width_m",
         "open_water_area_m2",
         "close_threshold_m",
+        "stage_m",
+        "storage_m3",
+        "plan_area_m2",
+        "warning_stage_m",
     }
 )
 INT_COLUMNS = frozenset({"lanes", "diameter_mm", "install_year", "qty_available", "speed_kmh", "pump_units", "failed_units"})
@@ -303,6 +314,10 @@ UNITS: dict[str, str] = {
     "opening_width_m": "m",
     "open_water_area_m2": "m2",
     "close_threshold_m": "m",
+    "stage_m": "m",
+    "storage_m3": "m3",
+    "plan_area_m2": "m2",
+    "warning_stage_m": "m",
 }
 
 

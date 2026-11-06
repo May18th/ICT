@@ -47,6 +47,7 @@ from pydantic import Field
 from .city_profile import UNITS
 from .contracts import ProvenanceLevel, StrictModel
 from .governance import ErrorCode
+from .urban_dataset import FOREBAY_CURVE_FILE, load_forebay_curves
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATASET_ROOT = REPO_ROOT / "samples" / "assets" / "urban"
@@ -368,6 +369,26 @@ def build_facts(
                 defaults=defaults,
             )
             add(fact, used)
+
+    # 前池库容：来源级别由数据层 loader 从 CSV 的 value_basis 读出（唯一真源），
+    # 这里只登记"曲线上限容积"一条事实；换图纸后曲线与级别一起换，不会各说一套
+    for facility_id, curve in load_forebay_curves(base).items():
+        add(
+            DataFact(
+                fact_id=f"pump:{facility_id}/forebay_effective_volume_m3",
+                entity_id=f"pump:{facility_id}",
+                field="forebay_effective_volume_m3",
+                value=round(curve.effective_volume_m3, 3),
+                unit="m³",
+                provenance=curve.provenance.basis,
+                basis=(
+                    f"前池库容曲线上限；曲线来源 {curve.provenance.basis.value}"
+                    f"（{curve.provenance.ref or '无出处'}），补齐图纸后须重算"
+                ),
+                dataset_ref=FOREBAY_CURVE_FILE,
+            ),
+            used_default=False,
+        )
 
     # 管线：埋深与管径；埋深用于反算管底高程
     for line, row in _read_rows(base, "pipeline_ledger.csv"):
