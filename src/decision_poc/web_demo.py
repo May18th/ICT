@@ -20,8 +20,9 @@ from urllib.parse import parse_qs, urlparse
 from . import review_collect as reviews
 from . import visualize
 from . import web_llm
+from .collab import orchestrate
 from .counterfactual import CASES, Intervention, InterventionKind, rerun_with_interventions
-from .deduction import DistrictSignal
+from .deduction import DeductionEngine, DistrictSignal
 from .evolution_demo import build_evolution_html, build_evolution_payload
 from .skills import SkillPipeline, SkillRuntime
 from .semantic import build_urban_semantic_store
@@ -90,6 +91,59 @@ def build_demo_payload(*, event_id: str = EVENT_ID, as_of: str = AS_OF) -> dict[
     payload = report.model_dump(mode="json")
     payload["evidence"] = payload.get("audit", {}).get("claims", [])
     return payload
+
+
+def collab_review(*, event_id: str = EVENT_ID, as_of: str = AS_OF) -> dict[str, Any]:
+    """协同层复核：把同一次推演交给「1 总控 + 5 部门」编一遍动作卡。
+
+    为什么单独一个端点而不是塞进时间线
+    ----------------------------------
+    `timeline` 的事件条数与顺序是测试钉死的形状（六跳 6 条 + 冲突 3 条 + 缺口 + 动作 + 审计），
+    往里加一类事件会让"固定形状"这条不变量失效。复核是**并联**环节：它读同一份推演，
+    产出的是角色动作卡与交接，不是推演的第 7 跳。
+
+    `orchestrate()` 是纯函数且只读 `DeductionResult`，因此这个端点**不改变任何冻结数字**——
+    六跳、三类冲突、缺口 2 台都由 `/api/demo` 说了算，这里只回答"这些结论落到部门头上长什么样"。
+    复核用的是和推演同源的 `DeductionEngine`（同一 event_id / as_of，确定性重跑），
+    拿的是原始 `DeductionResult` 而不是页面投影 `DeductionView`——后者没有 `steps`，编排层不认。
+    """
+    deduction = DeductionEngine.load().deduce(event_id, as_of=as_of)
+    result = orchestrate(deduction)
+    cards = [
+        {
+            "card_id": card.card_id,
+            "agent_id": card.agent_id,
+            "stage": card.stage,
+            "action": card.action,
+            "status": str(card.status),
+            "targets": list(card.targets),
+            "co_sign_required": list(card.co_sign_required),
+            "evidence_count": len(card.evidence_refs),
+            "claim_count": len(card.claim_ids),
+            "no_action_reason": card.no_action_reason,
+        }
+        for card in result.cards
+    ]
+    return {
+        "status": "ok",
+        "event_id": result.event_id,
+        "counts": {
+            "cards": len(result.cards),
+            "agents": len(result.covered_agents),
+            "handoffs": len(result.handoffs),
+            "co_sign_pairs": len(result.co_sign_pairs),
+            "violations": len(result.constraint_violations),
+        },
+        "agents": list(result.covered_agents),
+        "cards": cards,
+        "handoffs": [item.model_dump(mode="json") for item in result.handoffs],
+        "co_sign_pairs": [list(pair) for pair in result.co_sign_pairs],
+        "merge_order": list(result.merge_order),
+        "violations": list(result.constraint_violations),
+        "kernel_fingerprint": result.kernel_fingerprint,
+        "rules_version": result.rules_version,
+        "source": "deduction → collab.orchestrate（只读复核，不改六跳与缺口）",
+    }
 
 
 # --- 微调度台：人工干预 → 重推演 -------------------------------------------
@@ -167,6 +221,7 @@ def build_html() -> str:
 <main><h1>城市内涝跨部门事件推演</h1><div class=sub>暴雨 + 道路封闭 + 地下管线施工冲突 · 证据链可追溯</div><div class=toolbar><button onclick="run()">运行演示</button><button class=ghost onclick="renderScene('v1')">渲染基线 v1</button><button class=ghost onclick="renderScene('v4')">渲染进化 v4</button><button class=ghost onclick="diffScenes()">对比两版</button><button class=ghost onclick="runLLM()">LLM 决策（DeepSeek）</button><span id=status>等待运行</span><a class=navlink href='/evolution'>决策进化对比 →</a></div><section id=summary class=card><h2>事件概览</h2><div id=metrics>点击“运行演示”加载推演结果</div></section><div class=grid><section class=card><h2>数字孪生影响范围</h2><svg viewBox='0 0 700 330' aria-label='影响范围示意图'><path class=road d='M40 260 L660 70 M40 80 L660 260'/><path class=pipe d='M80 250 L400 160 L630 150'/><ellipse class=flood cx=350 cy=165 rx=130 ry=80/><circle class=node cx=350 cy=165 r=8/><text x=365 y=160 fill='#e8eef7'>A-03 积水区</text></svg><div id=assets></div></section><section class=card><h2>跨部门协同</h2><div id=departments></div><h2>资源与风险</h2><div id=risks></div></section></div><section class=card style='margin-top:16px'><h2>推理链路与证据</h2><div id=trace></div></section>
 <section class=card style='margin-top:16px'><h2>微调度台 · 决策时间线 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（每条都能对回推演字段）</span></h2><div class=toolbar style='margin:0 0 10px'><button onclick="playTimeline()">回放决策过程</button><span id=tlstatus class=sub>未加载</span></div><ol id=timeline class=tl></ol><div id=tlfoot class=sub style='margin-top:10px'></div></section>
 <section class=card style='margin-top:16px'><h2>人工干预 · 重新推演 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（改一个条件，系统重算并说明改了什么）</span></h2><div id=ivbtns class=toolbar style='margin:0 0 10px'></div><div id=ivout class=sub>点上面任一项，观察推演结果怎么变</div></section>
+<section class=card style='margin-top:16px'><h2>协同复核 · 谁接哪张卡 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（1 总控 + 5 部门，只读复核、不改推演数字）</span></h2><div id=cvsum class=sub>未加载</div><div id=cvcards style='margin-top:10px'></div><div id=cvhand class=sub style='margin-top:10px'></div></section>
 <style>.ghost{background:#1e3a55;color:#bae6fd}#log{max-height:360px;overflow:auto;font:12px ui-monospace,monospace}.logrow{padding:6px 8px;border-bottom:1px solid #1e3250;white-space:nowrap}.logrow .mcp{color:#86efac}.logrow .manual{color:#fbbf24}#panel{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}#comparebody{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}.tl{list-style:none;padding:0;margin:0}.tl li{border-left:2px solid #263a55;padding:8px 0 8px 14px;opacity:.2;transition:opacity .35s,border-color .35s}.tl li.on{opacity:1;border-left-color:#38bdf8}.tl .hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.tl .seq{color:#64748b;font:12px ui-monospace,monospace}.tl .ttl{font-weight:700;color:#bae6fd}.tl .dsc{color:#cfe3f7;font-size:13px;margin-top:3px}.tl .mt{color:#7f93ab;font:11px ui-monospace,monospace;margin-top:5px;word-break:break-all}.tl ul.basis{margin:7px 0 0;padding-left:16px;color:#b8c7d9;font-size:12px}.tl ul.basis li{margin:2px 0;border:0;padding:0;opacity:1}.tag{font-size:11px;padding:1px 6px;border-radius:4px;background:#20344d;color:#9fb1c8}.k-conflict{color:#fbbf24}.k-gap{color:#fca5a5}.k-audit{color:#86efac}.ivbtn{background:#1e3a55;color:#bae6fd;border:0;border-radius:6px;padding:10px 14px;font-weight:700;cursor:pointer;text-align:left;max-width:330px}.ivbtn small{display:block;font-weight:400;color:#8fa4bd;font-size:11px;margin-top:4px;line-height:1.4}.row{display:flex;gap:12px;padding:5px 0;border-bottom:1px dashed #1e3250;font-size:13px}.row b{margin-left:auto;color:#7dd3fc}</style>
 <div class=grid style='margin-top:16px'>
 <section class=card><h2>当前渲染作业（UE 拉取的就是它）</h2><div id=panel>尚未渲染</div></section>
@@ -228,7 +283,14 @@ async function doIntervene(id){ivout.innerHTML='<span class=warn>重推演中：
  const stmts='<ul style="margin:10px 0 0;padding-left:18px;font-size:13px;color:#cfe3f7">'+c.statements.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>';
  const moved=c.moved_actions.length?'<div style="margin-top:10px;font-size:12px;color:#8fa4bd">挪位：'+c.moved_actions.map(m=>'#'+m.order).join('、')+'</div>':'';
  ivout.innerHTML='<b style="color:#7dd3fc">'+esc(d.label)+'</b><div style="color:#7f93ab;font:11px ui-monospace,monospace;margin:6px 0 10px;word-break:break-all">'+esc(d.patches.join(' · '))+'</div>'+rows.map(x=>'<div class=row><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join('')+stmts+moved+'<div style="margin-top:10px;font-size:11px;color:#7f93ab">'+esc(d.mechanism)+'</div>'}
-loadPlatform();loadLog();loadInterventions();</script></html>"""
+async function loadCollab(){const r=await fetch('/api/collab-review');const d=await r.json();
+ if(d.status!=='ok'){cvsum.innerHTML='<span class=warn>'+esc(d.error||'复核不可用')+'</span>';return}
+ const c=d.counts;
+ cvsum.innerHTML='动作卡 <b>'+c.cards+'</b> 张 · 部门 <b>'+c.agents+'</b> 个 · 交接 <b>'+c.handoffs+'</b> 次 · 需会签 <b>'+c.co_sign_pairs+'</b> 对 · 规则冲突 <b class="'+(c.violations?'warn':'ok')+'">'+c.violations+'</b> 处';
+ const byAgent={};(d.cards||[]).forEach(x=>{(byAgent[x.agent_id]=byAgent[x.agent_id]||[]).push(x)});
+ cvcards.innerHTML=Object.keys(byAgent).map(a=>'<div style="margin:8px 0 4px;color:#7dd3fc;font-weight:700">'+esc(a)+'<span class=tag style="margin-left:8px">'+byAgent[a].length+' 张</span></div>'+byAgent[a].map(x=>'<div class=row><span>'+esc(x.action)+'</span><span class=tag>'+esc(x.stage)+'</span><b>'+esc(x.status)+'</b></div>').join('')).join('');
+ cvhand.textContent=(d.handoffs||[]).length?'交接：'+d.handoffs.map(h=>h.from_agent+' → '+h.to_agent+'（'+h.card_ids.length+' 张）').join(' ｜ ')+' ｜ 指纹 '+d.kernel_fingerprint.slice(0,12):'无角色交接 ｜ 指纹 '+d.kernel_fingerprint.slice(0,12)}
+loadPlatform();loadLog();loadInterventions();loadCollab();</script></html>"""
 
 
 # --- 可视化端点 -----------------------------------------------------------
@@ -459,6 +521,10 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
                 message = exc.args[0] if exc.args else str(exc)
                 return _error(f"干预项不可用：{message}", 404)
         return _json({"entries": intervention_catalog()})
+
+    if segments[:2] == ["api", "collab-review"]:
+        # 多智能体协同复核：只读同一份推演，产出部门动作卡与交接，不动冻结数字。
+        return _json(collab_review())
 
     if segments[:2] == ["api", "llm-decision"]:
         # 可选端点：配置了 DeepSeek 才会真调模型，否则返回 configured=false 优雅降级。
