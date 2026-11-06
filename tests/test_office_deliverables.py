@@ -34,6 +34,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from test_frozen_numbers import (  # noqa: E402
+    ALLOWED_NON_TOTAL,
     PATTERNS,
     RETIRED_MARKERS,
     RETIRED_MODELS,
@@ -61,44 +62,19 @@ TEXT_NODE = re.compile(r"<(?:a|w):t(?:\s[^>]*)?>(.*?)</(?:a|w):t>", re.S)
 #: 数字后面紧跟 `.` 或数字就不算。
 VERSION_CLAIM = re.compile(r"v(\d{1,2})(?![\d.])")
 
+#: 低于这个数的 `vN` 不当 Agent 版本看。理由是 PPT/信息表里 `v1`/`v2` 常用于
+#: 本体版本、条目编号或"第 1 版"叙述（赛题任务单里就有「发布 v1、回滚到 v1」），
+#: 而平台主 Agent 的版本早已是两位数。真要出现 v5–v18 的真实版本号，会照常断言。
+VERSION_CLAIM_FLOOR = 5
+
 #: 已登记的快照：相对路径 -> 登记信息。
 #: `values` 只登记**与当前权威值不同**的项；没登记的 family 仍按当前值校验。
-STALE_SNAPSHOTS: dict[str, dict[str, object]] = {
-    "docs/competition/初赛答辩-PPT-v0.1.pptx": {
-        "captured": "2026-11-05",
-        "values": {
-            "testcount": 776,
-            "selfcheck": 106,
-            "assets": 16,
-            "model": "openPangu-2.0-Pro",
-        },
-        "reason": (
-            "11-05 版式定稿的产物。重跑 scripts/build_answer_ppt.py 需要 python-pptx + Pillow，"
-            "不是默认依赖（uv sync --locked 不装），不能在验收环境里临时装包。"
-            "重做/套模板时一并重跑，之后删掉本登记。"
-        ),
-    },
-    "docs/competition/初赛作品信息收集表-内容稿-v0.1.docx": {
-        "captured": "2026-11-05",
-        "values": {
-            "testcount": 639,
-            "selfcheck": 106,
-            "fingerprint": "65e58b1e98039670",
-            "tools": 13,
-            "assets": 15,
-            "synthetic_assets": 15,
-            "rules": 28,
-            "triples": 101,
-            "agent_version": 10,
-            "conversation_id": 78,
-            "model": "openPangu-2.0-Pro",
-        },
-        "reason": (
-            "同上，产物来自 11-05；脚本 build_preliminary_docx.py 已是新口径，纯属没重跑。"
-            "官方模板到手后必须重生成再提交，之后删掉本登记。"
-        ),
-    },
-}
+#:
+#: 2026-11-06 已清空：两份交付物在标准库守卫落地当天用
+#: `uv run --with python-pptx --with python-docx --with pillow python scripts/build_*.py`
+#: 重跑过（隔离层，不污染 .venv / pyproject / uv.lock），数字已是当前口径。
+#: 以后再有"暂时不能重跑"的产物，按同样的结构登记：必须带 captured 与 reason。
+STALE_SNAPSHOTS: dict[str, dict[str, object]] = {}
 
 
 def _office_files() -> tuple[str, ...]:
@@ -123,11 +99,16 @@ def _texts(rel: str) -> list[str]:
     return chunks
 
 
+LIVE_EVIDENCE_PATH = ROOT / "samples" / "nexent" / "live" / "live_evidence.json"
+
+
 @cache
 def _current() -> dict[str, int | str]:
     expected = dict(_expected())
     expected["agent_version"] = int(_live_agents()["urban_deduction_agent"]["current_version_no"])
-    expected["conversation_id"] = 120
+    # 对话号取真机证据文件本身，不在这里手写第二份真值——手写就等于给漂移开了个口子
+    live = json.loads(LIVE_EVIDENCE_PATH.read_text(encoding="utf-8"))
+    expected["conversation_id"] = int(live["conversation_id"])
     expected["model"] = str(_live_agents()["urban_deduction_agent"]["model_name"])
     return expected
 
@@ -142,14 +123,22 @@ def _wanted(rel: str, family: str) -> tuple[object, str]:
 
 
 def _scan(rel: str) -> list[str]:
+    """扫一个文件：先收全部命中，再按 allowlist / 登记快照判定。
+
+    两遍是必须的——`ALLOWED_NON_TOTAL` 是按**出现次数**约定的（写成 1 次却命中 2 次
+    说明有一处没解释），得先把次数数完才能判。
+    """
+
     problems: list[str] = []
+    hits: list[tuple[str, int | str, str]] = []
+    counts: dict[tuple[str, str, int | str], int] = {}
 
     for text in _texts(rel):
         for family, pattern in PATTERNS:
             for match in pattern.finditer(text):
-                value: int | str = match.group(1)
+                value: int | str
                 if family == "fingerprint":
-                    value = str(value)
+                    value = str(match.group(1))
                 else:
                     value = int(match.group(1))
                     if family == "selfcheck" and match.re.groups >= 2 and match.group(2):
@@ -157,11 +146,8 @@ def _scan(rel: str) -> list[str]:
                             problems.append(
                                 f"{rel} 自检数左右不等「{match.group(0)}」：{text.strip()[:80]}"
                             )
-                want, label = _wanted(rel, family)
-                if value != want:
-                    problems.append(
-                        f"{rel} [{family}] 实际 {value!r}，{label} {want!r}：{text.strip()[:80]}"
-                    )
+                hits.append((family, value, text))
+                counts[(family, rel, value)] = counts.get((family, rel, value), 0) + 1
 
         for model in RETIRED_MODELS:
             if model not in text:
@@ -178,13 +164,34 @@ def _scan(rel: str) -> list[str]:
 
         for match in VERSION_CLAIM.finditer(text):
             claimed = int(match.group(1))
-            if claimed < 5:  # v1/v2 之类多是条目编号或本体版本，不按 Agent 版本算
+            if claimed < VERSION_CLAIM_FLOOR:
                 continue
             want, label = _wanted(rel, "agent_version")
             if claimed != int(want):
                 problems.append(
                     f"{rel} [agent_version] 实际 v{claimed}，{label} v{want}：{text.strip()[:80]}"
                 )
+
+    for family, value, text in hits:
+        # 合法但非总数的命中（如"只挂 2 个工具"）与 count 类守卫共用一张表，
+        # 否则只能被迫登记成"陈旧快照"，语义就错了。
+        if (family, rel, value) in ALLOWED_NON_TOTAL:
+            continue
+        want, label = _wanted(rel, family)
+        if value != want:
+            problems.append(
+                f"{rel} [{family}] 实际 {value!r}，{label} {want!r}：{text.strip()[:80]}"
+            )
+
+    # 豁免次数必须对得上：写成 1 次却命中 2 次，等于有一处没解释被顺带放过。
+    for (family, rel_key, value), (allowed, _reason) in ALLOWED_NON_TOTAL.items():
+        if rel_key != rel:
+            continue
+        actual = counts.get((family, rel_key, value), 0)
+        if actual != allowed:
+            problems.append(
+                f"{rel} allowlist [{family}] {value!r} 声明 {allowed} 次，实际命中 {actual} 次"
+            )
 
     return problems
 
@@ -203,7 +210,12 @@ def test_office_deliverables_match_authoritative_numbers() -> None:
 
 
 def test_stale_entries_are_still_stale() -> None:
-    """登记的快照一旦被重跑更新，登记就该删掉，否则会盖住以后的新漂移。"""
+    """登记的快照一旦被重跑更新，登记就该删掉，否则会盖住以后的新漂移。
+
+    这里**遍历登记里的全部口径**（不只 7 个常见 family）：重跑生成器后 `assets`/`rules`/
+    `triples` 这些也会变成当前值，只查一部分的话，它们会先在主断言里以
+    「实际 19 ≠ 登记 15」的形式报出来——能红，但提示指向的是"数字不对"而不是"该删登记"。
+    """
 
     problems: list[str] = []
     for rel, snapshot in STALE_SNAPSHOTS.items():
@@ -211,16 +223,15 @@ def test_stale_entries_are_still_stale() -> None:
         if not path.is_file():
             problems.append(f"登记的文件不存在：{rel}")
             continue
-        leftovers = []
-        for family, stale_value in (snapshot["values"] or {}).items():
-            if family not in ("testcount", "selfcheck", "fingerprint", "tools",
-                              "agent_version", "conversation_id", "model"):
-                continue
-            current = _current()[family]
-            if stale_value != current:
-                leftovers.append(f"{family}={stale_value!r}（当前 {current!r}）")
-        if not leftovers:
-            problems.append(f"{rel} 已与当前口径一致，请删除 STALE_SNAPSHOTS 里的登记")
+        still_stale = [
+            f"{family}={stale_value!r}（当前 {_current()[family]!r}）"
+            for family, stale_value in (snapshot["values"] or {}).items()
+            if family in _current() and stale_value != _current()[family]
+        ]
+        if not still_stale:
+            problems.append(
+                f"{rel} 已与当前口径全部一致，请删除 STALE_SNAPSHOTS 里的登记"
+            )
     assert not problems, "\n".join(problems)
 
 

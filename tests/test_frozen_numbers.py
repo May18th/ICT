@@ -145,18 +145,6 @@ ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
         "docs/ICT-赛题3-城市内涝事件推演-WorkBuddy任务单.md",
         370,
     ): (1, "赛题任务单记录的是当时验收（370 项），属于任务书原文，不改写成当前值"),
-    # delivery-status 如实记录了两份二进制交付物"当时"的旧数字（并标注了时点与重生成计划），
-    # 这不是当前口径，但必须让读者看到差异在哪。
-    (
-        "tools",
-        "docs/competition/delivery-status.md",
-        13,
-    ): (1, "引用 11-05 快照文件里的旧工具数，同行已标「当时的值」"),
-    (
-        "selfcheck",
-        "docs/competition/delivery-status.md",
-        106,
-    ): (2, "同上，两份 11-05 快照（PPT 与信息表）的旧自检项数各一处"),
 }
 
 
