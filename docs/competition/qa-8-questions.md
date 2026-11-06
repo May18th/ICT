@@ -121,9 +121,9 @@
 | --- | --- |
 | 文件（原始证据） | `samples/nexent/live/llm_decision_platform.json` 及 `run1/2/3` 共 4 条：`agent_name=urban_llm_decision_agent`、`expected_option_id=opt-3`、`selected_option_id=opt-3`、`selected_match=true`、`schema_valid=true`、`task_digest=5d4831eefce82361`（4 条同值，现场可逐条核对） |
 | 文件（修复前对照） | 同一批文件修复前为 `selected_option_id=opt-1/opt-2`、`selected_match=false`；逐层复测表见 `docs/reports/nexent-live-integration-report.md`「2026-11-06 追加」 |
-| 端点 | 公网 `/api/llm-decision`（`t=0` 真调 DeepSeek，约 4.1 s，命中 `opt-3`）、`/api/platform-evidence`（只读上面的 JSON；**重发前仍返回 11-04 快照的 `opt-1`/`false`**，见 `delivery-status.md` 公网 Demo 行） |
+| 端点 | 公网 `/api/llm-decision`（`t=0` 真调 DeepSeek，约 4.1 s，命中 `opt-3`）、`/api/platform-evidence`（只读上面的 JSON；2026-11-06 18:26 重发后已返回 `opt-3`/`true`、`task_digest=5d4831ee…`） |
 | 文件 | `docs/reports/p8-llm-ab-report.md`（本地 21/22、温度 0 两轮逐项一致）；`docs/demo-runbook.md`「LLM 决策按钮」一节 |
-| 现场演示点 | 公网首页点「**LLM 决策（DeepSeek）**」→ 卡片同时出现 **LLM 对照行**与**Nexent 平台真机验证行**。LLM 行当场命中 `opt-3`；平台行**要在发布包重发之后**才显示 `opt-3`——没重发就只讲 LLM 行，别在这里说"两行都命中" |
+| 现场演示点 | 公网首页点「**LLM 决策（DeepSeek）**」→ 卡片同时出现 **LLM 对照行**与**Nexent 平台真机验证行**，两行都显示命中 `opt-3`（2026-11-06 18:26 重发后复核过；**若之后再改过发布包内容，必须重发，否则 `platform-evidence` 仍是上一版**） |
 
 **加分动作（30 秒内可做）**：把密钥配错或断开 → 端点返回 `configured=false` → 页面显示"未配置"，其余演示照跑。这就是"LLM 失败可降级"的现场证据。
 
