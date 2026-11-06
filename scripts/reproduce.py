@@ -5,7 +5,7 @@
 
 用法：
 
-    uv run --locked python scripts/reproduce.py              # 全量（含 817 项测试，约 3-6 分钟）
+    uv run --locked python scripts/reproduce.py              # 全量（含 824 项测试，约 3-6 分钟）
     uv run --locked python scripts/reproduce.py --fast       # 跳过 pytest，约 30 秒
     uv run --locked python scripts/reproduce.py --list       # 只列步骤
     uv run --locked python scripts/reproduce.py --keep-going # 出错也继续跑完，最后统一汇报
@@ -224,7 +224,7 @@ def build_steps(*, include_slow: bool) -> list[Step]:
     )
     steps.append(
         Step(
-            "对外数字自检 106 项",
+            "对外数字自检 108 项",
             [
                 py,
                 "-m",
@@ -234,7 +234,7 @@ def build_steps(*, include_slow: bool) -> list[Step]:
                 "--report",
                 "docs/reports/evidence-check-report.md",
             ],
-            expect=[r"106/106"],
+            expect=[r"108/108"],
             writes=["samples/eval/evidence_check.json", "docs/reports/evidence-check-report.md"],
         )
     )

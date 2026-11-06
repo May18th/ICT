@@ -220,7 +220,7 @@ P9.1 追加证据：
 | 策略版本标签 | `flood-response-v1.0 → v1.1 → v1.2`，触发反馈 `p9-round-1/2`、触发评审 `REV-001` |
 | 记忆持久化 | `samples/eval/decision_memory.json` 跨进程可召回；`--reuse-memory` 立即 warm start |
 | 确定性 | 两次 `run_showcase()` 输出逐位一致 |
-| 对外数字自检 | `python -m decision_poc.evidence_check` → 106/106 项一致；改动任一数字即失败（退出码 1） |
+| 对外数字自检 | `python -m decision_poc.evidence_check` → 108/108 项一致；改动任一数字即失败（退出码 1） |
 | Nexent 真机 | 平台 Agent 调 14 个 MCP 工具，六跳结论与离线 **8/8 一致**（conversation_id=78）；2 次工具调用日志快照哈希一致 |
 
 - 训练/留出同向下降 → 不是对评测集过拟合；

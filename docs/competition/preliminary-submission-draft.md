@@ -108,7 +108,7 @@
 | `skills.py` | 五 Skill 编排 | 单一信封、降级决策、审计即门禁 |
 | `mcp_server.py` / `mcp_sse.py` | MCP 工具与传输 | 13 工具、权限收口、stdio + SSE 双传输（SSE 供 Nexent 接入） |
 | `allocation.py` / `policy_evolution.py` / `experience.py` | 决策与进化 | 策略版本、四维偏差、门禁、分层记忆、人工评审 |
-| `evidence_check.py` | 对外数字自检 | 106 项冻结期望，漂移即失败（退出码 1） |
+| `evidence_check.py` | 对外数字自检 | 108 项冻结期望，漂移即失败（退出码 1） |
 
 ## 8 可量化指标（模板 1 必填项）
 
@@ -125,7 +125,7 @@
 | 进化 | 训练/留出综合偏差 | 0.2264→0.0000 / 0.2182→0.0000 |
 | 进化 | 应调拨未调拨 / 关键片区未满足 | 4→0 次 / 15→6 台（6 为资源硬缺口下限） |
 | 进化 | 记忆 warm start / 评审约束 | 起点偏差 0.0000、轮次 3→1；评审偏差 0.1171→0 |
-| 工程 | 测试 / 对外数字自检 | 817 项通过；106/106 项一致 |
+| 工程 | 测试 / 对外数字自检 | 824 项通过；108/108 项一致 |
 | MCP | 工具数 / SSE 传输测试 | 14 个；10 项（握手、列工具、调工具、批量、错误路径） |
 
 ## 9 演示流程（现场 5–8 分钟）
@@ -134,7 +134,7 @@
 2. **证据追问**：点开任一条 claim 看 `asset_id#locator`，说明"每条结论可回指原文与版本"；
 3. **反事实**：CF1/CF2/CF3 三个"如果……会怎样"，数字由同一套规则重放得出；
 4. **进化面板**（`/evolution`）：一屏看进化前后、记忆 warm start、人工评审、版本标签、真实事件分配；
-5. **一条命令自检**：`python -m decision_poc.evidence_check` → 106/106；现场改一个期望值 → 立刻失败，证明数字不是手写；
+5. **一条命令自检**：`python -m decision_poc.evidence_check` → 108/108；现场改一个期望值 → 立刻失败，证明数字不是手写；
 6. **Nexent 真机**（待 Docker）：Nexent 对话窗口内完成同一事件，展示 MCP 工具调用与 JSON 结论，
    再跑 `python -m decision_poc.nexent_urban` 得到 8/8 与离线一致。
 
@@ -158,8 +158,8 @@
 
 ```powershell
 uv sync --locked
-uv run --locked pytest -q                                  # 817 passed
-uv run --locked python -m decision_poc.evidence_check      # 106/106 项一致
+uv run --locked pytest -q                                  # 824 passed
+uv run --locked python -m decision_poc.evidence_check      # 108/108 项一致
 uv run --locked python -m decision_poc.urban_eval          # 22/22
 uv run --locked python -m decision_poc.policy_evolution --report docs/reports/p9-policy-evolution-report.md
 uv run --locked python -m decision_poc.mcp_sse --port 8000  # Nexent MCP 接入
@@ -179,7 +179,7 @@ uv run --locked python -m decision_poc.web_demo --port 8787 # 推演面板 + /ev
 | 记忆 | 离线同构契约，未真机验证 |
 | 模型 | 平台演示链路仅用 openPangu-2.0-Pro；DeepSeek 仅用于本地决策节点 A/B 实验（默认关闭、非演示依赖），API 调用计费与合规由使用者承担 |
 | 评审 | 角色扮演，非真实部门批复 |
-| 指标 | 数字由命令生成；`evidence_check` 106 项冻结期望，漂移即失败 |
+| 指标 | 数字由命令生成；`evidence_check` 108 项冻结期望，漂移即失败 |
 | 场景宽度 | 跨部门目前覆盖 A-03/B-01 两片区；更大规模需扩数据集，不夸大为"全城级" |
 
 ## 13 下一步计划（对应差距审计）

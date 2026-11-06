@@ -341,14 +341,14 @@ def build() -> Path:
     h(doc, "四、可量化指标")
     p(
         doc,
-        "以下数字全部由仓库命令生成并冻结期望（evidence_check 106/106），任一数字漂移即失败；不接受为过检放宽期望。",
+        "以下数字全部由仓库命令生成并冻结期望（evidence_check 108/108），任一数字漂移即失败；不接受为过检放宽期望。",
     )
     table(
         doc,
         ["指标", "结果", "核对方式"],
         [
-            ["单元测试", "817 项通过", "uv run --locked pytest -q"],
-            ["对外数字自检", "106/106 项一致（期望指纹 6a9030396892c48f）", "python -m decision_poc.evidence_check"],
+            ["单元测试", "824 项通过", "uv run --locked pytest -q"],
+            ["对外数字自检", "108/108 项一致（期望指纹 09ae5510d34e7b2b）", "python -m decision_poc.evidence_check"],
             ["P8 事件评测", "22/22 通过（改进前基线 17/22）", "python -m decision_poc.urban_eval"],
             ["六跳完整率 / 引用完整率 / 检索命中率", "100% / 100% / 100%", "docs/reports/p8-evaluation-report.md"],
             ["数据资产解析", "19/19，未识别列 0", "python -m decision_poc.health"],
@@ -383,7 +383,7 @@ def build() -> Path:
 
     # 六、复现与部署
     h(doc, "六、复现与部署")
-    bullet(doc, "离线复现：python scripts/reproduce.py（17 步全过，约 30 秒）；python -m decision_poc.evidence_check（106/106）")
+    bullet(doc, "离线复现：python scripts/reproduce.py（17 步全过，约 30 秒）；python -m decision_poc.evidence_check（108/108）")
     bullet(doc, "Web 演示：python -m decision_poc.web_demo --port 8787（推演面板 /，进化对比面板 /evolution）")
     bullet(doc, "Nexent 平台：deploy/nexent/README.md（本机 Docker 单环境装配与复现步骤）")
     bullet(doc, "可视化闭环：决策层写 RenderJob → 引擎侧消费者逐跳演出 → 写 ack（两套引擎实现：unreal / blender-eevee）")

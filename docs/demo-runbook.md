@@ -309,13 +309,13 @@ uv run --locked python -m decision_poc.scene_layout      # 布局变了才需要
 Set-Location D:/华为ICT/agent_poc
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 对外数字自检：106/106 项一致（期望指纹 6a9030396892c48f）
+# 对外数字自检：108/108 项一致（期望指纹 09ae5510d34e7b2b）
 echo "exit=$LASTEXITCODE"
 ```
 
 可主动演示"自检真的会拦"：把 `samples/eval/evidence_expectations.json` 里
 `p9_evolution.train.initial_deviation` 改成 `0.2`，再跑一次——自检报 `! p9_evolution.train.initial_deviation`、
-退出码 1；改回去恢复 106/106。这说明期望是冻结口径，不是跟着代码动态变的。
+退出码 1；改回去恢复 108/108。这说明期望是冻结口径，不是跟着代码动态变的。
 
 完整逐项对照见 `docs/reports/evidence-check-report.md`（由命令生成，勿手改）。
 
