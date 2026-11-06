@@ -1,0 +1,65 @@
+{
+  "agent_id": 3,
+  "endpoint": "http://localhost:5010/agent/export",
+  "http_status": 200,
+  "content_type": "application/zip",
+  "bytes": 7890,
+  "sha256": "c6da97af40fc6ac7594820fe21cfec127a8fdf54cf1ba890e2cdda3680f37b5f",
+  "out": "/tmp/urban_deduction_agent.zip",
+  "bundle": {
+    "is_zip": true,
+    "entries": [
+      {
+        "name": "agent.json",
+        "bytes": 6256,
+        "sha256": "8b0e084b0fbba936047f8b39bea7239ab3be33bbe01fb983963e9dd7213fcb08"
+      },
+      {
+        "name": "skills/scarcity-allocation-evolution.zip",
+        "bytes": 2188,
+        "sha256": "6aab9fab8cbb26a90b60e9f72aba1122f482ca955464e7ffdad8477b565993d5"
+      },
+      {
+        "name": "skills/urban-six-hop-deduction.zip",
+        "bytes": 2943,
+        "sha256": "b36d48792c3650c87ff7f306196044d27ea7c4c877b00abe5cc85ce7ddad6aa0"
+      }
+    ],
+    "content_sha256": "adf49c002ee269a1d3f74d9410ebd89a0ca93121d968c47b56ac33c56202b6dd",
+    "has_agent_json": true,
+    "skill_zips": [
+      "skills/scarcity-allocation-evolution.zip",
+      "skills/urban-six-hop-deduction.zip"
+    ],
+    "agent_json_top_keys": [
+      "agent_id",
+      "agent_info",
+      "mcp_info"
+    ],
+    "agent_count": 1,
+    "agent_name": "urban_deduction_agent",
+    "agent_display_name": "城市内涝跨部门决策智能体",
+    "agent_enabled": true,
+    "agent_models": [
+      "DeepSeek-Chat"
+    ],
+    "agent_tool_count": 2,
+    "agent_tools": [
+      "event_deduce",
+      "evidence_locate"
+    ],
+    "agent_skill_names": [
+      "scarcity-allocation-evolution",
+      "urban-six-hop-deduction"
+    ],
+    "mcp_servers": [
+      {
+        "name": "urban-twin-mcp",
+        "url": "http://urban-twin-mcp:8000/sse"
+      }
+    ],
+    "has_duty_prompt": true,
+    "has_constraint_prompt": true,
+    "requested_output_tokens": 8192
+  }
+}

@@ -50,3 +50,6 @@ samples/data/raw_conditional/
 
 # 发布目录：含 .env 密钥与 src 副本，不进仓库
 deploy-webdemo/
+
+# RAG 索引（build 产物，60~150 MB，按需重建）
+.rag_index*/
