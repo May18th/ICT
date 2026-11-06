@@ -400,6 +400,24 @@ def expectations_digest(payload: Mapping[str, Any]) -> str:
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
+def expected_item_count(
+    expectations: Mapping[str, Any] | None = None,
+    *,
+    expectations_path: Path | str = EXPECTATIONS_PATH,
+) -> int:
+    """期望文件里会被逐项比对的条目数。
+
+    `run_evidence_check().total` 用的是同一套展开逻辑（`_compare`）。对外材料里
+    「108/108 项一致」的那个 108 就是它——所以别处要写这个数时来这里取，
+    别在脚本里硬编码：期望文件增删一项，这里自动跟着变，硬编码会静默过期。
+    """
+    payload = dict(expectations) if expectations is not None else load_expectations(expectations_path)
+    checks = payload.get("checks", {})
+    # 用 expected 自身当 actual 占位：`_compare` 只有在 actual 是 Mapping 时才递归展开，
+    # 传 `_MISSING` 会让每段短路成 1 项，数出来是段落数而不是条目数。
+    return sum(len(_compare(expected, expected, section)) for section, expected in checks.items())
+
+
 def run_evidence_check(
     expectations: Mapping[str, Any] | None = None,
     *,

@@ -11,6 +11,11 @@
     uv run --locked python scripts/reproduce.py --keep-going # 出错也继续跑完，最后统一汇报
 
 产物落点：`artifacts/reproduce/summary.json`（已被 .gitignore 忽略）+ 各命令自身的 samples/docs 输出。
+
+已知限制：评测产物（`samples/eval/latest.json`、`docs/reports/p8-evaluation-report.md`）里带
+逐例 `elapsed_ms` 与 p50/p95，是**本机实测**。断言不看这些字段（只看通过数、结构、快照），
+但重跑一次它们就会变，所以全量跑完 `git status` 常有多份产物改动——那是耗时抖动，不是回归。
+提交前先 `git diff` 过滤 `elapsed|p50|p95` 确认没有实质变化。
 """
 
 from __future__ import annotations
@@ -33,6 +38,32 @@ SRC = ROOT / "src"
 EVENT = "WO-20261029-007"
 AS_OF = "2026-10-29T09:40:00+08:00"
 OUT_DIR = ROOT / "artifacts" / "reproduce"
+
+# --- 权威源：对外数字从这些地方算，不在断言里写死 ---------------------------------
+# 起因：`"assets":\s*18` 写死之后，资产从 18 加到 19，整个 reproduce 在第 5 步就红，
+# 后面 13 步一步没跑——数字合理变化和真实回归长得一模一样。
+sys.path.insert(0, str(SRC))
+
+from decision_poc.evidence_check import EXPECTATIONS_PATH, expected_item_count  # noqa: E402
+from decision_poc.mcp_server import UrbanToolkit  # noqa: E402
+from decision_poc.urban_dataset import URBAN_ASSETS  # noqa: E402
+
+EVAL_DIR = ROOT / "samples" / "eval"
+
+#: MCP 工具名清单 —— 取自 toolkit 自身，工具增删时断言跟着变，不会出现"标题写 14、实际 13"。
+TOOL_NAMES = tuple(item["name"] for item in UrbanToolkit().tools())
+
+#: 数据集资产数 —— 取代码注册表长度。健康检查扫的是磁盘，两者相等才算真的一致；
+#: 少产出一个文件、或多注册一个没落地的资产，都会红。
+ASSET_TOTAL = len(URBAN_ASSETS)
+#: P8 评测用例数 —— 用例文件条目数。
+CASE_TOTAL = len(json.loads((EVAL_DIR / "urban_cases.json").read_text(encoding="utf-8"))["cases"])
+#: 证据自检条目数 —— 与 `run_evidence_check().total` 同一套展开逻辑。
+EVIDENCE_TOTAL = expected_item_count()
+#: 单测收集数 —— 期望文件里登记的值；实际 pytest 收集数与之不等即红。
+TEST_TOTAL = int(
+    json.loads(EXPECTATIONS_PATH.read_text(encoding="utf-8"))["test_baseline"]["collected"]
+)
 
 
 @dataclass
@@ -71,7 +102,7 @@ def build_steps(*, include_slow: bool) -> list[Step]:
             # 否则 pytest 会在退出时批量删除旧的 pytest-of-* 临时目录，在受限沙箱里触发
             # 批量删除拦截（fail-closed），把退出码改成 1 并吞掉末尾的 "N passed" 汇总行。
             [py, "-m", "pytest", "-q", "--basetemp", str(ROOT / "artifacts" / "tmp" / f"pytest-{uuid.uuid4().hex[:8]}")],
-            expect=[r"\d+ passed"],
+            expect=[rf"\b{TEST_TOTAL} passed"],
             slow=True,
             timeout=1800,
         )
@@ -88,7 +119,7 @@ def build_steps(*, include_slow: bool) -> list[Step]:
         Step(
             "数据集健康检查",
             [py, "-m", "decision_poc.health", "--dataset", "samples/assets/urban"],
-            expect=[r'"assets":\s*18'],
+            expect=[rf'"assets":\s*{ASSET_TOTAL}'],
         )
     )
     steps.append(
@@ -152,7 +183,7 @@ def build_steps(*, include_slow: bool) -> list[Step]:
     )
     steps.append(
         Step(
-            "P8 评测 22 用例",
+            f"P8 评测 {CASE_TOTAL} 用例",
             [
                 py,
                 "-m",
@@ -164,15 +195,16 @@ def build_steps(*, include_slow: bool) -> list[Step]:
                 "--baseline",
                 "samples/eval/baseline_before_temporal_guard.json",
             ],
-            expect=[r"22/22"],
+            expect=[rf"\b{CASE_TOTAL}/{CASE_TOTAL}\b"],
             writes=["samples/eval/latest.json", "docs/reports/p8-evaluation-report.md"],
         )
     )
     steps.append(
         Step(
-            "MCP 14 工具契约",
+            f"MCP {len(TOOL_NAMES)} 工具契约",
             [py, "-m", "decision_poc.mcp_server", "--list-tools"],
-            expect=[r"semantic_query", r"provenance_verify", r"scene_render", r"allocation_plan"],
+            # 逐个工具名都要出现：任何一个掉了都会红，比"数一下是 14 个"更严
+            expect=[re.escape(name) for name in TOOL_NAMES],
         )
     )
     steps.append(
@@ -189,7 +221,7 @@ def build_steps(*, include_slow: bool) -> list[Step]:
     )
     steps.append(
         Step(
-            "P11 消融阶梯（五档 × 22 例）",
+            f"P11 消融阶梯（五档 × {CASE_TOTAL} 例）",
             [
                 py,
                 "-m",
@@ -224,7 +256,7 @@ def build_steps(*, include_slow: bool) -> list[Step]:
     )
     steps.append(
         Step(
-            "对外数字自检 108 项",
+            f"对外数字自检 {EVIDENCE_TOTAL} 项",
             [
                 py,
                 "-m",
@@ -234,7 +266,7 @@ def build_steps(*, include_slow: bool) -> list[Step]:
                 "--report",
                 "docs/reports/evidence-check-report.md",
             ],
-            expect=[r"108/108"],
+            expect=[rf"\b{EVIDENCE_TOTAL}/{EVIDENCE_TOTAL}\b"],
             writes=["samples/eval/evidence_check.json", "docs/reports/evidence-check-report.md"],
         )
     )
