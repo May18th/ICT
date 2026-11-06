@@ -15,10 +15,21 @@
 子命令：
     register-mcp   注册 MCP 服务（SSE 地址指向 urban-twin-mcp 容器）
     sync-tools     scan_tool 同步 MCP 工具到平台工具库
-    create-agent   创建/复用 Agent，挂 14 个工具，发布版本
+    create-agent   创建/复用 Agent，挂两个结论类工具，发布版本
+    create-collab-agent  创建/复用协同 Agent，挂 6 个协同工具，发布版本
+    bind-skills    上传 SKILL.md → 绑 Agent 草稿 → 重新发布 → 复核已发布版本
     mint-key       生成北向 API Key（打印一次）
-    status         打印当前 MCP / Agent / 工具现状
-    all            依次执行 register-mcp → sync-tools → create-agent → mint-key
+    status         只读自检：MCP / 工具 / 两个 Agent / 技能绑定，任一不成立即非 0
+    all            从零装配：register-mcp → sync-tools → create-agent → create-collab-agent
+                   → bind-skills → mint-key
+
+**为什么技能必须排在发布之后再来一轮发布**
+`bind_skills.py` 只能写草稿（`version_no=0`），而运行期读的是已发布版本快照。
+所以装配顺序是"发布一次 → 绑草稿 → 再发布一次 → 复核已发布版本"，少最后那次
+发布，`ag_skill_instance_t` 里草稿有、发布版本没有，`status` 会红。
+这条顺序以前靠人记，是本脚本存在的主要理由。
+
+退出码：0 全部就位；1 有项目失败；2 缺输入（技能目录没挂进容器等）。
 """
 
 from __future__ import annotations
@@ -26,6 +37,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from pathlib import Path
 
 from platform_client import PlatformClient, admin_user, config_api
 
@@ -47,6 +59,19 @@ MODEL_IDS = [int(item) for item in os.getenv("NEXENT_MODEL_IDS", "5").split(",")
 #: 8192 足够（实测答案约 1.4k 字符）。留环境变量可覆盖。
 MAIN_REQUESTED_OUTPUT_TOKENS = int(os.getenv("NEXENT_MAIN_OUTPUT_TOKENS", "8192"))
 COLLAB_REQUESTED_OUTPUT_TOKENS = int(os.getenv("NEXENT_COLLAB_OUTPUT_TOKENS", "8192"))
+
+#: SKILL.md 目录（容器内路径）。宿主机用 `docker cp samples/nexent/skill nexent-config:/tmp/nexent_skills` 送进来。
+SKILLS_DIR = Path(os.getenv("NEXENT_SKILL_DIR", "/tmp/nexent_skills"))
+SKILLS_EVIDENCE = os.getenv("NEXENT_SKILLS_EVIDENCE", "/tmp/skills_evidence.json")
+SKILL_BINDINGS_EVIDENCE = os.getenv("NEXENT_SKILL_BINDINGS_EVIDENCE", "/tmp/skill_bindings.json")
+
+
+def skill_files() -> list[Path]:
+    """本地待装配的 SKILL.md；空列表表示技能目录没送进容器。"""
+    if not SKILLS_DIR.is_dir():
+        return []
+    return sorted(SKILLS_DIR.glob("*/SKILL.md"))
+
 
 OUR_TOOLS = {
     "semantic_query", "twin_neighbors", "evidence_locate", "claim_trace", "provenance_verify",
@@ -322,6 +347,55 @@ class Platform(PlatformClient):
         )
         print(f"[agent] publish: {status} {str(body)[:200]}")
 
+    # --- 技能 --------------------------------------------------------
+    #
+    # 三个动作拆开是因为它们的失败语义不同：上传失败是"平台技能仓库没这个技能"，
+    # 绑定失败是"Agent 草稿没这份引用"，复核失败是"发布版本快照没带上"。
+    # 三种都在 `assemble_skills` 里按顺序短路，避免"跑完全绿其实只做了一半"。
+    def upload_skills(self) -> int:
+        from upload_skills import main as upload_main
+
+        print("[skills] 上传 SKILL.md 到平台技能仓库（幂等）")
+        return upload_main(["upload_skills.py", "all", "--json", SKILLS_EVIDENCE])
+
+    def bind_skills(self) -> int:
+        from bind_skills import main as bind_main
+
+        print("[skills] 绑定到 Agent 草稿")
+        return bind_main(["bind_skills.py", "all", "--json", SKILL_BINDINGS_EVIDENCE])
+
+    def verify_skills(self, *, require_published: bool) -> int:
+        from bind_skills import main as bind_main
+
+        argv = ["bind_skills.py", "verify", "--json", SKILL_BINDINGS_EVIDENCE]
+        if require_published:
+            argv.append("--require-published")
+        return bind_main(argv)
+
+    def assemble_skills(self) -> int:
+        """上传 → 绑草稿 → 重新发布 → 复核已发布版本。返回 0 才算技能真正可用。"""
+        if not skill_files():
+            print(
+                f"[skills] {SKILLS_DIR} 下没有 */SKILL.md：先 "
+                "`docker cp samples/nexent/skill nexent-config:/tmp/nexent_skills`",
+                file=sys.stderr,
+            )
+            return 2
+        for step in (self.upload_skills, self.bind_skills):
+            rc = step()
+            if rc != 0:
+                print(f"[skills] {step.__name__} 失败（退出码 {rc}），后续步骤不执行", file=sys.stderr)
+                return rc
+        agent = self.find_agent()
+        if agent is None:
+            print("[skills] 找不到主 Agent，无法发布带技能的版本", file=sys.stderr)
+            return 1
+        before = agent.get("current_version_no")
+        # 绑的是草稿，运行期读的是发布快照；不重新发布等于没绑。
+        print(f"[skills] 重新发布以把技能带进新版本（{before} → {before + 1}，材料里的版本号要同步）")
+        self.publish(int(agent["agent_id"]))
+        return self.verify_skills(require_published=True)
+
     # --- API Key -----------------------------------------------------
     def mint_api_key(self) -> str:
         # 平台模块挂在 /opt/backend 下；从 /tmp 执行脚本时不在 sys.path，需显式补
@@ -336,6 +410,125 @@ class Platform(PlatformClient):
         return access_key
 
 
+# --- 装配步骤 -------------------------------------------------------------
+#
+# 顺序是本脚本唯一真正重要的东西，所以把它写成数据而不是散在 if 分支里：
+# 改了顺序、删了步骤，`tests/test_nexent_setup_steps.py` 会直接红。
+#
+# `skills` 必须排在两个 Agent 的发布**之后**：它先绑草稿再重新发布，
+# 提前跑等于绑到一个会被下一次发布覆盖的旧快照上。
+
+
+def _step_register(platform: Platform) -> int:
+    return 0 if platform.register_mcp() is not None else 1
+
+
+def _step_sync_tools(platform: Platform) -> int:
+    platform.sync_tools()
+    return 0
+
+
+def _step_create_main(platform: Platform) -> int:
+    agent_id = platform.create_agent()
+    if agent_id is None:
+        return 1
+    platform.attach_tools(agent_id)
+    platform.publish(agent_id)
+    return 0
+
+
+def _step_create_collab(platform: Platform) -> int:
+    collab_id = platform.create_collab_agent()
+    if collab_id is None:
+        return 1
+    platform.attach_collab_tools(collab_id)
+    platform.publish_collab(collab_id)
+    return 0
+
+
+def _step_skills(platform: Platform) -> int:
+    return platform.assemble_skills()
+
+
+def _step_mint_key(platform: Platform) -> int:
+    platform.mint_api_key()
+    return 0
+
+
+ASSEMBLY_STEPS = {
+    "register-mcp": _step_register,
+    "sync-tools": _step_sync_tools,
+    "create-main": _step_create_main,
+    "create-collab": _step_create_collab,
+    "skills": _step_skills,
+    "mint-key": _step_mint_key,
+}
+
+#: 每个子命令要跑的步骤序列。单条命令也带上前置步骤，保证"单独跑一次"同样是完整状态。
+COMMAND_STEPS: dict[str, tuple[str, ...]] = {
+    "register-mcp": ("register-mcp",),
+    "sync-tools": ("register-mcp", "sync-tools"),
+    "create-agent": ("register-mcp", "sync-tools", "create-main"),
+    "create-collab-agent": ("register-mcp", "sync-tools", "create-collab"),
+    "bind-skills": ("register-mcp", "sync-tools", "skills"),
+    "all": ("register-mcp", "sync-tools", "create-main", "create-collab", "skills", "mint-key"),
+}
+
+
+def render_status(platform: Platform) -> int:
+    """只读自检，逐项断言并汇总。0 全绿；1 有失败；2 有项无法断言（缺输入）。
+
+    为什么要分 1 和 2：**"没检查"和"检查通过"长得一样**是这套脚本踩过的坑——
+    旧版 `status` 只要 MCP/工具/Agent 在就返回 0，技能有没有绑完全不在它的视野里。
+    """
+    failed: list[str] = []
+    unknown: list[str] = []
+
+    record = platform.find_mcp()
+    print("[mcp]", json.dumps(record, ensure_ascii=False)[:300] if record else "未注册")
+    if record is None:
+        failed.append("mcp")
+    elif not record.get("enabled"):
+        failed.append("mcp(enabled=false)")
+
+    tools = platform.tools_by_name()
+    hit = OUR_TOOLS & set(tools)
+    missing = sorted(OUR_TOOLS - set(tools))
+    print(f"[tools] 命中 {len(hit)}/{len(OUR_TOOLS)}：{sorted(hit)}")
+    if missing:
+        print(f"[tools] 缺失：{missing}", file=sys.stderr)
+        failed.append(f"tools(缺 {', '.join(missing)})")
+
+    agent = platform.find_agent()
+    print("[agent]", json.dumps(agent, ensure_ascii=False)[:400] if agent else "未创建")
+    if agent is None:
+        failed.append("agent")
+
+    collab = platform.find_collab_agent()
+    print("[collab-agent]", json.dumps(collab, ensure_ascii=False)[:400] if collab else "未创建")
+    if collab is None:
+        failed.append("collab-agent")
+
+    # 技能：草稿与已发布版本都要带。目录没送进容器时无法算出期望集合，
+    # 归到 unknown 而不是"跳过"——跳过会被读成通过。
+    if not skill_files():
+        print(f"[skills] 无法断言：{SKILLS_DIR} 下没有 */SKILL.md（容器里没挂技能目录）", file=sys.stderr)
+        unknown.append("skills(缺技能目录)")
+    else:
+        skills_rc = platform.verify_skills(require_published=True)
+        if skills_rc != 0:
+            failed.append(f"skills(verify 退出码 {skills_rc})")
+
+    if failed:
+        print(f"[status] 失败 {len(failed)} 项：{failed}")
+        return 1
+    if unknown:
+        print(f"[status] 无法断言 {len(unknown)} 项：{unknown}")
+        return 2
+    print("[status] 全部就位：MCP / 14 工具 / 两个 Agent / 技能草稿与发布快照")
+    return 0
+
+
 def main(argv: list[str]) -> int:
     command = argv[1] if len(argv) > 1 else "status"
 
@@ -344,33 +537,19 @@ def main(argv: list[str]) -> int:
     if command in {"-h", "--help", "help"}:
         print(__doc__)
         return 0
-    valid_commands = {"all", "register-mcp", "sync-tools", "create-agent", "create-collab-agent", "mint-key", "status"}
+    valid_commands = set(COMMAND_STEPS) | {"mint-key", "status"}
     if command not in valid_commands:
         print(__doc__)
         return 2
 
     platform = Platform()
 
-    if command in {"all", "register-mcp", "sync-tools", "create-agent", "create-collab-agent"}:
-        mcp_id = platform.register_mcp()
-        if mcp_id is None:
-            return 1
-        if command in {"all", "sync-tools", "create-agent", "create-collab-agent"}:
-            platform.sync_tools()
-        if command in {"all", "create-agent"}:
-            agent_id = platform.create_agent()
-            if agent_id is None:
-                return 1
-            platform.attach_tools(agent_id)
-            platform.publish(agent_id)
-        if command in {"all", "create-collab-agent"}:
-            collab_id = platform.create_collab_agent()
-            if collab_id is None:
-                return 1
-            platform.attach_collab_tools(collab_id)
-            platform.publish_collab(collab_id)
-        if command == "all":
-            platform.mint_api_key()
+    if command in COMMAND_STEPS:
+        for step in COMMAND_STEPS[command]:
+            rc = ASSEMBLY_STEPS[step](platform)
+            if rc != 0:
+                print(f"[step] {step} 失败（退出码 {rc}），后续步骤不执行", file=sys.stderr)
+                return rc
         return 0
 
     if command == "mint-key":
@@ -378,15 +557,7 @@ def main(argv: list[str]) -> int:
         return 0
 
     if command == "status":
-        record = platform.find_mcp()
-        print("[mcp]", json.dumps(record, ensure_ascii=False)[:300] if record else "未注册")
-        tools = platform.tools_by_name()
-        print("[tools] 命中:", sorted(OUR_TOOLS & set(tools)))
-        agent = platform.find_agent()
-        print("[agent]", json.dumps(agent, ensure_ascii=False)[:400] if agent else "未创建")
-        collab = platform.find_collab_agent()
-        print("[collab-agent]", json.dumps(collab, ensure_ascii=False)[:400] if collab else "未创建")
-        return 0
+        return render_status(platform)
 
     raise AssertionError(f"unreachable command: {command}")
 

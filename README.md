@@ -101,7 +101,7 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望：对外数字自检：108/108 项一致（期望指纹 102114cd121c7be8）
+# 期望：对外数字自检：108/108 项一致（期望指纹 8d8fa3552813f677）
 ```
 
 期望值冻结在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/答辩口径，
@@ -288,9 +288,16 @@ Nexent **v2.7.0**（主 Agent v19，模型 DeepSeek-Chat）跑通。原绑定的
 docker build -t urban-twin-mcp:dev -f deploy/mcp_sse/Dockerfile .
 docker run -d --name urban-twin-mcp --network nexent_network --restart unless-stopped urban-twin-mcp:dev
 
-# 2) 平台侧装配（注册 MCP → 同步工具 → 创建 Agent → 发布），在 nexent-config 容器内执行
-docker cp deploy/nexent/setup_nexent.py nexent-config:/tmp/setup_nexent.py
+# 2) 平台侧装配（注册 MCP → 同步工具 → 两个 Agent → 技能上传/绑定 → 签发 Key）
+#    四个脚本缺一不可：bind_skills.py 会 import upload_skills
+docker cp deploy/nexent/platform_client.py nexent-config:/tmp/platform_client.py
+docker cp deploy/nexent/setup_nexent.py    nexent-config:/tmp/setup_nexent.py
+docker cp deploy/nexent/upload_skills.py   nexent-config:/tmp/upload_skills.py
+docker cp deploy/nexent/bind_skills.py     nexent-config:/tmp/bind_skills.py
+docker cp samples/nexent/skill             nexent-config:/tmp/nexent_skills
 docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_nexent.py all"
+# 自检：0=MCP/14 工具/两个 Agent/技能草稿与发布快照全就位；1=有失败；2=有项无法断言
+docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_nexent.py status"
 
 # 3) 结论级验证（宿主机）
 $env:NEXENT_API_KEY = "<上一步生成的 Key>"
@@ -442,8 +449,8 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **844 项测试通过**（口径是**收集数**：其中 1 项需可选依赖 `openai`，
-未 `uv sync --group llm` 时该条在输出里显示为 `skipped`，所以默认环境看到的是 passed 与 skipped 两个数，合计仍是 844）；
+当前基线：`uv run --locked pytest -q` 共 **855 项测试通过**（口径是**收集数**：其中 1 项需可选依赖 `openai`，
+未 `uv sync --group llm` 时该条在输出里显示为 `skipped`，所以默认环境看到的是 passed 与 skipped 两个数，合计仍是 855）；
 `python -m decision_poc.evidence_check` 108/108 项一致；
 城市内涝主链路 Nexent 真机校验 8/8（Agent v19 / DeepSeek-Chat，`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。

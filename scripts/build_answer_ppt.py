@@ -15,7 +15,7 @@ ASSETS = ROOT / "out" / "ppt-assets"
 OUT = ROOT / "docs" / "competition" / "初赛答辩-PPT-v0.1.pptx"
 
 # 对外数字从期望文件读，不在脚本里手写：写死的话每改一次测试数都要改脚本 + 重生成，
-# 漏一次就又是一份"数字过期的交付物"（这份 PPT 就吃过一次：776 → 844）。
+# 漏一次就又是一份"数字过期的交付物"（这份 PPT 就吃过一次：776 → 855）。
 _EXPECTATIONS = json.loads(
     (ROOT / "samples" / "eval" / "evidence_expectations.json").read_text(encoding="utf-8")
 )
