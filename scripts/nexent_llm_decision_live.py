@@ -70,7 +70,8 @@ def main() -> int:
     record = {
         "schema_version": "nexent-llm-decision-live-1",
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S+08:00"),
-        "method": "北向 /nb/v1/chat/run 实测；Agent=urban_llm_decision_agent（DeepSeek-Chat，独立 Agent，不动 v10）",
+        # 别再写「不动 v10」：主 Agent 已到 v19，这行会原样进证据并显示在公网页面上。
+        "method": "北向 /nb/v1/chat/run 实测；Agent=urban_llm_decision_agent（DeepSeek-Chat，独立 Agent，不占主 Agent 版本号）",
         "nexent_base_url": settings.base_url,
         "agent_name": settings.agent_name,
         "case_id": case.case_id,
