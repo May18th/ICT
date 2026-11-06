@@ -90,6 +90,35 @@ def test_compare_requires_both_ids():
     assert json.loads(body)["status"] == "error"
 
 
+def test_page_has_scheduler_panels_and_live_scene():
+    """微调度台的六块面板要有容器、有取数函数、场景图不再硬编码。
+
+    这条防的是"面板加了但没接数据"：容器在、函数不在，页面看起来正常，点开一片空白。
+    """
+    from decision_poc.web_demo import build_html
+
+    html = build_html()
+    for marker in (
+        "演示链路",
+        "工单列表",
+        "资源状态",
+        "当前方案 vs 备选方案",
+        "微调度台 · 决策事件流",
+        "id=scenemap",
+        "id=orders",
+        "id=resboard",
+        "id=plans",
+        "id=chain",
+    ):
+        assert marker in html, f"页面缺 {marker}"
+    for fn in ("loadScheduler", "drawScene", "pickEntity", "renderOrders", "renderResources", "renderPlan"):
+        assert f"function {fn}" in html, f"页面缺取数函数 {fn}"
+    assert "fetch('/api/scheduler')" in html
+    # 场景图必须是按实体渲染的，不能退回固定椭圆
+    assert "polygon class=" in html
+    assert "<ellipse class=flood" not in html
+
+
 def test_page_script_parses(tmp_path):
     """页面脚本必须能解析。
 

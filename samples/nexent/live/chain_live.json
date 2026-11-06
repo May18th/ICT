@@ -1,0 +1,45 @@
+{
+  "event_id": "WO-20261029-007",
+  "as_of": "2026-10-29T09:40:00+08:00",
+  "chain": [
+    {
+      "step": 1,
+      "agent": "urban_deduction_agent",
+      "tool": "event_deduce",
+      "conversation_id": 149,
+      "elapsed_s": 14.4,
+      "passed": true,
+      "checks": 8,
+      "failures": [],
+      "errors": [],
+      "event_id": "WO-20261029-007"
+    },
+    {
+      "step": 2,
+      "agent": "urban_collab_agent",
+      "tool": "collab_run",
+      "conversation_id": 150,
+      "elapsed_s": 15.4,
+      "event_id": "WO-20261029-007",
+      "answer_len": 8342,
+      "json_parsed": true,
+      "kernel_fingerprint": "ab94413cf94bc9a5",
+      "fingerprint_match": true,
+      "cards": 26,
+      "merge_order": 15,
+      "covered_agents": 6,
+      "constraint_violations": [],
+      "passed": true
+    }
+  ],
+  "summary": {
+    "main_passed": true,
+    "collab_passed": true,
+    "same_event": true,
+    "chain_ok": true,
+    "offline_kernel_fingerprint": "ab94413cf94bc9a5",
+    "offline_cards": 26
+  },
+  "note": "两环在**一次运行内串联**：主 Agent 出结论后，协同 Agent 用同一 event_id 复核。与 /api/collab-review 的离线复核同源，指纹应逐字一致。",
+  "generated_at": "2026-11-07T00:43:51+0800"
+}
