@@ -25,7 +25,8 @@ from collections.abc import Sequence
 
 from pydantic import Field, model_validator
 
-from decision_poc.contracts import StrictModel
+from decision_poc.contracts import ProvenanceLevel, StrictModel
+from decision_poc.hydro_contracts import CurveProvenance
 from decision_poc.quant.contracts import (
     HydrographResult,
     QuantResult,
@@ -49,6 +50,19 @@ MUSKINGUM_STABILITY_NOTE = "稳定性条件 2·K·X ≤ Δt ≤ 2·K·(1−X)；
 SECONDS_PER_HOUR = 3600.0
 _BISECTION_TOLERANCE_M = 1e-10
 _FLOW_TOLERANCE_M3H = 1e-6
+
+# 来源标注在 assumptions 里的固定前缀：便于 grep 与机器解析，不依赖自然语言措辞
+PROVENANCE_ASSUMPTION_PREFIX = "库容来源："
+
+
+def provenance_assumption(provenance: CurveProvenance | None) -> str | None:
+    """把来源标注渲染成 assumptions 的固定前缀行；未声明来源时返回 None。"""
+
+    if provenance is None:
+        return None
+    line = f"{PROVENANCE_ASSUMPTION_PREFIX}{provenance.basis.value}"
+    ref = provenance.ref.strip()
+    return f"{line}｜{ref}" if ref else line
 
 
 class MuskingumCoefficients(StrictModel):
@@ -261,17 +275,28 @@ def level_pool_route(
     spill_crest_m: float | None = None,
     spill_width_m: float = 0.0,
     spill_coefficient: float = DEFAULT_WEIR_COEFFICIENT,
+    storage_basis: ProvenanceLevel | None = None,
+    storage_ref: str = "",
 ) -> HydrographResult:
     """修正 Puls 法调蓄演进：按库容曲线算水位过程线，可叠加抽排与溢流。
 
     语义约定：`pump_outflow_m3h` 给标量表示全程恒定；给序列时第 k 个值是
     **t_k 时刻（节点）的抽排能力**，修正 Puls 在每个时段用起止两节点的出流均值，
     因此"第 1 时段中途停机"会按 (Q, 0) 的均值计入，这是离散格式的固有近似。
+
+    来源约定：`storage_basis` / `storage_ref` 声明库容曲线从哪来（真实图纸、推算、假设）。
+    声明后写进 `storage_provenance` 与 `assumptions` 的固定前缀行，随结果一路带走；
+    不声明则保持历史行为（`storage_provenance=None`，assumptions 不多一行）。
     """
 
     inflow = [float(value) for value in inflow_m3h]
     stages = [float(value) for value in stage_m]
     storages = [float(value) for value in storage_m3]
+    provenance = (
+        CurveProvenance(basis=storage_basis, ref=storage_ref)
+        if storage_basis is not None
+        else None
+    )
     inputs = {
         "dt_h": float(dt_h),
         "initial_stage_m": float(initial_stage_m),
@@ -289,15 +314,22 @@ def level_pool_route(
         "静水面假定：不计水面比降、侧向入流、下渗与蒸发",
         "修正 Puls 法按 Δt 离散，水位为时段末值",
     ]
+    provenance_line = provenance_assumption(provenance)
+    if provenance_line is not None:
+        assumptions = [*assumptions, provenance_line]
 
     def fail(reason: str) -> HydrographResult:
-        return uncomputable_hydrograph(
+        result = uncomputable_hydrograph(
             formula_id="H-LEVEL-POOL",
             formula_source=SOURCE_LEVEL_POOL,
             assumptions=assumptions,
             inputs=inputs,
             reason=reason,
             unit="m",
+        )
+        # 不可计算也照样交代输入来源：算不出来不等于输入没来源
+        return result if provenance is None else result.model_copy(
+            update={"storage_provenance": provenance}
         )
 
     if len(inflow) < 2:
@@ -400,6 +432,7 @@ def level_pool_route(
         error_bound="未率定；对库容曲线与出流能力近似 1 次幂敏感，曲线偏差 20% 则水位过程同量级偏差",
         peak=peak,
         peak_time_h=peak_time,
+        storage_provenance=provenance,
     )
 
 
@@ -457,6 +490,10 @@ def time_to_level(*, hydrograph: HydrographResult, target_level_m: float) -> Qua
         "到达时刻按离散过程线在相邻时段之间线性插值，误差不超过一个计算时段 Δt",
         "只求第一次到达；若过程线反复越过阈值，不在此处展开",
     ]
+    inherited = provenance_assumption(hydrograph.storage_provenance)
+    if inherited is not None:
+        # 上游曲线来源一路继承：到达时刻离开曲线就没有意义，出处必须跟着走
+        assumptions = [*assumptions, inherited]
     if not hydrograph.computable:
         return uncomputable(
             formula_id="T-LEVEL-CROSS",
@@ -509,6 +546,9 @@ def level_exceedance_duration(
         "超阈时长按离散过程线线性插值求上穿与下穿时刻",
         "只统计第一次超越区间；若反复越阈，不在此处累加多段",
     ]
+    inherited = provenance_assumption(hydrograph.storage_provenance)
+    if inherited is not None:
+        assumptions = [*assumptions, inherited]
     if not hydrograph.computable:
         return uncomputable(
             formula_id="T-LEVEL-EXCEED",

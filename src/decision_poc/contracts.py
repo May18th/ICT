@@ -16,6 +16,19 @@ def _nonblank(value: str) -> str:
     return value
 
 
+class ProvenanceLevel(StrEnum):
+    """数据来源级别：契约层的统一枚举，检查层与定量层共用同一套取值。
+
+    原先定义在 `data_gate`（检查模块）里，被 `hydro_contracts` 需要时会造成
+    "契约反向依赖检查模块"。上移到根契约后，`data_gate` 只做重导出。
+    """
+
+    REAL = "real"                    # 原文可定位（预案、公告、台账行、竣工图）
+    DERIVED = "derived"              # 由真实值按明确公式算出
+    ASSUMPTION = "assumption"        # 无公开口径，按量级假设
+    SYNTHETIC = "synthetic"          # 演示/占位数据
+
+
 class DecisionRequest(StrictModel):
     request_id: str = Field(min_length=1)
     goal: str = Field(min_length=1)
