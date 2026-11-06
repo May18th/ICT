@@ -26,12 +26,12 @@
 | README / 部署说明 | 一键复现 | README 有本地快速开始；**Nexent 部署说明仍是本机 docker 手工步骤** | 部分完成 | `README.md`、`docs/demo-runbook.md` | 我方 | 一页 `deploy/nexent/README.md` 能从零起平台并跑 8/8 |
 | 一键复现脚本 | 从干净环境复现 | `scripts/reproduce.py` 覆盖测试/数据集/推演/反事实/进化/自检 | 已完成 | `python scripts/reproduce.py` | — | 跑完输出全绿；报告里不写死时间 |
 | 演示录屏（问答过程） | 常见要求 | **没有**。平台截图脚本只录页面浏览，不录"提问→调工具→出六跳" | 未开始 | `deploy/nexent/capture_platform_ui.py` 只截页面 | 我方（需 10 分钟录屏） | 一段 3–5 分钟：提问 → 工具调用 → 六跳 → 证据 → 面板 |
-| SKILL 绑定已发布 Agent | 考点③ | 2 个 SKILL.md 已上传平台技能仓库（skill_id=2/3）；**未绑定到 Agent**（平台要求草稿态建实例） | 部分完成 | `samples/nexent/live/skills.json`、`captures/nexent/skill-space.png` | 我方 + 平台限制 | 平台 Agent 详情里看到技能实例引用 |
+| SKILL 绑定已发布 Agent | 考点③ | 2 个 SKILL.md 已上传平台技能仓库（skill_id=2/3），**并已绑定到 `urban_deduction_agent`**：草稿 v0 与已发布版本 v19 各 2 条实例，全部 `present=true enabled=true`（2026-11-06 复核，`bind_skills.py verify --require-published` 退出码 0） | 已完成 | `samples/nexent/live/skill_bindings.json`、`samples/nexent/live/skills.json`、`captures/nexent/skill-space.png` | — | 现场可直接跑 `verify` 复核；边界见 `deploy/nexent/README.md` §6（模型只读技能 `description`，正文不被注入） |
 | Nexent 多事件真机回归 | 考点⑤可信度 | **已跑通 4 个事件，均 8/8**：`WO-20261029-007`(conv 141) / `WO-20261029-009`(140) / `WO-20261026-013`(143) / `WO-20261030-021`(142)，每个都一次通过、与离线逐项比对 | 已完成 | `samples/nexent/live/multi_event_regression.json`；`docs/reports/nexent-live-integration-report.md` | — | 数据里另有 3 个 open 工单可扩（`WO-20261029-011`/`022`/`023`），需要时加一行即可 |
 | 真实用户评分（3–5 人） | 反馈来源合法性 | 采集通道就绪（`/evolution` 表单 + `review_collect`）；**样本为 0** | 未开始 | `docs/real-feedback-channel.md` | 用户侧（组织 3–5 名真实用户） | `reviews/` 有 ≥3 人、进化前后各一次 + 理由 |
 | 负例正式演示 | 反"瞎编" | 两条负例数据层 + 四张画面证据已入仓；**未进正式演示脚本** | 部分完成 | `docs/reports/captures/S31-ue-negative-*.png` | 我方 | 演示脚本第 5 步固定插入，30 秒讲完 |
 | 业务价值量化 | 应用价值 | 40 分钟 / 3040 m / 0.2264→0 等可复算；**"人工协同耗时"未实测** | 部分完成 | [业务价值证据](value-evidence.md) §2–§4 | 我方（15 分钟实测） | 3 人测一次，回填对照表 |
-| 多智能体协同进主链路 | 创新性 | 内核 + 32 测试已落地；MCP 工具、Nexent 未接 | **设计中** | `src/decision_poc/collab/`；`docs/reports/p12-collab-layer-report.md` | 我方 | `collab_run` 注册为 MCP 工具并在平台真机调用一次 |
+| 多智能体协同进主链路 | 创新性 | 内核 + 32 测试已落地；`collab_run` **已是 MCP 工具之一**（平台工具清单命中），协同 Agent `urban_collab_agent`(id=4, v7) 平台真机 **2/2**（conv 137/138，`kernel_fingerprint` 与离线逐字一致）；**但未并入主推演链路**（主 Agent 只挂两个工具） | 部分完成（平台已通，未进主链路） | `src/decision_poc/collab/`；`samples/nexent/live/collab_v7.json`、`docs/reports/p12-collab-layer-report.md` | 我方 | 若要"进主链路"，需决定主 Agent 是否挂 `collab_run` 并重跑 8/8 |
 | 定量层进主链路 | 专业性 | 水文/水力/简化水动力/不确定性内核 + 93 测试 + 手算对拍；**六跳缺口仍走 v1"80% 折算"** | **设计中** | `src/decision_poc/quant/`；`docs/reports/p12-quant-layer-report.md`、`docs/reports/p13-simplified-hydrodynamics-report.md` | 我方（需先补台账字段，见下） | 六跳跳 5 的缺口由 `Q=ψqF` + `能力=额定−故障` 算出，且对外数字一次改全 |
 
 ## 2. 本轮核对发现的"口径已过期"（必须改，否则自检会红）
@@ -48,10 +48,10 @@
 
 ## 3. "设计中"两项的真实阻断点（这是回答"为什么还不算完成"的关键）
 
-**A. 多智能体协同**——代码与测试已有，缺三件：
-1. `collab_run` 未注册为 MCP 工具（当前 MCP 仍是 14 个工具）；
-2. 未在 Nexent 平台真机调用（现只有离线确定性跑通）；
-3. 未进入演示脚本——因为进了会让"结论一致性"多一个需要现场解释的层次。
+**A. 多智能体协同**——代码、测试、MCP 注册、平台真机调用都已完成，缺的只剩"进主链路"这一件：
+1. ~~`collab_run` 未注册~~ **已注册**：它是当前 14 个工具清单里的一项，`setup_nexent.py status` 工具命中；
+2. ~~未在平台真机调用~~ **已真机 2/2**：协同 Agent 独立跑两次，指纹与离线逐字一致（`samples/nexent/live/collab_v7.json`）；
+3. 未进入演示主链路——主 Agent 只挂两个工具；要不要挂 `collab_run` 是口径选择，挂了会让"结论一致性"多一个需要现场解释的层次。
 
 **B. 定量层**——公式与测试已有，且 [P12 场景 v2 口径标定报告](../reports/p12-scenario-v2-calibration-report.md) 已经算出**换口径的真实代价**：
 按 v2 字面替换（来水 vs 可用能力）会把移动泵缺口从 **2 台变成 0 台**，缺口为 0 则 C3 资源争用冲突消失、"跨片区先给谁"这个 P9 决策对象失去事实基础，

@@ -120,7 +120,7 @@
 | P0 | 官方模板 1/模板 2 与报名通知原文落库 | 阻塞在用户侧 |
 | P1 | 模板 1 作品信息 Word 套版 | 内容草稿已备，未套版 |
 | P1 | Demo 地址（公网/云上） | 仅 localhost:8787 |
-| P1 | SKILL.md 上传平台技能仓库 | ✅ 已完成（2026-11-02）：skill_id=2/3，正文逐位一致，证据 `samples/nexent/live/skills.json` + `captures/nexent/skill-space.png`；**未绑定到已发布 Agent** |
+| P1 | SKILL.md 上传平台技能仓库 | ✅ 已完成（2026-11-02）：skill_id=2/3，正文逐位一致，证据 `samples/nexent/live/skills.json` + `captures/nexent/skill-space.png`；**已绑定到已发布 Agent**（草稿 v0 与发布版本 v19 各 2 条实例、全部 enabled，2026-11-06 复核，证据 `samples/nexent/live/skill_bindings.json`） |
 | P2 | 真实用户评分 3–5 人（进化前后各一次） | 待组织 |
 | P2 | 平台界面截图 / 演示录屏 | 截图 ✅（3 张 + `platform_ui.json`，sha256 进自检）；问答过程录屏仍待补 |
 | P2 | 应用价值量化（决策耗时、CF1 通行代价、缺口上报提前量） | 待做 |

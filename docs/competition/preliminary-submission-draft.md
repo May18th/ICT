@@ -33,7 +33,7 @@
 | --- | --- | --- |
 | ① 多模态数据资产认知 | 17 个合成资产（10 表 / 6 文 / 1 图）+ 2 份真实公开预案统一登记为 `asset_id + sha256 + locator + 版本 + 有效期 + 可见性`；解析率 19/19、未识别列 0 | 强（图像仅登记尺寸/区域，未做 OCR，如实声明） |
 | ② 低资源 KG 本体半自动构建 | 种子本体 → 规则抽取 → 置信度分档（auto/review/drop）→ 人工确认 → 版本发布/回滚；改 1 格只产 2 条候选，回滚哈希逐位一致 | 强 |
-| ③ MCP / Skills 编排 | 14 个 MCP 工具（含推演、冲突、分配、渲染、状态）+ 5 Skill 编排 + 2 个可上传的 SKILL.md；**Nexent 平台 Agent 已实调 MCP 工具并产出结论** | 强（工具编排真机已验证；2 个 SKILL.md 已上传平台技能仓库，未绑定 Agent） |
+| ③ MCP / Skills 编排 | 14 个 MCP 工具（含推演、冲突、分配、渲染、状态、协同）+ 5 Skill 编排 + 2 个 SKILL.md；**Nexent 平台 Agent 已实调 MCP 工具并产出结论** | 强（工具编排真机已验证；2 个 SKILL.md 已上传并**已绑定到已发布 Agent**：草稿与发布版本各 2 条实例、`present=enabled=true`，`bind_skills.py verify --require-published` 退出码 0） |
 | ④ 跨文档多跳推理与可溯源 | 六跳推演 + 三类冲突 + 反事实重放 + 哈希链账本 + 变更传播影响分析；引用完整率 100%、篡改可定位 | 强 |
 | ⑤ 基于 Nexent 可运行 | **真机已跑通**：14 工具注册、Agent 发布 v19、conversation_id=120、结论与离线 8/8 一致、平台工具调用日志可查（见 [真机报告](../reports/nexent-live-integration-report.md)） | **强**（原高风险项已解除） |
 
