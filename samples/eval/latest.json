@@ -16,8 +16,8 @@
     "six_hop_rate": 1.0,
     "citation_completeness": 1.0,
     "unsupported_claims": 0,
-    "p50_ms": 7.1,
-    "p95_ms": 8.5,
+    "p50_ms": 10.6,
+    "p95_ms": 14.6,
     "safety_by_kind": {
       "conflict": "3/3",
       "expired": "4/4",
@@ -63,7 +63,7 @@
       "locator_hits": 2,
       "locator_expected": 2,
       "refused": false,
-      "elapsed_ms": 25.9
+      "elapsed_ms": 40.7
     },
     {
       "case_id": "N02",
@@ -101,7 +101,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 8.5
+      "elapsed_ms": 14.6
     },
     {
       "case_id": "N03",
@@ -135,7 +135,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 7.7
+      "elapsed_ms": 13.6
     },
     {
       "case_id": "N04",
@@ -171,7 +171,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 9.9
+      "elapsed_ms": 10.9
     },
     {
       "case_id": "N05",
@@ -202,7 +202,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 7.1
+      "elapsed_ms": 20.9
     },
     {
       "case_id": "N06",
@@ -233,7 +233,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 6.7
+      "elapsed_ms": 11.6
     },
     {
       "case_id": "N07",
@@ -271,7 +271,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 8.2
+      "elapsed_ms": 14.3
     },
     {
       "case_id": "C01",
@@ -309,7 +309,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 3.6
+      "elapsed_ms": 5.9
     },
     {
       "case_id": "C02",
@@ -340,7 +340,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 3.4
+      "elapsed_ms": 5.1
     },
     {
       "case_id": "C03",
@@ -389,7 +389,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 1.3
+      "elapsed_ms": 3.0
     },
     {
       "case_id": "I02",
@@ -409,7 +409,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 5.9
+      "elapsed_ms": 10.1
     },
     {
       "case_id": "I03",
@@ -429,7 +429,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 5.2
+      "elapsed_ms": 8.7
     },
     {
       "case_id": "I04",
@@ -449,7 +449,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 6.0
+      "elapsed_ms": 6.9
     },
     {
       "case_id": "I05",
@@ -469,7 +469,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 5.2
+      "elapsed_ms": 8.8
     },
     {
       "case_id": "I06",
@@ -489,7 +489,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": true,
-      "elapsed_ms": 6.0
+      "elapsed_ms": 8.6
     },
     {
       "case_id": "P01",
@@ -507,7 +507,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 7.6
+      "elapsed_ms": 10.7
     },
     {
       "case_id": "P02",
@@ -525,7 +525,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 7.1
+      "elapsed_ms": 10.4
     },
     {
       "case_id": "E01",
@@ -559,7 +559,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 7.6
+      "elapsed_ms": 10.4
     },
     {
       "case_id": "E02",
@@ -593,7 +593,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 7.9
+      "elapsed_ms": 10.7
     },
     {
       "case_id": "E03",
@@ -627,7 +627,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 7.8
+      "elapsed_ms": 10.7
     },
     {
       "case_id": "E04",
@@ -658,7 +658,7 @@
       "locator_hits": 0,
       "locator_expected": 0,
       "refused": false,
-      "elapsed_ms": 7.9
+      "elapsed_ms": 12.5
     }
   ]
 }
