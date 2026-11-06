@@ -43,33 +43,53 @@ docker exec urban-twin-mcp python -c "import urllib.request;print(urllib.request
 > 为什么不用 `host.docker.internal` 直连宿主机：Windows 上 Docker→宿主机入站被防火墙拦（加规则需要管理员权限），
 > 把服务放进 `nexent_network` 用容器名互访更稳，也更接近真实部署。
 
-## 2 平台侧装配（幂等）
+## 2 平台侧装配（单入口，幂等）
 
 平台管理 API 需要 JWT，密钥只存在于 `nexent-config` 容器里，所以在容器内用后端自己的 venv 执行装配脚本。
-`setup_nexent.py` 与 `upload_skills.py` 共用 `platform_client.py`（JWT 签发 + HTTP 入口），三个文件一起拷：
+四个文件一起拷（`bind_skills.py` 会 `import upload_skills`，少拷一个就 `ModuleNotFoundError`）：
 
 ```powershell
 docker cp deploy/nexent/platform_client.py nexent-config:/tmp/platform_client.py
 docker cp deploy/nexent/setup_nexent.py    nexent-config:/tmp/setup_nexent.py
+docker cp deploy/nexent/upload_skills.py   nexent-config:/tmp/upload_skills.py
+docker cp deploy/nexent/bind_skills.py     nexent-config:/tmp/bind_skills.py
+docker cp samples/nexent/skill             nexent-config:/tmp/nexent_skills
 docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_nexent.py all"
 ```
 
-脚本依次做四件事（重复执行不会重复建）：
+`all` 依次跑六步，任何一步非 0 就停下（不会带着半成品去发 Key）：
 
 | 步骤 | 作用 | 幂等策略 |
 | --- | --- | --- |
 | `register-mcp` | 注册 MCP 服务 `urban-twin-mcp`（URL `http://urban-twin-mcp:8000/sse`） | 同名已存在则复用 |
 | `sync-tools` | `scan_tool` 把 14 个 MCP 工具同步进平台工具库 | 已存在则覆盖状态 |
-| `create-agent` | 创建/复用 `urban_deduction_agent`（**upsert**：带 `agent_id` 回写提示词），挂 2 个工具，发布版本 | 同名 Agent 复用；重复挂载无害 |
+| `create-main` | 创建/复用 `urban_deduction_agent`（**upsert**：带 `agent_id` 回写提示词），挂 2 个结论类工具并发布 | 同名 Agent 复用；重复挂载无害 |
+| `create-collab` | 创建/复用 `urban_collab_agent`，挂 6 个协同工具并发布 | 同上 |
+| `skills` | 上传 SKILL.md → 绑 Agent 草稿 → **重新发布** → 复核已发布版本 | 上传按正文哈希判 `unchanged`；绑定是覆盖写 |
 | `mint-key` | 生成北向 API Key | 每次生成新 Key（旧 Key 可继续用） |
 
-输出里记下：
+`skills` 必须排在两次发布之后：绑定只能写草稿（`version_no=0`），运行期读的是发布快照。
+少最后那次重新发布，表里草稿有、快照没有，**看起来绑了、实际不生效**。这条顺序以前靠人记，
+现在由 `tests/test_nexent_setup_steps.py` 锁住。
 
-- MCP：`[mcp] id=2 status=True enabled=True`
-- Agent：`[agent] id=3 name=urban_deduction_agent version=...`
-- Key：`[key] NEXENT_API_KEY=nexent-...`
+> 分步排障：`register-mcp` / `sync-tools` / `create-agent` / `create-collab-agent` /
+> `bind-skills` / `mint-key` / `status`。单条命令会自带它的前置步骤（例如 `bind-skills`
+> 会先 register + sync），所以单独跑一次也是完整状态。
 
-> 也可分步执行：`setup_nexent.py register-mcp` / `sync-tools` / `create-agent` / `mint-key` / `status`。
+装配完用 `status` 自检，三档退出码：
+
+```powershell
+docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_nexent.py status"
+```
+
+| 退出码 | 含义 |
+| --- | --- |
+| 0 | MCP / 14 工具 / 两个 Agent / 技能草稿与发布快照全部就位 |
+| 1 | 有硬失败（缺工具、Agent 不存在、技能 verify 不过） |
+| 2 | 有项**无法断言**（如技能目录没挂进容器）——这不是通过 |
+
+分 1 和 2 是因为旧版 `status` 只查 MCP / 工具 / Agent，技能根本不在它视野里，
+"没检查"和"检查通过"返回同一个 0。
 
 ## 2.1 上传 SKILL.md 到平台技能仓库（幂等）
 
@@ -100,9 +120,28 @@ docker cp nexent-config:/tmp/skills_evidence.json samples/nexent/live/skills.jso
 
 边界与现状：技能**已绑定到 `urban_deduction_agent` 的草稿和已发布版本**（`ag_skill_instance_t`
 的 `version_no=0` 与当前发布版本都 `present=True enabled=True`，用 `bind_skills.py verify
---require-published` 复核，退出码 0）。但要说清它**在运行时到底起什么作用**：实测模型不会主动
-`read_skill_md`，它读的是"这个 Agent 挂了哪些工具"，所以技能绑定改变不了工具调用行为——
-详见 [真机集成报告](../../docs/reports/nexent-live-integration-report.md) 的 2026-11-03 一节。
+--require-published` 复核，退出码 0）。
+
+它在运行时到底起什么作用，分三层说，别混成一句：
+
+| 层 | 事实 | 依据 |
+| --- | --- | --- |
+| 注入什么 | 平台把每个 enabled 技能的 `name` + `description` 拼进 `<available_skills>` 块，随系统提示下发，并指示模型"先审视 description 判断是否匹配" | `Nexent/sdk/nexent/core/agents/context/formatting.py:124-144` |
+| 没注入什么 | `SKILL.md` 正文**不会**自动进 prompt；要读得靠 `read_skill_md("skill_name")` | 同上 `:146` |
+| 我们怎么处理 | 主 Agent 的 `DUTY_PROMPT` **显式禁止** `read_skill_md`（`setup_nexent.py:96`），所以正文不参与推理 | `deploy/nexent/setup_nexent.py` |
+
+第三行是**有意取舍**，不是平台缺陷：2026-11-03 让模型读到正文后，它照着正文去调
+`twin_neighbors`/`conflict_check`/`allocation_plan`，走 `parallel_executor`，回答截断在
+`<|tool_call_start|>`，8/8 直接掉到 0/8。所以现在的口径是"只让 description 起作用，正文关掉"。
+
+由此能宣称与不能宣称要分开：
+
+- **能宣称**：技能绑定有效（草稿与发布快照都有实例）；技能的 description 会进入模型上下文，
+  影响它对任务的理解。
+- **不能宣称**："技能正文参与了推理"或"技能驱动了工具选择"。当前 8/8 证明的是 MCP 工具链与
+  输出协议有效，技能正文全程没进上下文。现场被追问时按这个边界答。
+
+两个技能的 `tool_ids` 都是空的——技能本身没挂工具，工具是按 Agent 挂的。
 
 ## 3 真机验证（结论级）
 
@@ -241,7 +280,9 @@ MCP 工具数已到 **14**（含 `collab_run`，分组 `collaboration`）。平�
 
 | 命令 | 作用 |
 | --- | --- |
-| `python /tmp/setup_nexent.py all` | 注册 MCP → 同步 14 工具 → 建主 Agent（挂决策/呈现工具）→ 建协同 Agent → 签发 Key |
+| `python /tmp/setup_nexent.py all` | 注册 MCP → 同步 14 工具 → 建主 Agent → 建协同 Agent → **上传技能 + 绑草稿 + 重新发布 + 复核** → 签发 Key（六步任一失败即停） |
+| `python /tmp/setup_nexent.py status` | 只读自检：MCP / 14 工具 / 两个 Agent / 技能草稿与发布快照；0 全绿、1 有失败、2 无法断言 |
+| `python /tmp/setup_nexent.py bind-skills` | 只重跑技能链（改过 SKILL.md 后用它；会重新发布一版，版本号 +1） |
 | `python /tmp/setup_nexent.py create-collab-agent` | 只建/更新协同 Agent `urban_collab_agent` 并挂 `collab_run` 等 6 个工具 |
 
 协同 Agent 的提示词是"两步式"：先 `collab_run`，再**逐字转述**动作卡、联合发布对、处置顺序与

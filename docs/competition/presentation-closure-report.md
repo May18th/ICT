@@ -49,7 +49,7 @@ UE 关卡（`/Game/UrbanTwin/Maps/UrbanTwinDemo`）按新规则回填了 5 个 A
 
 在编辑器里用"同一 MCP 会话"完成 load_level → 找 `twin:` Actor → 换 `M_Highlight` → 截图，
 避开了此前跨会话 world 绑定导致拍到 `UrbanTwinLevel` 的问题。四张证据已入仓
-`docs/reports/captures/`（UE 视口 1534×844）：
+`docs/reports/captures/`（UE 视口 1534×855）：
 
 | 文件 | 内容 |
 | --- | --- |
@@ -67,7 +67,7 @@ UE 关卡（`/Game/UrbanTwin/Maps/UrbanTwinDemo`）按新规则回填了 5 个 A
 
 - `python -m pytest -q` → **521 passed**（新增 5 条呈现层契约不变量；测试数已冻结在
   `samples/eval/evidence_expectations.json` 的 `test_baseline.collected=521`）；
-- `python -m decision_poc.evidence_check` → **108/108 项一致**，期望指纹 `102114cd121c7be8`
+- `python -m decision_poc.evidence_check` → **108/108 项一致**，期望指纹 `8d8fa3552813f677`
   （`checks.test_suite.docs_declared=[521]` 会扫描 README/竞赛文档，写旧数字即失败）。
 
 ## 6 下一步（按 0.5–1 人日剩余部分）
