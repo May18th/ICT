@@ -92,8 +92,17 @@
 - **已登记快照**（`STALE_SNAPSHOTS`）：必须等于**登记时的旧值**。旧值也被钉住——再漂一次
   （既不是当前值也不是登记值）就红；哪天重跑生成器更新到当前口径，
   `test_stale_entries_are_still_stale` 会要求删掉登记。
-- 重跑生成器需要 `python-pptx` / `python-docx` / `Pillow`（**非默认依赖**）。不要为了过检临时装包：
-  要么在带这些依赖的环境里跑，要么保持登记 + 在 `delivery-status` 标注"数字为某日当时"。
+- 重跑生成器需要 `python-pptx` / `python-docx` / `Pillow`（**非默认依赖**）。**不要 `uv add`、也不要 `pip install` 进 `.venv`**——
+  那会改 `pyproject.toml` / `uv.lock`，而且会让"默认环境跑出来的 pytest 数"失真（见下条）。用隔离层跑：
+  ```powershell
+  uv run --with python-pptx --with pillow python scripts/build_answer_ppt.py
+  uv run --with python-docx --with pillow python scripts/build_preliminary_docx.py
+  ```
+- **口径：`test_baseline.collected` 是收集数，不是 passed 数。** 当前 839 收集，默认环境实际输出
+  `838 passed, 1 skipped`——被跳过的是 `test_deepseek_model_can_be_built_without_network`
+  （`pytest.importorskip("openai")`，`openai` 属可选组 `llm`）。所以可以说"839 项测试"，
+  **不能说"839 项全部通过"**。反过来说：若哪天看到"839 passed"全绿，说明 `.venv` 里残留了手工装的
+  `openai`——环境已经被污染过，先 `uv sync --locked` 复原再判断。
 
 ## 运行 reproduce 后的噪声处理
 
