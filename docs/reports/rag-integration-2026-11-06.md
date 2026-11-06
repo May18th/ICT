@@ -35,7 +35,7 @@
 
 ```
 doc_search("基坑开挖 暴雨 职责冲突")
-  → AS-A-03-duty_list-... #A-03/duty_list/v1#line:... 
+  → AS-A-03-duty_list-...#A-03/duty_list/v1#line:...
   → evidence_locate(evidence_ref) → status=ok，取回「部门职责以《部门职责清单》为准…」
 ```
 
