@@ -25,7 +25,7 @@ from collections.abc import Sequence
 
 from pydantic import Field, model_validator
 
-from decision_poc.contracts import ProvenanceLevel, StrictModel
+from decision_poc.contracts import StrictModel
 from decision_poc.hydro_contracts import CurveProvenance
 from decision_poc.quant.contracts import (
     HydrographResult,
@@ -275,8 +275,7 @@ def level_pool_route(
     spill_crest_m: float | None = None,
     spill_width_m: float = 0.0,
     spill_coefficient: float = DEFAULT_WEIR_COEFFICIENT,
-    storage_basis: ProvenanceLevel | None = None,
-    storage_ref: str = "",
+    storage_provenance: CurveProvenance | None = None,
 ) -> HydrographResult:
     """修正 Puls 法调蓄演进：按库容曲线算水位过程线，可叠加抽排与溢流。
 
@@ -284,19 +283,16 @@ def level_pool_route(
     **t_k 时刻（节点）的抽排能力**，修正 Puls 在每个时段用起止两节点的出流均值，
     因此"第 1 时段中途停机"会按 (Q, 0) 的均值计入，这是离散格式的固有近似。
 
-    来源约定：`storage_basis` / `storage_ref` 声明库容曲线从哪来（真实图纸、推算、假设）。
-    声明后写进 `storage_provenance` 与 `assumptions` 的固定前缀行，随结果一路带走；
-    不声明则保持历史行为（`storage_provenance=None`，assumptions 不多一行）。
+    来源约定：`storage_provenance` 用单个对象声明库容曲线从哪来（真实图纸、推算、假设）。
+    这里刻意不接受"级别 + 出处"两个独立参数——那会让"只写出处、忘了级别"成为可表达状态，
+    而这种调用会静默丢来源。声明后写进结果的 `storage_provenance` 与 `assumptions` 固定前缀行；
+    不声明则保持历史行为（`None`，assumptions 不多一行）。
     """
 
     inflow = [float(value) for value in inflow_m3h]
     stages = [float(value) for value in stage_m]
     storages = [float(value) for value in storage_m3]
-    provenance = (
-        CurveProvenance(basis=storage_basis, ref=storage_ref)
-        if storage_basis is not None
-        else None
-    )
+    provenance = storage_provenance
     inputs = {
         "dt_h": float(dt_h),
         "initial_stage_m": float(initial_stage_m),

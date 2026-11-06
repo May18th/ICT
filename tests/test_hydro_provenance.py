@@ -57,8 +57,7 @@ def _curve() -> tuple[list[float], list[float]]:
 
 
 def _route(
-    basis: ProvenanceLevel | None = None,
-    ref: str = "",
+    provenance: CurveProvenance | None = None,
     *,
     steps: int = 21,
 ):
@@ -70,15 +69,14 @@ def _route(
         storage_m3=storages,
         initial_stage_m=0.0,
         pump_outflow_m3h=0.0,
-        storage_basis=basis,
-        storage_ref=ref,
+        storage_provenance=provenance,
     )
 
 
 def test_level_pool_route_carries_storage_provenance() -> None:
     """声明来源 → 契约字段与 assumptions 前缀行同时出现，且只出现一次。"""
 
-    hydrograph = _route(ProvenanceLevel.ASSUMPTION, FOREBAY_REF)
+    hydrograph = _route(CurveProvenance.assumption(FOREBAY_REF))
     assert hydrograph.storage_provenance is not None
     assert hydrograph.storage_provenance.basis is ProvenanceLevel.ASSUMPTION
     assert hydrograph.storage_provenance.ref == FOREBAY_REF
@@ -89,7 +87,7 @@ def test_level_pool_route_carries_storage_provenance() -> None:
 def test_downstream_queries_inherit_storage_provenance() -> None:
     """到达时刻与超阈时长都继承上游来源；未声明来源时两处都不该凭空多出一行。"""
 
-    hydrograph = _route(ProvenanceLevel.REAL, "竣工图 JS-2023-014")
+    hydrograph = _route(CurveProvenance.real("竣工图 JS-2023-014"))
     reached = time_to_level(hydrograph=hydrograph, target_level_m=2.4)
     exceeded = level_exceedance_duration(hydrograph=hydrograph, threshold_m=2.4)
     for result in (reached, exceeded):
@@ -124,8 +122,8 @@ def test_cache_key_separates_storage_provenance() -> None:
     """同数值不同来源必须落两个缓存键；同来源重复调用仍命中同一个对象。"""
 
     runtime = SkillRuntime()
-    assumed = _route(ProvenanceLevel.ASSUMPTION, FOREBAY_REF)
-    measured = _route(ProvenanceLevel.REAL, "竣工图 JS-2023-014")
+    assumed = _route(CurveProvenance.assumption(FOREBAY_REF))
+    measured = _route(CurveProvenance.real("竣工图 JS-2023-014"))
 
     first = runtime.deduce(EVENT, as_of=AS_OF, hydrograph=assumed)
     second = runtime.deduce(EVENT, as_of=AS_OF, hydrograph=measured)
@@ -146,3 +144,41 @@ def test_curve_provenance_requires_ref_only_when_real() -> None:
         CurveProvenance(basis=ProvenanceLevel.REAL, ref="   ")
     assert CurveProvenance(basis=ProvenanceLevel.ASSUMPTION).ref == ""
     assert CurveProvenance(basis=ProvenanceLevel.REAL, ref="竣工图 JS-2023-014").ref
+    assert CurveProvenance.assumption().basis is ProvenanceLevel.ASSUMPTION
+    assert CurveProvenance.derived("storage = area × stage").basis is ProvenanceLevel.DERIVED
+
+
+def test_two_kwarg_form_is_unrepresentable() -> None:
+    """旧的「级别 + 出处」两参数写法必须完全不可传，而不是传了才报错。
+
+    静默丢来源的根因是"两个松散参数可以只传一个"。修法不是加校验，而是让这种组合
+    在签名上不存在——本测试锁住这一点：任何人把 `storage_basis` 加回签名，这里立刻红。
+    """
+
+    stages, storages = _curve()
+    common = dict(
+        inflow_m3h=[1200.0] * 21,
+        dt_h=0.01,
+        stage_m=stages,
+        storage_m3=storages,
+        initial_stage_m=0.0,
+        pump_outflow_m3h=0.0,
+    )
+    with pytest.raises(TypeError):
+        level_pool_route(**common, storage_basis=ProvenanceLevel.ASSUMPTION)  # type: ignore[call-arg]
+    with pytest.raises(TypeError):
+        level_pool_route(**common, storage_ref="竣工图 JS-2023-014")  # type: ignore[call-arg]
+
+
+def test_public_exports_expose_provenance_types() -> None:
+    """公开契约的导出面要一致：根包与 quant 都能直接拿到来源类型。"""
+
+    import decision_poc
+    import decision_poc.quant as quant
+
+    assert decision_poc.CurveProvenance is CurveProvenance
+    assert decision_poc.ProvenanceLevel is ProvenanceLevel
+    assert quant.CurveProvenance is CurveProvenance
+    for module in (decision_poc, quant):
+        assert "CurveProvenance" in module.__all__, f"{module.__name__}.__all__ 缺 CurveProvenance"
+    assert "ProvenanceLevel" in decision_poc.__all__
