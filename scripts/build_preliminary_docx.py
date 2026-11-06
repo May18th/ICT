@@ -230,7 +230,7 @@ def build() -> Path:
         [
             [
                 "① 多模态数据资产认知",
-                "15 个合成资产（8 表 / 6 文 / 1 图）统一登记：asset_id、sha256、locator、版本、有效期、可见性；解析 15/15，未识别列 0",
+                "17 个合成资产（10 表 / 6 文 / 1 图）+ 2 份真实公开预案统一登记：asset_id、sha256、locator、版本、有效期、可见性；解析 19/19，未识别列 0",
                 "samples/assets/urban、docs/data-asset-spec.md",
             ],
             [
@@ -281,10 +281,10 @@ def build() -> Path:
         doc,
         ["处理环节", "做法", "结果"],
         [
-            ["采集/构造", "按统一 Schema 构造 15 个资产：道路/管线/泵站/雨水口/气象预警/工单/预案/规程/施工方案/示意图", "12 种类型，3 种模态"],
-            ["解析", "CSV/TSV 行列解析（utf-8-sig→gb18030→latin-1 回退）、MD/TXT 取首段、PNG 读 IHDR", "15/15 full/partial 解析，未识别列 0"],
+            ["采集/构造", "按统一 Schema 构造 17 个合成资产：道路/管线/泵站/雨水口/气象预警/工单/预案/规程/施工方案/下穿隧道/前池库容曲线/示意图", "14 种类型，3 种模态"],
+            ["解析", "CSV/TSV 行列解析（utf-8-sig→gb18030→latin-1 回退）、MD/TXT 取首段、PNG 读 IHDR", "19/19 full/partial 解析，未识别列 0"],
             ["登记与治理", "内容寻址 asset_id、sha256、locator（{locator}#row:n / #line:n）、版本、有效期、可见性", "检索命中 100%，越权可拒答"],
-            ["本体化", "种子本体 → 8 类抽取器（规则+词典）→ 置信度分档 0.80/0.55 → 人工确认 → 合并计划", "实测 101 三元组 / 8 谓词落地，溯源覆盖 100%"],
+            ["本体化", "种子本体 → 8 类抽取器（规则+词典）→ 置信度分档 0.80/0.55 → 人工确认 → 合并计划", "实测 123 三元组 / 8 谓词落地，溯源覆盖 100%"],
             ["时态语义", "as_of 查询 + snapshot_hash 锚定：同题在不同时间点结论不同（2021 已废止预案 vs 2025 修订预案）", "22 例评测含过期/时态用例，拒答有据"],
         ],
         widths=[3.0, 9.2, 4.8],
@@ -351,8 +351,8 @@ def build() -> Path:
             ["对外数字自检", "106/106 项一致（期望指纹 6a9030396892c48f）", "python -m decision_poc.evidence_check"],
             ["P8 事件评测", "22/22 通过（改进前基线 17/22）", "python -m decision_poc.urban_eval"],
             ["六跳完整率 / 引用完整率 / 检索命中率", "100% / 100% / 100%", "docs/reports/p8-evaluation-report.md"],
-            ["数据资产解析", "15/15，未识别列 0", "python -m decision_poc.health"],
-            ["本体三元组 / 谓词", "101 三元组 / 8 谓词（种子 10 类型 / 11 谓词）", "samples/assets/ontology_candidates.json"],
+            ["数据资产解析", "19/19，未识别列 0", "python -m decision_poc.health"],
+            ["本体三元组 / 谓词", "123 三元组 / 8 谓词（种子 10 类型 / 11 谓词）", "samples/assets/ontology_candidates.json"],
             ["推演规则", "28 条，全部带原文行号并在加载时校验", "samples/rules/urban_deduction_rules.json"],
             ["P9 进化（训练 / 留出）", "偏差 0.2264→0.0000 / 0.2182→0.0000", "docs/reports/p9-policy-evolution-report.md"],
             ["人工评审第二信号", "评审偏差 0.1171→0.0000，违反评审的候选全部被拒", "同上"],
