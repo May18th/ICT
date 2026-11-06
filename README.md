@@ -303,7 +303,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 证据固化：`python deploy/nexent/capture_evidence.py` → `samples/nexent/live/`（Agent 列表、会话、MCP 调用日志、
 汇总 JSON）。完整排障与边界见 [真机集成报告](docs/reports/nexent-live-integration-report.md)。
 
-边界：只在小规模本机 Docker 演示环境验证；两个 SKILL.md 已上传平台技能仓库（skill_id=2/3）但未绑定到已发布 Agent；
+边界：只在小规模本机 Docker 演示环境验证；两个 SKILL.md 已上传技能仓库（skill_id=2/3）**并已绑定到已发布 Agent**（草稿与发布版本各 2 条实例、全部 enabled，`bind_skills.py verify --require-published` 退出码 0，证据 `samples/nexent/live/skill_bindings.json`）；
 平台界面截图 3 张已固化（`docs/reports/captures/nexent/`，含 sha256 自检），问答过程录屏与多事件真机回归仍待补；
 不宣称"多 Agent 协同"。
 

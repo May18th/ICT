@@ -1,0 +1,54 @@
+{
+  "captured_at": "2026-11-06T19:23:35+0800",
+  "config_api": "http://localhost:5010",
+  "agent": {
+    "name": "urban_deduction_agent",
+    "agent_id": 3,
+    "current_version_no": 19
+  },
+  "expected_skills": {
+    "scarcity-allocation-evolution": 2,
+    "urban-six-hop-deduction": 3
+  },
+  "draft": {
+    "all_present_enabled": true,
+    "rows": [
+      {
+        "skill": "scarcity-allocation-evolution",
+        "skill_id": 2,
+        "present": true,
+        "enabled": true
+      },
+      {
+        "skill": "urban-six-hop-deduction",
+        "skill_id": 3,
+        "present": true,
+        "enabled": true
+      }
+    ]
+  },
+  "published": {
+    "all_present_enabled": true,
+    "rows": [
+      {
+        "skill": "scarcity-allocation-evolution",
+        "skill_id": 2,
+        "present": true,
+        "enabled": true
+      },
+      {
+        "skill": "urban-six-hop-deduction",
+        "skill_id": 3,
+        "present": true,
+        "enabled": true
+      }
+    ],
+    "version_no": 19
+  },
+  "draft_ok": true,
+  "published_ok": true,
+  "checked": {
+    "require_published": true,
+    "ok": true
+  }
+}

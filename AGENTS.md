@@ -99,7 +99,7 @@
   uv run --with python-docx --with pillow python scripts/build_preliminary_docx.py
   ```
 - **口径：`test_baseline.collected` 是收集数，不是 passed 数。** 当前 844 收集，默认环境实际输出
-  `838 passed, 1 skipped`——被跳过的是 `test_deepseek_model_can_be_built_without_network`
+  `843 passed, 1 skipped`——被跳过的是 `test_deepseek_model_can_be_built_without_network`
   （`pytest.importorskip("openai")`，`openai` 属可选组 `llm`）。所以可以说"844 项测试"，
   **不能说"844 项全部通过"**。反过来说：若哪天看到"844 passed"全绿，说明 `.venv` 里残留了手工装的
   `openai`——环境已经被污染过，先 `uv sync --locked` 复原再判断。

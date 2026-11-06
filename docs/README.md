@@ -22,7 +22,7 @@
 - [城市内涝主链路 Nexent 真机报告](reports/nexent-live-integration-report.md)：MCP-over-SSE 注册、Agent 发布、**8/8 一致性（conversation_id=120，Agent v19 / DeepSeek-Chat）**、平台工具调用日志、排障与边界。
 - [Nexent 集成设计（SSE + SKILL.md）](nexent-urban-integration-design.md)：为什么必须走 SSE、装配步骤、证据清单与验收口径。
 - [Nexent 侧装配与复现手册](../deploy/nexent/README.md)：容器构建、平台装配脚本、真机校验与证据抓取；含 **SKILL.md 上传平台技能仓库（§2.1）** 与 **平台界面截图/录屏取证（§4.1）**。
-- [平台侧证据报告](reports/platform-evidence-report.md)：SKILL.md 上传平台技能仓库（skill_id=2/3、幂等、正文逐位一致）+ 平台界面三张截图断言取证，以及这两项如何进对外数字自检；含权限/凭据边界与"技能未绑定 Agent"的诚实口径。
+- [平台侧证据报告](reports/platform-evidence-report.md)：SKILL.md 上传平台技能仓库（skill_id=2/3、幂等、正文逐位一致）+ 平台界面三张截图断言取证，以及这两项如何进对外数字自检；含权限/凭据边界与"技能已绑定、但正文不被模型读取"的诚实口径。
 - [真实用户评分采集](real-feedback-channel.md)：真实用户评分（进化前后各一次）的采集/汇总/导出，以及「只汇总不进门禁」与「带修正建议才进门禁」两条通道的口径。
 - [图像语义抽取](image-semantics.md)：PNG 像素级抽取（频谱峰值/示意色块/积水范围），输出 RegionSpec 区域候选；明确不做 OCR、不用视觉模型。
 - [P9 进化闭环报告](reports/p9-policy-evolution-report.md)：分配策略的逐轮偏差归因、评测门禁采纳/拒绝、留出集泛化、分层记忆 warm start、人工评审第二信号、语义化版本标签与回滚验证（由 `decision_poc.policy_evolution` 生成，勿手改）。
