@@ -232,13 +232,21 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py `
 
 - 本目录脚本面向**本机 Docker 演示环境**，管理员用户与 JWT 由容器环境提供；生产环境要换成正式账号与权限体系。
 - 真机结论只覆盖 `WO-20261029-007` 一个事件与 8 项一致性检查；扩事件需要扩数据集与评测用例。
-- 主 Agent 只挂 **2 个工具**（`event_deduce` + `evidence_locate`）。历史真机快照的工具库为 13 个；
-  当前代码清单为 14 个，平台重扫需在 Docker 恢复后执行。
+- 主 Agent 只挂 **2 个工具**（`event_deduce` + `evidence_locate`）。平台工具库当前是 14 个
+  （`setup_nexent.py status` 显示 `命中 14/14`），主 Agent 的挂载是这 14 个里的 2 个子集。
   收窄挂载不是偷懒：openPangu 看到 `twin_neighbors` / `conflict_check` / `allocation_plan`
   就会去调（提示词明令禁止也拦不住），随后走 `parallel_executor` 把回答截断在 `<|tool_call_start|>`。
   工具列表才是模型真正读的"提示词"。
-- 两个 SKILL.md 已进平台技能仓库**且已绑定到已发布版本**；但实测模型不读技能文档，
-  所以只能说"技能已绑定、可在平台内浏览与复用口径"，不说"平台 Agent 会按技能文档执行流程"。
+- 两个 SKILL.md 已进平台技能仓库**且已绑定到已发布版本**（草稿 v0 与发布快照各 2 条实例）。
+  运行时效果分三层说，别压成一句：
+  1. **会注入**：平台把每份 enabled 技能的 `name` + `description` 拼进 `<available_skills>`
+     随系统提示下发，并指示"先审视 description 判断是否匹配"
+     （`Nexent/sdk/nexent/core/agents/context/formatting.py:124-144`）；
+  2. **不注入**：`SKILL.md` 正文要调用 `read_skill_md("skill_name")` 才进 prompt（同文件 `:146`）；
+  3. **我们禁了**：主 Agent 的 `DUTY_PROMPT` 显式禁止 `read_skill_md`（`setup_nexent.py:96`），
+     所以本轮运行确实没有读取正文——这是 11-03 读正文导致 8/8→0/8 后的有意取舍，不是平台不支持。
+
+  因此口径是"技能已绑定，`description` 参与任务理解"，不说"平台 Agent 按技能正文执行流程"。
 - 协同 Agent（6 个工具）的输出稳定性：v6 时代实测 **2/3**（失败形态是工具调用协议退化）；
   v7（DeepSeek + `final_answer` 交卷）连跑 **2/2**。样本量小，口径仍是"可重跑、格式需容错"，不宣称 100%。
 - 平台界面截图/录屏都来自本机 Nexent v2.7.0 前端；换环境必须重跑并重新生成证据。
