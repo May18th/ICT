@@ -125,7 +125,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 
 | 证据 | 获取方式 |
 | --- | --- |
-| MCP 服务在线 | `/health` 截图（含 13 工具）+ 终端启动日志 |
+| MCP 服务在线 | `/health` 截图（含 14 工具）+ 终端启动日志 |
 | Nexent 已接入 MCP | MCP 配置页截图（URL 与连通性校验通过） |
 | Agent 挂载工具/Skills | Agent 编辑页工具列表截图 |
 | 平台对话 | 浏览器对话截图（question + 工具调用 + JSON 结论） |
