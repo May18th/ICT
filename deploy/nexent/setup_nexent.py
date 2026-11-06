@@ -325,8 +325,19 @@ class Platform(PlatformClient):
 
 
 def main(argv: list[str]) -> int:
-    platform = Platform()
     command = argv[1] if len(argv) > 1 else "status"
+
+    # 帮助/非法命令不应先初始化平台客户端；宿主机通常没有容器内的 PyJWT
+    # 与 SUPABASE_JWT_SECRET，但仍应能查看用法和发现拼写错误。
+    if command in {"-h", "--help", "help"}:
+        print(__doc__)
+        return 0
+    valid_commands = {"all", "register-mcp", "sync-tools", "create-agent", "create-collab-agent", "mint-key", "status"}
+    if command not in valid_commands:
+        print(__doc__)
+        return 2
+
+    platform = Platform()
 
     if command in {"all", "register-mcp", "sync-tools", "create-agent", "create-collab-agent"}:
         mcp_id = platform.register_mcp()
@@ -365,8 +376,7 @@ def main(argv: list[str]) -> int:
         print("[collab-agent]", json.dumps(collab, ensure_ascii=False)[:400] if collab else "未创建")
         return 0
 
-    print(__doc__)
-    return 2
+    raise AssertionError(f"unreachable command: {command}")
 
 
 if __name__ == "__main__":
