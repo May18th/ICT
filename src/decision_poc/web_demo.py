@@ -17,16 +17,19 @@ from pathlib import Path
 from typing import Any, Mapping
 from urllib.parse import parse_qs, urlparse
 
+from . import baseline_compare
+from . import chain as scheduler
 from . import review_collect as reviews
 from . import visualize
 from . import web_llm
 from .collab import orchestrate
-from .counterfactual import CASES, Intervention, InterventionKind, rerun_with_interventions
+from .counterfactual import Intervention, InterventionKind, rerun_with_interventions
 from .deduction import DeductionEngine, DistrictSignal
 from .evolution_demo import build_evolution_html, build_evolution_payload
+from .road_graph import RoadGraph, RoadGraphUnavailable
 from .skills import SkillPipeline, SkillRuntime
 from .semantic import build_urban_semantic_store
-from .timeline import build_timeline, compare_branches
+from .timeline import build_event_stream, build_timeline, compare_branches
 
 EVENT_ID = "WO-20261029-007"
 AS_OF = "2026-10-29T09:40:00+08:00"
@@ -151,9 +154,41 @@ def collab_review(*, event_id: str = EVENT_ID, as_of: str = AS_OF) -> dict[str, 
 # 干预只走**白名单**：前端只能提交预设 id，不能提交任意补丁。补丁机制会复制数据集并改写
 # CSV，若允许外部传 target/field/value，这个端点就成了任意文件改写入口。
 INTERVENTIONS: dict[str, dict[str, Any]] = {
+    "pump-minus-one": {
+        "label": "少调一台移动泵",
+        "hint": "A-03 台账 4 台只放行 3 台（真减 1 台），缺口 2 → 3，看方案怎么重排",
+        "kind": "resource",
+        "interventions": [
+            Intervention(
+                kind=InterventionKind.DATA_PATCH,
+                target="resource_inventory.csv",
+                match={"resource_id": "RES-PUMP-M"},
+                field="qty_available",
+                value="3",
+                note="现场只放行 3 台移动泵",
+            )
+        ],
+    },
+    "close-road": {
+        "label": "关闭民生街（R-103）",
+        "hint": "真把 R-103 置为封闭：到场时间变长，但缺口由库存决定、不会变",
+        "kind": "road",
+        "road_id": "R-103",
+        "interventions": [
+            Intervention(
+                kind=InterventionKind.DATA_PATCH,
+                target="road_network.csv",
+                match={"road_id": "R-103"},
+                field="status",
+                value="closed",
+                note="现场封闭民生街",
+            )
+        ],
+    },
     "pump-b01-off": {
-        "label": "B-01 跨区泵调不过来",
-        "hint": "把 B-01 的 2 台库存置 0（跨区调用要 40 分钟，车队被堵），看缺口怎么变",
+        "label": "B-01 跨区泵全调不过来",
+        "hint": "B-01 的 2 台库存置 0（跨区 40 分钟且车队被堵），看缺口怎么变",
+        "kind": "resource",
         "interventions": [
             Intervention(
                 kind=InterventionKind.DATA_PATCH,
@@ -165,11 +200,6 @@ INTERVENTIONS: dict[str, dict[str, Any]] = {
             )
         ],
     },
-    "close-road-first": {
-        "label": "先封路、后隔离风险源",
-        "hint": "规则处置顺序对调（与 CF1 同一对补丁），看处置顺序怎么重排",
-        "interventions": list(CASES["CF1"].interventions),
-    },
 }
 
 
@@ -180,10 +210,24 @@ def intervention_catalog() -> list[dict[str, Any]]:
             "id": key,
             "label": entry["label"],
             "hint": entry["hint"],
+            "kind": entry["kind"],
             "patches": [item.describe() for item in entry["interventions"]],
         }
         for key, entry in INTERVENTIONS.items()
     ]
+
+
+def road_travel(road_id: str) -> dict[str, Any]:
+    """封路后的到场时间对照（只算路口到路口，门到门仍然算不出）。
+
+    单独一个函数是为了让"封路到底影响了什么"有据可查：它**不改**缺口，
+    只改路网上的距离与时间；页面必须把这两件事分开说，不能合成一句"封路后更严重"。
+    """
+    try:
+        impact = RoadGraph.load().impact(road_id)
+    except RoadGraphUnavailable as exc:
+        return {"available": False, "road_id": road_id, "reason": str(exc)}
+    return {"available": True, **impact.model_dump(mode="json")}
 
 
 def run_intervention(intervention_id: str) -> dict[str, Any]:
@@ -200,9 +244,10 @@ def run_intervention(intervention_id: str) -> dict[str, Any]:
         as_of=AS_OF,
         caller_labels=["ORG-EMERG"],
     )
-    return {
+    payload = {
         "id": intervention_id,
         "label": entry["label"],
+        "kind": entry["kind"],
         "patches": result["interventions"],
         "mechanism": result["mechanism"],
         "timeline": build_timeline(result["intervened"]),
@@ -210,6 +255,10 @@ def run_intervention(intervention_id: str) -> dict[str, Any]:
             result["baseline"], result["intervened"], interventions=result["interventions"]
         ),
     }
+    road_id = entry.get("road_id")
+    if road_id:
+        payload["travel"] = road_travel(str(road_id))
+    return payload
 
 
 # 注意：下面是普通 Python 字符串，不是 raw 字符串。写 JS 时**不要**用 "\n"——Python 会把它
@@ -218,11 +267,20 @@ def run_intervention(intervention_id: str) -> dict[str, Any]:
 def build_html() -> str:
     return """<!doctype html><html lang=zh-CN><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Urban Twin</title>
 <style>body{font:15px system-ui;margin:0;background:#0b1220;color:#e8eef7}main{max-width:1180px;margin:auto;padding:28px}h1{color:#7dd3fc;margin-bottom:4px}.sub{color:#9fb1c8}.toolbar{display:flex;gap:12px;align-items:center;margin:22px 0}button{background:#38bdf8;border:0;border-radius:6px;padding:10px 18px;font-weight:700;cursor:pointer}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.card{background:#152238;border:1px solid #263a55;border-radius:10px;padding:16px}.card h2{font-size:17px;margin:0 0 12px;color:#bae6fd}.metric{display:inline-block;background:#20344d;border-radius:7px;padding:10px;margin:0 8px 8px 0}.metric b{display:block;font-size:22px;color:#7dd3fc}.pill{display:inline-block;background:#334155;padding:3px 8px;border-radius:99px;margin:3px;font-size:12px}.warn{color:#fbbf24}.ok{color:#86efac}.trace{border-left:2px solid #38bdf8;padding-left:12px;margin:8px 0}.evidence{font-size:12px;color:#b8c7d9;word-break:break-all}svg{width:100%;height:330px;background:#0e1a2c;border-radius:8px}.road{stroke:#64748b;stroke-width:8}.pipe{stroke:#f97316;stroke-width:3;stroke-dasharray:7 5}.flood{fill:#38bdf8;opacity:.35}.node{fill:#fbbf24;stroke:#fff;stroke-width:2}.navlink{color:#7dd3fc;text-decoration:none;margin-left:auto;font-weight:600}@media(max-width:800px){.grid{grid-template-columns:1fr}}</style>
-<main><h1>城市内涝跨部门事件推演</h1><div class=sub>暴雨 + 道路封闭 + 地下管线施工冲突 · 证据链可追溯</div><div class=toolbar><button onclick="run()">运行演示</button><button class=ghost onclick="renderScene('v1')">渲染基线 v1</button><button class=ghost onclick="renderScene('v4')">渲染进化 v4</button><button class=ghost onclick="diffScenes()">对比两版</button><button class=ghost onclick="runLLM()">LLM 决策（DeepSeek）</button><span id=status>等待运行</span><a class=navlink href='/evolution'>决策进化对比 →</a></div><section id=summary class=card><h2>事件概览</h2><div id=metrics>点击“运行演示”加载推演结果</div></section><div class=grid><section class=card><h2>数字孪生影响范围</h2><svg viewBox='0 0 700 330' aria-label='影响范围示意图'><path class=road d='M40 260 L660 70 M40 80 L660 260'/><path class=pipe d='M80 250 L400 160 L630 150'/><ellipse class=flood cx=350 cy=165 rx=130 ry=80/><circle class=node cx=350 cy=165 r=8/><text x=365 y=160 fill='#e8eef7'>A-03 积水区</text></svg><div id=assets></div></section><section class=card><h2>跨部门协同</h2><div id=departments></div><h2>资源与风险</h2><div id=risks></div></section></div><section class=card style='margin-top:16px'><h2>推理链路与证据</h2><div id=trace></div></section>
-<section class=card style='margin-top:16px'><h2>微调度台 · 决策时间线 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（每条都能对回推演字段）</span></h2><div class=toolbar style='margin:0 0 10px'><button onclick="playTimeline()">回放决策过程</button><span id=tlstatus class=sub>未加载</span></div><ol id=timeline class=tl></ol><div id=tlfoot class=sub style='margin-top:10px'></div></section>
+<main><h1>城市内涝跨部门事件推演</h1><div class=sub>暴雨 + 道路封闭 + 地下管线施工冲突 · 证据链可追溯</div><div class=toolbar><button onclick="run()">运行演示</button><button class=ghost onclick="renderScene('v1')">渲染基线 v1</button><button class=ghost onclick="renderScene('v4')">渲染进化 v4</button><button class=ghost onclick="diffScenes()">对比两版</button><button class=ghost onclick="runLLM()">LLM 决策（DeepSeek）</button><span id=status>等待运行</span><a class=navlink href='/evolution'>决策进化对比 →</a></div><section id=summary class=card><h2>事件概览</h2><div id=metrics>点击“运行演示”加载推演结果</div></section>
+<section class=card style='margin-top:16px'><h2>演示链路 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（事件输入 → 主 Agent → MCP 调用 → 协同复核 → 冲突 → 方案 → 复算）</span></h2><div class=toolbar style='margin:0 0 8px'><button onclick="runChain()">跑一遍链路</button><span id=chainstatus class=sub>未加载</span></div><div id=chain class=chain></div><div id=chainfoot class=sub style='margin-top:8px'></div></section>
+<div class=grid><section class=card><h2>数字孪生影响范围</h2><svg id=scenemap viewBox='0 0 700 330' aria-label='可点场景图'></svg><div id=sceneinfo class=sub>加载场景实体后，点积水区、泵站或道路，看它对应哪张工单、占用哪些资源</div><div id=assets></div></section><section class=card><h2>跨部门协同</h2><div id=departments></div><h2>资源与风险</h2><div id=risks></div></section></div>
+<div class=grid style='margin-top:16px'>
+<section class=card><h2>工单列表 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（台账全量，演示事件置顶）</span></h2><div id=orders class=sub>加载中</div></section>
+<section class=card><h2>资源状态 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（台账可用量 vs 本次缺口）</span></h2><div id=resboard class=sub>加载中</div></section>
+</div>
+<section class=card style='margin-top:16px'><h2>当前方案 vs 备选方案 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（同一份决策输入，只换策略参数）</span></h2><div id=plans class=sub>加载中</div><div id=planfoot class=sub style='margin-top:10px'></div></section>
+<section class=card style='margin-top:16px'><h2>人工协同 vs 智能体辅助 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（只比算得出来的项；人工耗时未实测就留空，不填估算值）</span></h2><div id=baseline class=sub>加载中</div><div id=basefoot class=sub style='margin-top:10px'></div></section>
+<section class=card style='margin-top:16px'><h2>推理链路与证据</h2><div id=trace></div></section>
+<section class=card style='margin-top:16px'><h2>微调度台 · 决策事件流 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（六类事件同源派生，每条都能对回推演字段）</span></h2><div class=toolbar style='margin:0 0 10px'><button onclick="playTimeline()">回放事件流</button><span id=tlstatus class=sub>未加载</span></div><div id=cats class=cats></div><ol id=timeline class=tl></ol><div id=tlfoot class=sub style='margin-top:10px'></div></section>
 <section class=card style='margin-top:16px'><h2>人工干预 · 重新推演 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（改一个条件，系统重算并说明改了什么）</span></h2><div id=ivbtns class=toolbar style='margin:0 0 10px'></div><div id=ivout class=sub>点上面任一项，观察推演结果怎么变</div></section>
 <section class=card style='margin-top:16px'><h2>协同复核 · 谁接哪张卡 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（1 总控 + 5 部门，只读复核、不改推演数字）</span></h2><div id=cvsum class=sub>未加载</div><div id=cvcards style='margin-top:10px'></div><div id=cvhand class=sub style='margin-top:10px'></div></section>
-<style>.ghost{background:#1e3a55;color:#bae6fd}#log{max-height:360px;overflow:auto;font:12px ui-monospace,monospace}.logrow{padding:6px 8px;border-bottom:1px solid #1e3250;white-space:nowrap}.logrow .mcp{color:#86efac}.logrow .manual{color:#fbbf24}#panel{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}#comparebody{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}.tl{list-style:none;padding:0;margin:0}.tl li{border-left:2px solid #263a55;padding:8px 0 8px 14px;opacity:.2;transition:opacity .35s,border-color .35s}.tl li.on{opacity:1;border-left-color:#38bdf8}.tl .hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.tl .seq{color:#64748b;font:12px ui-monospace,monospace}.tl .ttl{font-weight:700;color:#bae6fd}.tl .dsc{color:#cfe3f7;font-size:13px;margin-top:3px}.tl .mt{color:#7f93ab;font:11px ui-monospace,monospace;margin-top:5px;word-break:break-all}.tl ul.basis{margin:7px 0 0;padding-left:16px;color:#b8c7d9;font-size:12px}.tl ul.basis li{margin:2px 0;border:0;padding:0;opacity:1}.tag{font-size:11px;padding:1px 6px;border-radius:4px;background:#20344d;color:#9fb1c8}.k-conflict{color:#fbbf24}.k-gap{color:#fca5a5}.k-audit{color:#86efac}.ivbtn{background:#1e3a55;color:#bae6fd;border:0;border-radius:6px;padding:10px 14px;font-weight:700;cursor:pointer;text-align:left;max-width:330px}.ivbtn small{display:block;font-weight:400;color:#8fa4bd;font-size:11px;margin-top:4px;line-height:1.4}.row{display:flex;gap:12px;padding:5px 0;border-bottom:1px dashed #1e3250;font-size:13px}.row b{margin-left:auto;color:#7dd3fc}</style>
+<style>.ghost{background:#1e3a55;color:#bae6fd}#log{max-height:360px;overflow:auto;font:12px ui-monospace,monospace}.logrow{padding:6px 8px;border-bottom:1px solid #1e3250;white-space:nowrap}.logrow .mcp{color:#86efac}.logrow .manual{color:#fbbf24}#panel{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}#comparebody{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}.tl{list-style:none;padding:0;margin:0}.tl li{border-left:2px solid #263a55;padding:8px 0 8px 14px;opacity:.2;transition:opacity .35s,border-color .35s}.tl li.on{opacity:1;border-left-color:#38bdf8}.tl .hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.tl .seq{color:#64748b;font:12px ui-monospace,monospace}.tl .ttl{font-weight:700;color:#bae6fd}.tl .dsc{color:#cfe3f7;font-size:13px;margin-top:3px}.tl .mt{color:#7f93ab;font:11px ui-monospace,monospace;margin-top:5px;word-break:break-all}.tl ul.basis{margin:7px 0 0;padding-left:16px;color:#b8c7d9;font-size:12px}.tl ul.basis li{margin:2px 0;border:0;padding:0;opacity:1}.tag{font-size:11px;padding:1px 6px;border-radius:4px;background:#20344d;color:#9fb1c8}.k-conflict{color:#fbbf24}.k-gap{color:#fca5a5}.k-audit{color:#86efac}.ivbtn{background:#1e3a55;color:#bae6fd;border:0;border-radius:6px;padding:10px 14px;font-weight:700;cursor:pointer;text-align:left;max-width:330px}.ivbtn small{display:block;font-weight:400;color:#8fa4bd;font-size:11px;margin-top:4px;line-height:1.4}.row{display:flex;gap:12px;padding:5px 0;border-bottom:1px dashed #1e3250;font-size:13px}.row b{margin-left:auto;color:#7dd3fc}.chain{display:flex;flex-direction:column;gap:0}.lnk{display:flex;gap:12px;padding:9px 0 9px 14px;border-left:2px solid #263a55;opacity:.32;transition:opacity .3s,border-color .3s}.lnk.on{opacity:1;border-left-color:#38bdf8}.lnk .no{width:22px;color:#64748b;font:12px ui-monospace,monospace}.lnk .who{font:11px ui-monospace,monospace;color:#8fa4bd;min-width:150px}.lnk .what{flex:1}.lnk .what b{color:#bae6fd}.lnk .what div{font-size:12px;color:#b8c7d9;margin-top:3px}.lnk .tool{font:11px ui-monospace,monospace;color:#86efac;white-space:nowrap}.ord{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:7px 0;border-bottom:1px dashed #1e3250;font-size:13px}.ord .id{font:11px ui-monospace,monospace;color:#8fa4bd}.ord .ds{grid-column:1/3;color:#b8c7d9;font-size:12px}.ord.ev{background:#14283d;border-left:2px solid #38bdf8;padding-left:8px}.ord .sev{padding:1px 6px;border-radius:4px;font-size:11px;background:#20344d}.sev.high{color:#fca5a5}.sev.medium{color:#fbbf24}.plan{display:grid;grid-template-columns:1fr 1fr;gap:14px}.plan .col{background:#101d30;border:1px solid #22344d;border-radius:8px;padding:12px}.plan .col h3{margin:0 0 8px;font-size:14px;color:#bae6fd}.plan .col.now{border-color:#2b6f8f}.plan .col.alt{border-color:#7c5a1f}.plan .kv{display:flex;font-size:13px;padding:3px 0}.plan .kv b{margin-left:auto;color:#7dd3fc}.ent{cursor:pointer}.ent:hover{filter:brightness(1.35)}#sceneinfo{margin-top:8px;font-size:13px;color:#cfe3f7}#sceneinfo b{color:#7dd3fc}#sceneinfo .lk{font:12px ui-monospace,monospace;color:#8fa4bd;word-break:break-all;margin-top:4px}.cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.cat{background:#1e3a55;color:#bae6fd;border:0;border-radius:99px;padding:5px 11px;font-size:12px;cursor:pointer}.cat.sel{background:#38bdf8;color:#0b1220;font-weight:700}@media(max-width:800px){.grid{grid-template-columns:1fr}.plan{grid-template-columns:1fr}.lnk .who{min-width:0}}</style>
 <div class=grid style='margin-top:16px'>
 <section class=card><h2>当前渲染作业（UE 拉取的就是它）</h2><div id=panel>尚未渲染</div></section>
 <section class=card><h2>工具调用日志（谁触发了渲染）</h2><div id=log><span class=warn>暂无调用记录</span></div></section>
@@ -262,17 +320,18 @@ async function loadPlatform(){try{const r=await fetch('/api/platform-evidence');
  const agree=p.selected_match?'<span class=ok>与参照一致</span>':'<span class=warn>与参照不一致（真机温度未钉 0 会漂移，印证推演定优先级）</span>';
  llmcard.style.display='';
  llmbody.innerHTML='<b>Nexent 平台真机验证</b>（Agent '+esc(p.agent_name)+' · '+esc(p.case_id)+' · schema '+(p.schema_valid?'<span class=ok>合法</span>':'<span class=warn>失败</span>')+'）<br>选中 <b>'+esc(p.selected_option_id||'-')+'</b>（参照 '+esc(p.expected_option_id)+'）· '+agree+' · 时延 '+esc(p.latency_ms)+'ms<br><span class=evidence>'+esc(p.method||'')+'</span>';}catch(e){}}
-async function playTimeline(){tlstatus.textContent='读取决策日志…';const r=await fetch('/api/timeline');const t=await r.json();const evs=t.events||[];timeline.innerHTML='';tlstatus.textContent='回放中 0/'+evs.length;
- for(let i=0;i<evs.length;i++){const e=evs[i];
-  const li=document.createElement('li');
+let STREAM=null,STREAMCAT='all';
+function streamEvents(){if(!STREAM)return[];return (STREAM.events||[]).filter(e=>STREAMCAT==='all'||e.category===STREAMCAT)}
+function renderCats(){if(!STREAM)return;cats.innerHTML='<button class="cat'+(STREAMCAT==='all'?' sel':'')+'" onclick="filterCat(\\'all\\')">全部 '+STREAM.counts.events+'</button>'+(STREAM.categories||[]).map(c=>'<button class="cat'+(STREAMCAT===c.id?' sel':'')+'" onclick="filterCat(\\''+c.id+'\\')">'+esc(c.label)+' '+c.count+'</button>').join('')}
+function renderStream(){timeline.innerHTML='';const evs=streamEvents();evs.forEach(e=>{const li=document.createElement('li');li.classList.add('on');
   const basis=(e.basis&&e.basis.length)?'<ul class=basis>'+e.basis.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul>':'';
-  li.innerHTML='<div class=hd><span class=seq>'+String(e.seq).padStart(2,'0')+'</span><span class="ttl k-'+esc(e.kind)+'">'+esc(e.title)+'</span><span class=tag>'+esc(e.kind)+'</span><span class=tag>'+esc(e.status)+'</span></div><div class=dsc>'+esc(e.detail)+'</div><div class=mt>'+esc(e.source)+' · 证据 '+esc(e.ref_count)+' 条</div>'+basis;
-  timeline.appendChild(li);
-  await new Promise(done=>setTimeout(done,110));
-  li.classList.add('on');
-  tlstatus.textContent='回放中 '+(i+1)+'/'+evs.length}
- tlstatus.textContent='回放完成：'+t.counts.events+' 条事件 · 冲突 '+t.counts.conflicts+' · 缺口 '+t.counts.gaps+' · 处置动作 '+t.counts.actions;
- tlfoot.textContent='执行轨迹：'+(t.trace||[]).map(x=>x.skill+'('+x.elapsed_ms+'ms)').join(' → ')+' ｜ '+t.source}
+  li.innerHTML='<div class=hd><span class=seq>'+String(e.seq).padStart(2,'0')+'</span><span class="ttl k-'+esc(e.kind)+'">'+esc(e.title)+'</span><span class=tag>'+esc(e.category)+'</span><span class=tag>'+esc(e.status)+'</span></div><div class=dsc>'+esc(e.detail)+'</div><div class=mt>'+esc(e.source)+' · 证据 '+esc(e.ref_count)+' 条</div>'+basis;
+  timeline.appendChild(li)})}
+function filterCat(c){STREAMCAT=c;renderCats();renderStream();tlstatus.textContent='显示 '+streamEvents().length+' 条（'+c+'）'}
+async function playTimeline(){tlstatus.textContent='读取事件流…';const r=await fetch('/api/event-stream');STREAM=await r.json();renderCats();renderStream();
+ const lis=[...timeline.children];for(let i=0;i<lis.length;i++){lis[i].classList.remove('on');await new Promise(done=>setTimeout(done,45));lis[i].classList.add('on')}
+ tlstatus.textContent='回放完成：'+STREAM.counts.events+' 条事件';
+ tlfoot.textContent='六类计数：'+(STREAM.categories||[]).map(c=>c.label+' '+c.count).join(' · ')+' ｜ '+STREAM.source}
 async function loadInterventions(){const r=await fetch('/api/interventions');const d=await r.json();ivbtns.innerHTML='';(d.entries||[]).forEach(e=>{const b=document.createElement('button');b.className='ivbtn';b.innerHTML=esc(e.label)+'<small>'+esc(e.hint)+'</small>';b.onclick=()=>doIntervene(e.id);ivbtns.appendChild(b)})}
 async function doIntervene(id){ivout.innerHTML='<span class=warn>重推演中：复制数据集、打补丁、重跑整条流水线…</span>';
  const r=await fetch('/api/interventions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})});
@@ -280,9 +339,11 @@ async function doIntervene(id){ivout.innerHTML='<span class=warn>重推演中：
  if(d.status==='error'){ivout.innerHTML='<span class=warn>'+esc(d.error)+'</span>';return}
  const c=d.comparison;
  const rows=[['可用移动泵',c.before.available+' → '+c.after.available+' 台'],['资源缺口',c.before.gap+' → '+c.after.gap+' 台'],['冲突集合',(c.before.conflicts.join('、')||'无')+' → '+(c.after.conflicts.join('、')||'无')],['处置动作',c.before.actions+' 条 · '+c.moved_actions.length+' 条挪位']];
+ const tv=d.travel;
+ const travelHtml=(tv&&tv.available)?'<div class=row><span>封路后到场时间（'+esc(tv.origin)+' → '+esc(tv.target)+'）</span><b>'+esc(tv.baseline.minutes)+' → '+esc(tv.after_closure.minutes)+' 分钟</b></div><div class=row><span>绕行距离增量</span><b>+'+esc(tv.delta_meters)+' m</b></div><div style="margin-top:6px;font-size:11px;color:#8fa4bd">封路只改路网到场时间，不改移动泵缺口——缺口由库存与需求折算决定，两件事必须分开说</div>':'';
  const stmts='<ul style="margin:10px 0 0;padding-left:18px;font-size:13px;color:#cfe3f7">'+c.statements.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>';
  const moved=c.moved_actions.length?'<div style="margin-top:10px;font-size:12px;color:#8fa4bd">挪位：'+c.moved_actions.map(m=>'#'+m.order).join('、')+'</div>':'';
- ivout.innerHTML='<b style="color:#7dd3fc">'+esc(d.label)+'</b><div style="color:#7f93ab;font:11px ui-monospace,monospace;margin:6px 0 10px;word-break:break-all">'+esc(d.patches.join(' · '))+'</div>'+rows.map(x=>'<div class=row><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join('')+stmts+moved+'<div style="margin-top:10px;font-size:11px;color:#7f93ab">'+esc(d.mechanism)+'</div>'}
+ ivout.innerHTML='<b style="color:#7dd3fc">'+esc(d.label)+'</b><div style="color:#7f93ab;font:11px ui-monospace,monospace;margin:6px 0 10px;word-break:break-all">'+esc(d.patches.join(' · '))+'</div>'+rows.map(x=>'<div class=row><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join('')+travelHtml+stmts+moved+'<div style="margin-top:10px;font-size:11px;color:#7f93ab">'+esc(d.mechanism)+'</div>'}
 async function loadCollab(){const r=await fetch('/api/collab-review');const d=await r.json();
  if(d.status!=='ok'){cvsum.innerHTML='<span class=warn>'+esc(d.error||'复核不可用')+'</span>';return}
  const c=d.counts;
@@ -290,7 +351,54 @@ async function loadCollab(){const r=await fetch('/api/collab-review');const d=aw
  const byAgent={};(d.cards||[]).forEach(x=>{(byAgent[x.agent_id]=byAgent[x.agent_id]||[]).push(x)});
  cvcards.innerHTML=Object.keys(byAgent).map(a=>'<div style="margin:8px 0 4px;color:#7dd3fc;font-weight:700">'+esc(a)+'<span class=tag style="margin-left:8px">'+byAgent[a].length+' 张</span></div>'+byAgent[a].map(x=>'<div class=row><span>'+esc(x.action)+'</span><span class=tag>'+esc(x.stage)+'</span><b>'+esc(x.status)+'</b></div>').join('')).join('');
  cvhand.textContent=(d.handoffs||[]).length?'交接：'+d.handoffs.map(h=>h.from_agent+' → '+h.to_agent+'（'+h.card_ids.length+' 张）').join(' ｜ ')+' ｜ 指纹 '+d.kernel_fingerprint.slice(0,12):'无角色交接 ｜ 指纹 '+d.kernel_fingerprint.slice(0,12)}
-loadPlatform();loadLog();loadInterventions();loadCollab();</script></html>"""
+let SCHED=null;
+function drawScene(scene){if(!scene||!scene.entities)return;const parts=[];
+ (scene.entities||[]).forEach(e=>{const cls='ent k-'+esc(e.kind);const attrs='data-id="'+esc(e.id)+'" onclick="pickEntity(\\''+esc(e.id)+'\\')"';
+  if(e.shape==='line'){parts.push('<polyline class="'+cls+' road" points="'+e.points+'" fill="none" '+attrs+'/>')}
+  else if(e.shape==='polygon'){parts.push('<polygon class="'+cls+' flood" points="'+e.points+'" '+attrs+'/>')}
+  else{parts.push('<circle class="'+cls+' node" cx="'+e.cx+'" cy="'+e.cy+'" r="'+e.r+'" '+attrs+'/>')}});
+ const labels=(scene.entities||[]).filter(e=>e.kind==='water').map(e=>{const p=(e.points||'').split(' ')[0].split(',');return '<text x="'+esc(p[0])+'" y="'+esc(p[1])+'" fill="#e8eef7" font-size="11">'+esc(e.label)+'</text>'}).join('');
+ scenemap.innerHTML=parts.join('')+labels}
+function pickEntity(id){if(!SCHED)return;const e=(SCHED.scene.entities||[]).find(x=>x.id===id);if(!e)return;
+ const ords=(SCHED.work_orders||[]).filter(o=>(e.links.work_orders||[]).includes(o.order_id));
+ const ress=(SCHED.resources.items||[]).filter(r=>(e.links.resources||[]).includes(r.resource_id));
+ sceneinfo.innerHTML='<b>'+esc(e.label)+'</b><div style="margin-top:4px;font-size:13px">'+esc(e.detail)+'</div>'+
+  '<div class=lk>关联工单：'+(ords.length?ords.map(o=>esc(o.order_id)+'（'+esc(o.order_type_label)+'，'+esc(o.status)+'）').join('；'):'无')+'</div>'+
+  '<div class=lk>占用资源：'+(ress.length?ress.map(r=>esc(r.name)+' 可用 '+esc(r.qty_available)+esc(r.unit)+(r.required!=null?' / 本次需 '+esc(r.required):'')).join('；'):'无')+'</div>'+
+  '<div class=lk>证据：'+((e.links.evidence||[]).length?esc(e.links.evidence.join(' · ')):'无')+'</div>'}
+function renderOrders(){(orders=document.getElementById('orders')).className='';
+ orders.innerHTML=(SCHED.work_orders||[]).map(o=>'<div class="ord'+(o.is_event?' ev':'')+'"><span>'+esc(o.order_type_label)+' · '+esc(o.road_id||o.facility_id||o.pipeline_id||'-')+'</span><span class="sev '+esc(o.severity)+'">'+esc(o.severity)+'</span><div class=ds>'+esc(o.order_id)+' · '+esc(o.reporter_org)+' · '+esc(o.status)+' · '+esc(o.description)+'</div></div>').join('')}
+function renderResources(){const r=SCHED.resources||{};const s=r.summary||{};
+ (resboard=document.getElementById('resboard')).className='';
+ resboard.innerHTML='<div class=row><span>台账资源项 / 本次引用</span><b>'+esc(s.total_rows)+' / '+esc(s.used_in_event)+'</b></div><div class=row><span>需求 / 已到位 / 缺口</span><b>'+esc(s.required)+' / '+esc(s.committed)+' / <span class="'+(s.gap>0?'warn':'ok')+'">'+esc(s.gap)+'</span> '+esc(s.unit)+'</b></div>'+
+  (r.items||[]).map(i=>'<div class=row><span>'+esc(i.name)+' <span class=tag>'+esc(i.district)+'</span></span><b>'+(i.used_in_event?(esc(i.required)+' / '+esc(i.committed)+' / '+(i.gap>0?'<span class=warn>'+esc(i.gap)+'</span>':esc(i.gap))):('<span class=sub>'+esc(i.qty_available)+esc(i.unit)+'</span>'))+'</b></div>').join('')}
+function renderPlan(){const p=SCHED.plan||{};
+ (plans=document.getElementById('plans')).className='';
+ if(!p||p.error||!p.current||!p.current.per_district){plans.innerHTML='<span class=warn>'+esc((p&&p.error)||'方案不可用')+'</span>';return}
+ const col=(title,view,cls)=>'<div class="col '+cls+'"><h3>'+esc(title)+'</h3>'+(view.per_district||[]).map(d=>'<div class=kv><span>'+esc(d.district)+'</span><b>'+esc(d.allocated)+' / '+esc(d.demand)+' 台</b></div>').join('')+'<div class=kv><span>总缺口</span><b>'+esc(view.total_unmet)+' 台</b></div><div class=kv><span>跨区调拨</span><b>'+((view.transfers||[]).length?(view.transfers||[]).length+' 次':'无')+'</b></div></div>';
+ plans.innerHTML='<div class=plan>'+col('当前方案（'+p.current.policy_version+'）',p.current,'now')+col('备选方案（'+p.alternative.policy_version+'）',p.alternative,'alt')+'</div>';
+ planfoot.textContent=(p.statements||[]).join(' ｜ ')}
+function renderChain(){const c=SCHED.chain||{};
+ (chain=document.getElementById('chain')).innerHTML=(c.stages||[]).map(s=>'<div class=lnk id="lk-'+esc(s.id)+'"><span class=no>'+esc(s.seq)+'</span><span class=who>'+esc(s.actor)+'</span><span class=what><b>'+esc(s.title)+'</b><div>'+esc(s.summary)+'</div></span><span class=tool>'+esc(s.tool||'—')+'</span></div>').join('');
+ chainfoot.textContent='工具链：'+((c.tools||[]).join(' → ')||'—')+' ｜ '+esc(c.source||'')}
+function renderBaseline(){const b=SCHED.baseline||{};const m=b.manual||{};const a=b.agent||{};
+ (baseline=document.getElementById('baseline')).className='';
+ const rows=[
+  ['参与部门 / 角色',m.organizations+' 个部门',a.review_agents+' 个部门角色'],
+  ['跨部门确认次数（下限）',m.confirm_calls_min+' 次',a.tool_calls+' 次工具调用'],
+  ['需翻阅台账 / 证据引用',m.ledger_rows+' 行台账',a.evidence_refs+' 条带行号证据'],
+  ['需读规程预案',m.procedure_chars+' 字','按 event_id 检索'],
+  ['结论可追溯',m.traceability,'引用完整率 '+a.citation_completeness],
+  ['耗时',(m.duration_minutes==null?'未实测':m.duration_minutes+' 分钟'),a.compute_ms+' ms（计算耗时，非协同耗时）']
+ ];
+ baseline.innerHTML=rows.map(r=>'<div class=row><span>'+esc(r[0])+'</span><span class=sub style="margin-left:12px">人工 '+esc(r[1])+'</span><b>智能 '+esc(r[2])+'</b></div>').join('');
+ basefoot.textContent=(b.statements||[]).join(' ｜ ')+((b.unmeasured||[]).length?' ｜ 未测：'+(b.unmeasured||[]).join('、'):'')}
+async function loadScheduler(){const r=await fetch('/api/scheduler');SCHED=await r.json();drawScene(SCHED.scene);renderOrders();renderResources();renderPlan();renderChain();renderBaseline()}
+async function runChain(){if(!SCHED){chainstatus.textContent='加载中…';await loadScheduler()}
+ const ls=[...document.getElementById('chain').children];chainstatus.textContent='执行中 0/'+ls.length;
+ for(let i=0;i<ls.length;i++){ls[i].classList.remove('on');await new Promise(done=>setTimeout(done,200));ls[i].classList.add('on');chainstatus.textContent='第 '+(i+1)+'/'+ls.length+' 环：'+(((SCHED.chain||{}).stages||[])[i]||{}).title}
+ chainstatus.textContent='链路完成：'+((SCHED.chain||{}).counts||{}).stages+' 环'}
+loadPlatform();loadLog();loadInterventions();loadCollab();loadScheduler();</script></html>"""
 
 
 # --- 可视化端点 -----------------------------------------------------------
@@ -463,6 +571,40 @@ def _json(payload: Any, status: int = 200) -> tuple[int, str, bytes]:
     ).encode("utf-8")
 
 
+# --- 微调度台视图：一次算好，多个端点共享 ---------------------------------
+#
+# 页面一进来要工单、资源、方案、场景、链路五份数据。若每个端点各自跑一遍推演，
+# 首屏要十几秒——演示现场没人愿意等。这里按 (event_id, as_of) 缓存一份；
+# 演示前点一下"刷新"（`?refresh=1`）强制重算，看得到耗时字段的变化。
+_VIEW_CACHE: dict[str, dict[str, Any]] = {}
+
+
+def scheduler_view(*, refresh: bool = False) -> dict[str, Any]:
+    key = f"{EVENT_ID}|{AS_OF}"
+    if not refresh and key in _VIEW_CACHE:
+        return _VIEW_CACHE[key]
+
+    payload = build_demo_payload()
+    collab = collab_review()
+    orders = scheduler.load_work_orders(event_id=payload.get("event_id") or EVENT_ID)
+    try:
+        plan: dict[str, Any] | None = scheduler.build_plan_alternatives(payload)
+    except Exception as exc:  # 方案层失败不能连累推演与场景展示
+        plan = {"error": f"{type(exc).__name__}: {exc}", "current": {}, "alternative": {}, "diff": [], "statements": []}
+    _VIEW_CACHE[key] = {
+        "payload": payload,
+        "collab": collab,
+        "orders": orders,
+        "plan": plan,
+        "chain": scheduler.build_chain(payload, collab=collab, plan=plan, orders=orders),
+        "resources": scheduler.build_resource_board(payload),
+        "scene": scheduler.build_scene_entities(payload),
+        "stream": build_event_stream(payload, collab=collab),
+        "baseline": baseline_compare.compare(payload, collab=collab),
+    }
+    return _VIEW_CACHE[key]
+
+
 def _error(message: str, status: int = 404) -> tuple[int, str, bytes]:
     return _json({"status": "error", "error": message}, status)
 
@@ -502,6 +644,43 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
     if segments[:2] == ["api", "timeline"]:
         # 决策事件流：从 /api/demo 同一份 payload 派生，只排顺序不重算。
         return _json(build_timeline(build_demo_payload()))
+
+    if segments[:2] == ["api", "scheduler"]:
+        # 微调度台总入口：一次返回链路 / 六类事件流 / 工单 / 资源 / 场景 / 方案。
+        view = scheduler_view(refresh=(query.get("refresh") or ["0"])[0] in {"1", "true"})
+        return _json(
+            {
+                "event_id": view["payload"].get("event_id") or EVENT_ID,
+                "as_of": view["payload"].get("as_of") or AS_OF,
+                "chain": view["chain"],
+                "event_stream": view["stream"],
+                "work_orders": view["orders"],
+                "resources": view["resources"],
+                "scene": view["scene"],
+                "plan": view["plan"],
+                "baseline": view["baseline"],
+                "publishable": bool(view["payload"].get("publishable")),
+            }
+        )
+
+    # 下面四个是"只取一块"的细粒度端点：外部脚本与测试用，省一次整包传输。
+    if segments[:2] == ["api", "work-orders"]:
+        return _json({"entries": scheduler_view()["orders"]})
+
+    if segments[:2] == ["api", "resources"]:
+        return _json(scheduler_view()["resources"])
+
+    if segments[:2] == ["api", "plan-alternatives"]:
+        return _json(scheduler_view()["plan"])
+
+    if segments[:2] == ["api", "scene-entities"]:
+        return _json(scheduler_view()["scene"])
+
+    if segments[:2] == ["api", "event-stream"]:
+        return _json(scheduler_view()["stream"])
+
+    if segments[:2] == ["api", "baseline-compare"]:
+        return _json(scheduler_view()["baseline"])
 
     if segments[:2] == ["api", "interventions"]:
         if method.upper() == "POST":

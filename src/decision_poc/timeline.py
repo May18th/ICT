@@ -284,6 +284,278 @@ def build_timeline(payload: Mapping[str, Any] | None = None, *, event_id: str | 
     }
 
 
+# --- 六类统一事件流（决策演示口径） ---------------------------------------
+#
+# `build_timeline` 只回答"决策怎么一步步得出来"，形状被测试钉死（六跳 + 冲突 + 缺口
+# + 动作 + 审计）。评委看到的演示还需要另外三类：Agent 说了什么、调了哪个工具、
+# 资源和风险各自怎么变。这里把它们统一成**同一个事件流**的六个 category，
+# 而不是再开一套页面——否则"时间线"和"Agent 消息"会在两处各说各话。
+#
+# 纪律与 build_timeline 相同：每条事件都带 `source`，写明读的是 payload 的哪个字段；
+# 数字只拼装不判断，不写"情况危急"这类没有字段支撑的话。
+
+CATEGORY_ORDER = (
+    "timeline",
+    "agent_message",
+    "tool_call",
+    "resource_change",
+    "risk_change",
+    "evidence",
+)
+
+CATEGORY_LABEL = {
+    "timeline": "时间线",
+    "agent_message": "Agent 消息",
+    "tool_call": "工具调用",
+    "resource_change": "资源变化",
+    "risk_change": "风险变化",
+    "evidence": "决策依据",
+}
+
+#: 内部 skill → 对外 MCP 工具。评委问"这一步到底调了什么"时，答的是工具名不是 skill 名。
+SKILL_TOOL = {
+    "event_understand": ("event_deduce", "主 Agent"),
+    "impact_analysis": ("event_deduce", "主 Agent"),
+    "resource_check": ("event_deduce", "主 Agent"),
+    "cross_department_deduction": ("conflict_check", "主 Agent"),
+    "evidence_audit": ("evidence_locate", "主 Agent"),
+}
+
+
+def _gap_total(deduction: Mapping[str, Any]) -> tuple[int, str]:
+    gaps = deduction.get("resource_gaps") or []
+    total = sum(int(item.get("gap") or 0) for item in gaps)
+    unit = str((gaps[0].get("unit") if gaps else "") or "")
+    return total, unit
+
+
+def _agent_events(payload: Mapping[str, Any], collab: Mapping[str, Any] | None) -> list[dict[str, Any]]:
+    """两个 Agent 各自说了什么。协同那一条只有在真的跑了复核时才出现（不编一条空的）。"""
+    facts = payload.get("facts") or {}
+    deduction = payload.get("deduction") or {}
+    total, unit = _gap_total(deduction)
+    events = [
+        {
+            "category": "agent_message",
+            "kind": "agent_message",
+            "phase": "deduce",
+            "actor": "urban_deduction_agent",
+            "title": "主 Agent：六跳推演结论",
+            "detail": (
+                f"响应等级 {facts.get('response_level', '-')}"
+                f" · 积水 {facts.get('depth_cm', '-')} cm"
+                f" · 片区 {facts.get('district', '-')}"
+                f" · 冲突 {len(deduction.get('conflicts') or [])} 类"
+                f" · 缺口 {total} {unit}"
+                f" · 处置 {len(deduction.get('action_order') or [])} 条"
+            ),
+            "status": "ok" if payload.get("status") == "ok" else str(payload.get("status") or ""),
+            "refs": [],
+            "ref_count": len(payload.get("evidence") or []),
+            "source": "facts / deduction（与 /api/demo 同一份 payload）",
+        }
+    ]
+    if not collab or collab.get("status") != "ok":
+        return events
+    counts = collab.get("counts") or {}
+    events.append(
+        {
+            "category": "agent_message",
+            "kind": "agent_message",
+            "phase": "collab",
+            "actor": "urban_collab_agent",
+            "title": "协同 Agent：动作卡复核",
+            "detail": (
+                f"动作卡 {counts.get('cards', 0)} 张"
+                f" · 部门 {counts.get('agents', 0)} 个"
+                f" · 交接 {counts.get('handoffs', 0)} 次"
+                f" · 需会签 {counts.get('co_sign_pairs', 0)} 对"
+                f" · 规则冲突 {counts.get('violations', 0)} 处"
+            ),
+            "status": "ok",
+            "refs": [],
+            "ref_count": counts.get("cards", 0),
+            "fingerprint": str(collab.get("kernel_fingerprint") or ""),
+            "source": "collab.orchestrate（只读复核，不改六跳与缺口）",
+        }
+    )
+    return events
+
+
+def _tool_events(payload: Mapping[str, Any], collab: Mapping[str, Any] | None) -> list[dict[str, Any]]:
+    """每次 skill 执行对应一次工具调用；协同复核单独一条 `collab_run`。"""
+    events: list[dict[str, Any]] = []
+    for index, step in enumerate(payload.get("steps") or []):
+        skill = str(step.get("skill") or "")
+        tool, actor = SKILL_TOOL.get(skill, (skill or "unknown", "主 Agent"))
+        degraded = list(step.get("degraded") or [])
+        events.append(
+            {
+                "category": "tool_call",
+                "kind": "tool_call",
+                "phase": str(step.get("stage") or ""),
+                "actor": actor,
+                "title": f"{tool}（{skill}）",
+                "detail": (
+                    f"状态 {step.get('status', '-')}"
+                    f" · 耗时 {step.get('elapsed_ms', '-')} ms"
+                    + (f" · 降级 {len(degraded)} 处" if degraded else "")
+                ),
+                "status": str(step.get("status") or ""),
+                "tool": tool,
+                "skill": skill,
+                "elapsed_ms": step.get("elapsed_ms"),
+                "degraded": degraded,
+                "refs": [],
+                "ref_count": 0,
+                "source": f"steps[{index}]",
+            }
+        )
+    if collab and collab.get("status") == "ok":
+        events.append(
+            {
+                "category": "tool_call",
+                "kind": "tool_call",
+                "phase": "collab",
+                "actor": "协同 Agent",
+                "title": "collab_run（协同复核）",
+                "detail": (
+                    f"内核指纹 {str(collab.get('kernel_fingerprint') or '')[:12]}"
+                    f" · 规则版本 {collab.get('rules_version', '-')}"
+                    f" · 动作卡 {len(collab.get('cards') or [])} 张"
+                ),
+                "status": "ok",
+                "tool": "collab_run",
+                "skill": "collab.orchestrate",
+                "refs": [],
+                "ref_count": len(collab.get("cards") or []),
+                "source": "collab-review 端点",
+            }
+        )
+    return events
+
+
+def _resource_events(deduction: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """资源变化：从台账可用量到结论缺口，每一步都写清算式出处。"""
+    events: list[dict[str, Any]] = []
+    for index, item in enumerate(deduction.get("resource_gaps") or []):
+        refs = [str(ref) for ref in item.get("evidence_refs") or []]
+        gap = int(item.get("gap") or 0)
+        events.append(
+            {
+                "category": "resource_change",
+                "kind": "resource_change",
+                "phase": "resource",
+                "actor": "推演引擎",
+                "title": f"{item.get('resource_id', '-')} 可用量 → 缺口",
+                "detail": (
+                    f"需 {item.get('required')} / 可用 {item.get('available')}"
+                    f" → 缺口 {gap} {item.get('unit', '')}"
+                ),
+                "status": "shortfall" if gap > 0 else "covered",
+                "refs": refs[:REF_HEAD],
+                "ref_count": len(refs),
+                "source": f"deduction.resource_gaps[{index}]",
+            }
+        )
+    return events
+
+
+def _risk_events(deduction: Mapping[str, Any]) -> list[dict[str, Any]]:
+    events: list[dict[str, Any]] = []
+    for index, text in enumerate(deduction.get("residual_risks") or []):
+        events.append(
+            {
+                "category": "risk_change",
+                "kind": "risk_change",
+                "phase": "risk",
+                "actor": "推演引擎",
+                "title": f"残余风险 {index + 1}",
+                "detail": str(text),
+                "status": "residual",
+                "refs": [],
+                "ref_count": 0,
+                "source": f"deduction.residual_risks[{index}]",
+            }
+        )
+    return events
+
+
+def _evidence_event(payload: Mapping[str, Any]) -> dict[str, Any]:
+    audit = payload.get("audit") or {}
+    claims = audit.get("claims") or []
+    sample: list[str] = []
+    for claim in claims:
+        for ref in claim.get("evidence_refs") or []:
+            text = str(ref)
+            if text not in sample:
+                sample.append(text)
+        if len(sample) >= REF_HEAD:
+            break
+    return {
+        "category": "evidence",
+        "kind": "evidence",
+        "phase": "evidence",
+        "actor": "证据审计",
+        "title": "决策依据汇总",
+        "detail": (
+            f"引用完整率 {audit.get('citation_completeness', '-')}"
+            f" · 账本链 {'完整' if audit.get('chain_ok') else '不可信'}"
+            f" · 知识版本 {payload.get('knowledge_version', '-')}"
+            f" · 断言 {len(claims)} 条"
+        ),
+        "status": "publishable" if payload.get("publishable") else "needs_review",
+        "refs": sample,
+        "ref_count": sum(len(claim.get("evidence_refs") or []) for claim in claims),
+        "source": "audit.claims",
+    }
+
+
+def build_event_stream(
+    payload: Mapping[str, Any] | None = None,
+    *,
+    collab: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """六类统一事件流：时间线 / Agent 消息 / 工具调用 / 资源变化 / 风险变化 / 决策依据。
+
+    与 `build_timeline` 的关系是包含而不是替换：时间线类事件逐条来自 `build_timeline`，
+    保证"页面上任何一个数字都能对回 /api/demo"这条不变量仍然成立。
+    """
+    if payload is None:
+        from .web_demo import build_demo_payload  # 函数内导入，避免模块级循环依赖
+
+        payload = build_demo_payload()
+
+    base = build_timeline(payload)
+    events: list[dict[str, Any]] = []
+    for item in base["events"]:
+        events.append({**item, "category": "timeline", "sub_kind": item.get("kind")})
+    events.extend(_agent_events(payload, collab))
+    events.extend(_tool_events(payload, collab))
+    events.extend(_resource_events(payload.get("deduction") or {}))
+    events.extend(_risk_events(payload.get("deduction") or {}))
+    events.append(_evidence_event(payload))
+
+    for index, event in enumerate(events):
+        event["seq"] = index + 1
+
+    counts = {name: 0 for name in CATEGORY_ORDER}
+    for event in events:
+        counts[event["category"]] += 1
+
+    return {
+        "event_id": payload.get("event_id") or EVENT_ID,
+        "as_of": payload.get("as_of") or AS_OF,
+        "categories": [
+            {"id": name, "label": CATEGORY_LABEL[name], "count": counts[name]}
+            for name in CATEGORY_ORDER
+        ],
+        "counts": {**counts, "events": len(events)},
+        "events": events,
+        "source": "六类事件同源派生自 /api/demo + collab-review（展示层只排序、不重算）",
+    }
+
+
 # --- 干预前后对照 ---------------------------------------------------------
 
 
@@ -366,9 +638,12 @@ def compare_branches(
 
 __all__ = [
     "AS_OF",
+    "CATEGORY_LABEL",
+    "CATEGORY_ORDER",
     "EVENT_ID",
     "STAGE_LABEL",
     "STAGE_ORDER",
+    "build_event_stream",
     "build_timeline",
     "compare_branches",
 ]

@@ -78,7 +78,7 @@
      `tests/test_office_deliverables.py` 的 `STALE_SNAPSHOTS` 登记并在 `delivery-status` 标注时点；
    - 重新生成 `docs/reports/evidence-check-report.md`（勿手改）。
 3. **验收只有两条**：`git status` 干净 + `python -m decision_poc.evidence_check` 输出当前口径
-   （当前 `108/108`，指纹 `45dcd07289954dd6`）。**不看文档里的旧数字**，也不允许为过检放宽期望。
+   （当前 `108/108`，指纹 `360ea5dc8f3d6865`）。**不看文档里的旧数字**，也不允许为过检放宽期望。
 
 全仓扫旧数字时注意 `Get-ChildItem -Recurse`：`docs/**/*.md` 这种通配只匹配一层，
 `docs/superpowers/specs/` 这类深目录容易漏扫。
@@ -98,10 +98,10 @@
   uv run --with python-pptx --with pillow python scripts/build_answer_ppt.py
   uv run --with python-docx --with pillow python scripts/build_preliminary_docx.py
   ```
-- **口径：`test_baseline.collected` 是收集数，不是 passed 数。** 当前 880 收集，默认环境实际输出
-  `879 passed, 1 skipped`——被跳过的是 `test_deepseek_model_can_be_built_without_network`
-  （`pytest.importorskip("openai")`，`openai` 属可选组 `llm`）。所以可以说"880 项测试"，
-  **不能说"880 项全部通过"**。反过来说：若哪天看到"880 passed"全绿，说明 `.venv` 里残留了手工装的
+- **口径：`test_baseline.collected` 是收集数，不是 passed 数。** 当前 902 收集，默认环境实际输出
+  `901 passed, 1 skipped`——被跳过的是 `test_deepseek_model_can_be_built_without_network`
+  （`pytest.importorskip("openai")`，`openai` 属可选组 `llm`）。所以可以说"902 项测试"，
+  **不能说"902 项全部通过"**。反过来说：若哪天看到"902 passed"全绿，说明 `.venv` 里残留了手工装的
   `openai`——环境已经被污染过，先 `uv sync --locked` 复原再判断。
 
 ## 运行 reproduce 后的噪声处理
