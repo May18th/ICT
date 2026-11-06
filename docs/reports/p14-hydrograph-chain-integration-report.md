@@ -28,3 +28,17 @@ evidence_check：106/106，指纹 a60477b1f24dcfa9
 ```
 
 > 以上为 P14 落地当时的验收口径；2026-11-06 追加前池数据守卫测试后，当前口径为 812 项、指纹 `b884bb13fc42407c`（以实跑为准）。
+
+## 4 后续增量：库容曲线来源标注进契约（2026-11-06）
+
+"12 分钟到警戒"这类数字一旦进对外材料，出处不能只活在文档里，因此把来源做成契约字段
+（实现见 `tests/test_hydro_provenance.py`，本报告只记录对既有链路的影响）：
+
+| 项 | 变化 |
+| --- | --- |
+| 契约 | `HydrographResult` 末尾新增 `storage_provenance: CurveProvenance \| None`（默认 `None`）；旧 13 个键的相对顺序与取值不变，默认路径 dump 只多这一个键 |
+| 生产端 | `level_pool_route(storage_basis=..., storage_ref=...)` 声明后写进字段，并在 `assumptions` 追加固定前缀行 `库容来源：<basis>｜<ref>`；不可计算路径同样带来源（算不出来不等于输入没来源） |
+| 下游 | `time_to_level` / `level_exceedance_duration` 继承同一前缀行；**位置不固定**（超阈时长会在末尾追加"未回落"备注），因此约定是"有且只有一行带前缀"，靠前缀识别而非位置 |
+| 缓存 | `skills.py` 未改：缓存键仍是完整 `model_dump_json()`，同数值不同来源会落两个键；**故意不排除 provenance**——排除会让先跑的假设曲线替后来的实测曲线"背书" |
+| 回放/可视化 payload | `replay_export` 的 `metrics["hydrograph"]` 现在多一个 `storage_provenance` 键；`test_presentation_contract` 仍与同一份 `model_dump` 比较，不改成硬编码字段表 |
+| 链路状态 | 本轮只把来源接进契约，**来源仍由调用方手工传入**；CSV → loader → `storage_basis` 的自动贯通在资产化那轮完成，在那之前不得对外宣称"出处已贯通" |
