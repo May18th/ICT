@@ -6,20 +6,22 @@
 在 10+ 个文件里漂过：人 grep 会漏（词序一变就漏、正则写宽就误报），CI 不会漏。
 本文件把"写死的数字"变成断言：范围内任何命中，要么等于权威源实算值，要么在 allowlist 里带理由。
 
-扫描范围（显式清单，不用宽 glob）
---------------------------------
-- 当前口径载体：`README.md`、`AGENTS.md`、`docs/README.md`、`docs/demo-runbook.md`、
-  `docs/innovation-and-evidence.md`、`docs/competition-gap-audit.md`、`docs/competition/**`；
-- 生成器与复现脚本：`scripts/build_answer_ppt.py`、`scripts/build_preliminary_docx.py`、`scripts/reproduce.py`；
-- 数据与集成说明：`samples/assets/urban/README.md`、`samples/nexent/README.md`。
+扫描范围（**全扫 + 排除**，不是显式清单）
+--------------------------------------
+- 根文件 `README.md`、`AGENTS.md`；
+- `docs/**`、`scripts/**`、`samples/**` 下的 `.md` / `.py`；
+- 排除：`docs/reports/**`（阶段报告保留落地时数字，政策如此）、`docs/superpowers/**`（设计快照）、
+  `docs/tasks/**`、`tests/**`（本文件自己就全是正则字面量，扫自己必然自匹配）。
 
-刻意排除：`docs/reports/**`（阶段报告保留落地时数字，政策如此）、`docs/superpowers/**`（设计快照）、
-`docs/tasks/**`、`tests/**`（本文件自己就全是正则字面量，扫自己必然自匹配）。
+> 为什么从"显式清单"改成全扫：清单模式下**新增文档永远不会被扫到**。13 工具漂了两轮、
+> `106/106` 在 `docs/image-semantics.md` 与 `docs/real-feedback-channel.md` 里挂了两版，
+> 都是因为那两个文件不在清单里。全扫之后，新文档默认就被覆盖，漏掉的是"排除条"而不是"新增文件"。
 
 权威源（不在这里手写第二份真值）
 ------------------------------
 规则条数 ← `load_rules()`；资产数 ← `URBAN_ASSETS`；三元组 ← `urban_eval.evaluate`；
-工具数 ← `UrbanToolkit().tools()`；自检项数 ← 期望文件 `checks` 的叶子数；指纹 ← `expectations_digest`。
+工具数 ← `UrbanToolkit().tools()`；自检项数 ← 期望文件（与 `evidence_check._compare` 同一套展开）；
+测试数 ← 期望文件 `test_baseline.collected`；指纹 ← `expectations_digest`。
 """
 
 from __future__ import annotations
@@ -40,23 +42,41 @@ from decision_poc.urban_dataset import URBAN_ASSETS
 
 ROOT = Path(__file__).resolve().parents[1]
 
-SCOPE: tuple[str, ...] = (
-    "README.md",
-    "AGENTS.md",
-    "docs/README.md",
-    "docs/demo-runbook.md",
-    "docs/innovation-and-evidence.md",
-    "docs/competition-gap-audit.md",
-    *sorted(
-        path.relative_to(ROOT).as_posix()
-        for path in (ROOT / "docs" / "competition").glob("*.md")
-    ),
-    "scripts/build_answer_ppt.py",
-    "scripts/build_preliminary_docx.py",
-    "scripts/reproduce.py",
-    "samples/assets/urban/README.md",
-    "samples/nexent/README.md",
+#: 扫描根：文件直接收，目录递归收。
+SCAN_ROOTS: tuple[str, ...] = ("README.md", "AGENTS.md", "docs", "scripts", "samples")
+
+#: 只扫这些后缀；二进制与 JSON 不参与（JSON 是权威源本身，扫它等于自证）。
+SCAN_SUFFIXES: tuple[str, ...] = (".md", ".py")
+
+#: 递归时跳过的前缀（相对仓库根）。
+SCAN_EXCLUDES: tuple[str, ...] = (
+    "docs/reports/",
+    "docs/superpowers/",
+    "docs/tasks/",
+    "tests/",
 )
+
+
+def _scope_files() -> tuple[str, ...]:
+    """展开扫描范围。返回相对仓库根的 posix 路径，排序后稳定。"""
+
+    files: list[str] = []
+    for root in SCAN_ROOTS:
+        base = ROOT / root
+        if base.is_file():
+            files.append(root)
+            continue
+        for path in sorted(base.rglob("*")):
+            if not path.is_file() or path.suffix not in SCAN_SUFFIXES:
+                continue
+            rel = path.relative_to(ROOT).as_posix()
+            if any(rel.startswith(prefix) for prefix in SCAN_EXCLUDES):
+                continue
+            files.append(rel)
+    return tuple(files)
+
+
+SCOPE: tuple[str, ...] = _scope_files()
 
 #: (family, 正则)。词序一变就漏，所以同一语义允许挂多条正则；新写法出现时在这里补一条。
 PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -76,6 +96,8 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("selfcheck", re.compile(r"(\d+)\s*项自检")),
     ("selfcheck", re.compile(r"自检\s*(\d+)\s*项")),
     ("selfcheck", re.compile(r"(\d+)\s*项(?:宣称证据|冻结期望|对外宣称数字|逐条表|证据自检)")),
+    # 「834 项通过」这类验收口径。以前不扫，`553 项通过` 在两份文档里挂了两版都没人发现。
+    ("testcount", re.compile(r"(\d+)\s*项通过")),
     ("fingerprint", re.compile(r"指纹\s*`?([0-9a-f]{16})")),
 )
 
@@ -108,6 +130,21 @@ ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
         "docs/competition/preliminary-submission-draft.md",
         8,
     ): (1, "「8/8 项一致」是平台真机一致性，不是自检项数"),
+    (
+        "selfcheck",
+        "docs/nexent-urban-integration-design.md",
+        8,
+    ): (1, "验收期望行里的「8/8 项一致」是平台主链路一致性，不是自检项数"),
+    (
+        "tools",
+        "docs/p10-visualization-tools-design.md",
+        9,
+    ): (1, "「P5 起的 MCP 服务有 9 个工具」是阶段叙述（当时工具数），不是当前总数"),
+    (
+        "testcount",
+        "docs/ICT-赛题3-城市内涝事件推演-WorkBuddy任务单.md",
+        370,
+    ): (1, "赛题任务单记录的是当时验收（370 项），属于任务书原文，不改写成当前值"),
 }
 
 
@@ -128,6 +165,7 @@ def _urban_metrics():
 
 @cache
 def _expected() -> dict[str, int | str]:
+    payload = json.loads(EXPECTATIONS_PATH.read_text(encoding="utf-8"))
     return {
         "rules": len(load_rules().rules),
         "assets": len(URBAN_ASSETS),
@@ -136,7 +174,8 @@ def _expected() -> dict[str, int | str]:
         "real_plans": REAL_PUBLIC_PLAN_ASSETS,
         "triples": _urban_metrics().triples,
         "tools": len(UrbanToolkit().tools()),
-        "selfcheck": _leaf_count(json.loads(EXPECTATIONS_PATH.read_text(encoding="utf-8"))["checks"]),
+        "selfcheck": _leaf_count(payload["checks"]),
+        "testcount": int(payload["test_baseline"]["collected"]),
         "fingerprint": expectations_digest(load_expectations())[:16],
     }
 
@@ -219,6 +258,10 @@ def test_selfcheck_item_count_in_materials_is_current() -> None:
     _assert_families("selfcheck")
 
 
+def test_test_count_in_materials_is_current() -> None:
+    _assert_families("testcount")
+
+
 def test_fingerprint_in_materials_matches_expectations() -> None:
     _assert_families("fingerprint")
 
@@ -251,6 +294,10 @@ RETIRED_MARKERS = ("停服", "欠费", "已于", "当时", "历史", "原绑定"
 #: 协同 Agent 自己也有版本号，行内提到它时跳过主 Agent 版本断言。
 COLLAB_MARKERS = ("协同", "collab_agent")
 
+#: 不做 Agent 版本断言的文档：赛题任务单是外部给定原文，里面「发布 v1 / 回滚到 v1」
+#: 指的是本体版本，不是平台 Agent 版本。计数类断言仍扫它（见 ALLOWED_NON_TOTAL）。
+VERSION_CLAIM_EXCLUDES = ("docs/ICT-赛题3-城市内涝事件推演-WorkBuddy任务单.md",)
+
 
 @cache
 def _live_agents() -> dict[str, dict[str, object]]:
@@ -271,6 +318,8 @@ def test_agent_version_claims_match_platform() -> None:
     expected = int(_live_agents()["urban_deduction_agent"]["current_version_no"])
     problems = []
     for rel, lineno, line in _scope_lines():
+        if rel in VERSION_CLAIM_EXCLUDES:
+            continue
         if any(marker in line for marker in COLLAB_MARKERS):
             continue
         for match in VERSION_CLAIM.finditer(line):

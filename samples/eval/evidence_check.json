@@ -1,6 +1,6 @@
 {
   "schema_version": "evidence-check-1",
-  "expectations_digest": "b53ba9abe0d1fbe98138363fbb6b4dd39dea287355b40c2f5372ce9dcfe07097",
+  "expectations_digest": "666d3d3c1325083dd9157dc034b48ccc947dccd29b83a655d6ba8c7e94651691",
   "total": 108,
   "passed_count": 108,
   "failed_count": 0,
@@ -508,10 +508,10 @@
     {
       "path": "test_suite.docs_declared",
       "expected": [
-        834
+        835
       ],
       "actual": [
-        834
+        835
       ],
       "passed": true,
       "note": ""

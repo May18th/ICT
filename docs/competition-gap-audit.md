@@ -60,7 +60,7 @@
 | --- | --- |
 | Docker / Nexent | **可用**：Docker Desktop 启动后 Nexent v2.7.0 全栈在线（`/nb/v1/health` healthy）；MCP 服务以 `urban-twin-mcp` 容器跑在 `nexent_network` |
 | Nexent 真机 | **已跑通**：14 工具注册、Agent `urban_deduction_agent` 发布 v19（DeepSeek-Chat）、conversation_id=120、8/8 一致；证据 `samples/nexent/live/` |
-| 测试与自检 | 834 项测试通过；对外数字自检 108/108；`uv lock --check`、`compileall`、`uv pip check` 通过 |
+| 测试与自检 | 835 项测试通过；对外数字自检 108/108；`uv lock --check`、`compileall`、`uv pip check` 通过 |
 | Git | `main` 与 `origin/main` 同步在 `6f7c559`（2026-11-02 推送 12 个提交）；工作区干净；每轮结束由 `scripts/git_sync.ps1` 自动提交推送 |
 | 开源合规 | 无 `LICENSE`；`samples/` 为合成数据、来源已标注，未发现真实私有数据；真机证据不含 API Key |
 
