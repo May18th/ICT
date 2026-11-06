@@ -1,7 +1,7 @@
 {
   "event_id": "WO-20261029-007",
   "as_of": "2026-10-29T09:40:00+08:00",
-  "conversation_id": 78,
+  "conversation_id": 119,
   "answer": {
     "event_id": "WO-20261029-007",
     "as_of": "2026-10-29T09:40:00+08:00",
@@ -33,7 +33,7 @@
     "resource_gap": 2,
     "action_order": [
       "停止基坑开挖并覆盖或围堰，燃气浓度检测提升至每 2 小时一次",
-      "封闭下穿隧道洞口全幅（外部积水漫过入口挡水槛或洞内积水达封控阈值），由 ORG-ROAD 与 ORG-TRAFFIC 联合发布；封控水深阈值沿用道路 25cm（假设值，待核实）",
+      "封闭下穿隧道洞口全幅（外部积水漫过入口挡水槛或洞内积水达封控阈值），由 ORG-ROAD 与 ORG-TRAFFIC 联合发布",
       "隔离风险源：确认无泄漏后关阀或断电，未确认不得进入下一步",
       "封闭积水路段全幅（深度 ≥25cm 或面积 ≥200m²），范围覆盖积水区上下游各 50m",
       "封路由 ORG-ROAD 与 ORG-TRAFFIC 联合发布，单一部门发布无效",
@@ -43,53 +43,20 @@
       "全程同步交通管制与信息发布",
       "水位降至基坑底以下 0.3m 后复检管道悬空与泄漏，方可恢复作业"
     ],
-    "summary": "A-03 兴华路积水 30cm 触发橙色响应，下穿隧道倒灌、基坑沉陷与泵站故障叠加，移动泵缺口 2 台需跨区增援",
+    "summary": "A-03 区 30cm 积水触发橙色响应，下穿隧道倒灌、基坑浸泡与 DF-PS-01 运维空白并存，移动泵缺口 2 台需跨区调配。",
     "residual_risks": [
       "可燃气体浓度达到爆炸下限 10% 时必须停工、断电、撤离并上报",
       "基坑浸泡导致管周土体流失，燃气管悬空或泄漏",
-      "外部积水漫过下穿隧道入口挡水槛存在倒灌：洞内水位与外部同步上涨，须封闭洞口并投入移动泵抽排，禁止车辆驶入",
+      "外部积水漫过下穿隧道入口挡水槛存在倒灌：洞内水位与外部同步上涨，须封闭洞口并投入移动泵抽排",
       "绕行路线自身占道施工，疏散能力低于设计值，易形成二次拥堵",
-      "泵站无备用电源，上级电源浸水即失电，抽排中断",
-      "防汛应急响应级别与气象暴雨预警信号是两套独立体系：2026 版将预警列为响应启动条件（橙→四级、红→三级，上限三级），不得以预警级别直接替代响应级别",
-      "达成封路判据的 25cm 阈值来自区级属地合成预案，引用时须注明层级，不得表述为市级规定",
-      "开挖面暴露期与橙色预警窗口重叠：按预案 4.2 该期间应停止开挖并覆盖或围堰，工期顺延意味着该约束持续存在"
+      "泵站无备用电源，上级电源浸水即失电，抽排中断"
     ],
     "evidence_refs": [
-      "AS-A-03-work_order-afb7c435#A-03/work_order/v1#row:2",
-      "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:2",
-      "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:3",
-      "AS-A-03-construction_plan-79142c4f#A-03/construction_plan/v3#row:4",
-      "AS-A-03-drainage_facility-4e6c1308#A-03/drainage_facility/v1#row:2",
-      "AS-A-03-drainage_facility-4e6c1308#A-03/drainage_facility/v1#row:3",
-      "AS-A-03-drainage_facility-4e6c1308#A-03/drainage_facility/v1#row:7",
-      "AS-A-03-duty_list-07d920f0#A-03/duty_list/v2#row:3",
-      "AS-A-03-pipeline_ledger-4741e97f#A-03/pipeline_ledger/v1#row:2",
-      "AS-A-03-pipeline_ledger-4741e97f#A-03/pipeline_ledger/v1#row:4",
-      "AS-A-03-pipeline_ledger-4741e97f#A-03/pipeline_ledger/v1#row:5",
-      "AS-A-03-pipeline_ledger-4741e97f#A-03/pipeline_ledger/v1#row:6",
-      "AS-A-03-pipeline_ledger-4741e97f#A-03/pipeline_ledger/v1#row:7",
-      "AS-A-03-pipeline_ledger-4741e97f#A-03/pipeline_ledger/v1#row:8",
-      "AS-A-03-road_network-6fbe05c1#A-03/road_network/v1.1#row:2",
-      "AS-A-03-road_network-6fbe05c1#A-03/road_network/v1.1#row:4",
-      "AS-A-03-road_network-6fbe05c1#A-03/road_network/v1.1#row:6",
-      "AS-A-03-road_network-6fbe05c1#A-03/road_network/v1.1#row:7",
-      "AS-A-03-underpass-0684ecae#A-03/underpass/v1#row:2",
-      "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:24",
-      "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:29",
-      "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:31",
-      "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:38",
-      "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:44",
-      "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:45",
-      "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:46",
-      "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:47",
-      "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:60",
-      "AS-A-03-procedure-30dc5dcb#A-03/procedure/v1.2#line:20",
-      "AS-A-03-procedure-30dc5dcb#A-03/procedure/v1.2#line:21",
-      "AS-A-03-procedure-30dc5dcb#A-03/procedure/v1.2#line:26",
+      "AS-A-03-work_order-6a1282a1#A-03/work_order/v1#row:2",
+      "AS-A-03-underpass-d4ae624c#A-03/underpass/v1#row:2",
+      "AS-A-03-drainage_facility-073cc674#A-03/drainage_facility/v1#row:2",
       "AS-A-03-resource_inventory-8133c741#A-03/resource_inventory/v1#row:2",
-      "AS-A-03-resource_inventory-8133c741#A-03/resource_inventory/v1#row:3",
-      "AS-A-03-resource_inventory-8133c741#A-03/resource_inventory/v1#row:4",
-      "AS-A-03-resource_inventory-8133c741#A-03/resource_inventory/v1#row:5"
+      "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:29"
     ],
     "handoff_required": true
   },
@@ -161,7 +128,7 @@
         "抽排",
         "封闭积水路段"
       ],
-      "actual": "停止基坑开挖并覆盖或围堰，燃气浓度检测提升至每 2 小时一次；封闭下穿隧道洞口全幅（外部积水漫过入口挡水槛或洞内积水达封控阈值），由 ORG-ROAD 与 ORG-TRAFFIC 联合发布；封控水深阈值沿用道路 25cm（假设值，待核实）；隔离风险源：确认无泄漏后关阀或断电，未确认不得进入下一步；封闭积水路段全幅（深度 ≥25cm 或面积 ≥200m²），范围覆盖积水区上下游各 50m；封路由 ORG-ROAD 与 ORG-TRAFFIC 联合发布，单一部门发布无效；先清掏反涌雨水口再抽排，避免无效抽排；启动泵站抽排；泵站不可用时按 400 m³/h 折算投入移动泵，缺口上报跨区调配；绕行方案避开占道施工路段；无法避开时同步通知施工单位并增设现场疏导；全程同步交通管制与信息发布；水位降至基坑底以下 0.3m 后复检管道悬空与泄漏，方可恢复作业",
+      "actual": "停止基坑开挖并覆盖或围堰，燃气浓度检测提升至每 2 小时一次；封闭下穿隧道洞口全幅（外部积水漫过入口挡水槛或洞内积水达封控阈值），由 ORG-ROAD 与 ORG-TRAFFIC 联合发布；隔离风险源：确认无泄漏后关阀或断电，未确认不得进入下一步；封闭积水路段全幅（深度 ≥25cm 或面积 ≥200m²），范围覆盖积水区上下游各 50m；封路由 ORG-ROAD 与 ORG-TRAFFIC 联合发布，单一部门发布无效；先清掏反涌雨水口再抽排，避免无效抽排；启动泵站抽排；泵站不可用时按 400 m³/h 折算投入移动泵，缺口上报跨区调配；绕行方案避开占道施工路段；无法避开时同步通知施工单位并增设现场疏导；全程同步交通管制与信息发布；水位降至基坑底以下 0.3m 后复检管道悬空与泄漏，方可恢复作业",
       "passed": true
     },
     {
@@ -177,5 +144,7 @@
       "passed": true
     }
   ],
-  "errors": []
+  "errors": [],
+  "attempts_used": 1,
+  "attempt_errors": []
 }

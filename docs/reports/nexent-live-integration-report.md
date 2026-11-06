@@ -162,3 +162,37 @@ Agent 回答是**纯 JSON**（3596 字符，无 `<|tool_call_start|>` 残留、�
 当时的已知限制：协同 Agent 2 次调用 1 次返回可解析 JSON；本机内存 15.3 GB，
 `nexent-data-process` 占 4.5 GB 时 northbound 请求会被掐断（`docker restart nexent-northbound` 恢复）；
 Agent-as-Tool（路径 A）未验证，无证据不宣称。
+
+## 2026-11-06 复测：作答协议对齐后 8/8（Agent v18）
+
+平台运行时升级后，Agent 的"作答"必须由 `<code>` 代码块里的 `final_answer(...)` 给出；而当时的提示词
+与查询文案都写着"只输出 JSON、不要 Markdown 代码块"，两者直接冲突。表现不是"答案错"，而是
+**每一轮都被判 `no_action_no_final` 并整轮重跑**（单次请求 7 分钟以上仍无终态，客户端只能超时），
+平台侧还会把上一条挂住的会话继续跑，把运行时单 worker 占满，后续请求排队。
+
+两处根因与修法：
+
+| 现象（运行时日志） | 根因 | 修法 |
+| --- | --- | --- |
+| `agent.no_action_no_final` 反复出现，模型输出是**正确的 JSON 正文** | 提示词禁止代码块，模型照做；但平台只认 `final_answer` | `DUTY_PROMPT`/`CONSTRAINT_PROMPT` 与 `build_urban_query` 都改成"用 `<code>` 块内 `final_answer(json.dumps(...))` 交卷"，并明令禁止 ``` 围栏（围栏不执行） |
+| `reason=truncated_generation`（step 2） | `requested_output_tokens=4096` 被深度思考吃掉，answer 在 `evidence_refs` 中途被截断 | 主 Agent 提到 16384（模型上限 32768），并把 `evidence_refs` 限制在 3–5 条 |
+
+复测结果（`uv run python -m decision_poc.nexent_urban --attempts 2`）：
+
+| 项 | 值 |
+| --- | --- |
+| 结论一致性 | **8/8**，`attempts=1`（未用重试） |
+| conversation_id | **119** |
+| Agent 版本 | v18（主 Agent），v6（协同），v2（LLM 决策） |
+| 工具调用 | 2 次 `event_deduce`，均 `status=ok`，快照 `d102aa80…` |
+| 工具日志 | `samples/nexent/live/mcp_tool_log.jsonl` 仅 2 行，与本轮一一对应（跑前清空过，避免历史累积冒充本轮） |
+
+遗留问题（下一轮）：
+
+1. **稳定性**：同一提示词下仍有偶发 ``` 围栏与超长思考，靠 `--attempts 2` 兜底；根因是模型侧格式服从性，
+   平台层无法根治，只能在验收口径里显式允许"协议层重试"，并区分"结论不一致不重试"。
+2. **并发**：运行时按会话串行，客户端超时后服务端不会自动停，必须 `GET /nb/v1/chat/stop/{id}` 显式停，
+   否则新请求排队——这是本次排查里最长的一段弯路。
+3. **LLM 决策 Agent（DeepSeek）**：3 次实测均 `selected_match=false`（期望 opt-3，实际 opt-2×2、opt-1×1）。
+   证据池 8 个槽位被 `action_priority:1..7` 占满，模型看得到排序却看不到支撑证据，于是按"积水 30cm 已过 25cm 阈值"
+   自行选了 opt-2。属证据池设计问题，不是模型随机性，下一轮单独修。

@@ -38,10 +38,12 @@ MODEL_IDS = [int(item) for item in os.getenv("NEXENT_MODEL_IDS", "2").split(",")
 
 #: 平台在 `requested_output_tokens` 为空时会回落到硬编码 4096（见
 #: `nexent/core/models/capacity_resolver.py::_DEFAULT_REQUESTED_OUTPUT_TOKENS`）。
-#: 主 Agent 的六跳 JSON 约 3.2k 字符，4096 够用且响应快，显式写出来是为了不让它跟着平台默认值漂；
-#: **协同 Agent 的完整动作卡 JSON 超过 4096 token**，会被截断成半截 JSON（表现为"模型输出
-#: 格式不稳定"），所以单独放到 8192。模型上限 32768，8192 留足余量。
-MAIN_REQUESTED_OUTPUT_TOKENS = int(os.getenv("NEXENT_MAIN_OUTPUT_TOKENS", "4096"))
+#: 原值 4096 是按"六跳 JSON 约 3.2k 字符"估的，实测不够：openPangu 会先输出大段
+#: 深度思考，思考 token 与正文共用这一个预算，于是 answer 在 evidence_refs 列表中途
+#: 被截断，运行时判 `truncated_generation` 并整轮重跑（真机 conversation 115 复现）。
+#: 提到 8192 仍被截断（conversation 116/117 复现：思考篇幅波动大），最终取 16384；
+#: 模型上限 32768，仍留一半余量。协同 Agent 保持 8192（动作卡结构更短且不思考）。
+MAIN_REQUESTED_OUTPUT_TOKENS = int(os.getenv("NEXENT_MAIN_OUTPUT_TOKENS", "16384"))
 COLLAB_REQUESTED_OUTPUT_TOKENS = int(os.getenv("NEXENT_COLLAB_OUTPUT_TOKENS", "8192"))
 
 OUR_TOOLS = {
@@ -69,7 +71,7 @@ DUTY_PROMPT = """你是城市内涝跨部门决策智能体。用户给出事件
 （observed/affected/owner/conflict/resource/action）、三类冲突、资源缺口与 action_order，
 所以拿到返回后**不要再调任何工具**。
 
-第二步：只根据 event_deduce 的返回结果，输出一个 JSON 对象，字段如下（不得增删字段）：
+第二步：只根据 event_deduce 的返回结果构造 JSON 对象，字段如下（不得增删字段）：
 {"event_id": "...", "as_of": "...", "summary": "<一句话结论>",
  "six_hops": ["observed","affected","owner","conflict","resource","action"],
  "conflicts": [{"conflict_id": "C1", "kind": "overlap"}, {"conflict_id": "C2", "kind": "gap"},
@@ -80,12 +82,17 @@ DUTY_PROMPT = """你是城市内涝跨部门决策智能体。用户给出事件
  "evidence_refs": ["<asset_id#locator>"],
  "handoff_required": <true|false>}
 
-要求：工具返回里没有的数字不要编；JSON 前不要加解释，不要 Markdown 代码块。
+要求：工具返回里没有的数字不要编；evidence_refs 只列最有代表性的 3~5 条，不要把全部依据抄一遍
+（输出过长会被运行时按截断处理，整轮判失败）。
+**最后一步必须用 final_answer 交卷**：写一个 `<code>` 代码块，块内只有
+`final_answer(json.dumps(上面那个对象, ensure_ascii=False))` 这一句，块外不要再写 JSON 正文。
+代码块只能用 `<code>` / `</code>` 标签包裹，**不要用 ``` 三反引号围栏**——围栏不会被平台执行，
+整轮会被判成没作答。平台只把 final_answer 当成作答。
 """
 
 CONSTRAINT_PROMPT = (
-    "最终回答只输出 JSON 对象本身：不得发起工具调用，不得使用 python_interpreter，"
-    "不得使用 parallel_executor，不得输出 Markdown 代码块或解释性文字。"
+    "最终答案只能由 `<code>` 代码块里的 final_answer(json.dumps(...)) 给出，代码块外不写正文；"
+    "不得再发起工具调用，不得使用 python_interpreter 或 parallel_executor。"
 )
 
 # --- 多智能体协同 Agent（路径 B：总控 Agent 调 collab_run） ----------------
@@ -120,11 +127,14 @@ COLLAB_PROMPT = """你是城市内涝应急协同总控。用户给出事件编�
  "kernel_fingerprint": "<16 位内核指纹>"}
 
 要求：只转述工具返回，不得新增动作卡或改写冲突；kernel_fingerprint 必须与工具返回逐字一致，
-它是"这份协同方案对应哪一次推演"的唯一凭据。JSON 前不要加解释，不要 Markdown 代码块。"""
+它是"这份协同方案对应哪一次推演"的唯一凭据。
+**最后一步必须用 final_answer 交卷**：写一个 `<code>` 代码块，块内只有
+`final_answer(json.dumps(上面那个对象, ensure_ascii=False))` 这一句，块外不要再写 JSON 正文。"""
 
 COLLAB_CONSTRAINT_PROMPT = (
-    "最终回答只输出 JSON：不得编造 card_id、动作或指纹；不得使用 python_interpreter 或 parallel_executor；"
-    "不要在最终回答里发起工具调用。"
+    "最终答案只能由 `<code>` 代码块里的 final_answer(json.dumps(...)) 给出，代码块外不写正文；"
+    "不得编造 card_id、动作或指纹；不得使用 python_interpreter 或 parallel_executor；"
+    "不要在最终回答里再发起工具调用。"
 )
 
 

@@ -1,13 +1,13 @@
 # Nexent 侧工具注册（P10 增补）
 
-## 当前状态：代码清单 14 个；历史真机快照为 13 个
+## 当前状态：代码清单 14 个，平台已注册 14 个（2026-11-06 实测）
 
-> 历史：本文档较早版本记录的是"Docker 起不来、未真机注册"的阻塞状态。该阻塞已解除：
-> 2026-11-03 的真机证据显示，MCP 服务以 SSE 方式跑在 `nexent_network` 容器里，平台工具库当时为 13 个
-> （tool_id 41–53），挂到 Agent `urban_deduction_agent`（agent_id=3）并发布 v10；
-> 真机对话 **conversation_id=78**，六跳结论与离线 **8/8 一致**，平台调用日志含
-> `event_deduce`（含一次协议修复重试）。随后代码新增 `scene_status`，当前导出清单为 14 个；
-> 当前平台是否已重扫到 14 个，需 Docker 恢复后重新验收。
+> 2026-11-06 实测平台 `/api/tool/list`：14 个工具全部为 `source=mcp`、`is_available=true`，
+> `tool_id` 41–53 加后注册的 `scene_status=86`（新增工具不会复用旧编号，看到 41–53 就断言"只有 13 个"是错的）。
+> 主 Agent `urban_deduction_agent` 已发布 **v18**；真机复测 **conversation_id=119，8/8 一致，attempts=1**。
+>
+> 历史：2026-11-03 首次真机注册时平台工具库为 13 个（尚无 `scene_status`），Agent 版本 v10，
+> 真机对话 `conversation_id=78`、8/8 一致——那组数字属当天快照，不再代表当前状态。
 >
 > 完整证据见 [真机集成报告](reports/nexent-live-integration-report.md)，装配步骤见
 > [deploy/nexent/README.md](../deploy/nexent/README.md)。

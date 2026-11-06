@@ -1,59 +1,61 @@
 {
   "schema_version": "nexent-live-evidence-1",
   "nexent_base_url": "http://localhost:5013",
-  "conversation_id": 78,
+  "conversation_id": 119,
   "agents": [
+    {
+      "name": "urban_llm_decision_agent",
+      "display_name": "LLM 决策对照智能体",
+      "model_name": "DeepSeek-Chat",
+      "current_version_no": 2,
+      "version_name": "llm-decision-v2"
+    },
     {
       "name": "urban_collab_agent",
       "display_name": "城市内涝应急协同总控",
       "model_name": "openPangu-2.0-Pro",
-      "current_version_no": 4,
+      "current_version_no": 6,
       "version_name": "urban-collab-v1"
     },
     {
       "name": "urban_deduction_agent",
       "display_name": "城市内涝跨部门决策智能体",
       "model_name": "openPangu-2.0-Pro",
-      "current_version_no": 10,
+      "current_version_no": 18,
       "version_name": "urban-mcp-v3"
-    },
-    {
-      "name": "equipment_decision_agent",
-      "display_name": "设备故障决策智能体",
-      "model_name": "openPangu-2.0-Pro",
-      "current_version_no": 2,
-      "version_name": "设备故障决策智能体-协议修复"
     }
   ],
   "tool_calls": [
     {
       "error_code": null,
       "knowledge_version": "kb-v1.0.0",
-      "latency_ms": 11,
+      "latency_ms": 23,
       "origin": "mcp",
-      "snapshot_hash": "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5",
+      "snapshot_hash": "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891",
       "status": "ok",
       "tool": "event_deduce",
-      "trace_id": null
+      "trace_id": null,
+      "ts": "2026-11-06T09:08:06+0000"
     },
     {
       "error_code": null,
       "knowledge_version": "kb-v1.0.0",
-      "latency_ms": 6,
+      "latency_ms": 14,
       "origin": "mcp",
-      "snapshot_hash": "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5",
+      "snapshot_hash": "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891",
       "status": "ok",
       "tool": "event_deduce",
-      "trace_id": null
+      "trace_id": null,
+      "ts": "2026-11-06T09:10:21+0000"
     }
   ],
   "tool_log": {
     "path": "samples\\nexent\\live\\mcp_tool_log.jsonl",
     "lines": 2,
-    "file_mtime": "2026-11-03T14:56:17",
-    "container_started_at": "2026-11-03T06:42:45.16205947Z",
+    "file_mtime": "2026-11-06T17:10:21",
+    "container_started_at": "2026-11-06T08:22:30.771082027Z",
     "snapshot_hashes": [
-      "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5"
+      "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891"
     ]
   },
   "checks_passed": 8,

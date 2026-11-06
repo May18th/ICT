@@ -135,11 +135,17 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 
 ## 6 验收口径
 
-- [ ] `/health` 返回 14 个工具，SSE 握手可被独立的 MCP 客户端完成（已离线测试：10 项）。
-- [ ] Nexent MCP 配置「连通性校验」通过，工具列表可见。
-- [ ] Agent 一次对话产出六跳 JSON，且 8/8 与离线一致（conversation_id 留档）。
+- [x] `/health` 返回 14 个工具，SSE 握手可被独立的 MCP 客户端完成（已离线测试：10 项）。
+      2026-11-06 实测：`tools_count=14`，`scene_status` 为后注册（平台 `tool_id=86`，其余 41–53）。
+- [x] Nexent MCP 配置「连通性校验」通过，工具列表可见（`mcp_id=3`，`status=true`，`permission=EDIT`）。
+- [x] Agent 一次对话产出六跳 JSON，且 8/8 与离线一致（`conversation_id=119`，Agent v18，`attempts=1`）。
 - [ ] 工具日志里能看到 `event_deduce`、`conflict_check`、`allocation_plan` 至少各一次。
+      **当前只满足 `event_deduce`**：主 Agent 只挂 `event_deduce` + `evidence_locate`（收窄挂载是硬约束，
+      见 §8.1 说明），冲突与分配在 `event_deduce` 的返回里；`conflict_check`/`allocation_plan` 的独立调用
+      属协同 Agent 侧，尚未在 v18 上复测，故本条保持未打勾。
 - [ ] 若 Agent 未调工具直接作答（凭记忆），结论比对必须失败——这是"是不是真编排"的区分点。
+      未做专项负例实验：`event_deduce` 未调用时 agent 无法产出证据引用（`证据非空` 项会失败），
+      但这不是"故意让它凭记忆作答"的对照实验，口径上不能算已验证。
 
 ## 7 风险与边界
 
@@ -159,6 +165,12 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
   `urban_deduction_agent`（agent_id=3，v10）、一次真实对话六跳结论与离线 **8/8 一致**（conversation_id=78），
   平台调用日志含 `event_deduce`（含一次协议修复重试）。
   证据：`samples/nexent/live/`；报告：[真机集成报告](reports/nexent-live-integration-report.md)。
+- **2026-11-06 复测（Agent v18）**：平台运行时的作答协议升级后，原提示词（"只输出 JSON、不要代码块"）
+  与运行时要求的 `<code> final_answer(...) </code>` 冲突，主 Agent 反复被判 `no_action_no_final` 并整轮重跑；
+  另有一次 `truncated_generation`（输出预算 4096 被深度思考吃掉）。两处已在 `setup_nexent.py` 修正：
+  提示词与查询都要求 `final_answer(json.dumps(...))` 交卷且禁用 ``` 围栏，主 Agent 输出预算提到 16384，
+  `evidence_refs` 限 3–5 条。复测结果 **8/8、conversation_id=119、attempts=1**，
+  工具日志 2 行均为 `event_deduce`、快照 `d102aa80…`，与 `samples/eval/nexent_urban_smoke.json` 同源。
 - **已完成（平台侧）**：2 个 SKILL.md 已上传平台技能仓库（skill_id=2/3，幂等脚本 `deploy/nexent/upload_skills.py`），证据 `samples/nexent/live/skills.json`；平台界面截图 3 张 + sha256 证据（`deploy/nexent/capture_platform_ui.py` → `docs/reports/captures/nexent/`），报告 [平台侧证据报告](reports/platform-evidence-report.md)。
   `twin_neighbors` 的 `twin_id` 参数提示词修正。
 
@@ -167,7 +179,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 原 §3 写的是 UI 点选步骤；真机执行时改为可复现脚本（平台 API + JWT），流程等价但可审计：
 
 1. `deploy/mcp_sse/Dockerfile` 构建 `urban-twin-mcp:dev`，以 `--network nexent_network` 运行；
-2. `deploy/nexent/setup_nexent.py`（在 `nexent-config` 容器内）依次：注册 MCP → `scan_tool` 同步 13 工具 →
+2. `deploy/nexent/setup_nexent.py`（在 `nexent-config` 容器内）依次：注册 MCP → `scan_tool` 同步 14 工具 →
    创建/复用 Agent 并挂工具 → 发布版本；
 3. 宿主机 `python -m decision_poc.nexent_urban` 做结论级校验；
 4. `deploy/nexent/capture_evidence.py` 固化证据。

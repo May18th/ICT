@@ -103,7 +103,8 @@ def test_query_names_event_time_and_tools() -> None:
     # 未挂载的工具不得出现在查询里：点名了模型就会去调，随后走 parallel_executor 截断
     for unmounted in ("twin_neighbors", "conflict_check", "allocation_plan"):
         assert unmounted not in query
-    assert "只输出 JSON" in query
+    assert "只输出 JSON" not in query, "旧文案要求裸 JSON 作答，与平台的 final_answer 协议冲突"
+    assert "final_answer(json.dumps(" in query, "必须明确要求用 final_answer 交卷"
     assert "six_hops 只放六个阶段英文名" in query
 
 

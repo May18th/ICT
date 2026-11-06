@@ -2,8 +2,9 @@
 
 把本仓库的城市孪生 MCP 服务接入本机 Nexent v2.7.0，并验证"平台 Agent 调 MCP 工具 → 六跳结论与离线一致"。
 
-已验证结果：**8/8 项一致，conversation_id=78**，平台实际调用 `event_deduce`
-（见 `samples/nexent/live/`）。完整过程与排障见 [真机集成报告](../../docs/reports/nexent-live-integration-report.md)。
+已验证结果（2026-11-06 复测，Agent **v18**）：**8/8 项一致，conversation_id=119**，平台实际调用 `event_deduce` 2 次，
+工具日志与本轮一一对应（`samples/nexent/live/mcp_tool_log.jsonl` 仅 2 行，快照 `d102aa80…`）。
+完整过程与排障见 [真机集成报告](../../docs/reports/nexent-live-integration-report.md)。
 
 ## 0 前置
 
@@ -97,7 +98,7 @@ $env:PYTHONPATH = "src"
 $env:NEXENT_BASE_URL = "http://localhost:5013"
 $env:NEXENT_API_KEY = "<上一步生成的 Key>"
 $env:NEXENT_AGENT_NAME = "urban_deduction_agent"
-uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_urban_smoke.json
+uv run --locked python -m decision_poc.nexent_urban --attempts 2 --json samples/eval/nexent_urban_smoke.json
 ```
 
 期望输出：
