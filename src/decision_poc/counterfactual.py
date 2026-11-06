@@ -359,6 +359,21 @@ class _Branch:
         self.close()
 
 
+def _temp_root() -> Path:
+    """反事实分支的临时目录落点。
+
+    `tempfile.gettempdir()` 在系统临时目录不可写时会**静默回退到当前工作目录**（Windows
+    受限账户/沙箱下实测会发生），于是 `mkdtemp` 直接把 `cf-xxxx` 建进仓库根，`git status`
+    里凭空多出一堆未跟踪目录。这里显式兜底到项目内 `artifacts/tmp`（已在 .gitignore 里），
+    正常环境仍用系统临时目录，行为不变。
+    """
+    root = Path(tempfile.gettempdir())
+    if root.resolve() == Path.cwd().resolve():
+        root = Path(__file__).resolve().parents[2] / "artifacts" / "tmp"
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
 def _prepare(runtime: SkillRuntime, interventions: Sequence[Intervention]) -> _Branch:
     """Copy what needs changing into a temp dir; never touch the sample dataset."""
     data_items = [item for item in interventions if item.kind is InterventionKind.DATA_PATCH]
@@ -366,7 +381,7 @@ def _prepare(runtime: SkillRuntime, interventions: Sequence[Intervention]) -> _B
     if not data_items and not rule_items:
         return _Branch(None, None, None)
 
-    workdir = Path(tempfile.mkdtemp(prefix="cf-"))
+    workdir = Path(tempfile.mkdtemp(prefix="cf-", dir=_temp_root()))
     data_root: Path | None = None
     rules_path: Path | None = None
 
