@@ -34,16 +34,18 @@ ADMIN_USER = admin_user()
 MCP_NAME = os.getenv("NEXENT_MCP_NAME", "urban-twin-mcp")
 MCP_URL = os.getenv("NEXENT_MCP_URL", "http://urban-twin-mcp:8000/sse")
 AGENT_NAME = os.getenv("NEXENT_URBAN_AGENT", "urban_deduction_agent")
-MODEL_IDS = [int(item) for item in os.getenv("NEXENT_MODEL_IDS", "2").split(",") if item.strip()]
+#: 平台模型：2=openPangu-2.0-Pro（华为 ModelArts，2026-11-06 欠费停服）；5=DeepSeek-Chat
+#: （api.deepseek.com，独立计费）。默认走 5，避免再次被欠费卡住验收；切回去用 NEXENT_MODEL_IDS=2。
+MODEL_IDS = [int(item) for item in os.getenv("NEXENT_MODEL_IDS", "5").split(",") if item.strip()]
 
 #: 平台在 `requested_output_tokens` 为空时会回落到硬编码 4096（见
 #: `nexent/core/models/capacity_resolver.py::_DEFAULT_REQUESTED_OUTPUT_TOKENS`）。
 #: 原值 4096 是按"六跳 JSON 约 3.2k 字符"估的，实测不够：openPangu 会先输出大段
 #: 深度思考，思考 token 与正文共用这一个预算，于是 answer 在 evidence_refs 列表中途
 #: 被截断，运行时判 `truncated_generation` 并整轮重跑（真机 conversation 115 复现）。
-#: 提到 8192 仍被截断（conversation 116/117 复现：思考篇幅波动大），最终取 16384；
-#: 模型上限 32768，仍留一半余量。协同 Agent 保持 8192（动作卡结构更短且不思考）。
-MAIN_REQUESTED_OUTPUT_TOKENS = int(os.getenv("NEXENT_MAIN_OUTPUT_TOKENS", "16384"))
+#: openPangu 阶段曾因深度思考吃掉预算而取 16384；换到 DeepSeek-Chat 后不再输出思考段，
+#: 8192 足够（实测答案约 1.4k 字符）。留环境变量可覆盖。
+MAIN_REQUESTED_OUTPUT_TOKENS = int(os.getenv("NEXENT_MAIN_OUTPUT_TOKENS", "8192"))
 COLLAB_REQUESTED_OUTPUT_TOKENS = int(os.getenv("NEXENT_COLLAB_OUTPUT_TOKENS", "8192"))
 
 OUR_TOOLS = {

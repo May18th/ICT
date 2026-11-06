@@ -4,7 +4,8 @@
 
 > 2026-11-06 实测平台 `/api/tool/list`：14 个工具全部为 `source=mcp`、`is_available=true`，
 > `tool_id` 41–53 加后注册的 `scene_status=86`（新增工具不会复用旧编号，看到 41–53 就断言"只有 13 个"是错的）。
-> 主 Agent `urban_deduction_agent` 已发布 **v18**；真机复测 **conversation_id=119，8/8 一致，attempts=1**。
+> 主 Agent `urban_deduction_agent` 已发布 **v19**（模型 **DeepSeek-Chat**，因 openPangu 于 2026-11-06 欠费停服而切换）；
+> 真机复测 **conversation_id=120，8/8 一致，attempts=1**。
 >
 > 历史：2026-11-03 首次真机注册时平台工具库为 13 个（尚无 `scene_status`），Agent 版本 v10，
 > 真机对话 `conversation_id=78`、8/8 一致——那组数字属当天快照，不再代表当前状态。

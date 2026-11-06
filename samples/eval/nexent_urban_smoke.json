@@ -1,7 +1,7 @@
 {
   "event_id": "WO-20261029-007",
   "as_of": "2026-10-29T09:40:00+08:00",
-  "conversation_id": 119,
+  "conversation_id": 120,
   "answer": {
     "event_id": "WO-20261029-007",
     "as_of": "2026-10-29T09:40:00+08:00",
@@ -43,11 +43,11 @@
       "全程同步交通管制与信息发布",
       "水位降至基坑底以下 0.3m 后复检管道悬空与泄漏，方可恢复作业"
     ],
-    "summary": "A-03 区 30cm 积水触发橙色响应，下穿隧道倒灌、基坑浸泡与 DF-PS-01 运维空白并存，移动泵缺口 2 台需跨区调配。",
+    "summary": "A-03 片区积水 30cm 达橙色响应、已超封路阈值，DF-PS-01 故障且无运维主体，下穿隧道倒灌、基坑与燃气管受威胁，需 8 台移动泵而仅 6 台、缺口 2 台，由 ORG-EMERG 统筹先停挖隔离、封隧道与封路，再清掏抽排并按联合发布与跨区调配推进。",
     "residual_risks": [
       "可燃气体浓度达到爆炸下限 10% 时必须停工、断电、撤离并上报",
       "基坑浸泡导致管周土体流失，燃气管悬空或泄漏",
-      "外部积水漫过下穿隧道入口挡水槛存在倒灌：洞内水位与外部同步上涨，须封闭洞口并投入移动泵抽排",
+      "外部积水漫过下穿隧道入口挡水槛存在倒灌，禁止车辆驶入",
       "绕行路线自身占道施工，疏散能力低于设计值，易形成二次拥堵",
       "泵站无备用电源，上级电源浸水即失电，抽排中断"
     ],
@@ -56,7 +56,7 @@
       "AS-A-03-underpass-d4ae624c#A-03/underpass/v1#row:2",
       "AS-A-03-drainage_facility-073cc674#A-03/drainage_facility/v1#row:2",
       "AS-A-03-resource_inventory-8133c741#A-03/resource_inventory/v1#row:2",
-      "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:29"
+      "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:31"
     ],
     "handoff_required": true
   },

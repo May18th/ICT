@@ -38,25 +38,28 @@
       "description": "把六跳推演拆成 1 总控 + 5 专业部门的动作卡，编排联合发布与处置顺序",
       "author": "UrbanEvolve",
       "model_ids": [
-        2
+        5
       ],
       "model_names": [
-        "openPangu-2.0-Pro"
+        "DeepSeek-Chat"
       ],
-      "model_name": "openPangu-2.0-Pro",
+      "model_name": "DeepSeek-Chat",
       "is_available": true,
       "unavailable_reasons": [],
       "is_new": true,
       "is_main_agent": true,
       "group_ids": "2",
       "permission": "EDIT",
-      "current_version_no": 6,
+      "current_version_no": 7,
       "version_name": "urban-collab-v1",
       "greeting_message": null,
       "example_questions": null,
       "allow_chat_metadata": false,
       "model_params_override": {
         "2": {
+          "extra_params": {}
+        },
+        "5": {
           "extra_params": {}
         }
       },
@@ -69,19 +72,19 @@
       "description": "基于 Nexent + MCP 的城市内涝跨部门推演：六跳结论、三类冲突、稀缺资源分配与证据链",
       "author": "UrbanEvolve",
       "model_ids": [
-        2
+        5
       ],
       "model_names": [
-        "openPangu-2.0-Pro"
+        "DeepSeek-Chat"
       ],
-      "model_name": "openPangu-2.0-Pro",
+      "model_name": "DeepSeek-Chat",
       "is_available": true,
       "unavailable_reasons": [],
       "is_new": true,
       "is_main_agent": true,
       "group_ids": "2",
       "permission": "EDIT",
-      "current_version_no": 18,
+      "current_version_no": 19,
       "version_name": "urban-mcp-v3",
       "greeting_message": null,
       "example_questions": null,
@@ -89,11 +92,14 @@
       "model_params_override": {
         "2": {
           "extra_params": {}
+        },
+        "5": {
+          "extra_params": {}
         }
       },
       "enable_protocol_repair_retry": true,
       "tags": []
     }
   ],
-  "requestId": "b4ec1f58-5674-4589-b956-f6ad4682cbcb"
+  "requestId": "591d0620-e1fc-4217-9ec3-cad0d292fe15"
 }
