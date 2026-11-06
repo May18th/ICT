@@ -3,6 +3,8 @@
 这是一个面向华为 ModelEngine Nexent 赛题方向的决策智能体工程：**离线内核可复现、平台上可运行**。默认离线（不联网、不带凭据），
 只在内核验证完成后通过北向 API / MCP 接入真实 Nexent。城市内涝主链路已在本机 Nexent v2.7.0 真机跑通，
 平台 Agent（v19，模型 DeepSeek-Chat）调 MCP 工具产出的六跳结论与离线推演 8/8 一致（conversation_id=120，证据见 `samples/nexent/live/`）。
+同日 17:56 又重采过一次基线（conversation_id=134，同样 8/8，`samples/nexent/live/main_v19_baseline.json`）；
+两段对话都是真实记录，`conversation_120.json` 是换模型后的首测，134 是当日基线复采。
 
 当前提供 `NexentAdapter` 作为离线适配边界：它只把 `DecisionRequest` 转成可传输的 JSON 负载，并调用注入的传输函数；默认不会联网。真实 Nexent 接入由 `NexentHttpTransport` 承担，走官方北向 `/nb/v1/chat/run` SSE 契约（Bearer API Key + `Idempotency-Key`），并且只在显式构造时才联网，现有审批、评测和回滚门禁保持不变。
 
@@ -99,7 +101,7 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望：对外数字自检：108/108 项一致（期望指纹 b53ba9abe0d1fbe9）
+# 期望：对外数字自检：108/108 项一致（期望指纹 666d3d3c1325083d）
 ```
 
 期望值冻结在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/答辩口径，
@@ -440,7 +442,7 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **834 项**测试通过；`python -m decision_poc.evidence_check` 108/108 项一致；
+当前基线：`uv run --locked pytest -q` 共 **835 项**测试通过；`python -m decision_poc.evidence_check` 108/108 项一致；
 城市内涝主链路 Nexent 真机校验 8/8（Agent v19 / DeepSeek-Chat，`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。
 P0-P10 的验收口径与实测数字见各阶段回传报告（`docs/reports/`）。

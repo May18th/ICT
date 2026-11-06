@@ -10,6 +10,10 @@
 | 反事实对照 | 同一提示词解绑 14 个 MCP 工具后 **2/8**；需要工具取数的 6 项全塌 | `samples/nexent/live/control_no_tools.json` |
 | 协同链路 | 连跑 **2/2**，`kernel_fingerprint=ab94413cf94bc9a5` 与离线逐字一致（26 卡 / 15 序 / 6 角色） | `samples/nexent/live/collab_v7.json` |
 
+> 两段主链路对话都真实存在：**120** 是换 DeepSeek-Chat 后的首测（材料里引的是它，文件
+> `samples/nexent/live/conversation_120.json`），**134** 是同日 17:56 重采的基线（上面的证据文件）。
+> 都是 8/8、attempts=1，差别只是采集时点。
+
 平台实际调用 `event_deduce` 1 次，工具日志与该轮一一对应（`samples/nexent/live/mcp_tool_log.jsonl` 仅 1 行）。
 > 模型切换原因：openPangu-2.0-Pro 走华为 ModelArts，2026-11-06 因账户欠费停服，改为平台已注册的 DeepSeek-Chat（`https://api.deepseek.com/v1`，独立计费）。切换后深度思考段消失，同一提示词下一轮即通过，作答预算也从 16384 回调到 8192。
 完整过程与排障见 [真机集成报告](../../docs/reports/nexent-live-integration-report.md)。

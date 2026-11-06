@@ -121,5 +121,5 @@ report = evolve(..., reviews=reviews)   # 评审用例进入门禁：候选违�
 
 ## 7 验收
 
-- `uv run --locked pytest -q`：553 项通过（含 17 条本通道用例：模型校验、幂等、汇总、转评审用例、导出、CLI、Web 路由）；
-- `python -m decision_poc.evidence_check`：106/106 项一致（测试数已同步为 600）。
+- `uv run --locked pytest -q`：835 项通过（含 17 条本通道用例：模型校验、幂等、汇总、转评审用例、导出、CLI、Web 路由）；
+- `python -m decision_poc.evidence_check`：108/108 项一致（测试数已同步）。
