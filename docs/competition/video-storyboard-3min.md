@@ -142,7 +142,7 @@
 - **旁白**（≈18 + 10 = 28 字）：
   > Nexent 平台真机，独立智能体也跑通。
   > 六跳结论八比八一致。
-- **屏幕证据**：`docs/reports/captures/nexent/agents.png`（Agent 在平台里）、`docs/reports/captures/nexent/mcp-space.png`（连通性校验成功 + 14 个工具）、`docs/reports/captures/nexent/skill-space.png`（2 个 Skill 在平台技能仓库）；`conversation_id=78` 见 `samples/nexent/live/conversation_78.json`；`python -m decision_poc.nexent_urban` 可本机复跑（需 Docker 平台在线）。
+- **屏幕证据**：`docs/reports/captures/nexent/agents.png`（Agent 在平台里）、`docs/reports/captures/nexent/mcp-space.png`（连通性校验成功 + 14 个工具）、`docs/reports/captures/nexent/skill-space.png`（2 个 Skill 在平台技能仓库）；`conversation_id=120` 见 `samples/nexent/live/conversation_120.json`；`python -m decision_poc.nexent_urban` 可本机复跑（需 Docker 平台在线）。
 - **失败兜底**：平台没起 → **明说**「这是之前那台机器上的平台录屏/截图，不是现场跑」，然后放截图；这句必须说出来，比假装现跑安全得多。
 
 #### 镜 11 · 2:10–2:20 · 漂移如实说明（本段的高光，不要藏）
@@ -186,7 +186,7 @@
   > 数据是合成的，定量层还没进主链路。
   > 我们不宣称实时数字孪生。
   > 一条命令自检，数字可复现。
-- **屏幕证据**：`python -m decision_poc.evidence_check`（期望末行「对外数字自检：108/108 项一致（期望指纹 a8c0453683983b9d）」）；本文件开头那句「数字以该命令输出为准」就是这一镜的口播依据。
+- **屏幕证据**：`python -m decision_poc.evidence_check`（期望末行「对外数字自检：108/108 项一致（期望指纹 b53ba9abe0d1fbe9）」）；本文件开头那句「数字以该命令输出为准」就是这一镜的口播依据。
 - **失败兜底**：二维码扫不开（分享网关要 sharecode）→ 画面同时打全 URL 文字，旁白加「链接在片尾字幕里」；自检跑不过 → **不演**，改为「数字口径已冻结在期望文件里，答辩时现场跑」。
 
 ---
@@ -228,8 +228,8 @@
 | `docs/reports/captures/nexent/agents.png` | 截图 | 镜 10 | 平台 Agent 列表（含 `urban_llm_decision_agent`） |
 | `docs/reports/captures/nexent/mcp-space.png` | 截图 | 镜 10 | 连通性校验成功 + 14 个工具 |
 | `docs/reports/captures/nexent/skill-space.png` | 截图 | 镜 10 | 2 个 Skill 在平台技能仓库 |
-| `samples/nexent/live/conversation_78.json` | JSON | 镜 10 | `conversation_id=78`，六跳真机对话原文 |
-| `samples/nexent/live/llm_decision_platform.json` | JSON | 镜 11 | 平台真机漂移的唯一落盘记录（选 `opt-1`，参照 `opt-3`） |
+| `samples/nexent/live/conversation_120.json` | JSON | 镜 10 | `conversation_id=120`，六跳真机对话原文 |
+| `samples/nexent/live/llm_decision_platform.json` | JSON | 镜 11 | 平台 LLM 决策对照落盘记录（`opt-3` 命中；修复前那轮见 git 历史与真机报告） |
 | `docs/reports/captures/S31-ue-negative-insufficient.png`、`...-tampered.png` | 截图 | 备选（镜 14 或答辩） | 两条负例：证据不足拒绝产出 / 账本被篡改标记不可信 |
 | `docs/reports/captures/S33-binding-*.png` | 4 张截图 | 兜底（镜 03/04） | 实体绑定的近景/泵站/下穿通道 |
 | CLI 输出（六跳 / CF1 / policy_evolution） | 录屏或截图 | 镜 06、07、08、12、13 | 见第 4 节命令；**输出以实跑为准**，不许改字幕凑数 |
@@ -292,7 +292,7 @@
 
 ## 5. [待核实] 清单（这些不进配音，只进备注）
 
-1. **测试数口径冲突**：本任务简报写「测试 745 项」，但仓库冻结口径是 **831 项**（`samples/eval/evidence_expectations.json` 的 `test_baseline.collected=831`、`docs_declared=[831]`，README 与 5 份文档一致）。→ 3 分钟视频里**不出现测试数**；若答辩必须说，先跑 `python -m decision_poc.evidence_check` 以输出为准。
+1. **测试数口径冲突**：本任务简报写「测试 745 项」，但仓库冻结口径是 **834 项**（`samples/eval/evidence_expectations.json` 的 `test_baseline.collected=834`、`docs_declared=[834]`，README 与 5 份文档一致）。→ 3 分钟视频里**不出现测试数**；若答辩必须说，先跑 `python -m decision_poc.evidence_check` 以输出为准。
 2. **真机漂移记录**：已入仓 4 条——`llm_decision_platform.json`（selected=opt-1）+ `llm_decision_platform_run1/2/3.json`（均 selected=opt-2），全部 `selected_match=false`、`schema_valid=true`（2026-11-05 平台实跑补入）。**没有"空证据解析失败"那一条**，镜头 11 只讲"多次不一致、出现 opt-1/opt-2"，不编造解析失败。
 3. **`VD02-A` 的静帧张数**：`video-clips/README.md` 与简报都是 **4 张 / 10.8s**，但 `winning-gap-audit.md` §8.2 写「A 版从 4 张加为 5 张（含 S5 街面视角）」。→ 剪辑前用播放器确认实际张数与时长，以文件为准。
 4. **`action_count` 与「处置顺序条数」**：冻结期望 `p6_deduction.action_count=10`，`delivery-status.md` 已统一为「处置顺序 10 条」（2026-11-05 修正）。→ 视频可按 10 条讲，或只报"有顺序、有责任部门"。

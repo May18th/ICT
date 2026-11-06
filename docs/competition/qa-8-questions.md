@@ -39,7 +39,7 @@
 2. **承认边界的句子要主动说**，不要等评委问出来。本文件每题给的"一句话边界"就是那句话。
 3. **不确定就说不确定**，宁可说 `[待核实]`，也不要给一个像样的数。
 4. **跑挂了不要说"环境问题"**——直接降级并说明这是第几级（Q8）。
-5. **同一场答辩里数字只出现一次写法**：缺口 2 台、831 测试、108/108、0.2264→0.0000 / 0.2182→0.0000。
+5. **同一场答辩里数字只出现一次写法**：缺口 2 台、834 测试、108/108、0.2264→0.0000 / 0.2182→0.0000。
 
 ---
 
@@ -111,18 +111,19 @@
 
 **30 秒标准答**
 
-> "能跑，演示默认就跑确定性路径。LLM 负责理解事件和表达结论，优先级和冲突裁决永远在确定性推演手里。证据是反的：平台同一道题，模型分别选了 opt-2 和 opt-1，都没命中参照 opt-3。"
+> "能跑，演示默认就跑确定性路径。LLM 负责理解事件和表达结论，优先级和冲突裁决永远在确定性推演手里。平台真机上能看出这层分工：证据不出进程时 3 次全错（opt-2×2、opt-1×1）；把证据原文和职责边界补齐后复测 3/3 命中参照 opt-3——这 3/3 证明的是服从性，不是模型能独立算出同样的排序。"
 
-**一句话边界（主动说）**：平台演示链路只挂 **openPangu-2.0-Pro**；DeepSeek 只用于本地决策节点 A/B 与公网单端点，**不进平台链路**。
+**一句话边界（主动说）**：平台演示链路现挂 **DeepSeek-Chat**（原 openPangu-2.0-Pro 于 2026-11-06 欠费停服后切换，主/协同 Agent 重发布 v19 / v7）；本地决策节点 A/B 与公网单端点同样走 DeepSeek，密钥只走环境变量。
 
 **证据引用**
 
 | 类型 | 位置 / 命令 |
 | --- | --- |
-| 文件（原始证据） | `samples/nexent/live/llm_decision_platform.json`：`agent_name=urban_llm_decision_agent`、`expected_option_id=opt-3`、`selected_option_id=opt-1`、`selected_match=false`、`schema_valid=true`、`latency_ms=6883.6` |
+| 文件（原始证据） | `samples/nexent/live/llm_decision_platform.json` 及 `run1/2/3` 共 4 条：`agent_name=urban_llm_decision_agent`、`expected_option_id=opt-3`、`selected_option_id=opt-3`、`selected_match=true`、`schema_valid=true`；复测 `task_digest=f47d541775f7756f` |
+| 文件（修复前对照） | 同一批文件修复前为 `selected_option_id=opt-1/opt-2`、`selected_match=false`；逐层复测表见 `docs/reports/nexent-live-integration-report.md`「2026-11-06 追加」 |
 | 端点 | 公网 `/api/llm-decision`（`t=0` 真调 DeepSeek，约 4.1 s，命中 `opt-3`）、`/api/platform-evidence`（只读上面的 JSON） |
 | 文件 | `docs/reports/p8-llm-ab-report.md`（本地 21/22、温度 0 两轮逐项一致）；`docs/demo-runbook.md`「LLM 决策按钮」一节 |
-| 现场演示点 | 公网首页点「**LLM 决策（DeepSeek）**」→ 卡片同时出现 **LLM 对照行**与**Nexent 平台真机验证行**，后者显示"与参照不一致" |
+| 现场演示点 | 公网首页点「**LLM 决策（DeepSeek）**」→ 卡片同时出现 **LLM 对照行**与**Nexent 平台真机验证行**，两行都显示命中 `opt-3` |
 
 **加分动作（30 秒内可做）**：把密钥配错或断开 → 端点返回 `configured=false` → 页面显示"未配置"，其余演示照跑。这就是"LLM 失败可降级"的现场证据。
 
@@ -130,10 +131,11 @@
 
 | 不能说 | 为什么 | 改说 |
 | --- | --- | --- |
-| "LLM 在平台上 8/8 稳定选对" | 8/8 是**工具链结论一致**，不是 LLM 每次选对 | "8/8 是六跳结论一致；LLM 选项会漂移，页面上如实展示" |
-| "多次运行选了不同选项，文件里都有" | 已入仓 4 条原始记录：`llm_decision_platform.json`（opt-1）+ `llm_decision_platform_run1/2/3.json`（均 opt-2），现场可逐一打开核对；但**没有"空证据解析失败"那一条**，别说过头 | "4 条原始记录都在，全部没命中参照 opt-3；出现过的选项是 opt-1 和 opt-2" |
+| "LLM 独立算出了正确的处置排序" | 3/3 证明的是**服从性**：模型把确定性推演给出的排序落成决策记录，不是它自己重排 | "排序来自确定性推演，模型负责落成决策记录；给了原文与边界后 3/3 命中" |
+| "LLM 在平台上 8/8 稳定选对" | 8/8 是**工具链结论一致**，不是 LLM 每次选对 | "8/8 是六跳结论一致；LLM 决策对照是单独一条 3/3" |
+| "模型早期选错过，正好证明我们诚实" | 早期 0/3 是缺陷（证据没进请求、出处没解析成原文），已修；当卖点会被追问为什么修之前就说是"模型随机" | "0/3 的根因是证据没出进程，逐层修完 4/6 → 1/3 → 3/3，报告里有分层复测表" |
 | "我们用大模型做决策" | 与设计相反 | "模型理解与表达，裁决在推演" |
-| "DeepSeek 是平台模型" | 平台侧只有 openPangu-2.0-Pro | "DeepSeek 是本地 A/B 与公网单端点" |
+| "平台用的是 openPangu" | 2026-11-06 已欠费停服，当前平台模型是 DeepSeek-Chat | "openPangu 停服后切到 DeepSeek-Chat，重发 v19 复测仍 8/8" |
 
 ---
 
@@ -152,7 +154,7 @@
 | 类型 | 位置 / 命令 |
 | --- | --- |
 | 文件 | `docs/reports/data-gate-report.md`（来源分级：合成 / 公开文档，逐条标注 + 基准与跨字段一致性校验） |
-| 命令 | `python -m decision_poc.evidence_check` → 108/108（指纹 `a8c0453683983b9d`） |
+| 命令 | `python -m decision_poc.evidence_check` → 108/108（指纹 `b53ba9abe0d1fbe9`） |
 | 数据 | `samples/assets/urban/`（16 资产；`resource_inventory.csv` 含 40 分钟调拨备注） |
 | 文件 | `docs/competition/related-work-positioning.md` §1（外部同类研究是纯仿真，我们是真机跑通） |
 | 现场演示点 | 公网首页「推理链路与证据」区块每条 claim 下的引用行；再打开 `data-gate-report.md` 的来源分级表 |
@@ -311,8 +313,8 @@
 
 | 项 | 写法 | 复算 |
 | --- | --- | --- |
-| 测试 | **831** 全绿（若 `evidence_check` 输出不同，以输出为准，见 [PPT 骨架](ppt-outline-10p.md) §0） | `uv run --locked pytest -q` |
-| 对外自检 | **108/108**，指纹 `a8c0453683983b9d` | `python -m decision_poc.evidence_check` |
+| 测试 | **834** 全绿（若 `evidence_check` 输出不同，以输出为准，见 [PPT 骨架](ppt-outline-10p.md) §0） | `uv run --locked pytest -q` |
+| 对外自检 | **108/108**，指纹 `b53ba9abe0d1fbe9` | `python -m decision_poc.evidence_check` |
 | 评测用例 | **22/22** | `python -m decision_poc.urban_eval` |
 | 引用完整率 | **100%** | `evidence_check` |
 | 进化偏差 | 训练 **0.2264 → 0.0000**、留出 **0.2182 → 0.0000**（A/B 全序列固定臂 **0.2237**，另一口径） | `python -m decision_poc.policy_evolution`、`scripts/evolution_ab.py` |
@@ -320,14 +322,14 @@
 | 资源缺口 | **2 台**（口径 v1，含 80% 折算，v2 将重算） | 六跳输出跳 5 |
 | MCP 工具 | **13** 个 | `python -m decision_poc.mcp_sse --port 8000` |
 | SKILL | **2** 个（`skill_id=2/3`） | `samples/nexent/live/skills.json` |
-| 平台真机 | 六跳 **8/8** 一致，`conversation_id=78` | `python -m decision_poc.nexent_urban` |
+| 平台真机 | 六跳 **8/8** 一致，`conversation_id=120` | `python -m decision_poc.nexent_urban` |
 | 公网 Demo | 已上线（`/api/llm-decision` `t=0` 命中 `opt-3`，约 4.1 s） | 完整链接含 `?sharecode=K4MXY6WYTS` |
 
 ## 附 C：三句收尾（评委说"时间到"时用）
 
 1. "**结论可追、冲突不藏、改坏能退**——这是我们这一版做到的三件事。"
 2. "**数据是合成的、评审是角色扮演、真实用户还没测**——这三条我主动说，不藏在附录里。"
-3. "四条命令，谁都能当场复现：831 测试、108 项自检、22 个用例、平台 8/8。"
+3. "四条命令，谁都能当场复现：834 测试、108 项自检、22 个用例、平台 8/8。"
 
 ## 附 D：与其它材料的关系
 

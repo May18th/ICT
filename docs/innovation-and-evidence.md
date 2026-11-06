@@ -197,7 +197,7 @@ P9.1 再把它从"一次演示"变成"持续机制"，三个机制直击评委�
    指标卡、进化前后表、记忆命中、评审修正、版本标签、真实事件分配对比；页脚固定印三条表述边界，
    评委可自己点开核对，不依赖讲者口述。
 8. Nexent 真机：平台对话选 `urban_deduction_agent` 问 `WO-20261029-007`，回答为六跳 JSON；
-   再跑 `python -m decision_poc.nexent_urban` 输出 **8/8 一致**（conversation_id=78）；
+   再跑 `python -m decision_poc.nexent_urban` 输出 **8/8 一致**（conversation_id=120）；
    指出 `samples/nexent/live/mcp_tool_log.jsonl` 中 `event_deduce` 与它的协议修复重试
    是平台调用的——证明结论不是本地脚本自演。
 
@@ -221,7 +221,7 @@ P9.1 追加证据：
 | 记忆持久化 | `samples/eval/decision_memory.json` 跨进程可召回；`--reuse-memory` 立即 warm start |
 | 确定性 | 两次 `run_showcase()` 输出逐位一致 |
 | 对外数字自检 | `python -m decision_poc.evidence_check` → 108/108 项一致；改动任一数字即失败（退出码 1） |
-| Nexent 真机 | 平台 Agent 调 14 个 MCP 工具，六跳结论与离线 **8/8 一致**（conversation_id=78）；2 次工具调用日志快照哈希一致 |
+| Nexent 真机 | 平台 Agent 调 14 个 MCP 工具，六跳结论与离线 **8/8 一致**（conversation_id=120）；1 次工具调用日志快照哈希一致 |
 
 - 训练/留出同向下降 → 不是对评测集过拟合；
 - 关键片区未满足降到 6/4 台 = ground truth 自身也解决不了的下限（资源确实不够，必须上报增援）；

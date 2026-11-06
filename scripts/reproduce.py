@@ -5,7 +5,7 @@
 
 用法：
 
-    uv run --locked python scripts/reproduce.py              # 全量（含 831 项测试，约 3-6 分钟）
+    uv run --locked python scripts/reproduce.py              # 全量（含 834 项测试，约 3-6 分钟）
     uv run --locked python scripts/reproduce.py --fast       # 跳过 pytest，约 30 秒
     uv run --locked python scripts/reproduce.py --list       # 只列步骤
     uv run --locked python scripts/reproduce.py --keep-going # 出错也继续跑完，最后统一汇报
@@ -170,7 +170,7 @@ def build_steps(*, include_slow: bool) -> list[Step]:
     )
     steps.append(
         Step(
-            "MCP 13 工具契约",
+            "MCP 14 工具契约",
             [py, "-m", "decision_poc.mcp_server", "--list-tools"],
             expect=[r"semantic_query", r"provenance_verify", r"scene_render", r"allocation_plan"],
         )

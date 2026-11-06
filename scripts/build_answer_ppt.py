@@ -151,7 +151,7 @@ _bullets(s, Inches(0.9), Inches(3.95), Inches(11.2), Inches(2.2), [
     "每条结论带 asset_id#locator，可回到原文行号",
     "冲突不许被「综合判断」抹平",
     "反馈过门禁才改策略，改坏可回滚",
-    "平台真机 8/8 · 831 测试 · 108 项自检",
+    "平台真机 8/8 · 834 测试 · 108 项自检",
 ], size=17, gap=8)
 _text(s, Inches(0.9), Inches(6.72), Inches(11.6), Inches(0.3),
       "背景为离线渲染画面，非实时引擎", size=11, color=MUTED, font=MONO)
@@ -258,7 +258,7 @@ _rect(s, 0, 0, W, H, BG)
 _header(s, "P6 · Nexent 平台真机（3:15–4:05）", "不是本地脚本装智能体，是平台上真调工具")
 _bullets(s, Inches(0.62), Inches(2.0), Inches(5.6), Inches(4.3), [
     "MCP 服务 urban-twin-mcp 以 SSE 注册进平台，14 个工具",
-    "Agent urban_deduction_agent（openPangu-2.0-Pro）已发布",
+    "Agent urban_deduction_agent（DeepSeek-Chat）已发布 v19",
     "真机对话六跳结论与离线推演 8/8 一致，快照哈希一致",
     "平台侧调用日志可查：event_deduce 实际调用",
     "2 个 SKILL.md 已上传平台技能仓库（skill_id=2/3）",
@@ -368,7 +368,7 @@ _bullets(s, Inches(0.62), Inches(2.0), Inches(7.2), Inches(4.5), [
     "边界：数据合成；专家反馈是角色扮演；真实用户评分样本 0；UE 未实机验收",
     "定量层未接管六跳缺口口径（仍有 80% 折算，即 v1 口径）",
     "可视化口径：3D 是「设计中有 + Blender 侧静帧/短片」，不是实时引擎",
-    "可复现四条命令：pytest(831) / evidence_check(108/108) / urban_eval(22/22) / nexent_urban(8/8)",
+    "可复现四条命令：pytest(834) / evidence_check(108/108) / urban_eval(22/22) / nexent_urban(8/8)",
     "后续：第二场真实公开事件 → 真实用户评分 3–5 人 → 协同层接 MCP/平台（设计中）",
 ], size=14, gap=11)
 _fit_image(s, ROOT / "docs/reports/captures/S33-binding-v2.png",

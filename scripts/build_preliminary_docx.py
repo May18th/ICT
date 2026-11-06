@@ -250,7 +250,7 @@ def build() -> Path:
             ],
             [
                 "⑤ 基于 Nexent 可运行",
-                "Nexent v2.7.0 真机：注册 13 工具、发布 urban_deduction_agent（v10）、一次对话 conversation_id=78，六跳结论与离线 8/8 一致",
+                "Nexent v2.7.0 真机：注册 14 工具、发布 urban_deduction_agent（v19，DeepSeek-Chat）、一次对话 conversation_id=120，六跳结论与离线 8/8 一致",
                 "samples/nexent/live/、docs/reports/nexent-live-integration-report.md",
             ],
         ],
@@ -347,8 +347,8 @@ def build() -> Path:
         doc,
         ["指标", "结果", "核对方式"],
         [
-            ["单元测试", "831 项通过", "uv run --locked pytest -q"],
-            ["对外数字自检", "108/108 项一致（期望指纹 a8c0453683983b9d）", "python -m decision_poc.evidence_check"],
+            ["单元测试", "834 项通过", "uv run --locked pytest -q"],
+            ["对外数字自检", "108/108 项一致（期望指纹 b53ba9abe0d1fbe9）", "python -m decision_poc.evidence_check"],
             ["P8 事件评测", "22/22 通过（改进前基线 17/22）", "python -m decision_poc.urban_eval"],
             ["六跳完整率 / 引用完整率 / 检索命中率", "100% / 100% / 100%", "docs/reports/p8-evaluation-report.md"],
             ["数据资产解析", "19/19，未识别列 0", "python -m decision_poc.health"],
@@ -358,7 +358,7 @@ def build() -> Path:
             ["人工评审第二信号", "评审偏差 0.1171→0.0000，违反评审的候选全部被拒", "同上"],
             ["分层记忆 warm start", "第二会话起点偏差 0.0000，轮次 3→1", "同上"],
             ["策略版本", "flood-response-v1.0 → v1.2，可回滚；A-03 4→5 台 / B-01 2→1 台", "同上"],
-            ["Nexent 真机", "13 工具 / Agent v10 / conversation_id=78 / 六跳 8/8 一致 / 2 次工具调用", "docs/reports/nexent-live-integration-report.md"],
+            ["Nexent 真机", "14 工具 / Agent v19（DeepSeek-Chat）/ conversation_id=120 / 六跳 8/8 一致 / 1 次工具调用", "docs/reports/nexent-live-integration-report.md"],
             ["P10 可视化契约", "RenderJob snap-7f476f6c5880ee60 → 引擎演出 → ack（engine=blender-eevee），delivery=acked", "python -c \"from decision_poc.visualize import delivery_state; print(delivery_state('snap-7f476f6c5880ee60'))\""],
         ],
         widths=[4.4, 7.4, 5.2],

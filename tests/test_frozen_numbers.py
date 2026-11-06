@@ -69,6 +69,9 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("triples", re.compile(r"三元组\s*(\d+)\s*条")),
     ("triples", re.compile(r"三元组\s*/\s*谓词种类\s*\|\s*(\d+)\s*条")),
     ("tools", re.compile(r"(\d+)\s*个工具")),
+    # 「13 工具」这种不带宽度的写法漏了两轮（13→14 时没人发现），单独挂一条：
+    # `(\d+)\s*个工具` 要求有「个」，而材料里常写「14 工具注册」。
+    ("tools", re.compile(r"(\d+)\s*工具")),
     ("selfcheck", re.compile(r"(\d+)/(\d+)\s*项一致")),
     ("selfcheck", re.compile(r"(\d+)\s*项自检")),
     ("selfcheck", re.compile(r"自检\s*(\d+)\s*项")),
@@ -84,6 +87,21 @@ REAL_PUBLIC_PLAN_ASSETS = 2
 #: 次数不是装饰：同一文件里同值若出现两次而只登记一次，说明有一处没解释，必须红。
 ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
     ("tools", "README.md", 2): (1, "「Agent 只挂 2 个工具」是绑定数，不是工具总数"),
+    (
+        "tools",
+        "docs/competition/winning-gap-audit.md",
+        2,
+    ): (1, "「2 工具主 Agent」是主 Agent 的挂载数，不是工具总数"),
+    (
+        "tools",
+        "docs/competition/winning-gap-audit.md",
+        6,
+    ): (1, "「6 工具协同 Agent」是协同 Agent 的挂载数，不是工具总数"),
+    (
+        "tools",
+        "docs/competition/video-storyboard-v0.1.md",
+        2,
+    ): (1, "旧版分镜里「（2 工具）」同样指主 Agent 挂载数"),
     ("selfcheck", "README.md", 8): (2, "两处「8/8 项一致」都是平台真机一致性，不是自检项数"),
     (
         "selfcheck",
@@ -211,3 +229,85 @@ def test_allowlist_entries_are_still_needed() -> None:
     seen = {(family, rel, value) for rel, family, value, _ in _scan()[0]}
     stale = [key for key in ALLOWED_NON_TOTAL if key not in seen]
     assert not stale, f"allowlist 已失效，请删除这些条目：{stale}"
+
+
+# ---------------------------------------------------------------------------
+# 平台运行态：Agent 版本与模型名
+#
+# 这两项不在 PATTERNS 的"计数"体系里，却比计数更容易骗人：材料写 v10 + openPangu，
+# 平台上跑的是 v19 + DeepSeek-Chat，评委现场一对就穿。权威源取真机抓下来的
+# `samples/nexent/live/agents.json`（capture_evidence.py 的产物，不是手写）。
+# ---------------------------------------------------------------------------
+
+LIVE_AGENTS_PATH = ROOT / "samples" / "nexent" / "live" / "agents.json"
+
+#: 「发布 vN」「重发布 v19 / v7」里的版本号。
+VERSION_CLAIM = re.compile(r"发布\s*\**v(\d+)\**")
+
+#: 已停服的旧平台模型。只允许出现在带原因的句子里（停服/欠费/已于/当时/历史）。
+RETIRED_MODELS = ("openPangu-2.0-Pro",)
+RETIRED_MARKERS = ("停服", "欠费", "已于", "当时", "历史", "原绑定")
+
+#: 协同 Agent 自己也有版本号，行内提到它时跳过主 Agent 版本断言。
+COLLAB_MARKERS = ("协同", "collab_agent")
+
+
+@cache
+def _live_agents() -> dict[str, dict[str, object]]:
+    payload = json.loads(LIVE_AGENTS_PATH.read_text(encoding="utf-8"))
+    return {item["name"]: item for item in payload["data"]}
+
+
+def _scope_lines():
+    for rel in SCOPE:
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        for lineno, line in enumerate(text.splitlines(), 1):
+            yield rel, lineno, line
+
+
+def test_agent_version_claims_match_platform() -> None:
+    """材料里的「发布 vN」必须等于平台上主 Agent 的 current_version_no。"""
+
+    expected = int(_live_agents()["urban_deduction_agent"]["current_version_no"])
+    problems = []
+    for rel, lineno, line in _scope_lines():
+        if any(marker in line for marker in COLLAB_MARKERS):
+            continue
+        for match in VERSION_CLAIM.finditer(line):
+            claimed = int(match.group(1))
+            if claimed != expected:
+                problems.append(
+                    f"{rel}:{lineno} 期望 v{expected}，实际 v{claimed}：{line.strip()[:90]}"
+                )
+    assert not problems, (
+        "对外材料里的 Agent 版本与平台真机记录不一致（权威源 samples/nexent/live/agents.json）：\n"
+        + "\n".join(problems)
+    )
+
+
+def test_retired_model_only_appears_with_reason() -> None:
+    """停服的旧模型名只能连原因一起出现，不能当成"当前用什么"来写。"""
+
+    problems = []
+    for rel, lineno, line in _scope_lines():
+        if not any(model in line for model in RETIRED_MODELS):
+            continue
+        if not any(marker in line for marker in RETIRED_MARKERS):
+            problems.append(f"{rel}:{lineno} 出现已停服模型但没写原因：{line.strip()[:90]}")
+    assert not problems, (
+        "这些位置把已停服的 openPangu 当成当前口径在写，补上「已于 2026-11-06 欠费停服」之类的说明：\n"
+        + "\n".join(problems)
+    )
+
+
+def test_current_platform_model_is_what_materials_say() -> None:
+    """平台当前模型以 agents.json 为准；材料里至少要有一次写对，避免只靠历史叙述过关。"""
+
+    expected = str(_live_agents()["urban_deduction_agent"]["model_name"])
+    hits = [
+        f"{rel}:{lineno}"
+        for rel, lineno, line in _scope_lines()
+        if expected in line and "本地" not in line
+    ]
+    assert hits, f"对外材料没有一处说明当前平台模型是 {expected}"
+
