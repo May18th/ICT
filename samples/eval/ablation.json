@@ -1,6 +1,6 @@
 {
   "schema_version": "p11-ablation-2",
-  "dataset_snapshot": "2085018615b3a69bb60720b7e82a3c6ce544b7ff57a162affcdf5b9d38db76a5",
+  "dataset_snapshot": "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891",
   "stats_mode": "leave-one-out",
   "pairwise_mode": "exact-sign-flip",
   "configs": [
@@ -1538,7 +1538,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 4,
+      "actions": 5,
       "status": "partial"
     },
     {
@@ -1633,7 +1633,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 4,
+      "actions": 5,
       "status": "partial"
     },
     {
@@ -1861,7 +1861,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 4,
+      "actions": 5,
       "status": "partial"
     },
     {
@@ -1956,7 +1956,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 4,
+      "actions": 5,
       "status": "partial"
     },
     {
@@ -2051,7 +2051,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 4,
+      "actions": 5,
       "status": "partial"
     },
     {
@@ -2279,7 +2279,7 @@
       "citation_completeness": 0.0,
       "auditable": false,
       "publishable": false,
-      "actions": 4,
+      "actions": 5,
       "status": "partial"
     },
     {
@@ -2374,7 +2374,7 @@
       "citation_completeness": 1.0,
       "auditable": true,
       "publishable": false,
-      "actions": 4,
+      "actions": 5,
       "status": "partial"
     },
     {
@@ -2469,7 +2469,7 @@
       "citation_completeness": 1.0,
       "auditable": true,
       "publishable": false,
-      "actions": 4,
+      "actions": 5,
       "status": "partial"
     },
     {
@@ -2697,7 +2697,7 @@
       "citation_completeness": 1.0,
       "auditable": true,
       "publishable": false,
-      "actions": 4,
+      "actions": 5,
       "status": "partial"
     }
   ]

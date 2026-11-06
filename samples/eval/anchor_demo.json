@@ -1,12 +1,12 @@
 {
   "action_hash": "717fd72924e0ff25",
   "actions": 10,
-  "anchor_hash": "6bc71fd6585d9716",
+  "anchor_hash": "e737668a000aedd5",
   "anchor_id": "AN-0001-2f06efe1",
   "claims": 15,
   "decision_id": "DEC-WO-20261029-007-20261029T0940",
-  "evidence_hash": "29fccdfb08cd5d1a",
-  "observation_hash": "b42d3d219705f46c",
+  "evidence_hash": "e90494ab4e3972e9",
+  "observation_hash": "1f52f371660cd796",
   "offchain_ok": true,
   "tamper_detected": true,
   "tamper_reasons": [
