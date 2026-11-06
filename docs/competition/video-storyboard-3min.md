@@ -145,15 +145,15 @@
 - **屏幕证据**：`docs/reports/captures/nexent/agents.png`（Agent 在平台里）、`docs/reports/captures/nexent/mcp-space.png`（连通性校验成功 + 14 个工具）、`docs/reports/captures/nexent/skill-space.png`（2 个 Skill 在平台技能仓库）；`conversation_id=120` 见 `samples/nexent/live/conversation_120.json`；`python -m decision_poc.nexent_urban` 可本机复跑（需 Docker 平台在线）。
 - **失败兜底**：平台没起 → **明说**「这是之前那台机器上的平台录屏/截图，不是现场跑」，然后放截图；这句必须说出来，比假装现跑安全得多。
 
-#### 镜 11 · 2:10–2:20 · 漂移如实说明（本段的高光，不要藏）
+#### 镜 11 · 2:10–2:20 · 先错后对（本段的高光，不要藏）
 
-- **画面**：`samples/nexent/live/llm_decision_platform.json` 关键几行放大：`selected_option_id: "opt-1"`、`selected_match: false`、`expected_option_id: "opt-3"`；再并一张「三次调用」手写对照条（见 `[待核实]` 第 2 条，缺另两次截图就先只用文字条）。
-- **旁白**（13 + 12 + 8 = 33 字）：
-  > 但跑三次，答案并不都一样。
-  > 有一次空证据，解析失败。
-  > 我们照实放出来。
-- **屏幕证据**：`samples/nexent/live/llm_decision_platform.json`（真实记录：选 `opt-1`、参照 `opt-3`、`selected_match=false`）；页面卡片上的平台真机行由 `/api/platform-evidence` 只读该文件渲染。
-- **失败兜底**：另两次运行的原始记录**没有落盘**（`[待核实]`）→ 旁白只讲"跑三次不一致"这一个事实 + 展示手上这份记录，**不列具体选项号**；宁可少讲，不可补齐。
+- **画面**：左右分栏。左 = 修复前记录（`git show e351027~1:samples/nexent/live/llm_decision_platform.json`：`selected_option_id: "opt-1"`、`selected_match: false`、`expected_option_id: "opt-3"`），标注"证据没进请求"；右 = 修复后入仓记录（`samples/nexent/live/llm_decision_platform.json`：`opt-3`、`selected_match: true`、`evidence_cited: 6`），标注"补齐证据原文与职责边界"。
+- **旁白**（11 + 13 + 12 = 36 字）：
+  > 平台先跑三次，全选错。
+  > 把证据补进请求，三次全对。
+  > 说明的是服从，不是聪明。
+- **屏幕证据**：`samples/nexent/live/llm_decision_platform.json` + `run1/2/3`（4 条全部 `selected_match=true`）；修复前的 `opt-1` / `selected_match=false` 由 git 历史 `e351027~1` 与真机报告保存；页面卡片上的平台真机行由 `/api/platform-evidence` 只读该文件渲染。
+- **失败兜底**：若现场打开的公网页面仍显示 `opt-1`（发布包未重发），就明说"发布包还没重发，仓库数据已同步"，不要含糊；重发后即显示 `opt-3` 与"一致"。
 
 ### E 段｜进化与回滚（2:20–2:45）
 
@@ -240,7 +240,7 @@
 | --- | --- | --- | --- |
 | 公网页面操作录屏（推演 / LLM / evolution 三页，1080p，各 20–30s） | 05、09、12、13 | 见第 4 节，一条 OBS 录三段，合计 ≤2 分钟 | 用静态截图 + 2.5D 推拉，旁白说明「画面为录屏截帧」 |
 | Nexent 平台真机对话录屏（Agent 配置页 + 对话窗口） | 10、11 | 平台在跑时录 40 秒；平台不在就用已入仓截图 | 明说「这是平台录屏/截图，不是现场跑」 |
-| ~~三次调用漂移的另两次原始记录~~ **已补齐**：`llm_decision_platform_run1/2/3.json`（2026-11-05 平台实跑，均选 `opt-2`） | 11 | 已完成，无需再录 | 直接展示 4 条原始记录（1×opt-1 + 3×opt-2，均未命中 opt-3） |
+| ~~三次调用漂移的另两次原始记录~~ **已补齐并已修复**：`run1/2/3` 现为 2026-11-06 复测记录（全部选 `opt-3`、`selected_match=true`）；修复前的 `opt-1` / `opt-2` 与 `selected_match=false` 保留在 git 历史 `e351027~1` 与真机报告 | 11 | 已完成，无需再录 | 左右分栏：修复前（git 历史）vs 修复后（仓库 4 条） |
 | **真实用户评分**（3–5 人，进化前后各一次） | 备选（不进 3 分钟主线） | `/evolution` 页「真实用户评分」表单，填完即汇总；口径是个人意见、不参与门禁 | 3 分钟视频**不讲评分**，被问答「评分通道就绪、样本待组织」 |
 | 人工协同 vs 智能体辅助的实测计时 | 备选（不进主线） | `docs/competition/value-evidence.md` §4 的 15 分钟流程，3 人各一次 | 不宣称节省百分比，只讲可复算的 3040 m / 5.1 分钟与 40 分钟调拨锚点 |
 | 配音 + 字幕（`.srt`） | 全部 | 本文件第 1 节即配音稿；字幕一句话一条 | 用 TTS 先出粗剪，再用真人替换 |
@@ -277,7 +277,7 @@
 | 1:15–1:30 | 终端·冲突与缺口 | 接上一条输出，下滚到「冲突:」与「资源缺口:」→ 鼠标停在「缺口 2 台」上别动 5 秒（后期打圈注） |
 | 1:30–1:45 | 终端·CF1 | ① 粘贴回车：`uv run --locked python -m decision_poc.counterfactual --case CF1` → ② 滚到「通行代价」段 → ③ 停在「基线路径 / 封路后路径」两行 |
 | 1:45–2:00 | 公网·LLM 决策 | ① 回 TAB 1 顶部 → ② 点「LLM 决策（DeepSeek）」→ ③ **保留** 2 秒「LLM 决策中…」→ ④ 卡片出现后停 5 秒（确保 `opt-3` 与「与确定性参照一致」入画） |
-| 2:00–2:20 | 平台证据 | ① 全屏打开 `docs/reports/captures/nexent/agents.png`（左右分屏）→ ② 右屏打开 `samples/nexent/live/conversation_78.json`（VS Code，滚到第 4 行 `conversation_id`）→ ③ 切到 `llm_decision_platform.json`，停在 `selected_option_id: "opt-1"` 与 `selected_match: false` 两行 |
+| 2:00–2:20 | 平台证据 | ① 全屏打开 `docs/reports/captures/nexent/agents.png`（左右分屏）→ ② 右屏打开 `samples/nexent/live/conversation_120.json`（VS Code，滚到第 4 行 `conversation_id`）→ ③ 左右分屏对照 `llm_decision_platform.json`：左为 git 历史 `e351027~1` 的 `selected_option_id: "opt-1"` / `selected_match: false`，右为当前文件的 `opt-3` / `selected_match: true` |
 | 2:20–2:33 | 本机·进化页 | ① 开 TAB 2 `/evolution` → ② 等四张指标卡加载完 → ③ 停 6 秒不下滚（只给训练/留出两张卡） |
 | 2:33–2:45 | 本机·版本标签 + CLI 回滚 | ① 同一页下滚到「策略版本标签（可审计、可回滚）」→ ② 切终端跑 `uv run --locked python -m decision_poc.policy_evolution` → ③ 滚到「回滚验证」段停 5 秒 |
 | 2:45–3:00 | 不录（后期排版 + 二维码） | — |
@@ -293,7 +293,7 @@
 ## 5. [待核实] 清单（这些不进配音，只进备注）
 
 1. **测试数口径冲突**：本任务简报写「测试 745 项」，但仓库冻结口径是 **834 项**（`samples/eval/evidence_expectations.json` 的 `test_baseline.collected=834`、`docs_declared=[834]`，README 与 5 份文档一致）。→ 3 分钟视频里**不出现测试数**；若答辩必须说，先跑 `python -m decision_poc.evidence_check` 以输出为准。
-2. **真机漂移记录**：已入仓 4 条——`llm_decision_platform.json`（selected=opt-1）+ `llm_decision_platform_run1/2/3.json`（均 selected=opt-2），全部 `selected_match=false`、`schema_valid=true`（2026-11-05 平台实跑补入）。**没有"空证据解析失败"那一条**，镜头 11 只讲"多次不一致、出现 opt-1/opt-2"，不编造解析失败。
+2. **真机记录**：仓库当前 4 条——`llm_decision_platform.json` + `run1/2/3`，全部 `selected_option_id=opt-3`、`selected_match=true`、`schema_valid=true`（2026-11-06 复测）；修复前为 `opt-1` / `opt-2` 且 `selected_match=false`（git `e351027~1` 与真机报告「2026-11-06 追加」）。镜头 11 只讲"先错后对 + 3/3 是服从性"，不编造"空证据解析失败"。
 3. **`VD02-A` 的静帧张数**：`video-clips/README.md` 与简报都是 **4 张 / 10.8s**，但 `winning-gap-audit.md` §8.2 写「A 版从 4 张加为 5 张（含 S5 街面视角）」。→ 剪辑前用播放器确认实际张数与时长，以文件为准。
 4. **`action_count` 与「处置顺序条数」**：冻结期望 `p6_deduction.action_count=10`，`delivery-status.md` 已统一为「处置顺序 10 条」（2026-11-05 修正）。→ 视频可按 10 条讲，或只报"有顺序、有责任部门"。
 5. **资源缺口口径**：`answer-mainline.md` 已统一为「需 8 台 / 可用 6 台 / 缺口 2 台」（2026-11-05 修正），与冻结值 `resource_gap=2`、`urban-scenario-ground-truth.md`（需求 8 = A-03 6 + B-01 2）一致。→ 视频按 **8 / 6 / 2** 讲。
