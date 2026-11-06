@@ -44,7 +44,11 @@ def _pump_station_ids() -> set[str]:
 
 
 def test_curve_is_linear_with_declared_plan_area() -> None:
-    """等截面矩形前池假设下，容积必须严格等于面积×水位。"""
+    """等截面矩形前池假设下，容积必须严格等于面积×水位。
+
+    线性只在 `value_basis=assumption` 时强制：等截面是**假设**的一部分，不是数据契约。
+    实测曲线若有斜壁/台阶会非线性，那时应换数据、不动模型，不能因为这条测试红了就删测试。
+    """
 
     rows = _curve_rows()
     assert len(rows) >= 3
@@ -53,19 +57,38 @@ def test_curve_is_linear_with_declared_plan_area() -> None:
     assert stages == sorted(stages) and len(set(stages)) == len(stages)
     assert storages == sorted(storages) and len(set(storages)) == len(storages)
     for row in rows:
-        expected = float(row["plan_area_m2"]) * float(row["stage_m"])
-        assert float(row["storage_m3"]) == pytest.approx(expected, abs=1e-6)
+        area = float(row["plan_area_m2"])
+        storage = float(row["storage_m3"])
+        assert area > 0.0
+        if row["value_basis"] == "assumption":
+            assert storage == pytest.approx(area * float(row["stage_m"]), abs=1e-6)
+        else:
+            assert storage >= 0.0
     warning = float(rows[0]["warning_stage_m"])
     assert 0.0 < warning <= stages[-1]
+    if rows[0]["value_basis"] == "assumption":
+        # 假设值下警戒必须留出缓冲；等于池顶就等于没有警戒
+        assert warning < stages[-1]
 
 
 def test_every_curve_row_is_labeled_as_assumption() -> None:
-    """假设值不得冒充实测：每行都要 assumption + 可追的"待补"来源。"""
+    """假设值不得冒充实测：来源级别与出处必须自洽，且不允许同一曲线混用真/假设。
+
+    这条守卫两个方向都要拦：假设行必须写「待补」，实测行必须给真实出处且不得再写「待补」。
+    这样补齐图纸后换成 `real` + 图纸号可以直接通过，不需要为了变绿而改测试。
+    """
 
     rows = _curve_rows()
+    bases = {row["value_basis"] for row in rows}
+    assert len(bases) == 1, f"同一库容曲线不允许混用来源级别：{sorted(bases)}"
+    basis = bases.pop()
+    assert basis in {"assumption", "derived", "real"}
     for row in rows:
-        assert row["value_basis"] == "assumption"
-        assert row["source_ref"].strip().startswith("待补")
+        ref = row["source_ref"].strip()
+        if basis == "assumption":
+            assert ref.startswith("待补"), f"假设行必须写「待补：…」，实际是 {ref!r}"
+        else:
+            assert ref and not ref.startswith("待补"), "实测/推算来源必须给真实出处"
     assert rows[0]["note"].strip(), "首个曲线点必须带假设依据指针"
 
 
