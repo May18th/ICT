@@ -131,7 +131,7 @@
 > **当前口径（2026-11-06）：814 项测试通过、对外数字自检 106/106、期望指纹 `886a4c07762cdf96`**，
 > 以 `pytest -q` 与 `python -m decision_poc.evidence_check` 的实跑输出为准。
 
-实测 `python -m pytest -q`：**814 项通过**（2026-11-06 复核实测，含前池数据守卫 4 项与库容来源标注 5 项新增用例）。
+实测 `python -m pytest -q`：**814 项通过**（2026-11-06 复核实测，含前池数据守卫 4 项与库容来源标注 7 项新增用例）。
 原先 `README.md` / `competition-gap-audit.md` 写 498 项、`preliminary-submission-draft.md` 写 483 项，
 三处已统一为 **516**；期望指纹也重新生成（旧文档里 `a93666bf` / `f6f67337` 两个指纹本身已经互相不一致，一并修掉）。
 
