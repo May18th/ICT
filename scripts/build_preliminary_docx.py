@@ -245,7 +245,7 @@ def build() -> Path:
             ],
             [
                 "④ 跨文档多跳推理与可溯源",
-                "六跳推演（规则 28 条全部带原文行号并在加载时校验）+ append-only 哈希链账本；引用完整率 100%，篡改可定位",
+                "六跳推演（39 条规则全部带原文行号并在加载时校验）+ append-only 哈希链账本；引用完整率 100%，篡改可定位",
                 "src/decision_poc/deduction.py、provenance.py",
             ],
             [
@@ -353,7 +353,7 @@ def build() -> Path:
             ["六跳完整率 / 引用完整率 / 检索命中率", "100% / 100% / 100%", "docs/reports/p8-evaluation-report.md"],
             ["数据资产解析", "19/19，未识别列 0", "python -m decision_poc.health"],
             ["本体三元组 / 谓词", "123 三元组 / 8 谓词（种子 10 类型 / 11 谓词）", "samples/assets/ontology_candidates.json"],
-            ["推演规则", "28 条，全部带原文行号并在加载时校验", "samples/rules/urban_deduction_rules.json"],
+            ["推演规则", "39 条规则，全部带原文行号并在加载时校验", "samples/rules/urban_deduction_rules.json"],
             ["P9 进化（训练 / 留出）", "偏差 0.2264→0.0000 / 0.2182→0.0000", "docs/reports/p9-policy-evolution-report.md"],
             ["人工评审第二信号", "评审偏差 0.1171→0.0000，违反评审的候选全部被拒", "同上"],
             ["分层记忆 warm start", "第二会话起点偏差 0.0000，轮次 3→1", "同上"],
