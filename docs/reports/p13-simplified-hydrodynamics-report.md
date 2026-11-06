@@ -96,6 +96,8 @@
   `scripts/build_answer_ppt.py`、`scripts/build_preliminary_docx.py` 文案）；
 - `docs/reports/evidence-check-report.md` 与 `samples/eval/evidence_check.json` 由命令重生成（勿手改）。
 
+> 2026-11-06 追加 4 项前池数据守卫测试（`tests/test_hydro_forebay_data.py`）后，当前测试口径为 **807 项**，期望指纹为 `6484b6add7571a85`（以 `python -m decision_poc.evidence_check` 实跑为准）；本报告表格与 §7 记录的是 P13 落地当时的 803 口径。
+
 ## 7 验证命令与结果
 
 ```powershell

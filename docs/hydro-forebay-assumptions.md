@@ -22,7 +22,7 @@ P13 的 `level_pool_route` 需要一个"水位 → 容积"关系才能算水位�
 | `warning_stage_m` | 假设的警戒水位（占有效水深 80%） | 2.4 |
 | `value_basis` | 来源级别，取值 `real` / `derived` / `assumption` | `assumption` |
 | `source_ref` | 依据出处；假设值写「待补：…」 | 待补 DF-PS-01 前池竣工图/设计图 |
-| `note` | 人读说明 | 假设链条摘要 |
+| `note` | 人读说明；**只在首个点写依据指针，其余留空**（换假设时只改 1 处） | 第 1 行：假设摘要 + 依据指针 |
 
 曲线为等截面矩形前池，因此 `storage_m3 = plan_area_m2 × stage_m`（严格线性）。**这不是"简化画法"导致的巧合，
 而是假设本身**：前池按矩形、垂直池壁处理；若实测有斜壁或台阶，曲线会非线性，届时只换数据、不动模型。
@@ -101,7 +101,12 @@ print(time_to_level(hydrograph=hydrograph, target_level_m=2.4).computable)  # Fa
 2. 重新生成 `samples/assets/urban/manifest.json`；
 3. 在 `data_gate.py` 增加 `forebay` 类事实并更新 `tests/test_data_gate.py` 的 `FACTS_TOTAL`；
 4. 同步 `evidence_check` 的资产数与指纹，按单一 owner 一次改全；
-5. 补一条"假设值不得当实测引用"的负例测试。
+5. 把 `tests/test_hydro_forebay_data.py` 里"尚未注册"那条守卫**反过来写**（该测试已提前落地，见下）。
+
+**负例守卫已提前落地**：`tests/test_hydro_forebay_data.py`（4 项）现在就能断言
+逐行 `value_basis=assumption`、来源可追（"待补"）、曲线自洽（容积 = 面积×水位）、
+挂靠设施在排水台账内且为泵站，并且该文件**尚未注册为数据集资产**——
+这样即使将来有人把假设值当实测值往材料里写，或者悄悄注册资产，测试会先红。
 
 ## 7 待核实清单（补齐后即可从"假设输入"变成"实测输入"）
 
