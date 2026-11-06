@@ -37,8 +37,12 @@
   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/git_sync.ps1 -Message "<type>(scope): 中文摘要>"
   ```
 
-  脚本行为：无改动直接退出 0（不产生空提交）→ 有改动则 `git add -A` + 提交 → 推送到 `origin`
-  → 打印分支与提交号。失败时退出码 1，**不要强推**，先看错误。
+  脚本行为：无改动直接退出 0（不产生空提交）→ 有改动则**只暂存已跟踪文件**（`git add -u`）+ 提交
+  → 推送到 `origin` → 打印分支与提交号。失败时退出码 1，**不要强推**，先看错误。
+- **禁止 `git add -A` / `git add .`**（2026-11-06 事故来源：演示脚本刚生成的 `variant.csv` 被一起提交）。
+  规则三条：① 临时脚本、变体、演示产物一律写到 `artifacts/`（已忽略），跑完不必删也不入库；
+  ② 新增文件与并发场景一律显式路径 `-PathList "a,b,c"`；③ 提交前 `git status --porcelain` 人工过一眼，
+  untracked 项非 0 就停下来查清是谁的。
 - 提交信息用 `<type>(<scope>): <摘要>`，type 取 `feat|fix|docs|test|chore`；一次提交讲清一件事。
 - 推完在回传里记录：分支名 + `git log -1 --oneline`（远程操作必须可追溯）。
 - 不入库：`.venv/`、`artifacts/`、`codex/`、`.worktrees/`、`pytest-of-*/`、口令与密钥
