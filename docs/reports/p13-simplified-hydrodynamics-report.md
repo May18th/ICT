@@ -66,6 +66,12 @@
 前提是**前池容积表台账里没有**：要么现场量取，要么按明确标注的假设值算并写进 `assumptions`。
 本层不替台账补数，也不能把假设值算出来的时间说成实测结论。
 
+**假设输入已补**：`samples/assets/urban/pump_forebay_curves.csv`（DF-PS-01 前池，`value_basis=assumption`，
+假设链条与前池 10m×10m×3.0m、警戒 2.4 m 的依据）与说明见
+[泵站前池库容曲线（假设值）数据说明](../hydro-forebay-assumptions.md)。
+该文件暂**未注册**进 `URBAN_ASSETS`（注册会使资产数 18→19、触发一次对外数字重算），
+因此本轮"补的是可算输入，不碰对外数字"。
+
 ## 5 本阶段明确没做
 
 | 项 | 原因 |
