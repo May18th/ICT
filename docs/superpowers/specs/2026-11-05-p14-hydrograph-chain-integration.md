@@ -22,7 +22,7 @@ HydrographResult → DeductionEngine → SkillPipeline → collab_run / ReplaySc
 
 - 不实现圣维南非恒定流、2D 浅水、1D/2D 耦合或 SWMM 级率定；
 - 不把成都风格合成片区写成真实成都率定结果；
-- 不新增 MCP 工具，不改变 14 工具对外口径；
+- 不新增 MCP 工具，不改变 15 工具对外口径；
 - 不凭过程线推断泵站汇水面积、故障泵组能力或积水面积，资源口径仍待真实台账输入。
 
 ## 4 验收要求

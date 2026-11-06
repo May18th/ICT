@@ -69,9 +69,9 @@ PAGES: List[Dict[str, Any]] = [
         # 卡片右上角的"连通性校验"按钮：先让平台真的去连一次，截图里才是"连接成功"而不是陈旧状态。
         # 现在「我的MCP」里只剩 urban-twin-mcp 一个（无关的 kg-mcp-server 已清理），点第一个即可。
         "click_selector": 'button[aria-label="连通性校验"]',
-        # 卡片角标现在实时显示 14 个工具（2026-11-05 删掉旧注册、重加 urban-twin-mcp 并重扫工具后刷新）。
-        "expect": ["urban-twin-mcp", "14 个工具", "连接成功"],
-        "purpose": "平台 MCP「我的MCP」：urban-twin-mcp 连通性校验通过，14 个工具可用",
+        # 卡片角标现在实时显示 15 个工具（2026-11-05 删掉旧注册、重加 urban-twin-mcp 并重扫工具后刷新）。
+        "expect": ["urban-twin-mcp", "15 个工具", "连接成功"],
+        "purpose": "平台 MCP「我的MCP」：urban-twin-mcp 连通性校验通过，15 个工具可用",
     },
 ]
 

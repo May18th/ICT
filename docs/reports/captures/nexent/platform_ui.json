@@ -1,6 +1,6 @@
 {
   "schema_version": "platform-ui-capture-1",
-  "captured_at": "2026-11-05T17:52:40+0800",
+  "captured_at": "2026-11-07T00:10:00+0800",
   "web_url": "http://127.0.0.1:3000",
   "pages": [
     {
@@ -38,21 +38,21 @@
       "url": "http://127.0.0.1:3000/zh/agents",
       "title": "AI Agent Platform",
       "screenshot": "docs/reports/captures/nexent/agents.png",
-      "screenshot_bytes": 88682,
-      "screenshot_sha256": "fa2df2f7da405e6d64777e4358152a3a80cb009517eb0cd4ef8af6eaa87b70c6"
+      "screenshot_bytes": 94835,
+      "screenshot_sha256": "5e7dd1e4b41802d8bca2411efd2ca09f0808bff2db4f0d7d274f4acad4296c22"
     },
     {
       "name": "mcp-space",
       "path": "/zh/mcp-space",
-      "purpose": "平台 MCP「我的MCP」：urban-twin-mcp 连通性校验通过，14 个工具可用",
+      "purpose": "平台 MCP「我的MCP」：urban-twin-mcp 连通性校验通过，15 个工具可用",
       "expect": [
         "urban-twin-mcp",
-        "14 个工具",
+        "15 个工具",
         "连接成功"
       ],
       "hit": [
         "urban-twin-mcp",
-        "14 个工具",
+        "15 个工具",
         "连接成功"
       ],
       "missing": [],
@@ -60,8 +60,8 @@
       "url": "http://127.0.0.1:3000/zh/mcp-space",
       "title": "AI Agent Platform",
       "screenshot": "docs/reports/captures/nexent/mcp-space.png",
-      "screenshot_bytes": 77913,
-      "screenshot_sha256": "08fb821ec58bc32a88de2a2bd53f5e4e22613f667fed4f7968ea53bfffd668a4"
+      "screenshot_bytes": 77881,
+      "screenshot_sha256": "b3e1ff569e1c6c291db43127d9d78d36b6f57726d0e6729284279fe24bb230db"
     }
   ],
   "all_expectations_met": true,

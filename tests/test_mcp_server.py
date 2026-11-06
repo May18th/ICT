@@ -68,6 +68,7 @@ def test_tools_list_shape(server: McpServer) -> None:
     assert names == [
         "semantic_query",
         "twin_neighbors",
+        "doc_search",
         "evidence_locate",
         "claim_trace",
         "provenance_verify",
@@ -81,7 +82,8 @@ def test_tools_list_shape(server: McpServer) -> None:
         "asset_lookup",
         "collab_run",
     ]
-    assert len(names) == 14, "P5 的 7 个 + P6 反事实 1 个 + P9 分配 1 个 + P10 可视化 4 个"
+    # decision 10（含 P5 的 7 个 + 反事实 1 + 分配 1 + doc_search 1）+ 可视化 3 + bootstrap 1 + 协同 1
+    assert len(names) == 15, "工具数变化必须同时改 samples/nexent/tools.json 与材料里的「N 个工具」"
     for tool in tools:
         assert tool["description"]
         schema = tool["inputSchema"]
@@ -409,7 +411,7 @@ def test_server_runs_as_subprocess(tmp_path) -> None:
     lines = [json.loads(line) for line in completed.stdout.splitlines() if line.strip()]
     assert [item["id"] for item in lines] == [1, 2, 3]
     assert lines[0]["result"]["serverInfo"]["name"] == SERVER_NAME
-    assert len(lines[1]["result"]["tools"]) == 14
+    assert len(lines[1]["result"]["tools"]) == 15
     payload = json.loads(lines[2]["result"]["content"][0]["text"])
     assert payload["status"] == "ok"
     assert payload["data"]["triple_count"] > 0

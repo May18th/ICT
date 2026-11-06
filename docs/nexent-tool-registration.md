@@ -2,7 +2,7 @@
 
 ## 当前状态：代码清单 14 个，平台已注册 14 个（2026-11-06 实测）
 
-> 2026-11-06 实测平台 `/api/tool/list`：14 个工具全部为 `source=mcp`、`is_available=true`，
+> 2026-11-06 实测平台 `/api/tool/list`：15 个工具全部为 `source=mcp`、`is_available=true`，
 > `tool_id` 41–53 加后注册的 `scene_status=86`（新增工具不会复用旧编号，看到 41–53 就断言"只有 13 个"是错的）。
 > 主 Agent `urban_deduction_agent` 已发布 **v19**（模型 **DeepSeek-Chat**，因 openPangu 于 2026-11-06 欠费停服而切换）；
 > 真机复测 **conversation_id=120，8/8 一致，attempts=1**。
@@ -17,7 +17,7 @@
 
 | 产物 | 状态 | 用途 |
 | --- | --- | --- |
-| `samples/nexent/tools.json` | 已生成 | 14 个工具的 schema、serverInfo、4 个分组。**生成物，勿手改** |
+| `samples/nexent/tools.json` | 已生成 | 15 个工具的 schema、serverInfo、4 个分组。**生成物，勿手改** |
 | `samples/nexent/skills.json` (1.2) | 已重新生成 | 新增 `scene_render` / `scene_compare` / `asset_lookup` 三个独立工具绑定（改的是 `skills.py` 的 `skill_manifest()`，不是手改 JSON） |
 | `tests/test_nexent_tools.py` | 已通过 | 锁住"注册清单与代码同源"，防止走了散 |
 | `docs/nexent-integration-boundary.md` | 既有 | 适配层职责边界，仍然有效 |
@@ -51,7 +51,7 @@ Docker 不可用（见文首）是当下的阻塞，但即使 Docker 恢复，
 Set-Location D:/华为ICT/agent_poc
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.mcp_server --export-tools samples/nexent/tools.json
-# 已写出 samples\nexent\tools.json（14 个工具 / 4 个分组）
+# 已写出 samples\nexent\tools.json（15 个工具 / 4 个分组）
 ```
 
 `tests/test_nexent_tools.py` 会比对 `tools.json` 与 `UrbanToolkit().tools()`，
@@ -110,7 +110,7 @@ $env:PYTHONPATH = "src"
 
 ## 表述边界（答辩时不要越界）
 
-- ✅ 可以说：14 个 MCP 工具已实现并可被任意 MCP 客户端调用；注册清单由代码生成并有一致性测试。
+- ✅ 可以说：15 个 MCP 工具已实现并可被任意 MCP 客户端调用；注册清单由代码生成并有一致性测试。
 - ✅ 可以说：历史证据证明 Nexent v2.7.0 曾以平台工具库 13 个跑通内涝主链路（conversation_id=78，8/8 一致）；
   当前代码实现和导出清单为 14 个，平台重扫结果待 Docker 恢复后确认。
 - ✅ 可以说：2 个 SKILL.md 已上传到本机 Nexent 技能仓库（skill_id=2/3，正文逐位一致，见 `samples/nexent/live/skills.json`）。

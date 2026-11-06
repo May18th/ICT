@@ -1,6 +1,6 @@
 {
   "schema_version": "evidence-check-1",
-  "expectations_digest": "05a89728b9555980528fbdda72a5536f8d826f04932ada9222519578e9107427",
+  "expectations_digest": "45dcd07289954dd6528fbdda72a5536f8d826f04932ada9222519578e9107427",
   "total": 108,
   "passed_count": 108,
   "failed_count": 0,

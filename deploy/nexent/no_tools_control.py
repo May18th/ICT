@@ -50,7 +50,7 @@ def main() -> int:
     payload = {
         "name": CONTROL_NAME,
         "display_name": "对照：无 MCP 工具的城市内涝智能体",
-        "description": "实验对照组。提示词/模型与主 Agent 完全相同，仅解绑 14 个 MCP 工具，用于证明 8/8 来自工具而非模型先验",
+        "description": "实验对照组。提示词/模型与主 Agent 完全相同，仅解绑 15 个 MCP 工具，用于证明 8/8 来自工具而非模型先验",
         "business_description": "不作为业务入口，仅供验收取证",
         "author": "UrbanEvolve",
         "model_ids": MODEL_IDS,

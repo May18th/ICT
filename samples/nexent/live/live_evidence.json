@@ -1,8 +1,15 @@
 {
   "schema_version": "nexent-live-evidence-1",
   "nexent_base_url": "http://localhost:5013",
-  "conversation_id": 120,
+  "conversation_id": 148,
   "agents": [
+    {
+      "name": "urban_control_no_tools",
+      "display_name": "对照：无 MCP 工具的城市内涝智能体",
+      "model_name": "DeepSeek-Chat",
+      "current_version_no": 1,
+      "version_name": "control-no-tools-v1"
+    },
     {
       "name": "urban_llm_decision_agent",
       "display_name": "LLM 决策对照智能体",
@@ -42,7 +49,7 @@
     "path": "samples\\nexent\\live\\mcp_tool_log.jsonl",
     "lines": 1,
     "file_mtime": "2026-11-06T17:20:43",
-    "container_started_at": "2026-11-06T08:22:30.771082027Z",
+    "container_started_at": null,
     "snapshot_hashes": [
       "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891"
     ]

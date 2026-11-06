@@ -90,7 +90,7 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("triples", re.compile(r"三元组\s*/\s*谓词种类\s*\|\s*(\d+)\s*条")),
     ("tools", re.compile(r"(\d+)\s*个工具")),
     # 「13 工具」这种不带宽度的写法漏了两轮（13→14 时没人发现），单独挂一条：
-    # `(\d+)\s*个工具` 要求有「个」，而材料里常写「14 工具注册」。
+    # `(\d+)\s*个工具` 要求有「个」，而材料里常写「15 工具注册」。
     ("tools", re.compile(r"(\d+)\s*工具")),
     ("selfcheck", re.compile(r"(\d+)/(\d+)\s*项一致")),
     ("selfcheck", re.compile(r"(\d+)\s*项自检")),

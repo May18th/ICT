@@ -200,9 +200,9 @@ _header(s, "P3 · 五个考点对位（1:00–1:50）", "五个考点，五张�
 rows = [
     ("① 多模态数据资产认知", "19 资产统一登记（asset_id+sha256+locator+版本+有效期）；解析 19/19、未识别列 0", "强（图像只登记，不做 OCR）"),
     ("② 低资源本体半自动构建", "种子本体→规则抽取→置信度分档→人工确认→版本发布/回滚；改 1 格只产 2 条候选", "强"),
-    ("③ MCP / Skills 编排", "14 个 MCP 工具 + 5 Skill 编排 + 2 个已上传 SKILL.md；平台 Agent 实调工具", "强"),
+    ("③ MCP / Skills 编排", "15 个 MCP 工具 + 5 Skill 编排 + 2 个已上传 SKILL.md；平台 Agent 实调工具", "强"),
     ("④ 跨文档多跳推理与溯源", "六跳 + 三类冲突 + 反事实重放 + 哈希链账本；引用完整率 100%", "强"),
-    ("⑤ 基于 Nexent 可运行", "真机 14 工具注册、Agent 发布、六跳结论 8/8 一致（单环境单事件）", "强"),
+    ("⑤ 基于 Nexent 可运行", "真机 15 工具注册、Agent 发布、六跳结论 8/8 一致（单环境单事件）", "强"),
 ]
 tbl = s.shapes.add_table(len(rows) + 1, 3, Inches(0.62), Inches(1.95), Inches(12.1), Inches(4.3)).table
 tbl.columns[0].width = Inches(2.7)
@@ -275,7 +275,7 @@ s = prs.slides.add_slide(BLANK)
 _rect(s, 0, 0, W, H, BG)
 _header(s, "P6 · Nexent 平台真机（3:15–4:05）", "不是本地脚本装智能体，是平台上真调工具")
 _bullets(s, Inches(0.62), Inches(2.0), Inches(5.6), Inches(4.3), [
-    "MCP 服务 urban-twin-mcp 以 SSE 注册进平台，14 个工具",
+    "MCP 服务 urban-twin-mcp 以 SSE 注册进平台，15 个工具",
     "Agent urban_deduction_agent（DeepSeek-Chat）已发布 v19",
     "真机对话六跳结论与离线推演 8/8 一致，快照哈希一致",
     "平台侧调用日志可查：event_deduce 实际调用",
@@ -283,7 +283,7 @@ _bullets(s, Inches(0.62), Inches(2.0), Inches(5.6), Inches(4.3), [
 ], size=14, gap=11)
 cap = ROOT / "docs/competition/video-clips"
 shots = [
-    (ROOT / "docs/reports/captures/nexent/mcp-space.png", "MCP：连通性校验成功 + 14 工具"),
+    (ROOT / "docs/reports/captures/nexent/mcp-space.png", "MCP：连通性校验成功 + 15 工具"),
     (ROOT / "docs/reports/captures/nexent/agents.png", "Agent：已发布"),
     (ROOT / "docs/reports/captures/nexent/skill-space.png", "Skill：2 个已上传"),
 ]

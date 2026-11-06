@@ -17,13 +17,13 @@
 
 | 交付物 | 官方要求 | 现状 | 状态 | 证据 / 路径 | 阻塞方 | 下一步验收标准 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 模板 1 作品信息收集表（Word） | 初赛唯一提交物，需按官方版式 | 内容稿已成稿并可重生成（六页：五考点/数据集/关键代码/指标/截图/边界）。**数字已于 2026-11-06 重跑刷新**：880 项 / 108 项自检 / 14 工具 / v19 / conversation_id=120 / 指纹 `05a89728b9555980`；**官方版式未套** | 部分完成（口径已刷新，待套官方模板） | `docs/competition/初赛作品信息收集表-内容稿-v0.1.docx`；`scripts/build_preliminary_docx.py` | 用户侧（官方模板原文未入仓） | 套官方模板后重跑生成器再导出 PDF，逐项对照官方要求打勾；重跑用 `uv run --with python-docx --with pillow python scripts/build_preliminary_docx.py` |
-| 项目 PPT（初赛） | 覆盖背景/价值/创新/数据/代码/指标 | 已有 `初赛答辩-PPT-v0.1.pptx`（10 页，脚本生成）。**数字已于 2026-11-06 重跑刷新**：880 测试 / 108 项自检 / 14 工具 / Agent v19（DeepSeek-Chat） | 已完成（内容与口径均为当前） | `docs/competition/初赛答辩-PPT-v0.1.pptx`；`scripts/build_answer_ppt.py` | — | 套官方模板/改版式后再跑一次生成器即可；重跑用 `uv run --with python-pptx --with pillow python scripts/build_answer_ppt.py`（隔离层，不污染环境） |
+| 模板 1 作品信息收集表（Word） | 初赛唯一提交物，需按官方版式 | 内容稿已成稿并可重生成（六页：五考点/数据集/关键代码/指标/截图/边界）。**数字已于 2026-11-06 重跑刷新**：880 项 / 108 项自检 / 15 工具 / v19 / conversation_id=120 / 指纹 `45dcd07289954dd6`；**官方版式未套** | 部分完成（口径已刷新，待套官方模板） | `docs/competition/初赛作品信息收集表-内容稿-v0.1.docx`；`scripts/build_preliminary_docx.py` | 用户侧（官方模板原文未入仓） | 套官方模板后重跑生成器再导出 PDF，逐项对照官方要求打勾；重跑用 `uv run --with python-docx --with pillow python scripts/build_preliminary_docx.py` |
+| 项目 PPT（初赛） | 覆盖背景/价值/创新/数据/代码/指标 | 已有 `初赛答辩-PPT-v0.1.pptx`（10 页，脚本生成）。**数字已于 2026-11-06 重跑刷新**：880 测试 / 108 项自检 / 15 工具 / Agent v19（DeepSeek-Chat） | 已完成（内容与口径均为当前） | `docs/competition/初赛答辩-PPT-v0.1.pptx`；`scripts/build_answer_ppt.py` | — | 套官方模板/改版式后再跑一次生成器即可；重跑用 `uv run --with python-pptx --with pillow python scripts/build_answer_ppt.py`（隔离层，不污染环境） |
 | 模板 2 答辩 PPT | 决赛 | 无 | 未开始 | — | 我方 | 进决赛后再做，初赛不投入 |
 | 公网 Demo 地址 | 可访问演示地址 | 已发布：`https://urban-twin-demo.app.workbuddy.host/?sharecode=K4MXY6WYTS`（发布包 `agent_poc/deploy-webdemo/`，**是裁剪子集不是逐字节镜像**：`src` 60/64 个模块，只留 Web Demo 依赖；`samples` 只含演示用证据，其中 `agents.json` 仍是 openPangu） | 已完成（证据已于 2026-11-06 18:26 重发） | 重发后复核：`/api/platform-evidence` 返回 `selected_option_id=opt-3`、`selected_match=true`、`task_digest=5d4831eefce82361`、`generated_at=2026-11-06T17:33:28+08:00`，响应体 2401→2993 B；`/`、`/evolution`、`/api/demo`、`/api/llm-decision` 仍全 200，`/api/llm-decision` 真调 DeepSeek 命中 `opt-3`（t=0、约 4.1s） | — | 用**完整含 `?sharecode=`** 的链接在真实浏览器打开并录屏（卡片内嵌预览不带 sharecode，会显示 Not Found，属已知限制） |
 | 完整代码 + 数据集 | 可复现、开源 | 已推 `origin/main`；`LICENSE`（MIT）、`scripts/reproduce.py` 均在仓 | 已完成 | `git log -1`；`LICENSE`；`scripts/reproduce.py` | — | 干净 clone 后按 README 跑 `reproduce.py` 全绿 |
 | 开源截图 | 决赛材料 | 仓库已公开、`LICENSE` 已入库；平台界面截图已有 4 张 | 部分完成 | `docs/reports/captures/`；`platform_ui.json`（sha256 进自检） | 我方 | 界面截图 + 开源协议页截图一起入 PPT |
-| 平台装配 | 一键复现 | **一条命令**在已有 Nexent 上完成装配：`setup_nexent.py all` = register-mcp → sync-tools → create-agent → create-collab-agent → **skills（上传+绑草稿+重新发布+复核）** → mint-key，任一步失败即停；`setup_nexent.py status` 一次查全 MCP/14 工具/两个 Agent/技能草稿与发布快照，三档退出码（0 全绿 / 1 有失败 / 2 无法断言）。**边界：Nexent 平台本身的安装不在仓库内**，§0 前置要求全栈已在跑 | 部分完成（装配已单入口；平台安装仍属外部前置） | `deploy/nexent/README.md` §2；`deploy/nexent/setup_nexent.py`；`tests/test_nexent_setup_steps.py`（锁步骤顺序与 status 三档语义） | 我方（平台安装属对方镜像/环境，不自建安装器） | 换机器时先按官方方式起 Nexent，再跑 `all`；`status` 返回 0 才算装好 |
+| 平台装配 | 一键复现 | **一条命令**在已有 Nexent 上完成装配：`setup_nexent.py all` = register-mcp → sync-tools → create-agent → create-collab-agent → **skills（上传+绑草稿+重新发布+复核）** → mint-key，任一步失败即停；`setup_nexent.py status` 一次查全 MCP/15 工具/两个 Agent/技能草稿与发布快照，三档退出码（0 全绿 / 1 有失败 / 2 无法断言）。**边界：Nexent 平台本身的安装不在仓库内**，§0 前置要求全栈已在跑 | 部分完成（装配已单入口；平台安装仍属外部前置） | `deploy/nexent/README.md` §2；`deploy/nexent/setup_nexent.py`；`tests/test_nexent_setup_steps.py`（锁步骤顺序与 status 三档语义） | 我方（平台安装属对方镜像/环境，不自建安装器） | 换机器时先按官方方式起 Nexent，再跑 `all`；`status` 返回 0 才算装好 |
 | 一键复现脚本 | 从干净环境复现 | `scripts/reproduce.py` 覆盖测试/数据集/推演/反事实/进化/自检 | 已完成 | `python scripts/reproduce.py` | — | 跑完输出全绿；报告里不写死时间 |
 | 演示录屏（问答过程） | 常见要求 | **没有**。平台截图脚本只录页面浏览，不录"提问→调工具→出六跳" | 未开始 | `deploy/nexent/capture_platform_ui.py` 只截页面 | 我方（需 10 分钟录屏） | 一段 3–5 分钟：提问 → 工具调用 → 六跳 → 证据 → 面板 |
 | SKILL 绑定已发布 Agent | 考点③ | 2 个 SKILL.md 已上传平台技能仓库（skill_id=2/3），**并已绑定到 `urban_deduction_agent`**：草稿 v0 与已发布版本 v19 各 2 条实例，全部 `present=true enabled=true`（2026-11-06 复核，`bind_skills.py verify --require-published` 退出码 0） | 已完成 | `samples/nexent/live/skill_bindings.json`、`samples/nexent/live/skills.json`、`captures/nexent/skill-space.png` | — | 现场可直接跑 `verify` 复核。**能宣称**：技能绑定有效、`description` 会进模型上下文（依据 `Nexent/sdk/.../context/formatting.py:124-144`）。**不能宣称**：技能正文参与推理——正文要靠 `read_skill_md` 才进 prompt，而主 Agent 提示词显式禁用了它（`setup_nexent.py:96`，2026-11-03 让模型读正文导致 8/8→0/8 后的有意取舍）。所以 8/8 证明的是 MCP 工具链与输出协议，不是技能正文的效果，见 `deploy/nexent/README.md` §6 |
@@ -49,7 +49,7 @@
 ## 3. "设计中"两项的真实阻断点（这是回答"为什么还不算完成"的关键）
 
 **A. 多智能体协同**——代码、测试、MCP 注册、平台真机调用都已完成，缺的只剩"进主链路"这一件：
-1. ~~`collab_run` 未注册~~ **已注册**：它是当前 14 个工具清单里的一项，`setup_nexent.py status` 工具命中；
+1. ~~`collab_run` 未注册~~ **已注册**：它是当前 15 个工具清单里的一项，`setup_nexent.py status` 工具命中；
 2. ~~未在平台真机调用~~ **已真机 2/2**：协同 Agent 独立跑两次，指纹与离线逐字一致（`samples/nexent/live/collab_v7.json`）；
 3. 未进入演示主链路——主 Agent 只挂两个工具；要不要挂 `collab_run` 是口径选择，挂了会让"结论一致性"多一个需要现场解释的层次。
 

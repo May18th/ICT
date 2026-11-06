@@ -46,11 +46,11 @@
 - Nexent 北向传输层（SSE 聚合、幂等键、401/429/冲突错误映射，默认不联网）；
 - Nexent SDK 传输层（无平台环境时的内嵌路径，可选依赖）；
 - 北向链路真机验证（本机 Nexent v2.7.0，SSE → 结构化决策）；
-- 城市内涝主链路 Nexent 真机集成：MCP-over-SSE（14 工具）+ Agent 发布 v19（DeepSeek-Chat）+ 8/8 结论一致性校验（conversation_id=120）；
+- 城市内涝主链路 Nexent 真机集成：MCP-over-SSE（15 工具）+ Agent 发布 v19（DeepSeek-Chat）+ 8/8 结论一致性校验（conversation_id=120）；
 - 多模态数据资产标识（表格 / 文本 / 图片统一登记、结构摘要、标准引用、可引用定位）；
 - 本体半自动构建（种子本体 → 规则抽取 → 置信度分档 + 跨文档多跳证据 + 合并计划）；
 - 城市内涝数字孪生语义层 + 六跳跨部门推演 + 三类职责冲突 + 反事实重放（P4–P6）；
-- 五个 Skill 编排与 14 个 MCP 工具（9 个决策语义 + 4 个可视化 + 1 个协同，含权限收口、trace_id、失败语义、工具分组 allowlist）（P6/P9/P10）；
+- 五个 Skill 编排与 15 个 MCP 工具（9 个决策语义 + 4 个可视化 + 1 个协同，含权限收口、trace_id、失败语义、工具分组 allowlist）（P6/P9/P10）；
 - P8 评测：22 个事件用例、七项指标口径与改进前后对比；
 - P9 决策层：推演输出片区决策输入、稀缺资源分配策略、偏差归因 + 评测门禁 + 回滚的受控进化闭环；
 - P9.1 持续进化：分层决策记忆（离线同构）+ 人工评审第二反馈通道 + 语义化策略版本标签；
@@ -101,7 +101,7 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望：对外数字自检：108/108 项一致（期望指纹 05a89728b9555980）
+# 期望：对外数字自检：108/108 项一致（期望指纹 45dcd07289954dd6）
 ```
 
 期望值冻结在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/答辩口径，
@@ -187,7 +187,7 @@ uv run --locked python -m decision_poc.counterfactual --case CF2 --json
 
 ```powershell
 $env:PYTHONPATH = "src"
-uv run --locked python -m decision_poc.mcp_server --list-tools     # 打印 14 个工具的参数结构
+uv run --locked python -m decision_poc.mcp_server --list-tools     # 打印 15 个工具的参数结构
 uv run --locked python -m decision_poc.mcp_server                  # 进入 stdio 服务循环
 ```
 
@@ -277,7 +277,7 @@ Nexent **v2.7.0**（主 Agent v19，模型 DeepSeek-Chat）跑通。原绑定的
 2026-11-06 因账户欠费停服，主/协同 Agent 改挂平台已注册的 DeepSeek-Chat（`MODEL_IDS` 默认 5），
 重发布 v19 / v7 后同一提示词复测仍 8/8；下文的真机证据以 v19 那一轮为准：
 
-- MCP 服务 `urban-twin-mcp`（14 工具）以 SSE 方式跑在 `nexent_network` 容器里；
+- MCP 服务 `urban-twin-mcp`（15 工具）以 SSE 方式跑在 `nexent_network` 容器里；
 - Agent `urban_deduction_agent`（agent_id=3，已发布 v19）只挂 2 个工具（`event_deduce` / `evidence_locate`，收窄原因见真机报告 §6）；
 - 一次真实对话（**conversation_id=120**）产出六跳 JSON，与离线 `DeductionEngine` **8/8 项一致**；
 - 平台侧确实发生了工具调用：`event_deduce`（18ms）+ 一次协议修复重试（6ms），
@@ -296,7 +296,7 @@ docker cp deploy/nexent/upload_skills.py   nexent-config:/tmp/upload_skills.py
 docker cp deploy/nexent/bind_skills.py     nexent-config:/tmp/bind_skills.py
 docker cp samples/nexent/skill             nexent-config:/tmp/nexent_skills
 docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_nexent.py all"
-# 自检：0=MCP/14 工具/两个 Agent/技能草稿与发布快照全就位；1=有失败；2=有项无法断言
+# 自检：0=MCP/15 工具/两个 Agent/技能草稿与发布快照全就位；1=有失败；2=有项无法断言
 docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_nexent.py status"
 
 # 3) 结论级验证（宿主机）

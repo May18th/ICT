@@ -8,7 +8,7 @@ Nexent 的「MCP 服务接入」只认 HTTP/SSE 端点（`http://<host>:<port>/s
     智能体在 Nexent 上，工具在本地 stdio 进程里，两边从未真正连上。
 
 本模块只做传输层，不复制任何业务能力：工具清单、参数 schema、错误信封全部来自
-`mcp_server.UrbanToolkit` / `mcp_server.McpServer`（P11 之后是 14 个工具，含协同工具 `collab_run` 与出片状态查询 `scene_status`）。业务
+`mcp_server.UrbanToolkit` / `mcp_server.McpServer`（P11 之后是 15 个工具，含协同工具 `collab_run` 与出片状态查询 `scene_status`）。业务
 改动只要发生在原模块，SSE 侧自动同步，不存在第二套工具定义。
 
 协议实现（MCP SSE transport，2024-11-05）：

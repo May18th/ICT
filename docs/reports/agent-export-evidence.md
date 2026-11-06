@@ -2,7 +2,7 @@
 
 - 日期：2026-11-06
 - 官方依据：初赛需提交「配置能力」，即用平台导出功能导出作品 `[官方赋能直播 17:05]`，来源见 [官方口径落库](../competition/official-brief-2026-11-06.md)
-- 结论：**已导出并通过结构核验；同时澄清了「14 工具」与导出包「2 工具」的口径矛盾。**
+- 结论：**已导出并通过结构核验；同时澄清了「15 工具」与导出包「2 工具」的口径矛盾。**
 
 ## 1 产物
 
@@ -34,12 +34,12 @@ Agent 本体：`urban_deduction_agent`（显示名「城市内涝跨部门决策
 
 | 条目 | 字节 | sha256 |
 | --- | --- | --- |
-| `agent.json` | 6 256 | `8b0e084b0fbba936047f8b39bea7239ab3be33bbe01fb983963e9dd7213fcb08` |
+| `agent.json` | 6 486 | `9639de1f776901cff69419f484f0c309c30ddfa2ef8c6b8e5d26a20466bf363e` |
 | `skills/scarcity-allocation-evolution.zip` | 2 188 | `6aab9fab8cbb26a90b60e9f72aba1122f482ca955464e7ffdad8477b565993d5` |
 | `skills/urban-six-hop-deduction.zip` | 2 943 | `b36d48792c3650c87ff7f306196044d27ea7c4c877b00abe5cc85ce7ddad6aa0` |
-| **内容指纹**（上述三项按名排序拼接后再 sha256） | — | `adf49c002ee269a1d3f74d9410ebd89a0ca93121d968c47b56ac33c56202b6dd` |
+| **内容指纹**（上述三项按名排序拼接后再 sha256） | — | `0a3aef9c61d8e5e523424ad738c93dd737772580a3b3082c3c81ee8810836221` |
 
-材料写法：**写内容指纹 `adf49c00…`，并注明「由包内 `agent.json` 与 `skills/*.zip` 逐项 sha256 排序拼接计算」**。不要写整包 sha256——评委照做复算会对不上，反而像造假。
+材料写法：**写内容指纹 `0a3aef9c…`，并注明「由包内 `agent.json` 与 `skills/*.zip` 逐项 sha256 排序拼接计算」**。不要写整包 sha256——评委照做复算会对不上，反而像造假。
 
 ## 3 与平台技能仓库的交叉核对：逐位不一致，但语义一致
 
@@ -54,23 +54,23 @@ Agent 本体：`urban_deduction_agent`（显示名「城市内涝跨部门决策
 
 材料写法：可说「导出包内技能与本地原文**语义一致**（frontmatter 逐字段相等、正文逐位一致）」，**不可说「逐位一致」**。
 
-## 4 口径澄清：注册 14 个工具 ≠ Agent 挂 2 个
+## 4 口径澄清：注册 15 个工具 ≠ Agent 挂 2 个
 
-导出包 `agent.json` 的 `tools` 只有 2 项（`event_deduce`、`evidence_locate`，`source=mcp`），而台账写「14 个 MCP 工具注册到平台」。这两个数字都对，但指的是不同东西，**答辩时必须一句话讲清，否则评委打开导出包会当场追问**：
+导出包 `agent.json` 的 `tools` 只有 2 项（`event_deduce`、`evidence_locate`，`source=mcp`），而台账写「15 个 MCP 工具注册到平台」。这两个数字都对，但指的是不同东西，**答辩时必须一句话讲清，否则评委打开导出包会当场追问**：
 
 | 层级 | 数量 | 依据 |
 | --- | --- | --- |
-| 注册到平台 MCP 服务的工具 | **14** | `deploy/nexent/setup_nexent.py:76 OUR_TOOLS` |
+| 注册到平台 MCP 服务的工具 | **15** | `deploy/nexent/setup_nexent.py:76 OUR_TOOLS`（2026-11-06 补入 `doc_search`） |
 | 主 Agent `urban_deduction_agent` 挂载 | **2**（`event_deduce`、`evidence_locate`） | `setup_nexent.py:89 MAIN_TOOLS`，导出包实测 |
 | 协同 Agent `urban_collab_agent` 挂载 | **6**（含 `collab_run`） | `setup_nexent.py:131 COLLAB_TOOLS` |
 
 主 Agent 收窄到 2 个是**有意的设计决策**，源码注释给了理由（`setup_nexent.py:83-88`）：模型真正读的「提示词」是工具列表，工具一多就会绕过 `event_deduce` 去调 `twin_neighbors` / `allocation_plan`，随后 `parallel_executor` 把回答截断在 `<|tool_call_start|>`，8 项结论一致性校验就守不住。
 
-一句话说法：**「平台注册 14 个 MCP 工具，主 Agent 只拿 2 个结论类工具（收窄是稳定性设计），协同入口与其余工具挂在协同 Agent 上。」**
+一句话说法：**「平台注册 15 个 MCP 工具，主 Agent 只拿 2 个结论类工具（收窄是稳定性设计），协同入口与其余工具挂在协同 Agent 上。」**
 
 ## 5 这暴露出的一个真实缺口
 
-导出包只存 `mcp_info` 里的 **server 地址**，不存工具清单与工具实现。评委拿到 zip 复现时，若没有 `urban-twin-mcp` 服务端代码，这 14 个工具一个都起不来。
+导出包只存 `mcp_info` 里的 **server 地址**，不存工具清单与工具实现。评委拿到 zip 复现时，若没有 `urban-twin-mcp` 服务端代码，这 15 个工具一个都起不来。
 
 → 初赛材料/复现包必须**同时交 MCP 服务端代码 + 启动说明**（`src/decision_poc/mcp_server.py` / `mcp_sse.py` + 容器启动方式），并说明「导出包恢复的是 Agent 配置，工具能力由 MCP 服务提供」。这一条已补进 [差距台账](../competition-gap-audit.md) 第 3 节。
 
@@ -85,4 +85,4 @@ docker cp nexent-config:/tmp/urban_deduction_agent.zip samples/nexent/live/urban
 docker cp nexent-config:/tmp/agent_export.json       samples/nexent/live/agent_export.json
 ```
 
-前台校验：`agent_export.json` 里 `http_status=200`、`bundle.has_agent_json=true`、`bundle.skill_zips` 长度 2、`bundle.content_sha256=adf49c00…`（Agent 或技能内容改动后此值会变，属预期）。
+前台校验：`agent_export.json` 里 `http_status=200`、`bundle.has_agent_json=true`、`bundle.skill_zips` 长度 2、`bundle.content_sha256=0a3aef9c…`（Agent 或技能内容改动后此值会变，属预期；2026-11-07 因 MCP 记录描述与工具数改为 15，本值由 `adf49c00…` 变为 `0a3aef9c…`）。

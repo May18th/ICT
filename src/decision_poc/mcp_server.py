@@ -26,7 +26,7 @@ from typing import Any, Callable, Mapping, Sequence
 from pydantic import ValidationError
 
 from .contracts import ToolContext, ToolError, ToolResult, ToolStats
-from .governance import ErrorCode, blocked_by_visibility, is_retryable
+from .governance import AssetStatus, ErrorCode, blocked_by_visibility, is_retryable
 from .provenance import ProvenanceLedger, build_ledger, split_ref
 from .hydro_contracts import HydrographResult
 from .semantic import (
@@ -47,6 +47,7 @@ TOOL_GROUPS: dict[str, tuple[str, ...]] = {
     "decision": (
         "semantic_query",
         "twin_neighbors",
+        "doc_search",
         "evidence_locate",
         "claim_trace",
         "provenance_verify",
@@ -168,6 +169,7 @@ class UrbanToolkit:
         rules_path: str | None = None,
         visual_root: str | None = None,
         groups: Sequence[str] | None = None,
+        rag_index_dir: str | None = None,
     ) -> None:
         self.logs: list[dict[str, Any]] = []
         self.log_path = Path(log_path) if log_path else None
@@ -175,6 +177,11 @@ class UrbanToolkit:
         self.visual_root = Path(visual_root) if visual_root else None
         # 工具分组：None = 全量暴露，保持向后兼容
         self.groups = tuple(groups) if groups else None
+        # 业务资产检索索引：None 表示走默认路径，首次调用才加载（索引 60 MB 级别，
+        # 服务启动阶段不该为它付代价）。
+        self.rag_index_dir = Path(rag_index_dir) if rag_index_dir else None
+        self._rag_searcher: Any = None
+        self._rag_error: str | None = None
         self._deduction: Any = None
         self._skills: Any = None
         self.rules_path = Path(rules_path) if rules_path else _default_rules_path()
@@ -251,6 +258,25 @@ class UrbanToolkit:
                         },
                     },
                     "required": ["twin_id", "as_of"],
+                },
+            },
+            {
+                "name": "doc_search",
+                "description": "业务资产语义检索：在预案、规程、台账、交底记录里做词法+向量混合检索，返回可直接核验的 evidence_ref。手上只有自然语言问题（没有事件号）时用它取证，再用 evidence_locate 取原文。",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "自然语言检索式，如「基坑开挖遇暴雨有哪些职责冲突」"},
+                        "top_k": {"type": "integer", "minimum": 1, "maximum": 20, "default": 5},
+                        "path_prefix": {"type": "string", "description": "限定资产路径前缀，如 A-03/"},
+                        "kind": {"type": "string", "enum": ["text", "code"]},
+                        "include_deprecated": {
+                            "type": "boolean",
+                            "default": False,
+                            "description": "默认只返回已发布资产。仅在需要做版本对比（如 2021 版 vs 2025 版预案）时置 true，否则会同时拿到已废止的旧版口径。",
+                        },
+                    },
+                    "required": ["query"],
                 },
             },
             {
@@ -462,6 +488,7 @@ class UrbanToolkit:
         handlers: dict[str, Callable[[Mapping[str, Any]], ToolResult]] = {
             "semantic_query": self._semantic_query,
             "twin_neighbors": self._twin_neighbors,
+            "doc_search": self._doc_search,
             "evidence_locate": self._evidence_locate,
             "claim_trace": self._claim_trace,
             "provenance_verify": self._provenance_verify,
@@ -559,6 +586,103 @@ class UrbanToolkit:
         result = self.store.query(query)
         result.data["twin_id"] = twin_id
         return result
+
+    # --- 业务资产检索（RAG） ---------------------------------------------
+
+    def _search_engine(self) -> Any:
+        """惰性加载业务资产索引，失败原因留给调用方转成可读错误。
+
+        索引不存在时**不静默返回空结果**：模型会把"没建索引"误读成"没有依据"，
+        进而编一条结论出来——这比直接报错危险得多。
+        """
+        if self._rag_searcher is not None or self._rag_error is not None:
+            return self._rag_searcher
+        from .rag.embedding import build_embedder
+        from .rag.search import HybridSearcher
+        from .rag.store import load_bundle
+
+        root = Path(__file__).resolve().parents[2]
+        index_dir = self.rag_index_dir or (root / "artifacts" / "rag_index_assets")
+        try:
+            bundle = load_bundle(index_dir)
+        except Exception as exc:  # noqa: BLE001 - 索引缺失与损坏都要给出可读原因
+            self._rag_error = f"{index_dir}: {type(exc).__name__}: {exc}"
+            return None
+        name = str((bundle.manifest.get("embedder") or {}).get("name", "hash"))
+        self._rag_searcher = HybridSearcher(bundle, build_embedder("hash" if name.startswith("hash") else "api"))
+        return self._rag_searcher
+
+    def _doc_search(self, args: Mapping[str, Any]) -> ToolResult:
+        from .rag.types import ChunkKind, Filter
+
+        query = str(args.get("query", "")).strip()
+        if not query:
+            return _error("doc_search", {"query": query}, ErrorCode.VALIDATION_FAILED, "query 不能为空", self.version)
+        engine = self._search_engine()
+        if engine is None:
+            return _error(
+                "doc_search",
+                {"query": query, "index_error": self._rag_error},
+                ErrorCode.NOT_FOUND,
+                "业务资产索引未构建：先跑 python -m decision_poc.rag build --registered",
+                self.version,
+            )
+
+        try:
+            kind = ChunkKind(str(args["kind"])) if args.get("kind") else None
+        except ValueError:
+            return _error(
+                "doc_search",
+                {"kind": args.get("kind")},
+                ErrorCode.VALIDATION_FAILED,
+                "kind 只能是 text 或 code",
+                self.version,
+            )
+        prefix = args.get("path_prefix")
+        response = engine.search(
+            query,
+            top_k=int(args.get("top_k", 5)),
+            filter=Filter(path_prefix=str(prefix) if prefix else None, kind=kind),
+        )
+
+        # 检索必须尊重资产治理：2021 版预案已按废止（封路阈值 30cm）而 2025 版是 25cm，
+        # 两版同时命中时模型挑错一条就是业务事故。默认只放行 published，
+        # 需要做版本对比时用 include_deprecated 显式打开。
+        include_deprecated = bool(args.get("include_deprecated", False))
+        hits: list[dict[str, Any]] = []
+        suppressed = 0
+        for hit in response.hits:
+            record = self._governance.get(hit.asset_id)
+            status = getattr(record, "status", None)
+            status_text = str(status) if status is not None else "unknown"
+            if status_text != AssetStatus.PUBLISHED.value and not include_deprecated:
+                suppressed += 1
+                continue
+            hits.append(
+                {
+                    # 命中项直接就是 evidence_locate 认的 evidence_ref，闭合"检索→取原文"这一环
+                    "evidence_ref": f"{hit.asset_id}#{hit.locators[0]}",
+                    "asset_id": hit.asset_id,
+                    "asset_status": status_text,
+                    "valid_to": str(getattr(record, "valid_to", "") or ""),
+                    "source_path": hit.source_path,
+                    "heading_path": hit.heading_path,
+                    "score": round(hit.score, 4),
+                    "signals": hit.signals,
+                    "excerpt": hit.text,
+                }
+            )
+
+        data: dict[str, Any] = {
+            "query": query,
+            "hit_count": len(hits),
+            "hits": hits,
+            "suppressed_deprecated": suppressed,
+            "trace": response.trace.model_dump(),
+            "knowledge_version": self.version,
+            "note": "hits[].evidence_ref 可直接交给 evidence_locate 取原文复核；默认已剔除废止资产",
+        }
+        return _ok("doc_search", data, self.version)
 
     def _evidence_locate(self, args: Mapping[str, Any]) -> ToolResult:
         ref = str(args["evidence_ref"])

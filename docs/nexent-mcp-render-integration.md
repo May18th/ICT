@@ -50,7 +50,7 @@ clips/<snapshot_id>.mp4  +  acks/<snapshot_id>.json         （delivery=acked，
 
 ```bash
 PYTHONPATH=src uv run python -m decision_poc.mcp_server --export-tools samples/nexent/tools.json
-# 已写出 samples\nexent\tools.json（14 个工具 / 4 个分组）
+# 已写出 samples\nexent\tools.json（15 个工具 / 4 个分组）
 
 uv run pytest tests/test_nexent_tools.py -q      # 锁：清单与代码同源、必填项、禁用的渲染控制参数
 ```

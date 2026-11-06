@@ -74,7 +74,7 @@ def skill_files() -> list[Path]:
 
 
 OUR_TOOLS = {
-    "semantic_query", "twin_neighbors", "evidence_locate", "claim_trace", "provenance_verify",
+    "doc_search", "semantic_query", "twin_neighbors", "evidence_locate", "claim_trace", "provenance_verify",
     "event_deduce", "counterfactual_run", "conflict_check", "allocation_plan",
     "scene_render", "scene_status", "scene_compare", "asset_lookup",
     "collab_run",
@@ -187,7 +187,7 @@ class Platform(PlatformClient):
                 payload={
                     "name": MCP_NAME,
                     "server_url": MCP_URL,
-                    "description": "城市孪生决策工具：六跳推演/冲突/溯源/分配/渲染（14 个工具）",
+                    "description": "城市孪生决策工具：六跳推演/冲突/溯源/分配/渲染（15 个工具）",
                     "source": "local",
                     "enabled": True,
                     "skip_health_check": False,
@@ -525,7 +525,7 @@ def render_status(platform: Platform) -> int:
     if unknown:
         print(f"[status] 无法断言 {len(unknown)} 项：{unknown}")
         return 2
-    print("[status] 全部就位：MCP / 14 工具 / 两个 Agent / 技能草稿与发布快照")
+    print("[status] 全部就位：MCP / 15 工具 / 两个 Agent / 技能草稿与发布快照")
     return 0
 
 
