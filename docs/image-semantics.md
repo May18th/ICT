@@ -65,5 +65,5 @@ specs = img.to_region_specs(facts)                              # RegionSpec 兼
 
 ## 6 验收
 
-- `pytest -q`：862 项通过（本模块 10 条：解码/形态判定/峰值/幅值排序/边界诚实性/色块走向/积水范围/区域候选校验/不支持格式/CLI）；
+- `pytest -q`：876 项通过（本模块 10 条：解码/形态判定/峰值/幅值排序/边界诚实性/色块走向/积水范围/区域候选校验/不支持格式/CLI）；
 - `python -m decision_poc.evidence_check`：108/108 项一致（测试数已同步）。

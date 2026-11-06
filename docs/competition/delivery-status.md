@@ -17,8 +17,8 @@
 
 | 交付物 | 官方要求 | 现状 | 状态 | 证据 / 路径 | 阻塞方 | 下一步验收标准 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 模板 1 作品信息收集表（Word） | 初赛唯一提交物，需按官方版式 | 内容稿已成稿并可重生成（六页：五考点/数据集/关键代码/指标/截图/边界）。**数字已于 2026-11-06 重跑刷新**：862 项 / 108 项自检 / 14 工具 / v19 / conversation_id=120 / 指纹 `c078625f8dcc13dc`；**官方版式未套** | 部分完成（口径已刷新，待套官方模板） | `docs/competition/初赛作品信息收集表-内容稿-v0.1.docx`；`scripts/build_preliminary_docx.py` | 用户侧（官方模板原文未入仓） | 套官方模板后重跑生成器再导出 PDF，逐项对照官方要求打勾；重跑用 `uv run --with python-docx --with pillow python scripts/build_preliminary_docx.py` |
-| 项目 PPT（初赛） | 覆盖背景/价值/创新/数据/代码/指标 | 已有 `初赛答辩-PPT-v0.1.pptx`（10 页，脚本生成）。**数字已于 2026-11-06 重跑刷新**：862 测试 / 108 项自检 / 14 工具 / Agent v19（DeepSeek-Chat） | 已完成（内容与口径均为当前） | `docs/competition/初赛答辩-PPT-v0.1.pptx`；`scripts/build_answer_ppt.py` | — | 套官方模板/改版式后再跑一次生成器即可；重跑用 `uv run --with python-pptx --with pillow python scripts/build_answer_ppt.py`（隔离层，不污染环境） |
+| 模板 1 作品信息收集表（Word） | 初赛唯一提交物，需按官方版式 | 内容稿已成稿并可重生成（六页：五考点/数据集/关键代码/指标/截图/边界）。**数字已于 2026-11-06 重跑刷新**：876 项 / 108 项自检 / 14 工具 / v19 / conversation_id=120 / 指纹 `9e840667ed03a7ab`；**官方版式未套** | 部分完成（口径已刷新，待套官方模板） | `docs/competition/初赛作品信息收集表-内容稿-v0.1.docx`；`scripts/build_preliminary_docx.py` | 用户侧（官方模板原文未入仓） | 套官方模板后重跑生成器再导出 PDF，逐项对照官方要求打勾；重跑用 `uv run --with python-docx --with pillow python scripts/build_preliminary_docx.py` |
+| 项目 PPT（初赛） | 覆盖背景/价值/创新/数据/代码/指标 | 已有 `初赛答辩-PPT-v0.1.pptx`（10 页，脚本生成）。**数字已于 2026-11-06 重跑刷新**：876 测试 / 108 项自检 / 14 工具 / Agent v19（DeepSeek-Chat） | 已完成（内容与口径均为当前） | `docs/competition/初赛答辩-PPT-v0.1.pptx`；`scripts/build_answer_ppt.py` | — | 套官方模板/改版式后再跑一次生成器即可；重跑用 `uv run --with python-pptx --with pillow python scripts/build_answer_ppt.py`（隔离层，不污染环境） |
 | 模板 2 答辩 PPT | 决赛 | 无 | 未开始 | — | 我方 | 进决赛后再做，初赛不投入 |
 | 公网 Demo 地址 | 可访问演示地址 | 已发布：`https://urban-twin-demo.app.workbuddy.host/?sharecode=K4MXY6WYTS`（发布包 `agent_poc/deploy-webdemo/`，**是裁剪子集不是逐字节镜像**：`src` 60/64 个模块，只留 Web Demo 依赖；`samples` 只含演示用证据，其中 `agents.json` 仍是 openPangu） | 已完成（证据已于 2026-11-06 18:26 重发） | 重发后复核：`/api/platform-evidence` 返回 `selected_option_id=opt-3`、`selected_match=true`、`task_digest=5d4831eefce82361`、`generated_at=2026-11-06T17:33:28+08:00`，响应体 2401→2993 B；`/`、`/evolution`、`/api/demo`、`/api/llm-decision` 仍全 200，`/api/llm-decision` 真调 DeepSeek 命中 `opt-3`（t=0、约 4.1s） | — | 用**完整含 `?sharecode=`** 的链接在真实浏览器打开并录屏（卡片内嵌预览不带 sharecode，会显示 Not Found，属已知限制） |
 | 完整代码 + 数据集 | 可复现、开源 | 已推 `origin/main`；`LICENSE`（MIT）、`scripts/reproduce.py` 均在仓 | 已完成 | `git log -1`；`LICENSE`；`scripts/reproduce.py` | — | 干净 clone 后按 README 跑 `reproduce.py` 全绿 |
@@ -56,7 +56,8 @@
 **B. 定量层**——公式与测试已有，且 [P12 场景 v2 口径标定报告](../reports/p12-scenario-v2-calibration-report.md) 已经算出**换口径的真实代价**：
 按 v2 字面替换（来水 vs 可用能力）会把移动泵缺口从 **2 台变成 0 台**，缺口为 0 则 C3 资源争用冲突消失、"跨片区先给谁"这个 P9 决策对象失去事实基础，
 12 个分配案例与全部进化数字都要重标。该报告给了两个方案：**A（推荐）需求折算保留 v1，负荷用 `load_state` + 二次风险表达；B 字面替换并整批重标**。
-这条口径**需要用户裁决后才能接六跳**。另缺三件**台账字段**（缺了就只能假精确）：
+这条口径**已于 2026-11-06 由用户裁决为方案 A**（需求折算保留 v1、负荷用 `load_state`、缺口保持 2 台），
+裁决全文与表述红线见 [定量口径冻结：方案 A](../quant-baseline-option-a.md)。方案 B 不采用。另缺三件**台账字段**（缺了就只能假精确）：
 1. 泵站服务范围的**汇水面积**（当前台账只有设计流量 3.09 m³/s 的一次性报告，没有服务面积）；
 2. 泵站的**故障泵组能力明细**（现在只有"1# 泵组故障"的文字描述，800 m³/h 是推算的）；
 3. 内涝点的**积水面积**（现在只有深度 30 cm，没有面积，`dV/dt` 无法算到时时刻）。

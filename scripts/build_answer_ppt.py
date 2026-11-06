@@ -15,7 +15,7 @@ ASSETS = ROOT / "out" / "ppt-assets"
 OUT = ROOT / "docs" / "competition" / "初赛答辩-PPT-v0.1.pptx"
 
 # 对外数字从期望文件读，不在脚本里手写：写死的话每改一次测试数都要改脚本 + 重生成，
-# 漏一次就又是一份"数字过期的交付物"（这份 PPT 就吃过一次：776 → 862）。
+# 漏一次就又是一份"数字过期的交付物"（这份 PPT 就吃过一次：776 → 876）。
 _EXPECTATIONS = json.loads(
     (ROOT / "samples" / "eval" / "evidence_expectations.json").read_text(encoding="utf-8")
 )
@@ -384,11 +384,13 @@ _rect(s, 0, 0, W, H, BG)
 _header(s, "P10 · 边界、可复现与后续（6:15–6:50）", "我们把边界写在页面上")
 _bullets(s, Inches(0.62), Inches(2.0), Inches(7.2), Inches(4.5), [
     "边界：数据合成；专家反馈是角色扮演；真实用户评分样本 0；UE 未实机验收",
-    "定量层未接管六跳缺口口径（仍有 80% 折算，即 v1 口径）",
+    "定量口径（2026-11-06 冻结）：缺口 2 台 = 额定 × 0.8 折算，是折算口径、不是水力模型；定量层不接管缺口",
+    "泵站负荷用 load_state 表达：DF-PS-01 可用 800 m³/h、负荷率 1.50 判 overload；负荷率是风险指标、缺口是资源指标，互不换算，二次风险以「上报跨区调配」动作体现",
+    "台账缺口：泵站汇水面积 / 故障泵组能力明细 / 内涝点积水面积三项未补 → 结论是可复算，不是实测",
     "可视化口径：3D 是「设计中有 + Blender 侧静帧/短片」，不是实时引擎",
     f"可复现四条命令：pytest({TEST_TOTAL}) / evidence_check({SELFCHECK_TOTAL}/{SELFCHECK_TOTAL}) / urban_eval(22/22) / nexent_urban(8/8)",
     "后续：第二场真实公开事件 → 真实用户评分 3–5 人 → 协同层接 MCP/平台（设计中）",
-], size=14, gap=11)
+], size=13, gap=9)
 _fit_image(s, ROOT / "docs/reports/captures/S33-binding-v2.png",
            Inches(8.1), Inches(2.0), Inches(4.6), Inches(3.4))
 _text(s, Inches(8.1), Inches(5.5), Inches(4.6), Inches(0.5),
