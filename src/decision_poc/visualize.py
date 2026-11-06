@@ -288,22 +288,6 @@ def build_visual_snapshot(
 # --- 渲染作业 ------------------------------------------------------------
 
 
-class RenderStep(StrictModel):
-    index: int
-    stage: str
-    title: str
-    status: str
-    highlights: list[str] = Field(default_factory=list)
-    narrative: str = ""
-    evidence: list[str] = Field(default_factory=list)
-
-
-class RenderAction(StrictModel):
-    order: int
-    action: str
-    rule_ids: list[str] = Field(default_factory=list)
-
-
 class RenderJob(StrictModel):
     """UE 侧唯一需要认的结构。字段名与 `urban_twin_state.apply_job` 对齐。"""
 
@@ -714,9 +698,7 @@ __all__ = [
     "DEFAULT_VISUAL_ROOT",
     "DistrictDelta",
     "JOB_SCHEMA",
-    "RenderAction",
     "RenderJob",
-    "RenderStep",
     "SCENARIOS",
     "VISUAL_SCHEMA",
     "VisualSnapshot",
