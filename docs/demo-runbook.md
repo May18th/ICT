@@ -314,7 +314,7 @@ uv run --locked python -m decision_poc.scene_layout      # 布局变了才需要
 Set-Location D:/华为ICT/agent_poc
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 对外数字自检：108/108 项一致（期望指纹 9e840667ed03a7ab）
+# 对外数字自检：108/108 项一致（期望指纹 05a89728b9555980）
 echo "exit=$LASTEXITCODE"
 ```
 
