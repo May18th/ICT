@@ -1,12 +1,13 @@
 # Nexent 侧工具注册（P10 增补）
 
-## 结论：**已真机注册并跑通**（2026-10-30 更新）
+## 当前状态：代码清单 14 个；历史真机快照为 13 个
 
 > 历史：本文档较早版本记录的是"Docker 起不来、未真机注册"的阻塞状态。该阻塞已解除：
-> Docker Desktop 恢复后，MCP 服务以 SSE 方式跑在 `nexent_network` 容器里，14 个工具已注册进平台
-> （tool_id 41–53）、挂到 Agent `urban_deduction_agent`（agent_id=3）并发布 v10；
+> 2026-11-03 的真机证据显示，MCP 服务以 SSE 方式跑在 `nexent_network` 容器里，平台工具库当时为 13 个
+> （tool_id 41–53），挂到 Agent `urban_deduction_agent`（agent_id=3）并发布 v10；
 > 真机对话 **conversation_id=78**，六跳结论与离线 **8/8 一致**，平台调用日志含
-> `event_deduce`（含一次协议修复重试）。
+> `event_deduce`（含一次协议修复重试）。随后代码新增 `scene_status`，当前导出清单为 14 个；
+> 当前平台是否已重扫到 14 个，需 Docker 恢复后重新验收。
 >
 > 完整证据见 [真机集成报告](reports/nexent-live-integration-report.md)，装配步骤见
 > [deploy/nexent/README.md](../deploy/nexent/README.md)。
@@ -109,7 +110,8 @@ $env:PYTHONPATH = "src"
 ## 表述边界（答辩时不要越界）
 
 - ✅ 可以说：14 个 MCP 工具已实现并可被任意 MCP 客户端调用；注册清单由代码生成并有一致性测试。
-- ✅ 可以说：已在本机 Nexent v2.7.0 真机注册 14 个工具并跑通内涝主链路（conversation_id=78，8/8 一致）。
+- ✅ 可以说：历史证据证明 Nexent v2.7.0 曾以平台工具库 13 个跑通内涝主链路（conversation_id=78，8/8 一致）；
+  当前代码实现和导出清单为 14 个，平台重扫结果待 Docker 恢复后确认。
 - ✅ 可以说：2 个 SKILL.md 已上传到本机 Nexent 技能仓库（skill_id=2/3，正文逐位一致，见 `samples/nexent/live/skills.json`）。
 
 真机证据已留档：`samples/nexent/live/`（Agent 列表、会话、MCP 调用日志、汇总 JSON）+

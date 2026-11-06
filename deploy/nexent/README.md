@@ -142,7 +142,7 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py `
 ```text
 [ui] skill-space: OK     # 平台 Skill 仓库里能看到 urban-six-hop-deduction / scarcity-allocation-evolution
 [ui] agents: OK          # 平台智能体列表里能看到 城市内涝跨部门决策智能体（V3 已发布）
-[ui] mcp-space: OK       # 「我的MCP」里 urban-twin-mcp 连通性校验成功、13 个工具
+[ui] mcp-space: OK       # 「我的MCP」里 urban-twin-mcp 连通性校验成功、14 个工具
 [ui] 证据：docs\reports\captures\nexent\platform_ui.json
 ```
 
@@ -179,7 +179,8 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py `
 
 - 本目录脚本面向**本机 Docker 演示环境**，管理员用户与 JWT 由容器环境提供；生产环境要换成正式账号与权限体系。
 - 真机结论只覆盖 `WO-20261029-007` 一个事件与 8 项一致性检查；扩事件需要扩数据集与评测用例。
-- 主 Agent 只挂 **2 个工具**（`event_deduce` + `evidence_locate`），工具库 13 个全部在平台可见。
+- 主 Agent 只挂 **2 个工具**（`event_deduce` + `evidence_locate`）。历史真机快照的工具库为 13 个；
+  当前代码清单为 14 个，平台重扫需在 Docker 恢复后执行。
   收窄挂载不是偷懒：openPangu 看到 `twin_neighbors` / `conflict_check` / `allocation_plan`
   就会去调（提示词明令禁止也拦不住），随后走 `parallel_executor` 把回答截断在 `<|tool_call_start|>`。
   工具列表才是模型真正读的"提示词"。
@@ -191,11 +192,11 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py `
 
 ## 多智能体协同 Agent（`collab_run`，路径 B）
 
-MCP 工具数已到 **13**（新增 `collab_run`，分组 `collaboration`）。平台侧两条装配线：
+MCP 工具数已到 **14**（含 `collab_run`，分组 `collaboration`）。平台侧两条装配线：
 
 | 命令 | 作用 |
 | --- | --- |
-| `python /tmp/setup_nexent.py all` | 注册 MCP → 同步 13 工具 → 建主 Agent（挂决策/呈现工具）→ 建协同 Agent → 签发 Key |
+| `python /tmp/setup_nexent.py all` | 注册 MCP → 同步 14 工具 → 建主 Agent（挂决策/呈现工具）→ 建协同 Agent → 签发 Key |
 | `python /tmp/setup_nexent.py create-collab-agent` | 只建/更新协同 Agent `urban_collab_agent` 并挂 `collab_run` 等 6 个工具 |
 
 协同 Agent 的提示词是"两步式"：先 `collab_run`，再**逐字转述**动作卡、联合发布对、处置顺序与
@@ -204,7 +205,8 @@ MCP 工具数已到 **13**（新增 `collab_run`，分组 `collaboration`）。�
 角色白名单 `ROLE_TOOL_GROUPS` 是**运行期视图**，不导出到 `tools.json`；部门 Agent 若单独建（路径 A），
 只能看到本组工具。Nexent v2.7 是否支持 Agent-as-Tool **未验证**，故默认走路径 B。
 
-> **真机状态**：2026-11-03 已在 Docker 恢复后完整复跑（13 工具 / 主 Agent v10 / 协同 Agent v4），
+> **历史真机状态**：2026-11-03 已在 Docker 恢复后完整复跑（平台工具库 13 个 / 主 Agent v10 / 协同 Agent v4）；
+> 当时 `scene_status` 尚未加入平台工具库。当前代码与 MCP 清单为 14 个，需 Docker 恢复后重扫，
 > 结果见文末「2026-11-03 复跑」一节；主 Agent 挂载工具数已从 12 收窄到 2，原因见该节。
 
 ## 2026-11-02 真机复跑（Docker 恢复后）
@@ -271,12 +273,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File deploy/up_mcp.ps1
 ```
 
 脚本做四件事：Docker/网络体检 → 判定同名容器归属 → `docker compose up -d` → 等到 healthy
-且**容器内 `/health` 的 `tools_count == 13`**。退出码 0 才算起好。
+且**容器内 `/health` 的 `tools_count == 14`**。退出码 0 才算起好。
 底层编排仍是 `deploy/docker-compose.mcp.yml`，也可以直接：
 
 ```powershell
 docker compose -f deploy/docker-compose.mcp.yml up -d
-docker compose -f deploy/docker-compose.mcp.yml ps   # healthcheck 校验 tools_count == 13
+docker compose -f deploy/docker-compose.mcp.yml ps   # healthcheck 校验 tools_count == 14
 ```
 
 **为什么需要外面这层脚本**：编排里 `container_name: urban-twin-mcp` 是固定名（容器间靠这个名字互访，
