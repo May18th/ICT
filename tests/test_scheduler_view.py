@@ -201,3 +201,129 @@ def test_scheduler_routes_serve(path):
     assert status == 200
     assert "json" in content_type
     assert body
+
+
+# --- 页面可读性：给评委看的东西不能是英文枚举 ------------------------------
+
+
+def test_departments_come_from_the_ledger():
+    """「跨部门协同」必须从部门台账读出中文名。
+
+    这条防的是一个真实踩过的坑：页面原来读 `deduction.departments`，而该字段是空列表，
+    评委看到的是「跨部门协同：无」——等于告诉评委本系统没有跨部门能力。
+    """
+    departments = chain.load_departments()
+    assert len(departments) == 8
+    assert all(item["org_name"] for item in departments)
+    assert any(item["org_id"] == "ORG-DRAIN" for item in departments)
+
+    view = scheduler_view(refresh=True)
+    assert view["departments"], "视图里的部门不能为空"
+    # 「参与本次」的那几个必须是 impact.departments 的子集，不能凭空标
+    involved = set(view["involved_orgs"])
+    assert involved and involved <= {item["org_id"] for item in view["departments"]}
+
+
+def test_scheduler_endpoint_exposes_departments():
+    import json
+
+    body = json.loads(route("/api/scheduler")[2])
+    assert len(body["departments"]) == 8
+    assert body["involved_orgs"]
+
+
+def test_page_translates_backend_enums_for_humans():
+    """后端枚举必须在页面显示层翻成中文，后端字段本身不动。"""
+    from decision_poc.web_demo import build_html
+
+    html = build_html()
+    for marker in ("橙色预警", "各片区自理", "职责重叠", "参与本次", "第 '+m[1]+' 行", "发生了什么"):
+        assert marker in html, f"页面缺中文映射 {marker}"
+    # 链路栅格只允许一套列定义：再出现 grid-column 强推，工具名会挤到第一列
+    assert "grid-column:2/4" not in html
+
+
+def test_chain_summary_speaks_chinese():
+    """主 Agent 那环的摘要不能是 `observed=supported、conflict=conflict`。
+
+    这条是真浏览器联调发现的：页面能渲染、接口 200、静态断言全绿，但正文里躺着
+    一串英文枚举，评委读不出「哪一跳有据、哪一跳暴露冲突」。
+    """
+    import json
+    import re
+
+    from decision_poc.chain import CLAIM_STATUS_LABEL, DEDUCTION_STAGE_LABEL
+
+    body = json.loads(route("/api/scheduler")[2])
+    stages = body["chain"]["stages"]
+    main = next(item for item in stages if item["id"] == "main_agent")
+    summary = main["summary"]
+
+    assert "六跳推演完成" in summary
+    # 不允许出现 `英文=英文` 的跳状态拼法
+    assert not re.search(r"[a-z_]+=[a-z_]+", summary), summary
+    # 六跳的名字都翻成了中文，且没漏翻（出现原样 stage 名即失败）
+    for stage, label in DEDUCTION_STAGE_LABEL.items():
+        if stage in summary:
+            raise AssertionError(f"阶段名未翻译：{stage}")
+    assert any(label in summary for label in CLAIM_STATUS_LABEL.values() if label not in {"未判定"})
+    # 同一跳会被多条规则重复记（实测 10 条 action），摘要必须按阶段去重
+    for label in ("发生了什么", "影响对象", "责任归属", "冲突识别", "资源缺口", "处置动作"):
+        assert summary.count(label) == 1, f"「{label}」在摘要里出现 {summary.count(label)} 次，未去重：{summary}"
+
+
+def test_every_dom_reference_is_declared():
+    """页面脚本里当 DOM 元素用的变量，必须显式声明、或指向真实存在的 id。
+
+    真实事故：`sceneSummary.innerHTML=` 从没声明过，靠「id 与变量同名时浏览器把它们
+    挂到 window 上」的遗留行为，名字对得上（orders/resboard/plans）就侥幸能跑；
+    而这个元素的 id 是 `scene-summary`（带连字符），`window.sceneSummary` 不存在 →
+    ReferenceError 在 drawScene 第一行抛出 → async 链中断 → 地图空白、后面六个面板全不刷新。
+    静态断言的测试当时 29 条全绿，只有无头浏览器能暴露。
+    """
+    import re
+
+    from decision_poc.web_demo import build_html
+
+    html = build_html()
+    script = html.split("<script>", 1)[1]
+    # 只取"左侧赋值/操作"形态，属性读取不算
+    used = set(
+        re.findall(
+            r"(?:^|[;{}\n])\s*([A-Za-z_$][\w$]*)\s*\.\s*(?:innerHTML|textContent|className|classList)\s*[=.]",
+            script,
+        )
+    )
+    assert used, "没抓到任何 DOM 赋值，正则失效了要改测试"
+
+    # 1) 声明过（含 `let a=1,b=2` 一行多声明）
+    declared = set()
+    for stmt in re.findall(r"\b(?:let|const|var)\s+([^;]+);", script):
+        for part in stmt.split(","):
+            m = re.match(r"\s*([A-Za-z_$][\w$]*)", part)
+            if m:
+                declared.add(m.group(1))
+    # 2) 或由 getElementById 显式取过（含 `(x=document.getElementById(...))` 括号写法）
+    declared |= set(re.findall(r"([A-Za-z_$][\w$]*)\s*=\s*document\.getElementById", script))
+
+    # 3) 剩下的只能靠「id 同名挂 window」—— 那就必须真有这个 id
+    bad = [
+        name
+        for name in sorted(used - declared)
+        if not re.search(rf'id=["\']?{re.escape(name)}["\'\s>]', html)
+    ]
+    assert not bad, f"这些 DOM 变量既没声明、页面也没有同名 id，浏览器里必然 ReferenceError：{bad}"
+
+
+def test_dom_ids_referenced_by_js_actually_exist():
+    """脚本 getElementById 的每个 id 都得真在页面里，否则拿到的全是 null。"""
+    import re
+
+    from decision_poc.web_demo import build_html
+
+    html = build_html()
+    script = html.split("<script>", 1)[1]
+    wanted = set(re.findall(r"getElementById\('([^']+)'\)", script))
+    assert wanted
+    missing = [i for i in sorted(wanted) if not re.search(rf'id=["\']?{re.escape(i)}["\'\s>]', html)]
+    assert not missing, f"脚本引用了页面里不存在的 id：{missing}"

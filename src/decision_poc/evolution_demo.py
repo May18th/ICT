@@ -145,41 +145,71 @@ def build_evolution_payload(showcase: ShowcaseReport | None = None) -> dict[str,
     }
 
 
-def build_evolution_html() -> str:
-    return """<!doctype html><html lang=zh-CN><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>决策进化对比</title>
+EVOLUTION_STYLE = """
 <style>
-body{font:15px/1.6 system-ui;margin:0;background:#0b1220;color:#e8eef7}
-main{max-width:1180px;margin:auto;padding:28px}
-h1{color:#7dd3fc;margin:0 0 4px}.sub{color:#9fb1c8}
-a.back{color:#7dd3fc;text-decoration:none;font-size:13px}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
-.metric{background:#152238;border:1px solid #263a55;border-radius:10px;padding:14px}
-.metric b{display:block;font-size:22px;color:#7dd3fc}.metric span{font-size:12px;color:#9fb1c8}
-.card{background:#152238;border:1px solid #263a55;border-radius:10px;padding:16px;margin:16px 0}
-.card h2{font-size:16px;margin:0 0 12px;color:#bae6fd}
-table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px solid #263a55;padding:7px 8px;text-align:left}th{color:#9fb1c8;font-weight:600}
-.pill{display:inline-block;background:#20344d;border:1px solid #334155;border-radius:99px;padding:2px 9px;margin:2px;font-size:12px}
-.ok{color:#86efac}.warn{color:#fbbf24}.dim{color:#9fb1c8}
-.bar{height:8px;border-radius:4px;background:#263a55;overflow:hidden;margin:3px 0 8px}
-.bar i{display:block;height:100%;background:#38bdf8}
-.bad{background:#f97316!important}
-.bound{font-size:12px;color:#9fb1c8;border-top:1px solid #263a55;padding-top:12px;margin-top:18px}
-.rv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-.rv input,.rv select{background:#0e1a2c;border:1px solid #334155;color:#e8eef7;border-radius:8px;padding:8px;font:13px system-ui}
-.rv input.wide,.rv button{grid-column:1/3}
-.rv button{background:#38bdf8;border:0;color:#04121f;font-weight:700;border-radius:8px;padding:9px;cursor:pointer}
-.rvstat{font-size:13px;color:#9fb1c8}
-code{background:#0e1a2c;padding:1px 5px;border-radius:4px;font-size:12px}
-@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}}
+:root{--page-bg:#eef2ef;--ink:#173238;--muted:#6c7e7f;--line:#d9e3e0;--surface:#fff;--accent:#0f766e;--accent-soft:#e2f1ed;--warning:#c56d45;--shadow:0 16px 42px rgba(25,55,57,.08)}
+*{box-sizing:border-box}
+html{background:var(--page-bg)}
+body{font:15px/1.65 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;margin:0;background:var(--page-bg);color:var(--ink)}
+main.evolution-page{max-width:1240px;margin:auto;padding:42px 34px 58px}
+.evolution-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;padding:10px 0 32px;border-bottom:1px solid var(--line)}
+.evolution-hero-copy{max-width:760px}
+.evolution-eyebrow{margin-bottom:10px;color:var(--accent);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.evolution-hero h1{margin:0;color:var(--ink);font-size:clamp(30px,4vw,50px);line-height:1.08;letter-spacing:-.04em}
+.evolution-hero .sub{max-width:650px;margin:14px 0 0;color:var(--muted);font-size:16px}
+a.back{display:inline-flex;align-items:center;min-height:42px;padding:0 16px;border:1px solid #b7cbc5;border-radius:999px;background:rgba(255,255,255,.7);color:var(--accent);font-size:13px;font-weight:750;text-decoration:none;transition:background .18s ease,border-color .18s ease,transform .18s ease}
+a.back:hover{background:#fff;border-color:var(--accent);transform:translateY(-1px)}
+.evolution-metrics{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:24px 0}
+.evolution-metrics .metric{min-height:128px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+.evolution-metrics .metric:first-child{background:var(--ink);border-color:var(--ink);color:#fff}
+.evolution-metrics .metric:first-child span{color:#bfd2ce}
+.metric span{display:block;color:var(--muted);font-size:12px;font-weight:700}
+.metric b{display:block;margin:8px 0 4px;color:var(--accent);font-size:clamp(19px,2.2vw,28px);letter-spacing:-.03em}
+.evolution-metrics .metric:first-child b{color:#fff}
+.evolution-grid{display:grid;grid-template-columns:minmax(0,1.28fr) minmax(320px,.72fr);gap:16px}
+.evolution-card{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+.comparison-card,.feedback-card{grid-column:1/-1}
+.evolution-card h2{margin:0 0 14px;color:var(--ink);font-size:18px;letter-spacing:-.02em}
+.evolution-card h2:after{content:"";display:block;width:32px;height:3px;margin-top:10px;border-radius:99px;background:var(--accent)}
+.allocation-card{grid-column:1/-1}
+.outcome-card{grid-column:1/-1;background:var(--ink);border-color:var(--ink);color:#fff;padding:26px 28px}.outcome-card h2{color:#fff;font-size:13px;text-transform:uppercase;letter-spacing:.12em}.outcome-card h2:after{background:#7ed2c4}.outcome-result{margin:4px 0 8px;font-size:clamp(25px,3.6vw,42px);font-weight:850;letter-spacing:-.04em}.outcome-card p{max-width:760px;margin:0;color:#c7d9d5}.outcome-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.outcome-list span{padding:7px 11px;border:1px solid rgba(255,255,255,.18);border-radius:999px;color:#d9e8e5;font-size:12px}
+.story-lead{margin:0 0 8px;color:var(--ink);font-size:16px;font-weight:800}.story-lead b{color:var(--accent)}
+.flow-card{grid-column:1/-1}.story-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.story-step{position:relative;min-height:112px;padding:15px;border:1px solid var(--line);border-radius:14px;background:#fbfdfc}.story-step strong{display:block;margin-bottom:5px;color:var(--accent);font-size:13px}.story-step span{display:block;color:var(--muted);font-size:13px}.story-step:not(:last-child):after{content:"→";position:absolute;right:-15px;top:42px;color:var(--accent);font-size:20px;font-weight:800;z-index:1}.story-note{margin:14px 0 0;color:var(--muted);font-size:12px}
+.secondary-details{grid-column:1/-1;margin:0;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.secondary-details summary{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 22px;color:var(--ink);font-size:14px;font-weight:800;cursor:pointer;list-style:none}.secondary-details summary::-webkit-details-marker{display:none}.secondary-details summary:after{content:"＋";color:var(--accent);font-size:20px;font-weight:500}.secondary-details[open] summary{border-bottom:1px solid var(--line)}.secondary-details[open] summary:after{content:"−"}.secondary-details summary span{margin-left:auto;color:var(--muted);font-size:12px;font-weight:600}
+.details-body{padding:0 18px 18px}.details-body .evolution-card{margin-top:16px;box-shadow:none}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px solid var(--line);padding:10px 9px;text-align:left;vertical-align:top}th{color:var(--muted);font-size:12px;font-weight:800;white-space:nowrap}tbody tr:last-child td,tr:last-child td{border-bottom:0}
+.pill{display:inline-block;background:var(--accent-soft);border:1px solid #c4ded7;border-radius:99px;padding:3px 9px;margin:2px;font-size:12px;color:var(--accent);font-weight:700}
+.ok{color:#16805f}.warn{color:var(--warning)}.dim{color:var(--muted)}
+.bar{height:8px;border-radius:4px;background:#e5ece9;overflow:hidden;margin:3px 0 8px}.bar i{display:block;height:100%;background:var(--accent)}.bad{background:var(--warning)!important}
+.review-panel{border-left:4px solid var(--accent)}
+.history-panel{border-top:4px solid #d7a25b}
+.rv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.rv input,.rv select{width:100%;min-height:42px;background:#fbfdfc;border:1px solid #cbdad6;color:var(--ink);border-radius:10px;padding:9px 11px;font:13px inherit;outline:none}.rv input:focus,.rv select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(15,118,110,.12)}
+.rv input.wide,.rv button{grid-column:1/3}.rv button{min-height:44px;background:var(--accent);border:0;color:#fff;font-weight:800;border-radius:10px;padding:9px;cursor:pointer;transition:background .18s ease,transform .18s ease}.rv button:hover{background:#0a5f59;transform:translateY(-1px)}
+.rvstat{font-size:13px;color:var(--muted)}
+code{background:#eef4f1;color:#35605c;padding:2px 6px;border-radius:5px;font-size:12px;overflow-wrap:anywhere}
+.evolution-footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;margin-top:22px}
+@media(max-width:900px){main.evolution-page{padding:28px 20px 42px}.evolution-hero{align-items:flex-start;flex-direction:column}.evolution-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.evolution-grid{grid-template-columns:1fr}.comparison-card,.feedback-card{grid-column:auto}.evolution-card{overflow-x:auto}.story-flow{grid-template-columns:repeat(2,minmax(0,1fr))}.story-step:not(:last-child):after{display:none}}
+@media(max-width:560px){.evolution-metrics{grid-template-columns:1fr}.evolution-card{padding:17px}.rv{grid-template-columns:1fr}.rv input.wide,.rv button{grid-column:auto}.story-flow{grid-template-columns:1fr}table{min-width:620px}}
 </style>
-<main>
-<div><a class=back href='/'>← 返回推演面板</a></div>
-<h1>决策进化对比</h1><div class=sub>同一条推演链：初始决策 → 反馈信号 → 策略调整 → 偏差缩小 → 记忆沉淀</div>
-<div class=grid id=metrics><div class=metric><span>加载中…</span></div></div>
-<section class=card><h2>第一会话：进化前 vs 进化后</h2><table id=firstTable></table></section>
-<section class=card><h2>第二会话：分层记忆 warm start</h2><div id=memory></div></section>
-<section class=card><h2>人工协同反馈（第二信号）</h2><div id=review></div></section>
-<section class=card><h2>真实用户评分（3–5 人 · 进化前后各一次）</h2>
+"""
+
+
+def build_evolution_html() -> str:
+    return """<!doctype html><html lang=zh-CN><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>决策进化对比</title>""" + EVOLUTION_STYLE + """
+<main class=evolution-page>
+<header class=evolution-hero><div class=evolution-hero-copy><div class=evolution-eyebrow>POLICY EVOLUTION · 策略如何变好</div><h1>决策进化：从反馈到可回滚策略</h1><div class=sub>看清楚每次调整改了什么、为什么被采纳，以及下一次推演能否直接复用。</div></div><a class=back href='/'>← 返回推演面板</a></header>
+<div class="grid evolution-metrics" id=metrics><div class=metric><span>正在读取进化结果…</span></div></div>
+<div class=evolution-grid>
+<section class="card evolution-card outcome-card"><h2>先看结论</h2><div class=outcome-result>这次方案变好了</div><p>系统根据演练反馈调整了资源分配，结果更接近人工建议；下一次遇到相似事件，可以直接复用这套策略。</p><div class=outcome-list><span>误差降到 0</span><span>新场景没有变差</span><span>策略已记录，可回滚</span></div></section>
+<section class="card evolution-card flow-card"><h2>这页只讲四件事</h2><div class=story-flow><div class=story-step><strong>1 · 原来的方案</strong><span>先按初始规则分配资源。</span></div><div class=story-step><strong>2 · 收到建议</strong><span>人工指出重点片区需要更多资源。</span></div><div class=story-step><strong>3 · 调整方案</strong><span>把资源从低优先区域转到重点区域。</span></div><div class=story-step><strong>4 · 下次复用</strong><span>相似事件可直接沿用已验证策略。</span></div></div><p class=story-note>下面的数字用于证明这四步确实发生过；不需要先理解专业术语。</p></section>
+<section class="card evolution-card memory-card"><h2>第二会话：复用已验证经验</h2><div id=memory></div></section>
+<section class="card evolution-card review-panel"><h2>人工协同反馈：为什么采纳这次调整</h2><div id=review></div></section>
+<section class="card evolution-card allocation-card"><h2>真实事件：资源分配变化 · WO-20261029-007</h2><div id=realEvent></div></section>
+<details class=secondary-details><summary>更多审计信息 <span>评分、版本与边界说明</span></summary><div class=details-body>
+<section class="card evolution-card comparison-card"><h2>第一会话：策略调整前后</h2><table id=firstTable></table></section>
+<section class="card evolution-card feedback-card"><h2>真实用户评分：收集意见并触发门禁</h2>
 <div id=reviewReal class=rvstat>加载中…</div>
 <form class=rv id=rvForm>
   <input id=rvId placeholder='你的名字或编号（必填）' required>
@@ -194,9 +224,9 @@ code{background:#0e1a2c;padding:1px 5px;border-radius:4px;font-size:12px}
 <div id=gateLatest class=rvstat></div>
 <p class=dim>口径：评分只做汇总（样本/均分/前后差值），<b>不参与门禁</b>；只有给出"建议分配"的提交才会转成评审用例，成为候选策略的硬约束。真实用户评分是个人意见，非部门批复。</p>
 </section>
-<section class=card><h2>策略版本标签（可审计、可回滚）</h2><table id=releases></table></section>
-<section class=card><h2>真实事件分配对比：WO-20261029-007</h2><div id=realEvent></div></section>
-<div class=bound id=boundaries></div>
+<section class="card evolution-card history-panel"><h2>策略版本：可审计、可回滚</h2><table id=releases></table></section>
+<div class="bound evolution-footer" id=boundaries></div></div></details>
+</div>
 </main>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -209,10 +239,10 @@ async function main(){
   const first=p.first, second=p.second, review=p.review, real=p.real_event;
   const a=first.initial_train, b=first.final_train, c=first.initial_holdout, d=first.final_holdout;
   metrics.innerHTML=
-    '<div class=metric><span>训练集综合偏差</span><b>'+f4(a.deviation)+' → '+f4(b.deviation)+'</b><span class=dim>进化前 → 后</span></div>'+
-    '<div class=metric><span>留出集综合偏差</span><b>'+f4(c.deviation)+' → '+f4(d.deviation)+'</b><span class=dim>不退化门禁</span></div>'+
-    '<div class=metric><span>第二会话起点偏差</span><b class=ok>'+f4(second.initial_train.deviation)+'</b><span class=dim>记忆 warm start</span></div>'+
-    '<div class=metric><span>人工评审偏差</span><b>'+(review?f4(review.deviation_before)+' → '+f4(review.deviation_after):'-')+'</b><span class=dim>第二反馈信号</span></div>';
+    '<div class=metric><span>演练场景：方案偏差</span><b>'+f4(a.deviation)+' → '+f4(b.deviation)+'</b><span class=dim>调整前 → 调整后</span></div>'+
+    '<div class=metric><span>新场景：方案偏差</span><b>'+f4(c.deviation)+' → '+f4(d.deviation)+'</b><span class=dim>通过不退化门禁</span></div>'+
+    '<div class=metric><span>复用经验后的起点</span><b class=ok>'+f4(second.initial_train.deviation)+'</b><span class=dim>第二次会话</span></div>'+
+    '<div class=metric><span>人工建议修正幅度</span><b>'+(review?f4(review.deviation_before)+' → '+f4(review.deviation_after):'-')+'</b><span class=dim>第二反馈信号</span></div>';
   firstTable.innerHTML='<tr><th>指标</th><th>训练集 前</th><th>训练集 后</th><th>留出集 前</th><th>留出集 后</th></tr>'+
     row('综合决策偏差',a.deviation,b.deviation,c.deviation,d.deviation)+
     row('分配向量 L1 差（台）',a.allocation_l1_units,b.allocation_l1_units,c.allocation_l1_units,d.allocation_l1_units)+
@@ -222,25 +252,26 @@ async function main(){
     '<tr><td>最终策略标签</td><td colspan=4>'+label(first.final_label)+' 轮次 '+first.rounds.length+'（采纳 '+first.rounds.filter(x=>x.action==='promoted').length+' / 拒绝 '+first.rounds.filter(x=>x.action==='rejected').length+'）</td></tr>';
   const w=second.warm_start;
   memory.innerHTML=w?
-    '<p>命中经验条目 '+label(w.entry_id)+' 标签 '+label(w.label)+' 场景相似度 <b>'+f4(w.similarity)+'</b></p>'+
-    '<p class=dim>该条目历史结果：偏差 '+f4(w.source_outcome.deviation)+'、应调拨未调拨 '+esc(w.source_outcome.missed_transfers)+'、关键片区未满足 '+esc(w.source_outcome.critical_unmet_units)+' 台</p>'+
-    '<p>第二次会话：起点偏差 <b class=ok>'+f4(second.initial_train.deviation)+'</b>，只需 <b>'+second.rounds+'</b> 轮收敛探针（采纳 '+second.promoted_rounds+' 次）——记忆里存的是已验证有效的策略。</p>'+
-    (p.memory.path?'<p class=dim>记忆落盘：<code>'+esc(p.memory.path)+'</code>（追加式，跨进程可复用）</p>':'')
+    '<p class=story-lead>下次遇到相似事件，可以直接沿用 '+label(w.label)+'。</p>'+
+    '<p>这套策略已经验证过，第二次推演一开始就得到更好的结果；相似度 <b>'+f4(w.similarity)+'</b>。</p>'+
+    '<p class=dim>记录编号 '+label(w.entry_id)+'，用于审计和回滚。</p>'
     :'<p class=warn>未命中记忆</p>';
   review.innerHTML=review?
-    '<p>'+label(review.review_id)+' '+esc(review.reviewer_role)+' → <b>'+esc(review.decision)+'</b></p>'+
+    '<p class=story-lead>人工建议：把资源优先给更需要的片区。</p>'+
     '<p>'+esc(review.reason)+'</p>'+
-    '<p>修正后分配：<code>'+esc(JSON.stringify(review.expected_allocation))+'</code>；评审用例偏差 <b>'+f4(review.deviation_before)+' → <span class=ok>'+f4(review.deviation_after)+'</span></b></p>'+
-    '<p class=dim>口径：'+esc(review.reviewer_note)+'；评审结论已转成门禁硬约束，不满足的候选一律被拒。</p>'
+    '<p>采纳后，方案偏差从 <b>'+f4(review.deviation_before)+'</b> 降到 <b class=ok>'+f4(review.deviation_after)+'</b>。</p>'+
+    '<p class=dim>这条建议来自 '+esc(review.reviewer_role)+'，记录编号 '+label(review.review_id)+'。</p>'
     :'<p class=dim>本次无人工评审</p>';
   releases.innerHTML='<tr><th>策略标签</th><th>版本</th><th>父标签</th><th>触发反馈</th><th>触发评审</th><th>参数变更</th><th>预期改善</th></tr>'+
     (first.releases.length?first.releases.map(r=>'<tr><td>'+label(r.label)+'</td><td>'+esc(r.version_id)+'</td><td>'+esc(r.parent_label)+'</td><td>'+esc(r.trigger_feedback_id)+'</td><td>'+esc((r.trigger_review_ids||[]).join('，')||'-')+'</td><td><code>'+esc(JSON.stringify(r.params_delta))+'</code></td><td class=ok>'+f4(r.expected_improvement)+'</td></tr>').join(''):'<tr><td colspan=7 class=dim>本轮无采纳</td></tr>');
   if(real.baseline&&real.evolved){
     const names=Object.keys(real.evolved.allocation_by_district);
-    realEvent.innerHTML='<table><tr><th>片区</th><th>进化前分配</th><th>进化后分配</th><th>进化前未满足</th><th>进化后未满足</th></tr>'+
-      names.map(n=>'<tr><td>'+esc(n)+'</td><td>'+esc(real.baseline.allocation_by_district[n]??0)+'</td><td class=ok>'+esc(real.evolved.allocation_by_district[n]??0)+'</td><td>'+esc(real.baseline.unmet_by_district[n]??0)+'</td><td>'+esc(real.evolved.unmet_by_district[n]??0)+'</td></tr>').join('')+'</table>'+
-      '<p>调拨：'+esc(real.evolved.transfers.join('；')||'无')+'</p>'+
-      '<p class=dim>需上报增援：'+esc(real.evolved.escalation.join('；')||'无')+'</p>';
+    const gain=names.find(n=>(real.evolved.allocation_by_district[n]??0)>(real.baseline.allocation_by_district[n]??0));
+    const release=names.find(n=>(real.evolved.allocation_by_district[n]??0)<(real.baseline.allocation_by_district[n]??0));
+    const moved=gain&&release?Math.abs((real.evolved.allocation_by_district[gain]??0)-(real.baseline.allocation_by_district[gain]??0)):0;
+    realEvent.innerHTML='<p class=story-lead>把 <b>'+moved+' 台</b> 资源从 '+label(release||'其他片区')+' 调到 '+label(gain||'重点片区')+'。</p>'+
+      '<p>这样做的目的，是先满足更紧急的片区，而不是平均分配。</p>'+
+      '<p class=dim>需要额外上报增援：'+esc(real.evolved.escalation.join('；')||'无')+'</p>';
   } else { realEvent.innerHTML='<p class=warn>真实事件未跑通</p>'; }
   boundaries.innerHTML='表述边界：'+p.boundaries.map(esc).join(' · ')+'。反馈指纹 <code>'+esc((p.case_digest||'').slice(0,16))+'</code>';
   loadReviews();

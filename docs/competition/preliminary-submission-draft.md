@@ -125,7 +125,7 @@
 | 进化 | 训练/留出综合偏差 | 0.2264→0.0000 / 0.2182→0.0000 |
 | 进化 | 应调拨未调拨 / 关键片区未满足 | 4→0 次 / 15→6 台（6 为资源硬缺口下限） |
 | 进化 | 记忆 warm start / 评审约束 | 起点偏差 0.0000、轮次 3→1；评审偏差 0.1171→0 |
-| 工程 | 测试 / 对外数字自检 | 902 项测试通过；108/108 项一致 |
+| 工程 | 测试 / 对外数字自检 | 908 项测试通过；108/108 项一致 |
 | MCP | 工具数 / SSE 传输测试 | 14 个；10 项（握手、列工具、调工具、批量、错误路径） |
 
 ## 9 演示流程（现场 5–8 分钟）
@@ -160,7 +160,7 @@
 
 ```powershell
 uv sync --locked
-uv run --locked pytest -q                                  # 902 项测试（收集数）
+uv run --locked pytest -q                                  # 908 项测试（收集数）
 uv run --locked python -m decision_poc.evidence_check      # 108/108 项一致
 uv run --locked python -m decision_poc.urban_eval          # 22/22
 uv run --locked python -m decision_poc.policy_evolution --report docs/reports/p9-policy-evolution-report.md
