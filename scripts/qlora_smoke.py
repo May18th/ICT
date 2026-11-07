@@ -41,10 +41,16 @@ def main() -> None:
     batch = tokenizer(texts, return_tensors="pt", padding=True, truncation=True).to(model.device)
     batch["labels"] = batch["input_ids"].clone()
     out = model(**batch)
+    optimizer = torch.optim.AdamW((p for p in model.parameters() if p.requires_grad), lr=2e-4)
     out.loss.backward()
+    optimizer.step()
+    output_dir = DATASET.parent / "smoke_adapter"
+    model.save_pretrained(output_dir)
+    tokenizer.save_pretrained(output_dir)
     print(f"loss={float(out.loss):.4f}")
     print(f"trainable={sum(p.numel() for p in model.parameters() if p.requires_grad)}")
     print(f"peak_mb={torch.cuda.max_memory_allocated() / 1024**2:.1f}")
+    print(f"adapter={output_dir}")
 
 
 if __name__ == "__main__":
