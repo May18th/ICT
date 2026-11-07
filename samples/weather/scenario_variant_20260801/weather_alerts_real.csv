@@ -1,0 +1,2 @@
+﻿alert_id,issued_at,valid_from,valid_to,level,rainfall_mm_3h,district,source_org,status,description
+WA-REAL-20260801-01,2026-08-01T01:00:00+08:00,2026-08-01T01:00:00+08:00,2026-08-02T01:00:00+08:00,yellow,42.1,V2-A,ORG-METEO,active,真实暴雨过程（Open-Meteo/ERA5，成都 30.66N 104.07E）映射：24h 累计 77.7mm，峰值小时 15.5mm（05:00），3h 最大 42.1mm。
