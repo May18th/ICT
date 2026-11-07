@@ -101,7 +101,7 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望：对外数字自检：108/108 项一致（期望指纹 360ea5dc8f3d6865）
+# 期望：对外数字自检：108/108 项一致（期望指纹 c06b7f1eab2a58e2）
 ```
 
 期望值冻结在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/答辩口径，
@@ -449,8 +449,8 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **902 项测试通过**（口径是**收集数**：其中 1 项需可选依赖 `openai`，
-未 `uv sync --group llm` 时该条在输出里显示为 `skipped`，所以默认环境看到的是 passed 与 skipped 两个数，合计仍是 902）；
+当前基线：`uv run --locked pytest -q` 共 **908 项测试通过**（口径是**收集数**：其中 1 项需可选依赖 `openai`，
+未 `uv sync --group llm` 时该条在输出里显示为 `skipped`，所以默认环境看到的是 passed 与 skipped 两个数，合计仍是 908）；
 `python -m decision_poc.evidence_check` 108/108 项一致；
 城市内涝主链路 Nexent 真机校验 8/8（Agent v19 / DeepSeek-Chat，`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。

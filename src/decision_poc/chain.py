@@ -54,6 +54,40 @@ ORDER_TYPE_LABEL = {
     "power_coordination": "电力协调",
 }
 
+#: 预警等级的中文说法。页面第一环要写「响应等级 橙色预警」，直接吐 `orange` 评委读不懂。
+RESPONSE_LEVEL_LABEL = {
+    "red": "红色预警（Ⅰ级）",
+    "orange": "橙色预警（Ⅱ级）",
+    "yellow": "黄色预警（Ⅲ级）",
+    "blue": "蓝色预警（Ⅳ级）",
+}
+
+#: 六跳推演的阶段名。主 Agent 那环原来直接吐 `observed=supported、conflict=conflict`，
+#: 评委在页面上看到的是英文枚举，读不出「哪一跳有据、哪一跳暴露冲突」，所以摘要层翻中文。
+#: 字段值本身不改 —— 下游断言和证据链还靠 `stages[].stage/status`。
+DEDUCTION_STAGE_LABEL = {
+    "observed": "发生了什么",
+    "affected": "影响对象",
+    "owner": "责任归属",
+    "conflict": "冲突识别",
+    "resource": "资源缺口",
+    "action": "处置动作",
+    "audit": "结果复算",
+    "handoff": "交接",
+}
+
+#: 每跳的结论状态（与前端 EVST 表同口径）。
+CLAIM_STATUS_LABEL = {
+    "supported": "有据",
+    "conflict": "有冲突",
+    "detected": "已识别",
+    "ok": "正常",
+    "publishable": "可发布",
+    "residual": "有遗留风险",
+    "shortfall": "有缺口",
+    "unknown": "未判定",
+}
+
 #: 演示用的"备选方案"策略参数：P9 报告里进化后的最终策略（weight_closure=1 /
 #: weight_hazard=0.25 / transfer_penalty=0.1）。固化成常量是为了让"策略变了
 #: → 分配变了"这一条可复现，不是现场手调。
@@ -114,6 +148,28 @@ def load_work_orders(
     # 演示事件置顶，其余按上报时间倒序——评委第一眼看到的就是本次事件
     orders.sort(key=lambda item: (not item["is_event"], item["reported_at"]), reverse=False)
     return orders
+
+
+# --- 部门 -----------------------------------------------------------------
+
+
+def load_departments(root: Path | str | None = None) -> list[dict[str, Any]]:
+    """读部门职责台账，给页面出「哪个部门、管什么」的人话版本。
+
+    页面原来直接显示 `ORG-DRAIN` 这种代码，评委读不出是哪个单位；这里统一取台账里的
+    中文名与职责表述，避免前端另写一份会漂的映射表。
+    """
+    rows = _read_rows(_root(root) / "department_duties.csv")
+    return [
+        {
+            "org_id": (row.get("org_id") or "").strip(),
+            "org_name": (row.get("org_name") or "").strip(),
+            "authority": (row.get("authority") or "").strip(),
+            "escalation_note": (row.get("escalation_note") or "").strip(),
+        }
+        for row in rows
+        if (row.get("org_id") or "").strip()
+    ]
 
 
 # --- 资源 -----------------------------------------------------------------
@@ -468,6 +524,35 @@ def build_scene_entities(
 # --- 演示链路 -------------------------------------------------------------
 
 
+def _deduction_summary(deduction: Mapping[str, Any]) -> str:
+    """把 `stages[]` 压成一句中文，供页面「主 Agent 分析」那一环当摘要。
+
+    两条约束来自真浏览器联调：
+    1. 不能吐英文枚举（`observed=supported` 评委读不懂）；
+    2. 同一跳会被多条规则重复记（实测 10 条 `action`），逐条拼出来就是
+       「处置动作有据、处置动作有据、……」十遍。所以按阶段去重，状态不同才并列。
+    """
+    order: list[str] = []
+    seen: dict[str, list[str]] = {}
+    for item in deduction.get("stages") or []:
+        stage = str(item.get("stage") or "")
+        status = str(item.get("status") or "")
+        if not stage:
+            continue
+        if stage not in seen:
+            seen[stage] = []
+            order.append(stage)
+        label = CLAIM_STATUS_LABEL.get(status, status)
+        if label and label not in seen[stage]:
+            seen[stage].append(label)
+
+    parts = []
+    for stage in order:
+        name = DEDUCTION_STAGE_LABEL.get(stage, stage)
+        parts.append(name + "/".join(seen[stage]) if seen[stage] else name)
+    return "、".join(parts)
+
+
 def build_chain(
     payload: Mapping[str, Any],
     *,
@@ -490,9 +575,12 @@ def build_chain(
     event_order = next(
         (item for item in (orders or []) if item.get("is_event")), None
     )
+    level_cn = RESPONSE_LEVEL_LABEL.get(
+        str(facts.get("response_level") or ""), str(facts.get("response_level") or "-")
+    )
     event_text = (
         f"{facts.get('event_id', '-')} {facts.get('district', '-')} 积水 {facts.get('depth_cm', '-')} cm"
-        f"，响应等级 {facts.get('response_level', '-')}"
+        f"，响应等级 {level_cn}"
     )
     if event_order:
         event_text += f"；工单来源 {event_order.get('reporter_org', '-')}「{event_order.get('description', '')}」"
@@ -525,12 +613,7 @@ def build_chain(
             "title": "主 Agent 分析",
             "actor": "urban_deduction_agent",
             "tool": "event_deduce",
-            "summary": (
-                f"六跳推演完成，跳状态："
-                + "、".join(
-                    f"{item.get('stage')}={item.get('status')}" for item in deduction.get("stages") or []
-                )
-            ),
+            "summary": "六跳推演完成，" + _deduction_summary(deduction),
             "facts": [
                 f"受影响对象 {len((payload.get('impact') or {}).get('affected') or [])} 个",
                 f"命中规则覆盖 {sum((facts.get('rule_coverage') or {}).values())} 条",
@@ -650,19 +733,23 @@ def build_chain(
         "stages": stages,
         "counts": {"stages": len(stages), "tools": len(tools)},
         "tools": tools,
-        "source": "七环全部派生自同一份 payload + collab-review，展示层不新算数字",
+        "source": "以上 7 步全部基于同一份推演结果，页面只做呈现、不重算数字",
     }
 
 
 __all__ = [
     "ALTERNATIVE_POLICY",
     "AS_OF",
+    "CLAIM_STATUS_LABEL",
+    "DEDUCTION_STAGE_LABEL",
     "EVENT_ID",
     "ORDER_RESOURCE",
     "ORDER_TYPE_LABEL",
+    "RESPONSE_LEVEL_LABEL",
     "build_chain",
     "build_plan_alternatives",
     "build_resource_board",
     "build_scene_entities",
+    "load_departments",
     "load_work_orders",
 ]

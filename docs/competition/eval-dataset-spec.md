@@ -103,7 +103,7 @@ PYTHONPATH=src uv run --locked python -m decision_poc.ablation --check
 PYTHONPATH=src uv run --locked python -m decision_poc.evidence_check
 ```
 
-实测：第 4 条输出 `对外数字自检：108/108 项一致（期望指纹 360ea5dc8f3d6865）`。
+实测：第 4 条输出 `对外数字自检：108/108 项一致（期望指纹 c06b7f1eab2a58e2）`。
 
 第 1 条实测输出（2026-11-06 实跑）：
 

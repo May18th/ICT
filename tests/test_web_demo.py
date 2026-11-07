@@ -23,7 +23,7 @@ def test_scene_payload_is_engine_neutral():
 
 def test_html_contains_demo_panels_and_api_route():
     html = build_html()
-    assert "数字孪生影响范围" in html
+    assert "受影响对象" in html
     assert "跨部门协同" in html
     assert "fetch('/api/demo')" in html
     # 评审要看"谁触发了渲染"，所以面板在页面上
@@ -114,6 +114,16 @@ def test_page_has_scheduler_panels_and_live_scene():
     for fn in ("loadScheduler", "drawScene", "pickEntity", "renderOrders", "renderResources", "renderPlan"):
         assert f"function {fn}" in html, f"页面缺取数函数 {fn}"
     assert "fetch('/api/scheduler')" in html
+    assert "受影响对象" in html
+    assert "<span>事件</span><b>→</b><span>受影响对象</span><b>→</b><span>处置动作</span>" in html
+    assert 'id=scene-summary' in html
+    assert 'class=page-hero' in html
+    assert 'outcome-card' in html
+    assert 'process-card' in html
+    assert 'primary-grid' in html
+    assert 'data-grid' in html
+    assert 'id=scene-detail' in html
+    assert "查看判断依据" in html
     # 场景图必须是按实体渲染的，不能退回固定椭圆
     assert "polygon class=" in html
     assert "<ellipse class=flood" not in html

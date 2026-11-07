@@ -552,7 +552,7 @@ def build_event_stream(
         ],
         "counts": {**counts, "events": len(events)},
         "events": events,
-        "source": "六类事件同源派生自 /api/demo + collab-review（展示层只排序、不重算）",
+        "source": "6 类事件都取自同一份推演结果，页面只排顺序、不重算数字",
     }
 
 
