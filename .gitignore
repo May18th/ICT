@@ -60,3 +60,6 @@ deploy-webdemo/
 
 # 训练产物（模型权重不入仓）
 dist/
+
+# 本地模型/引擎缓存（HF 权重与 pyswmm 输出，可重建）
+.cache/
