@@ -113,6 +113,10 @@ def test_page_has_scheduler_panels_and_live_scene():
         assert marker in html, f"页面缺 {marker}"
     for fn in ("loadScheduler", "drawScene", "pickEntity", "renderOrders", "renderResources", "renderPlan"):
         assert f"function {fn}" in html, f"页面缺取数函数 {fn}"
+    # 场景实体要能键盘操作：role=button + tabindex 只让元素"能聚焦"，
+    # 实测按 Enter 详情面板纹丝不动（before=0 / after=0），必须显式挂 onkeydown。
+    assert "onkeydown=\"entKey(event," in html
+    assert "function entKey" in html and "preventDefault" in html
     assert "fetch('/api/scheduler')" in html
     assert "受影响对象" in html
     assert "<span>事件</span><b>→</b><span>受影响对象</span><b>→</b><span>处置动作</span>" in html

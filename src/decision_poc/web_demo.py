@@ -410,7 +410,9 @@ function drawScene(scene){if(!scene||!scene.entities)return;renderSceneSummary(s
   parts.push('<text x="'+e.cx+'" y="'+(e.cy-r-5)+'" fill="#4a6484" font-size="11" text-anchor="middle" pointer-events="none">'+esc(e.label)+' 片区</text>')});
  (scene.entities||[]).filter(e=>e.kind!=='district').forEach(e=>{const cls='ent k-'+esc(e.kind)+(SCENE_SELECTED_ID===e.id?' selected':'');
   const shape=e.kind==='road'?'road':(e.kind==='water'?'flood':'node');
-  const attrs='data-id="'+esc(e.id)+'" role="button" tabindex="0" aria-label="'+esc(e.label)+'" onclick="pickEntity(\\''+esc(e.id)+'\\')"';
+  // role=button + tabindex 只让人"能聚焦"，不按 Enter 就等于没键盘支持。
+  // 实测：焦点能落到实体上，但 before=0 / after=0，详情面板纹丝不动。
+  const attrs='data-id="'+esc(e.id)+'" role="button" tabindex="0" aria-label="'+esc(e.label)+'" onclick="pickEntity(\\''+esc(e.id)+'\\')" onkeydown="entKey(event,\\''+esc(e.id)+'\\')"';
   if(e.shape==='line'){parts.push('<polyline class="'+cls+' '+shape+'" points="'+e.points+'" fill="none" '+attrs+'/>')}
   else if(e.shape==='polygon'){parts.push('<polygon class="'+cls+' '+shape+'" points="'+e.points+'" '+attrs+'/>')}
   else{parts.push('<circle class="'+cls+' '+shape+'" cx="'+e.cx+'" cy="'+e.cy+'" r="'+e.r+'" '+attrs+'/>')}});
@@ -425,6 +427,7 @@ function pickEntity(id){if(!SCHED)return;const e=(SCHED.scene.entities||[]).find
  sceneDetail.innerHTML='<div class=scene-detail-head><span class=scene-kind>'+esc(SCENE_KIND[e.kind]||e.kind)+'</span><b>'+esc(e.label)+'</b><span class=scene-state>'+esc(SCENE_STATE[e.state]||e.state||'待确认')+'</span></div>'+
   '<div class=scene-detail-grid><div><small>影响说明</small><strong>'+esc(e.detail||'暂无说明')+'</strong></div><div><small>关联工单</small><strong>'+orders+'</strong></div><div><small>所需资源</small><strong>'+resources+'</strong></div></div>'+
   '<details class=scene-evidence><summary>查看判断依据</summary><div class=evidence>'+esc(evidence)+'</div></details>'}
+function entKey(ev,id){const k=ev.key;if(k==='Enter'||k===' '||k==='Spacebar'||k==='Space'){ev.preventDefault();pickEntity(id)}}
 function renderDepartments(){const el=document.getElementById('departments');
  if(!SCHED||!SCHED.departments||!SCHED.departments.length){el.innerHTML='<span class=sub>部门台账加载中…</span>';return}
  const inv=new Set(SCHED.involved_orgs||[]);
