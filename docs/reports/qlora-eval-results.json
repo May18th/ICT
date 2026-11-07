@@ -1,0 +1,96 @@
+{
+  "summary": {
+    "base": {
+      "json_valid": 0.0,
+      "allocation_by_district": 0.0,
+      "transfers": 0.0,
+      "priority_order": 0.0,
+      "critical_unmet": 0.0
+    },
+    "tuned": {
+      "json_valid": 0.75,
+      "allocation_by_district": 0.0,
+      "transfers": 0.25,
+      "priority_order": 0.0,
+      "critical_unmet": 0.0
+    }
+  },
+  "detail": {
+    "base": [
+      {
+        "case_id": "H1",
+        "raw": "根据提供的信息和资源信号，可以得出以下可审计的调度结论：\n\n### 城市内涝应急响应\n\n**调度目标：**\n确保在紧急情况下，城市能够有效应对内涝问题。\n\n**当前状态分析：**\n- **A-03 区域：**\n  - 深度（cm）: 30.0\n  - 需求：4台\n  - 当前可用：3台\n  - 紧急需求：6台\n  - 是否存在危险：是\n  - 是否需要关闭：是\n  \n- **B-01 区域：**\n  - 深度（cm）: 18.0\n  - 需求：2台\n  - 当前可用：4台\n  - 紧急需求：6台\n  - 是否存在危险：否\n  - 是否需要关闭：否\n\n### 资源分配与调度：\n1. **A-03 区域：**\n   - 根据地面实况跳过第5步，说明该区域的需求为4台，但当前可用只有3台。\n   - 因此，需从世界范围",
+        "json_valid": false,
+        "allocation_by_district": false,
+        "transfers": false,
+        "priority_order": false,
+        "critical_unmet": false
+      },
+      {
+        "case_id": "H2",
+        "raw": "根据提供的信息和资源信号，可以得出以下可审计的调度结论：\n\n### 调度目标：\n确保在城市内涝应急响应中，关键区域（如A-03）能够满足其需求，并且避免潜在的风险。\n\n### 资源分配情况：\n1. **A-03**：\n   - 需求：3台\n   - 当前可用：2台\n   - 剩余世界要求：7台\n\n2. **B-01**：\n   - 需求：4台\n   - 当前可用：1台\n   - 剩余世界要求：7台\n\n### 分析：\n- A-03当前可用2台，但需求为3台。因此，A-03需要额外1台设备来满足需求。\n- B-01当前可用1台，但需求为4台。因此，B-01需要额外3台设备来满足需求。\n\n### 结论：\n为了确保A-03能够满足其需求并避免潜在风险，应从B-01中提取剩余的3台设备进行补充。这样可以确保A-03有足够的设备应对可能发生的内涝事件，",
+        "json_valid": false,
+        "allocation_by_district": false,
+        "transfers": false,
+        "priority_order": false,
+        "critical_unmet": false
+      },
+      {
+        "case_id": "H3",
+        "raw": "根据提供的信息和资源信号，可以得出以下可审计的调度结论：\n\n### 可审计调度结论\n\n**留出：两个片区都无关键状态且都有富余，不应发生调拨**\n\n#### 原因分析：\n1. **两个片区的状态评估**：\n   - 区域 A-03 的深度为 18.0 cm，没有关键状态（`has_hazard: false`），并且有充足的可用资源（`local_available: 4`）。\n   - 区域 B-01 的深度为 18.0 cm，也没有关键状态（`has_hazard: false`），并且也有足够的可用资源（`local_available: 4`）。\n\n2. **区域的需求与供应情况**：\n   - 区域 A-03 的需求量为 3，但其本地可用资源为 4，因此该区域有足够的资源来满足需求。\n   - 区域 B-01 的需求量也为 3，但其本地可用资源同样为 4，因此该区域也足够满足需求",
+        "json_valid": false,
+        "allocation_by_district": false,
+        "transfers": false,
+        "priority_order": false,
+        "critical_unmet": false
+      },
+      {
+        "case_id": "H4",
+        "raw": "根据提供的信息和资源信号，可以得出以下可审计的调度结论：\n\n### 可审计调度结论\n\n**留出：双关键但风险类型不同，均不可被调出**\n\n#### 原因分析：\n1. **双关键且不可调出**：\n   - **区位 A-03**: 深度为 30 cm，存在危险源，需求量为 5，本地可用资源为 3，世界所需资源为 10。\n   - **区位 B-01**: 深度为 18 cm，不存在危险源，需求量为 4，本地可用资源为 3，世界所需资源为 10。\n\n2. **风险类型不同**：\n   - 区位 A-03 的危险源可能导致严重的水灾，影响公共安全。\n   - 区位 B-01 的危险源可能对基础设施造成损害，但其危害程度相对较低。\n\n#### 调度建议：\n- 将区位 A-03 留在当前区域，因为它需要更多的世界资源来应对潜在的洪水风险。\n- 将区位 B-01 移至其他区域或关闭，因为其",
+        "json_valid": false,
+        "allocation_by_district": false,
+        "transfers": false,
+        "priority_order": false,
+        "critical_unmet": false
+      }
+    ],
+    "tuned": [
+      {
+        "case_id": "H1",
+        "raw": "{\"allocation\": {\"A-03\": 3, \"B-01\": 4}, \"critical_gap\": {\"A-03\": 1, \"B-01\": 2}}",
+        "json_valid": true,
+        "allocation_by_district": false,
+        "transfers": false,
+        "priority_order": false,
+        "critical_unmet": false
+      },
+      {
+        "case_id": "H2",
+        "raw": "{\"allocation\": {\"A-03\": 2, \"B-01\": 3}, \"reason\": [\"A-03 缺口 3 台，需留出 2 台；B-01 需要 4 台，但 A-03 只能让 2 台，因此 B-01 应该优先调度\"]}",
+        "json_valid": true,
+        "allocation_by_district": false,
+        "transfers": false,
+        "priority_order": false,
+        "critical_unmet": false
+      },
+      {
+        "case_id": "H3",
+        "raw": "{\"allocation\": {\"A-03\": 2, \"B-01\": 2}, \"required_by_districts\": [\"A-03\", \"B-01\"], \"transfers\": []}",
+        "json_valid": true,
+        "allocation_by_district": false,
+        "transfers": true,
+        "priority_order": false,
+        "critical_unmet": false
+      },
+      {
+        "case_id": "H4",
+        "raw": "{\"allocation\": {\"A-03\": 3, \"B-01\": 0}, \"reason\": [\"A-03 需要 5 可以提供 3，缺口 2；B-01 需要 4，可以提供 3，正好满足。\"]}\n{\"critical_districts\": [\"A-03\"], \"unavailable_by_world\": {\"A-03\": 2}, \"transfers_required\": []}",
+        "json_valid": false,
+        "allocation_by_district": false,
+        "transfers": false,
+        "priority_order": false,
+        "critical_unmet": false
+      }
+    ]
+  }
+}

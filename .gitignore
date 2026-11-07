@@ -57,3 +57,6 @@ deploy-webdemo/
 
 # RAG 索引（build 产物，60~150 MB，按需重建）
 .rag_index*/
+
+# 训练产物（模型权重不入仓）
+dist/
