@@ -133,6 +133,12 @@ class NexentHttpTransport:
 7. Agent 输出契约定为**严格 JSON**：`parse_decision_output()` 直接走 `DecisionOutput` 校验；
    不合格（含非 JSON）不抛异常打断链路，而是返回 `decision=None` + `decision_error`，
    交给上层按结构化失败处理。
+8. 拒答必须显式表达：`refused: bool` + `refusal_reason: str | None` 互斥——`refused=true`
+   必须给理由，`refused=false` 不得带理由（与 `ToolResult` 的
+   `error status requires error` 同一套口径）。这两个字段都有默认值
+   （`false` / `null`），平台侧历史 JSON 不带它们仍能反序列化。
+   证据池为空时唯一的占位来源是 `contracts.MISSING_EVIDENCE_SOURCE`
+   （`"missing:evidence"`），下游据此判定"无证据拒答"而不是硬编码字符串。
 
 错误类型：`NexentConfigError` / `NexentAuthError` / `NexentConflictError` /
 `NexentTransportError` / `NexentStreamError`，共同基类 `NexentError`。

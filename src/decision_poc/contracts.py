@@ -16,6 +16,10 @@ def _nonblank(value: str) -> str:
     return value
 
 
+#: 证据池为空时唯一允许的占位来源。下游据此判定"无证据拒答"，不要在别处硬编码字符串。
+MISSING_EVIDENCE_SOURCE = "missing:evidence"
+
+
 class ProvenanceLevel(StrEnum):
     """数据来源级别：契约层的统一枚举，检查层与定量层共用同一套取值。
 
@@ -144,6 +148,10 @@ class DecisionOutput(StrictModel):
     risk_level: RiskLevel
     risks: list[str] = Field(min_length=1)
     evidence: list[EvidenceItem] = Field(min_length=1)
+    # 拒答必须显式表达：证据不足 / 无权限时不允许用"选了个保守选项"含糊过去。
+    # 两个字段都给默认值，是为了让平台侧历史 JSON（没有这两个键）照旧能反序列化。
+    refused: bool = False
+    refusal_reason: str | None = None
 
     @field_validator("request_id", "summary", "selected_option_id")
     @classmethod
@@ -161,6 +169,19 @@ class DecisionOutput(StrictModel):
         if self.selected_option_id not in option_ids:
             raise ValueError("selected_option_id must reference an option")
         return self
+
+    @model_validator(mode="after")
+    def refusal_must_be_explained(self) -> "DecisionOutput":
+        reason = (self.refusal_reason or "").strip()
+        if self.refused and not reason:
+            raise ValueError("refusal requires reason")
+        if not self.refused and reason:
+            raise ValueError("non-refusal forbids reason")
+        return self
+
+    def cites_only_placeholder_evidence(self) -> bool:
+        """是否所有引用都是"证据池为空"占位——下游据此跳过白名单校验。"""
+        return all(item.source == MISSING_EVIDENCE_SOURCE for item in self.evidence)
 
 
 class ToolError(StrictModel):

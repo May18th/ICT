@@ -186,7 +186,7 @@
   > 数据是合成的，定量层还没进主链路。
   > 我们不宣称实时数字孪生。
   > 一条命令自检，数字可复现。
-- **屏幕证据**：`python -m decision_poc.evidence_check`（期望末行「对外数字自检：108/108 项一致（期望指纹 14070e22fff848e6）」）；本文件开头那句「数字以该命令输出为准」就是这一镜的口播依据。
+- **屏幕证据**：`python -m decision_poc.evidence_check`（期望末行「对外数字自检：108/108 项一致（期望指纹 f0cfb775568f96ed）」）；本文件开头那句「数字以该命令输出为准」就是这一镜的口播依据。
 - **失败兜底**：二维码扫不开（分享网关要 sharecode）→ 画面同时打全 URL 文字，旁白加「链接在片尾字幕里」；自检跑不过 → **不演**，改为「数字口径已冻结在期望文件里，答辩时现场跑」。
 
 ---
@@ -292,7 +292,7 @@
 
 ## 5. [待核实] 清单（这些不进配音，只进备注）
 
-1. **测试数口径冲突**：本任务简报写「测试 745 项」，但仓库冻结口径是 **913 项**（`samples/eval/evidence_expectations.json` 的 `test_baseline.collected=913`、`docs_declared=[913]`，README 与 5 份文档一致）。→ 3 分钟视频里**不出现测试数**；若答辩必须说，先跑 `python -m decision_poc.evidence_check` 以输出为准。
+1. **测试数口径冲突**：本任务简报写「测试 745 项」，但仓库冻结口径是 **914 项**（`samples/eval/evidence_expectations.json` 的 `test_baseline.collected=914`、`docs_declared=[914]`，README 与 5 份文档一致）。→ 3 分钟视频里**不出现测试数**；若答辩必须说，先跑 `python -m decision_poc.evidence_check` 以输出为准。
 2. **真机记录**：仓库当前 4 条——`llm_decision_platform.json` + `run1/2/3`，全部 `selected_option_id=opt-3`、`selected_match=true`、`schema_valid=true`（2026-11-06 复测）；修复前为 `opt-1` / `opt-2` 且 `selected_match=false`（git `e351027~1` 与真机报告「2026-11-06 追加」）。镜头 11 只讲"先错后对 + 3/3 是服从性"，不编造"空证据解析失败"。
 3. **`VD02-A` 的静帧张数**：`video-clips/README.md` 与简报都是 **4 张 / 10.8s**，但 `winning-gap-audit.md` §8.2 写「A 版从 4 张加为 5 张（含 S5 街面视角）」。→ 剪辑前用播放器确认实际张数与时长，以文件为准。
 4. **`action_count` 与「处置顺序条数」**：冻结期望 `p6_deduction.action_count=10`，`delivery-status.md` 已统一为「处置顺序 10 条」（2026-11-05 修正）。→ 视频可按 10 条讲，或只报"有顺序、有责任部门"。

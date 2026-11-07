@@ -26,7 +26,8 @@ DECISION_SCHEMA_HINT = (
     '{"request_id": "<string>", "summary": "<string>", "options": [{"option_id": "<string>", '
     '"description": "<string>", "expected_impact": "<string>"}], "selected_option_id": "<string>", '
     '"confidence": <0-1 的数字>, "risk_level": "low|medium|high", "risks": ["<string>"], '
-    '"evidence": [{"source": "<string>", "content": "<string>"}]}'
+    '"evidence": [{"source": "<string>", "content": "<string>"}], '
+    '"refused": <true|false>, "refusal_reason": "<string 或 null>"}'
 )
 
 
@@ -104,6 +105,8 @@ def build_decision_query(payload: Mapping[str, Any]) -> str:
             "请基于本 Agent 的领域知识给出可执行决策，并严格按下面的 JSON 结构输出：",
             DECISION_SCHEMA_HINT,
             f"其中 request_id 固定填 \"{request_id}\"。",
+            "证据不足或无权处置时，refused 填 true 并给出 refusal_reason；"
+            "否则 refused 填 false、refusal_reason 填 null。",
             "只输出这段 JSON 本身，不要 Markdown 代码块、不要解释、不要输出任何工具调用标记。",
         ]
     )
