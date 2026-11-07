@@ -75,11 +75,47 @@ python -m decision_poc.nexent_urban                                      # 8/8
 - 不含 terminal 工具镜像：`ENABLE_TERMINAL_TOOL_CONTAINER=false`，全链路禁用沙箱执行。
 - 模型不走本地推理：Agent 调用外部 LLM API，**离线机上仍需能访问所选模型服务**（按官方离线口径理解为"不依赖在线开发环境"，模型侧网络要求见现场网络方案）。若现场完全断网，需另备本地推理方案（当前未配置）。
 
-## 7 断网实测（待执行）
-
-清单（评估文档 §5.4）：断 WLAN → 从零 load → compose up → 跑一次六跳对话 → 截图留证。
+## 7 断网实测（步骤已备好，待执行）
 
 **当前状态：未执行。** 执行后在本节补：日期、断网方式、通过项、失败项。在此之前，本包的对外表述是「已产出离线镜像包，断网从零重建实测待补」——不得写成「已验证」。
+
+前置确认（2026-11-07 已做）：14/14 个 tar 结构校验通过（`tar -tf` + `manifest.json` 可读）。
+
+### 档 1：离线指令链路验证（低风险，服务中断约 5 分钟，可随时做）
+
+验证 compose 全程不碰网、load 指令可用。不动镜像与卷，只 down/up。
+
+```bash
+# 1) 停全栈（保留镜像与卷）
+docker compose -p nexent -f <nexent的compose>.yml down
+docker compose -f <urban-twin-mcp的compose>.yml down
+
+# 2) 断网（关 WLAN / 拔网线），ping 一个外网 IP 确认断开
+
+# 3) 重放 load（镜像已存在，验证命令与 tar 可读性）
+for tar in dist-offline/images/*.tar; do docker load -i "$tar"; done
+
+# 4) 离线拉起（--pull never 强制禁止在线拉取，等效断网检查）
+docker compose ... up -d --pull never
+
+# 5) 健康检查（§4 第 5 步）+ 跑一次六跳对话
+
+# 6) 记录：起止时间、每步结果、失败与处置
+```
+
+### 档 2：真从零重建（高风险，只建议在备份机 / 大版本节点做）
+
+```bash
+docker ps -aq | xargs docker rm -f        # 清全部容器（卷保留）
+docker images -q | xargs docker rmi -f    # 清全部镜像（不可逆，确认 tar 14/14 校验过再执行）
+# 断网 → install-offline.sh → compose up → 健康检查 → 六跳对话 → 截图留证
+```
+
+风险提示：删除镜像前必须再次确认 `SHA256SUMS` 与 tar 在本机；卷一旦删除，台账/会话数据不可恢复，**档 2 永远不要动卷**。
+
+### 判定标准（两档通用）
+
+通过 = ① load 全部成功无报错；② compose up 全程无 pull 尝试（日志无 "Pulling"）；③ 15 容器全 Up 且 healthy；④ `/health` tools_count=15；⑤ 六跳对话 8/8。任一不满足即失败，记录现场后回退（恢复网络按原部署文档重建）。
 
 ## 附录 A：镜像清单（权威，14 个，共 4.92 GB）
 
