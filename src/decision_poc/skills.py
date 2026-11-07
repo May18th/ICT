@@ -1142,18 +1142,7 @@ def skill_manifest() -> dict[str, Any]:
 # --- helpers ------------------------------------------------------------
 
 
-def _as_error_code(value: str) -> ErrorCode:
-    try:
-        return ErrorCode(value)
-    except ValueError:
-        return ErrorCode.INTERNAL_ERROR
-
-
-def _num(value: Any) -> float | None:
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
+from ._shared import parse_number as _num
 
 
 def _dedupe(items: Sequence[str]) -> list[str]:
@@ -1393,6 +1382,13 @@ __all__ = [
     "render_report",
     "skill_manifest",
 ]
+
+
+def _as_error_code(value: str) -> ErrorCode:
+    try:
+        return ErrorCode(value)
+    except ValueError:
+        return ErrorCode.INTERNAL_ERROR
 
 
 if __name__ == "__main__":  # pragma: no cover

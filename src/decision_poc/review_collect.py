@@ -26,7 +26,6 @@ P9.1 的评审是**角色扮演**（`decision_reviews.json` 里明确标注）�
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import sys
@@ -60,12 +59,7 @@ REVIEWER_NOTE = "真实用户评分（个人意见，非部门批复）"
 MIN_REVIEWERS = 3
 
 
-def _canonical(payload: Any) -> str:
-    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
-
-def _digest(payload: Any) -> str:
-    return hashlib.sha256(_canonical(payload).encode("utf-8")).hexdigest()
+from ._shared import canonical_json as _canonical, payload_digest as _digest
 
 
 # --- 模型 -----------------------------------------------------------------

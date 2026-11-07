@@ -418,11 +418,7 @@ def _pump_inventory(runtime: SkillRuntime) -> int:
     return total
 
 
-def _num(value: Any) -> float | None:
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
+from ._shared import parse_number as _num, parse_datetime as _time
 
 
 def _summarise(report: PipelineReport, runtime: SkillRuntime) -> BranchSummary:
@@ -552,13 +548,6 @@ def _road_states(runtime: SkillRuntime, district: str, closed_road: str | None, 
     return states
 
 
-def _time(value: Any) -> datetime | None:
-    if not isinstance(value, str):
-        return None
-    try:
-        return datetime.fromisoformat(value)
-    except ValueError:
-        return None
 
 
 # --- priority (CF2) -----------------------------------------------------
@@ -979,13 +968,6 @@ def _verdict(
     return "结论变化 " + ("是" if diff.changed else "否")
 
 
-def _as_error_code(value: str) -> ErrorCode:
-    try:
-        return ErrorCode(value)
-    except ValueError:
-        return ErrorCode.INTERNAL_ERROR
-
-
 # --- CLI ----------------------------------------------------------------
 
 
@@ -1109,6 +1091,13 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print("\n\n".join(_format(result) for result in results))
     return 0
+
+
+def _as_error_code(value: str) -> ErrorCode:
+    try:
+        return ErrorCode(value)
+    except ValueError:
+        return ErrorCode.INTERNAL_ERROR
 
 
 if __name__ == "__main__":  # pragma: no cover

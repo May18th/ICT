@@ -23,7 +23,6 @@ P9 的进化循环本身只在"一次进程内"成立：每次从 v1 起步、�
 
 from __future__ import annotations
 
-import hashlib
 import json
 from enum import StrEnum
 from pathlib import Path
@@ -56,12 +55,7 @@ class MemoryScope(StrEnum):
     AGENT = "agent"
 
 
-def _canonical(payload: Any) -> str:
-    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
-
-def _digest(payload: Any) -> str:
-    return hashlib.sha256(_canonical(payload).encode("utf-8")).hexdigest()
+from ._shared import canonical_json as _canonical, payload_digest as _digest
 
 
 # --- 场景签名与经验条目 ---------------------------------------------------

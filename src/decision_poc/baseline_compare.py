@@ -15,11 +15,11 @@
 """
 from __future__ import annotations
 
-import csv
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .urban_dataset import DEFAULT_DATASET_ROOT
+from ._shared import dataset_root, read_csv_rows
 
 #: 人工值守时要翻的台账。数字直接来自行数，不凭印象写"十几张表"。
 LEDGER_FILES = (
@@ -41,14 +41,11 @@ PROCEDURE_FILES = (
 
 
 def _root(root: Path | str | None = None) -> Path:
-    return Path(root) if root else Path(DEFAULT_DATASET_ROOT)
+    return dataset_root(root, DEFAULT_DATASET_ROOT)
 
 
 def _rows(path: Path) -> list[dict[str, str]]:
-    if not path.is_file():
-        return []
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        return [dict(row) for row in csv.DictReader(handle)]
+    return read_csv_rows(path)
 
 
 def build_manual_baseline(root: Path | str | None = None) -> dict[str, Any]:

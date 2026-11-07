@@ -364,20 +364,7 @@ def verify_rules(rules: RuleSet, dataset_root: Path | str) -> list[tuple[str, st
 # --- engine -------------------------------------------------------------
 
 
-def _time(value: Any) -> datetime | None:
-    if not isinstance(value, str):
-        return None
-    try:
-        return datetime.fromisoformat(value)
-    except ValueError:
-        return None
-
-
-def _num(value: Any) -> float | None:
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
+from ._shared import parse_datetime as _time, parse_number as _num
 
 
 def district_of(objects: Mapping[str, TwinObject], obj: TwinObject) -> str | None:
