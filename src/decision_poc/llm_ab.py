@@ -26,6 +26,7 @@ from typing import Any, Callable, Literal
 
 from .agent import generate_decision_async, generate_decision_live
 from .contracts import (
+    MISSING_EVIDENCE_SOURCE,
     DecisionOption,
     DecisionOutput,
     DecisionRequest,
@@ -85,12 +86,17 @@ class ABTask:
     expected_kind: str  # "action" | "refuse"
     risk_hint: RiskLevel
     provided_sources: tuple[str, ...]
+    #: options 里那个"拒答项"的 id。选中它即视为拒答，输出须带 refusal_reason。
+    refusal_option_id: str | None = None
 
     def option_ids(self) -> set[str]:
         return {item["option_id"] for item in self.options}
 
     def source_of(self, item: dict[str, Any]) -> str:
         return str(item.get("source", "")).strip()
+
+    def is_refusal(self, selected_option_id: str) -> bool:
+        return self.refusal_option_id is not None and selected_option_id == self.refusal_option_id
 
 
 @dataclass
@@ -311,6 +317,7 @@ def build_task(
     order = _shuffle_positions(case.case_id, len(entries))
     options: list[dict[str, str]] = []
     expected_id = None
+    refusal_id: str | None = None
     for position, source_index in enumerate(order, start=1):
         entry = entries[source_index]
         option_id = f"opt-{position}"
@@ -325,6 +332,8 @@ def build_task(
                 ),
             }
         )
+        if entry["kind"] == "refuse":
+            refusal_id = option_id
         if entry["expected"]:
             expected_id = option_id
     if expected_id is None:  # 兜底：没有任何可选项时只能拒答
@@ -337,6 +346,7 @@ def build_task(
         )
         expected_id = "opt-1"
         refused = True
+        refusal_id = "opt-1"
 
     assert expected_id in {item["option_id"] for item in options}
 
@@ -401,14 +411,19 @@ def build_task(
         expected_kind="refuse" if refused else "action",
         risk_hint=_WARNING_TO_RISK.get(warning, RiskLevel.MEDIUM),
         provided_sources=tuple(source for source, _ in pool),
+        refusal_option_id=refusal_id,
     )
 
 
 def _decision(
     task: ABTask, selected_option_id: str, evidence_items: list[EvidenceItem]
 ) -> DecisionOutput:
-    fallback_evidence = [
-        EvidenceItem(source="missing:evidence", content="给定证据池为空（用例无可用依据）")
+    # 拒答不是"选了保守选项"就算：必须选中 options 里的拒答项，输出才带 refusal_reason。
+    refused = task.is_refusal(selected_option_id)
+    evidence = evidence_items or [
+        EvidenceItem(
+            source=MISSING_EVIDENCE_SOURCE, content="给定证据池为空（用例无可用依据）"
+        )
     ]
     return DecisionOutput(
         request_id=task.request.request_id,
@@ -418,7 +433,11 @@ def _decision(
         confidence=0.8,
         risk_level=task.risk_hint,
         risks=["仅基于给定证据；证据不完整时结论可能偏保守"],
-        evidence=evidence_items or fallback_evidence,
+        evidence=evidence,
+        refused=refused,
+        refusal_reason=(
+            "推演判定证据不足或权限受限，拒答并转人工核实" if refused else None
+        ),
     )
 
 

@@ -20,7 +20,9 @@ def _build_agent() -> Agent:
         instructions=(
             "Generate a domain-neutral decision using only the supplied request "
             "and evidence. Return a selected option, explicit risks, and evidence. "
-            "Copy request_id exactly from the request."
+            "Copy request_id exactly from the request. "
+            "If the evidence cannot support any action, set refused=true and give a "
+            "refusal_reason; otherwise leave refused=false and refusal_reason null."
         ),
     )
 

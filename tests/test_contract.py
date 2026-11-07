@@ -2,6 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from decision_poc.contracts import (
+    MISSING_EVIDENCE_SOURCE,
     DecisionOption,
     DecisionOutput,
     DecisionPolicy,
@@ -73,6 +74,39 @@ def test_decision_output_requires_selected_option_and_evidence():
             risks=["Outcome is uncertain"],
             evidence=[],
         )
+
+
+def test_decision_output_refusal_and_reason_must_agree():
+    """拒答必须显式给理由，非拒答不许带理由——两者互斥，和 ToolResult 同一套口径。"""
+
+    option = DecisionOption(
+        option_id="opt-1",
+        description="Refuse and escalate to human",
+        expected_impact="Avoid acting on incomplete evidence",
+    )
+    evidence = EvidenceItem(
+        source=MISSING_EVIDENCE_SOURCE, content="给定证据池为空（用例无可用依据）"
+    )
+    common = {
+        "request_id": "req-1",
+        "summary": "证据不足，拒绝处置",
+        "options": [option],
+        "selected_option_id": "opt-1",
+        "confidence": 0.5,
+        "risk_level": "low",
+        "risks": ["证据不足时结论不可用"],
+        "evidence": [evidence],
+    }
+
+    refused = DecisionOutput(**common, refused=True, refusal_reason="证据池为空，转人工核实")
+    assert refused.refused is True
+    assert refused.cites_only_placeholder_evidence() is True
+
+    with pytest.raises(ValidationError, match="refusal requires reason"):
+        DecisionOutput(**common, refused=True)
+
+    with pytest.raises(ValidationError, match="non-refusal forbids reason"):
+        DecisionOutput(**common, refused=False, refusal_reason="证据池为空")
 
 
 def test_tool_result_status_and_error_fields_must_agree():

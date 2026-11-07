@@ -51,6 +51,8 @@ scripts/deepseek_smoke.py ──generate_decision_live──> model_provider.bui
 | `DEEPSEEK_TEMPERATURE` 非数字或超出 `0`–`2` | `settings_from_env` 阶段抛 `ModelProviderError`，**不发请求** |
 | 鉴权失败 / 限流 / 网络错误 | 不吞异常，由调用方（脚本/评测）记录并决策是否重试 |
 | 模型输出不符合 `DecisionOutput` | Pydantic 校验失败照常抛错，不生成兜底结论 |
+| 模型判定证据不足 | **合法输出**：`refused=true` + `refusal_reason`，不算校验失败 |
+| `refused=true` 但缺 `refusal_reason` | 视为不合格输出，同样抛错（拒答不是免检通道） |
 
 ## 5. 安全
 
