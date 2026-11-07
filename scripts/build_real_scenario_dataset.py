@@ -101,7 +101,7 @@ def build_weather_csv() -> str:
     import io
 
     buf = io.StringIO()
-    writer = csv.DictWriter(buf, fieldnames=fieldnames)
+    writer = csv.DictWriter(buf, fieldnames=fieldnames, lineterminator="\n")
     writer.writeheader()
     writer.writerows(rows)
     return buf.getvalue()
