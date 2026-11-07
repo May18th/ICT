@@ -1,0 +1,38 @@
+{
+  "version": "1",
+  "annotator": "manual:v1",
+  "annotations": {
+    "pipeline_map.png": [
+      {
+        "label": "积水区",
+        "bbox": [250, 245, 220, 30],
+        "confidence": 0.95,
+        "note": "R-101 K0+200-600，对应工单 WO-20261029-007"
+      },
+      {
+        "label": "DF-PS-01 雨水泵站",
+        "bbox": [298, 274, 28, 28],
+        "confidence": 0.9,
+        "note": "泵站故障待修，无备用电源"
+      },
+      {
+        "label": "燃气管线 DN300",
+        "bbox": [190, 246, 370, 8],
+        "confidence": 0.9,
+        "note": "PL-GAS-101，埋深 2.5m，开挖更换中"
+      },
+      {
+        "label": "R-103 民生街",
+        "bbox": [352, 110, 16, 360],
+        "confidence": 0.85,
+        "note": "封路公告指定的绕行路线，本身有占道施工"
+      },
+      {
+        "label": "排水管线 DN600",
+        "bbox": [40, 265, 520, 8],
+        "confidence": 0.85,
+        "note": "PL-DRN-101，管径偏小"
+      }
+    ]
+  }
+}

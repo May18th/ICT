@@ -1,6 +1,6 @@
 # 上游 PR 草稿：agent list 未授权返回 401 而非 500
 
-状态：**分支与修复已备好，待推送 fork + 开 PR**（涉及在 GitHub 建 fork，等用户确认）。
+状态：**已提交 → https://github.com/ModelEngine-Group/nexent/pull/4308**（2026-11-07，base: develop，head: May18th:fix/agent-list-401，fork: May18th/nexent）。跟踪 review 结果即可。
 
 ## 分支
 
