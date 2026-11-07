@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -44,6 +45,7 @@ WARNING_STAGE_M = 2.4         # 同上 warning_stage_m
 EFFECTIVE_DEPTH_M = 3.0       # 同上有效水深
 
 REPORT_PATH = ROOT / "docs" / "reports" / "swmm-bypass-comparison.md"
+DATA_PATH = ROOT / "docs" / "reports" / "swmm-bypass-comparison.json"
 INP_PATH = ROOT / "dist" / "swmm" / "bypass_model.inp"
 
 
@@ -434,7 +436,64 @@ def main() -> None:
 
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    # 机器可读版（前端 /api/quant-references 消费；数字与报告同源同次生成）
+    data = {
+        "generated_by": "scripts/swmm_bypass.py",
+        "inputs": {
+            "rain_depth_mm": RAIN_DEPTH_MM,
+            "rain_duration_h": RAIN_DURATION_H,
+            "area_ha": AREA_HA,
+            "runoff_coefficient": RUNOFF_COEF,
+            "pipe_dn_m": PIPE_DN_M,
+            "pipe_slope": PIPE_SLOPE,
+        },
+        "runoff": {
+            "ours_m3s": round(ours["peak_inflow_m3s"], 4),
+            "swmm_m3s": round(swmm_off["peak_runoff_m3s"], 4),
+            "ratio": round(ratio_runoff, 3),
+            "swmm_effective_psi": round(eff_psi, 3),
+        },
+        "trunk": {
+            "ours_capacity_m3h": round(ours["trunk_capacity_m3h"], 1),
+            "swmm_peak_m3h": round(swmm_off["peak_link_flow_m3s"] * 3600, 1),
+            "verdict": "干管不约束（两模型一致）",
+        },
+        "forebay": {
+            "warning_stage_m": WARNING_STAGE_M,
+            "time_to_warning_h": {
+                "no_pump": {
+                    "ours": round(ours["no_pump"]["time_to_warning_h"], 3),
+                    "swmm": round(swmm_off["time_to_warning_h"], 3),
+                },
+                "pump_avail": {
+                    "ours": round(ours["pump_avail"]["time_to_warning_h"], 3),
+                    "swmm": round(swmm_on["time_to_warning_h"], 3),
+                },
+            },
+            "overflow_h": {
+                "no_pump": {
+                    "ours": round(ours["no_pump"]["time_to_overflow_h"], 3),
+                    "swmm": round(swmm_off["flooding_first_h"], 3) if swmm_off["flooding_first_h"] is not None else None,
+                    "swmm_volume_m3": round(swmm_off["flooding_total_m3"], 0),
+                },
+                "pump_avail": {
+                    "ours": round(ours["pump_avail"]["time_to_overflow_h"], 3),
+                    "swmm": round(swmm_on["flooding_first_h"], 3) if swmm_on["flooding_first_h"] is not None else None,
+                    "swmm_volume_m3": round(swmm_on["flooding_total_m3"], 0),
+                },
+            },
+        },
+        "conclusions": [
+            "干管输水判定一致：Manning 满流公式与 EPA SWMM 动态波同判「不约束」",
+            f"产流洪峰差 {ratio_runoff:.2f} 倍：定值 ψ vs Horton 衰减，方法假设差异非对拍误差",
+            "到警/溢流时间我方偏早（保守侧）：无管网调蓄假设的量化后果，可当上界不可当精确预测",
+        ],
+    }
+    DATA_PATH.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     print(f"report -> {REPORT_PATH}")
+    print(f"data   -> {DATA_PATH}")
     print(f"runoff: ours={ours['peak_inflow_m3s']:.3f} swmm={swmm_off['peak_runoff_m3s']:.3f} ratio={ratio_runoff:.2f}")
     print(f"warning(no pump): ours={ours['no_pump']['time_to_warning_h']} swmm={swmm_off['time_to_warning_h']}")
     print(f"warning(pump):    ours={ours['pump_avail']['time_to_warning_h']} swmm={swmm_on['time_to_warning_h']}")

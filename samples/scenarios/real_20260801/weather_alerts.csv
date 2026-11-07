@@ -1,0 +1,5 @@
+alert_id,issued_at,valid_from,valid_to,level,rainfall_mm_3h,district,source_org,status,description
+WA-REAL-20260801-01,2026-10-29T07:30:00+08:00,2026-10-29T08:00:00+08:00,2026-10-29T14:00:00+08:00,yellow,42.1,A-03,ORG-METEO,active,真实暴雨映射（Open-Meteo/ERA5，2026-08-01 成都）：24h 累计 77.7mm，3h 最大 42.1mm，峰值小时 15.5mm；演示映射：真实雨量 + 演示事件时间窗，映射规则见 samples/weather/scenario_variant_20260801/mapping_report.md
+WA-20261028-07,2026-10-28T14:00:00+08:00,2026-10-28T14:00:00+08:00,2026-10-28T20:00:00+08:00,yellow,20,A-03,ORG-METEO,expired,暴雨黄色预警，已解除
+WA-20261029-02,2026-10-29T07:30:00+08:00,2026-10-29T08:00:00+08:00,2026-10-29T14:00:00+08:00,yellow,30,B-01,ORG-METEO,active,暴雨黄色预警，B-01 片区累计雨量 30mm
+WA-20261030-01,2026-10-29T06:00:00+08:00,2026-10-30T06:00:00+08:00,2026-10-30T12:00:00+08:00,red,120,A-03,ORG-METEO,active,10-30 暴雨红色预警（提前 24 小时发布），累计雨量预计 120mm

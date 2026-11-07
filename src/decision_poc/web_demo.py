@@ -9,6 +9,7 @@
 """
 from __future__ import annotations
 
+import csv
 import json
 import os
 from datetime import datetime, timezone
@@ -33,6 +34,31 @@ from .timeline import build_event_stream, build_timeline, compare_branches
 
 EVENT_ID = "WO-20261029-007"
 AS_OF = "2026-10-29T09:40:00+08:00"
+
+# 情景白名单：键=URL 参数值，值=数据根目录。默认口径（assets/urban）不在表内——
+# 只有显式传 ?scenario=<key> 才换根，冻结口径一个字节不动。
+# real_20260801 由 scripts/build_real_scenario_dataset.py 生成（真实暴雨映射，见其 README）。
+SCENARIO_ROOTS: dict[str, Path] = {
+    "real_20260801": Path(__file__).resolve().parents[2]
+    / "samples" / "scenarios" / "real_20260801",
+}
+
+SCENARIO_INFO: dict[str, dict[str, str]] = {
+    "real_20260801": {
+        "id": "real_20260801",
+        "label": "真实暴雨 · 2026-08-01（成都）",
+        "weather_source": "Open-Meteo / ERA5（CC BY 4.0）",
+        "weather_provenance": "real",
+        "note": "真实雨量映射到演示事件时间窗；等级由工单实测深度驱动，预警佐证降为黄色",
+    },
+}
+DEFAULT_SCENARIO_INFO = {
+    "id": "synthetic_v1",
+    "label": "合成情景 · 橙色预警（默认口径）",
+    "weather_source": "合成（weather_alerts.csv WA-20261029-01）",
+    "weather_provenance": "synthetic",
+    "note": "冻结口径：六跳/冲突/缺口以本情景为准",
+}
 
 # P9 报告里进化后的最终策略（weight_closure=1 / weight_hazard=0.25 / transfer_penalty=0.1）。
 # 固化成预设，是为了让"策略变了 → 分配变了"在页面上可点、可复现。
@@ -87,13 +113,101 @@ def evolution_gate_history(limit: int = 10) -> dict[str, Any]:
     }
 
 
-def build_demo_payload(*, event_id: str = EVENT_ID, as_of: str = AS_OF) -> dict[str, Any]:
-    report = SkillPipeline(SkillRuntime()).run(
+def build_demo_payload(
+    *,
+    event_id: str = EVENT_ID,
+    as_of: str = AS_OF,
+    scenario: str = "",
+) -> dict[str, Any]:
+    scenario = str(scenario or "").strip()
+    if scenario and scenario not in SCENARIO_ROOTS:
+        raise KeyError(scenario)
+    if scenario:
+        runtime = SkillRuntime(SCENARIO_ROOTS[scenario])
+        info = dict(SCENARIO_INFO[scenario])
+    else:
+        runtime = SkillRuntime()
+        info = dict(DEFAULT_SCENARIO_INFO)
+    report = SkillPipeline(runtime).run(
         event_id, as_of, caller_labels=["ORG-EMERG"], persist=False
     )
     payload = report.model_dump(mode="json")
     payload["evidence"] = payload.get("audit", {}).get("claims", [])
+    # 情景元信息：前端 provenance 徽章与「结论稳健性」演示都从这里取，不硬编码
+    facts = payload.get("facts") or {}
+    payload["scenario"] = {
+        **info,
+        "warning_level": facts.get("warning_level") or "",
+        "response_level": facts.get("response_level") or "",
+        "depth_cm": facts.get("depth_cm"),
+    }
     return payload
+
+
+def weather_replay() -> dict[str, Any]:
+    """2026-08-01 真实逐时降雨（动画回放数据源）。
+
+    从气象数据集 CSV 现算，不硬编码：改数据重跑即可，页面自动跟随。
+    """
+    csv_path = (
+        Path(__file__).resolve().parents[2]
+        / "samples" / "weather" / "chengdu_hourly_2026-06-01_2026-09-30.csv"
+    )
+    if not csv_path.is_file():
+        # 数据文件名可能随 prepare_weather 输出调整：退回目录内唯一的逐时 CSV
+        candidates = sorted(
+            (Path(__file__).resolve().parents[2] / "samples" / "weather").glob(
+                "chengdu_hourly_*.csv"
+            )
+        )
+        if not candidates:
+            return {"error": "气象数据集缺失，先运行 scripts/prepare_weather.py"}
+        csv_path = candidates[0]
+
+    points: list[dict[str, Any]] = []
+    with csv_path.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        cols = {c.lower(): c for c in (reader.fieldnames or [])}
+        time_col = cols.get("time") or next(iter(cols))
+        rain_col = cols.get("rain_mm") or cols.get("rain") or cols.get("precipitation_mm")
+        for row in reader:
+            day = str(row.get(time_col) or "")
+            if day.startswith("2026-08-01"):
+                rain = row.get(rain_col) if rain_col else None
+                points.append({"time": day[-5:], "rain_mm": float(rain) if rain not in (None, "") else 0.0})
+
+    points.sort(key=lambda p: p["time"])
+    cum = 0.0
+    total = sum(p["rain_mm"] for p in points) or 1.0
+    for p in points:
+        cum += p["rain_mm"]
+        p["cum_mm"] = round(cum, 2)
+        p["cum_frac"] = round(cum / total, 4)
+    peak = max(points, key=lambda p: p["rain_mm"], default=None)
+    return {
+        "date": "2026-08-01",
+        "source": "Open-Meteo / ERA5（CC BY 4.0）· 成都 30.66N/104.07E",
+        "total_mm": round(total, 1),
+        "peak_mm": peak["rain_mm"] if peak else 0.0,
+        "peak_time": peak["time"] if peak else "",
+        "note": (
+            "真实降雨回放（非推演输入）：动画水位由累计雨量占比驱动，事件推演仍读工单实测深度。"
+            "total_mm 为 08-01 自然日累计（77.5mm）；材料中 77.7mm 为最大 24h 滑动窗口口径"
+            "（跨自然日），两者出处一致、定义不同"
+        ),
+        "points": points,
+    }
+
+
+def quant_references() -> dict[str, Any]:
+    """定量方法交叉参照（SWMM 对照）供前端展示；数字全部来自同源 JSON，不硬编码。"""
+    data_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs" / "reports" / "swmm-bypass-comparison.json"
+    )
+    if not data_path.is_file():
+        return {"error": "SWMM 对照数据缺失，先运行 scripts/swmm_bypass.py"}
+    return json.loads(data_path.read_text(encoding="utf-8"))
 
 
 def collab_review(*, event_id: str = EVENT_ID, as_of: str = AS_OF) -> dict[str, Any]:
@@ -281,7 +395,7 @@ def build_html() -> str:
 <section class=guide><div><b>01</b><span>先看结论</span>出什么事、要几台泵、实际有几台、怎么分 —— 见“事件概览 / 工单 / 资源 / 方案”</div><div><b>02</b><span>再看依据</span>这结论是谁算的、引用了台账哪一行 —— 见“演示链路 / 决策事件流”</div><div><b>03</b><span>最后改条件</span>少一台泵或封一条路，看结论怎么重算 —— 见“人工干预”</div></section>
 <div class=toolbar><button onclick="run()">运行演示</button><span id=status>等待运行</span></div><section id=summary class='card outcome-card'><h2>事件结论</h2><div id=metrics>点击“运行演示”加载推演结果</div></section>
 <section class='card process-card'><h2>推演主线 <span>事件输入 → 证据核验 → 协同复核 → 方案复算</span></h2><div class=toolbar style='margin:0 0 8px'><button onclick="runChain()">跑一遍链路</button><span id=chainstatus class=sub>未加载</span></div><div id=chain class=chain></div><div id=chainfoot class=sub style='margin-top:8px'></div></section>
-<section class='card' id='dynamic-scene-card'><h2>动态内涝推演 <span>画面为示意动画，节奏与文案由事件流 stage 事件驱动</span></h2><div class=toolbar style='margin:0 0 10px'><button onclick="playFloodScenario()">播放推演</button><button class=ghost onclick="resetFloodScenario()">重置</button><span id=flood-status class=sub>待播放</span></div><div id=flood-scene><div class=flood-road><div class=flood-water id=flood-water></div><div class=flood-drain id=flood-drain>雨水口</div><div class=flood-pump id=flood-pump>泵站故障</div><div class=flood-barrier id=flood-barrier>封路</div></div><div class=flood-pipe><span>DN600 排水管</span><i id=flood-flow></i></div></div><div class=flood-readout><b id=flood-depth>积水 0 cm</b><span id=flood-phase>降雨尚未开始</span><span id=flood-dept>协同：等待事件</span></div></section><div class='grid primary-grid'><section class='card impact-card'><div class=impact-kicker>02 · 影响与处置</div><h2>受影响对象 <span class='impact-hint'>地图只保留本次事件有关对象</span></h2><div id=scene-summary class=scene-summary>正在读取影响范围…</div><div class=impact-flow aria-label='影响链路'><span>事件</span><b>→</b><span>受影响对象</span><b>→</b><span>处置动作</span></div><svg id=scenemap viewBox='0 0 700 330' aria-label='可点场景图'></svg><div class=lgd><span><i style='background:#38bdf8;opacity:.55'></i>积水 / 事件</span><span><i style='background:#64748b'></i>道路</span><span><i style='background:#fbbf24'></i>设施</span><span><i style='background:#2f4a6b'></i>片区范围</span></div><div id=scene-detail class=scene-detail><div class=scene-empty>点击地图上的对象，查看它受到的影响、关联工单和所需资源。</div></div><div id=assets></div></section><section class='card coordination-card'><h2>跨部门协同</h2><div id=departments></div><h2>资源与风险</h2><div id=risks></div></section></div>
+<section class='card' id='dynamic-scene-card'><h2>动态内涝推演 <span>画面为示意动画，节奏与文案由事件流 stage 事件驱动</span></h2><div class=toolbar style='margin:0 0 10px'><button onclick="playFloodScenario()">播放推演</button><button class=ghost onclick="resetFloodScenario()">重置</button><span id=flood-status class=sub>待播放</span><span style='margin-left:10px'><b>情景</b> <button class=ghost id=btn-scn-syn onclick="switchScenario('')">合成（默认）</button> <button class=ghost id=btn-scn-real onclick="switchScenario('real_20260801')">真实暴雨 08-01</button> <button class=ghost onclick="playRealRain()">真实降雨回放</button></span></div><div id=flood-scene><div class=flood-road><div class=flood-water id=flood-water></div><div class=flood-drain id=flood-drain>雨水口</div><div class=flood-pump id=flood-pump>泵站故障</div><div class=flood-barrier id=flood-barrier>封路</div></div><div class=flood-pipe><span>DN600 排水管</span><i id=flood-flow></i></div></div><div class=flood-readout><b id=flood-depth>积水 0 cm</b><span id=flood-phase>降雨尚未开始</span><span id=flood-dept>协同：等待事件</span></div></section><section class='card' id='quant-card'><h2>定量方法交叉参照 <span>EPA SWMM 动态汇流 vs 推理公式/Manning 旁路对拍 · 详见 docs/reports/swmm-bypass-comparison.md</span></h2><div id=quant-refs class=sub>加载中…</div></section><div class='grid primary-grid'><section class='card impact-card'><div class=impact-kicker>02 · 影响与处置</div><h2>受影响对象 <span class='impact-hint'>地图只保留本次事件有关对象</span></h2><div id=scene-summary class=scene-summary>正在读取影响范围…</div><div class=impact-flow aria-label='影响链路'><span>事件</span><b>→</b><span>受影响对象</span><b>→</b><span>处置动作</span></div><svg id=scenemap viewBox='0 0 700 330' aria-label='可点场景图'></svg><div class=lgd><span><i style='background:#38bdf8;opacity:.55'></i>积水 / 事件</span><span><i style='background:#64748b'></i>道路</span><span><i style='background:#fbbf24'></i>设施</span><span><i style='background:#2f4a6b'></i>片区范围</span></div><div id=scene-detail class=scene-detail><div class=scene-empty>点击地图上的对象，查看它受到的影响、关联工单和所需资源。</div></div><div id=assets></div></section><section class='card coordination-card'><h2>跨部门协同</h2><div id=departments></div><h2>资源与风险</h2><div id=risks></div></section></div>
 <div class='grid data-grid'>
 <section class=card><h2>工单列表 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（台账全量，演示事件置顶）</span></h2><div id=orders class=sub>加载中</div></section>
 <section class=card><h2>资源状态 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（台账可用量 vs 本次缺口）</span></h2><div id=resboard class=sub>加载中</div></section>
@@ -328,7 +442,7 @@ function claimName(id){const s=String(id||'');if(CLAIM[s])return CLAIM[s];const 
 function refCn(x){const parts=String(x||'').split('#');if(parts.length<2)return x;
  const p=parts[1].split('/');const m=String(parts[2]||'').match(/(?:row|line):(\\d+)/);
  return (p[0]||'')+' '+(TBL[p[1]]||p[1])+(p[2]?' '+p[2]:'')+(m?' 第 '+m[1]+' 行':'')}
-let floodTimer=null,floodStep=0; function resetFloodScenario(){clearInterval(floodTimer);floodStep=0;document.getElementById('flood-water').style.height='0%';document.getElementById('flood-flow').style.width='0%';document.getElementById('flood-drain').className='flood-drain';document.getElementById('flood-pump').className='flood-pump';document.getElementById('flood-barrier').className='flood-barrier';document.getElementById('flood-depth').textContent='积水 0 cm';document.getElementById('flood-phase').textContent='降雨尚未开始';document.getElementById('flood-dept').textContent='协同：等待事件';document.getElementById('flood-status').textContent='待播放'} async function playFloodScenario(){clearInterval(floodTimer);floodStep=0;const live=await Promise.all([fetch('/api/event-stream').then(r=>r.json()).catch(()=>null),fetch('/api/collab-review').then(r=>r.json()).catch(()=>null),fetch('/api/demo').then(r=>r.json()).catch(()=>null)]);const stream=live[0]||{},collab=live[1]||{},demo=live[2]||{};const statusEl=document.getElementById('flood-status');const stages=(stream.events||[]).filter(e=>e.kind==='stage');if(!stages.length){statusEl.textContent='事件流无 stage 事件，无法推演';return}let maxDepth=NaN;const md=String((stages[0]||{}).detail||'').match(/积水\\s*([0-9.]+)\\s*cm/);if(md)maxDepth=parseFloat(md[1]);if(!isFinite(maxDepth))maxDepth=Number((demo.facts||{}).depth_cm)||0;if(!maxDepth)maxDepth=30;const water=document.getElementById('flood-water'),flow=document.getElementById('flood-flow'),drain=document.getElementById('flood-drain'),pump=document.getElementById('flood-pump'),barrier=document.getElementById('flood-barrier'),phaseEl=document.getElementById('flood-phase'),deptEl=document.getElementById('flood-dept'),depthEl=document.getElementById('flood-depth');const visual={observed:function(){drain.className='flood-drain active';flow.style.width='45%'},affected:function(){flow.style.width='70%'},owner:function(){pump.className='flood-pump fault'},conflict:function(){},resource:function(){},action:function(){barrier.className='flood-barrier closed';flow.style.width='0%'}};const total=stages.length;floodTimer=setInterval(function(){floodStep++;if(floodStep>total){clearInterval(floodTimer);statusEl.textContent='推演完成 · 事件流 '+((stream.counts||{}).events||'-')+' 条 · '+total+' 拍 stage 驱动';return}const e=stages[floodStep-1];water.style.height=(88*floodStep/total)+'%';depthEl.textContent='积水 '+Math.round(maxDepth*floodStep/total)+' cm（终值取事件实测 '+maxDepth+' cm）';phaseEl.textContent=e.title||e.phase;deptEl.textContent=String(e.detail||'').replace(/ORG-[A-Z0-9_-]+/g,function(m){return orgName(m)||m})+((collab.cards||[]).length&&e.phase==='action'?' · 动作卡 '+collab.cards.length+' 张':'');(visual[e.phase]||function(){}());statusEl.textContent='推演 '+Math.round(floodStep/total*100)+'% · 第 '+floodStep+'/'+total+' 拍（stage 事件驱动）'},950)} async function run(){status.textContent='推演中…';const r=await fetch('/api/demo');const p=await r.json();const f=p.facts||{},d=p.deduction||{};metrics.innerHTML='<span class=metric><b>'+esc(zh(LV,f.response_level))+'</b>预警等级</span><span class=metric><b>'+esc(f.depth_cm||'-')+' cm</b>积水深度</span><span class=metric><b>'+esc(String(p.knowledge_version||'-').replace(/^kb-/,'预案 '))+'</b>所用预案版本</span><span class=metric><b class=ok>'+esc(pct(p.audit?.citation_completeness))+'</b>引用完整率</span>';assets.innerHTML='<div class=cap>对象台账</div><div>'+list(p.impact?.affected_objects||d.affected_assets||[])+'</div>';renderDepartments();risks.innerHTML='<div>'+list((d.conflicts||[]).map(c=>String(c.conflict_id||'')+' '+(CFT[c.conflict_id]||'')+'（'+(c.subject||'')+'）'))+'</div><div class=cap>资源缺口（要多少 vs 有多少）</div><div>'+list((d.resource_gaps||[]).map(g=>String(g.resource_id||'')+' 缺 '+g.gap+' '+String(g.unit||'')))+'</div><div class=cap>需要人工盯住的风险</div><div class=warn>'+list(d.residual_risks||[])+'</div>';const acts=(p.evidence||[]).filter(c=>/^CL-S6-action/.test(String(c.claim_id||'')));trace.innerHTML=((p.evidence||[]).filter(c=>!/^CL-S6-action/.test(String(c.claim_id||''))).map(c=>{const rs=c.evidence_refs||[];return '<div class=trace><b>'+esc(c.text||claimName(c.claim_id))+'</b><div class=evidence>依据：'+esc(rs.slice(0,4).map(refCn).join(' · '))+(rs.length>4?' 等 '+rs.length+' 条':'')+'</div></div>'}).join('')||'<span class=warn>暂无可展示证据</span>')+(acts.length?'<div class=sub style="font-size:12px;margin-top:8px">另有 '+acts.length+' 条处置动作，逐条见下方「决策事件流」</div>':'');status.textContent=p.publishable?'可发布结论':'需要人工复核';loadLog();playFloodScenario()}
+let floodTimer=null,floodStep=0; function resetFloodScenario(){clearInterval(floodTimer);floodStep=0;document.getElementById('flood-water').style.height='0%';document.getElementById('flood-flow').style.width='0%';document.getElementById('flood-drain').className='flood-drain';document.getElementById('flood-pump').className='flood-pump';document.getElementById('flood-barrier').className='flood-barrier';document.getElementById('flood-depth').textContent='积水 0 cm';document.getElementById('flood-phase').textContent='降雨尚未开始';document.getElementById('flood-dept').textContent='协同：等待事件';document.getElementById('flood-status').textContent='待播放'} async function playFloodScenario(){clearInterval(floodTimer);floodStep=0;const live=await Promise.all([fetch('/api/event-stream').then(r=>r.json()).catch(()=>null),fetch('/api/collab-review').then(r=>r.json()).catch(()=>null),fetch('/api/demo').then(r=>r.json()).catch(()=>null)]);const stream=live[0]||{},collab=live[1]||{},demo=live[2]||{};const statusEl=document.getElementById('flood-status');const stages=(stream.events||[]).filter(e=>e.kind==='stage');if(!stages.length){statusEl.textContent='事件流无 stage 事件，无法推演';return}let maxDepth=NaN;const md=String((stages[0]||{}).detail||'').match(/积水\\s*([0-9.]+)\\s*cm/);if(md)maxDepth=parseFloat(md[1]);if(!isFinite(maxDepth))maxDepth=Number((demo.facts||{}).depth_cm)||0;if(!maxDepth)maxDepth=30;const water=document.getElementById('flood-water'),flow=document.getElementById('flood-flow'),drain=document.getElementById('flood-drain'),pump=document.getElementById('flood-pump'),barrier=document.getElementById('flood-barrier'),phaseEl=document.getElementById('flood-phase'),deptEl=document.getElementById('flood-dept'),depthEl=document.getElementById('flood-depth');const visual={observed:function(){drain.className='flood-drain active';flow.style.width='45%'},affected:function(){flow.style.width='70%'},owner:function(){pump.className='flood-pump fault'},conflict:function(){},resource:function(){},action:function(){barrier.className='flood-barrier closed';flow.style.width='0%'}};const total=stages.length;floodTimer=setInterval(function(){floodStep++;if(floodStep>total){clearInterval(floodTimer);statusEl.textContent='推演完成 · 事件流 '+((stream.counts||{}).events||'-')+' 条 · '+total+' 拍 stage 驱动';return}const e=stages[floodStep-1];water.style.height=(88*floodStep/total)+'%';depthEl.textContent='积水 '+Math.round(maxDepth*floodStep/total)+' cm（终值取事件实测 '+maxDepth+' cm）';phaseEl.textContent=e.title||e.phase;deptEl.textContent=String(e.detail||'').replace(/ORG-[A-Z0-9_-]+/g,function(m){return orgName(m)||m})+((collab.cards||[]).length&&e.phase==='action'?' · 动作卡 '+collab.cards.length+' 张':'');(visual[e.phase]||function(){}());statusEl.textContent='推演 '+Math.round(floodStep/total*100)+'% · 第 '+floodStep+'/'+total+' 拍（stage 事件驱动）'},950)} let currentScenario=''; function switchScenario(s){currentScenario=s;run(true)} async function playRealRain(){clearInterval(floodTimer);resetFloodScenario();const statusEl=document.getElementById('flood-status');statusEl.textContent='读取真实降雨…';const r=await fetch('/api/weather-replay').then(x=>x.json()).catch(()=>null);if(!r||r.error){statusEl.textContent='真实降雨数据不可用';return}const water=document.getElementById('flood-water'),flow=document.getElementById('flood-flow'),depthEl=document.getElementById('flood-depth'),phaseEl=document.getElementById('flood-phase'),deptEl=document.getElementById('flood-dept');const pts=r.points||[];if(!pts.length){statusEl.textContent='无 2026-08-01 数据';return}let i=0;floodTimer=setInterval(function(){if(i>=pts.length){clearInterval(floodTimer);statusEl.textContent='回放完成 · '+r.date+' 自然日累计 '+r.total_mm+' mm（峰值 '+r.peak_mm+' mm/h @ '+r.peak_time+'）· 77.7mm 为最大24h滑动窗口口径';return}const p=pts[i++];water.style.height=Math.round(88*(p.cum_frac||0))+'%';depthEl.textContent='累计降雨 '+p.cum_mm+' mm（非积水深度）';phaseEl.textContent=p.time+' · 时段降雨 '+p.rain_mm+' mm/h';deptEl.textContent='真实降雨回放 · '+r.source;flow.style.width=(30+50*(p.rain_mm/(r.peak_mm||1)))+'%';statusEl.textContent='真实降雨回放 '+Math.round(i/pts.length*100)+'%（非推演输入）'},420)} async function loadQuantRefs(){const el=document.getElementById('quant-refs');if(!el||el.dataset.loaded)return;const q=await fetch('/api/quant-references').then(x=>x.json()).catch(()=>null);if(!q||q.error){el.textContent='定量参照数据不可用';return}el.dataset.loaded='1';const rb=q.runoff||{},tk=q.trunk||{},fb=q.forebay||{},tw=fb.time_to_warning_h||{no_pump:{},pump_avail:{}};el.innerHTML='<div>· <b>'+esc(tk.verdict||'')+'</b>：Manning 满流 '+esc(tk.ours_capacity_m3h)+' m³/h vs SWMM 实测洪峰 '+esc(tk.swmm_peak_m3h)+' m³/h</div><div>· 产流洪峰：推理公式 '+esc(rb.ours_m3s)+' m³/s vs SWMM '+esc(rb.swmm_m3s)+' m³/s（比值 '+esc(rb.ratio)+'；Horton 衰减 vs 定值 ψ，方法假设差异）</div><div>· 前池到警 '+esc(fb.warning_stage_m)+' m：泵全停 我方 '+esc(tw.no_pump.ours)+' h vs SWMM '+esc(tw.no_pump.swmm)+' h；泵可用 我方 '+esc(tw.pump_avail.ours)+' h vs SWMM '+esc(tw.pump_avail.swmm)+' h —— 我方偏早（保守侧，可当上界）</div>'} async function run(isSwitch){status.textContent=isSwitch?'切换情景推演中…':'推演中…';const r=await fetch('/api/demo'+(currentScenario?'?scenario='+encodeURIComponent(currentScenario):''));const p=await r.json();const f=p.facts||{},d=p.deduction||{};metrics.innerHTML='<span class=metric><b>'+esc(zh(LV,f.response_level))+'</b>预警等级</span><span class=metric><b>'+esc(f.depth_cm||'-')+' cm</b>积水深度</span><span class=metric><b>'+esc(String(p.knowledge_version||'-').replace(/^kb-/,'预案 '))+'</b>所用预案版本</span><span class=metric><b class=ok>'+esc(pct(p.audit?.citation_completeness))+'</b>引用完整率</span><span class=metric><b>'+esc((p.scenario||{}).label||'合成情景')+'</b>数据源 · '+esc((p.scenario||{}).weather_source||'-')+'</span>';assets.innerHTML='<div class=cap>对象台账</div><div>'+list(p.impact?.affected_objects||d.affected_assets||[])+'</div>';renderDepartments();risks.innerHTML='<div>'+list((d.conflicts||[]).map(c=>String(c.conflict_id||'')+' '+(CFT[c.conflict_id]||'')+'（'+(c.subject||'')+'）'))+'</div><div class=cap>资源缺口（要多少 vs 有多少）</div><div>'+list((d.resource_gaps||[]).map(g=>String(g.resource_id||'')+' 缺 '+g.gap+' '+String(g.unit||'')))+'</div><div class=cap>需要人工盯住的风险</div><div class=warn>'+list(d.residual_risks||[])+'</div>';const acts=(p.evidence||[]).filter(c=>/^CL-S6-action/.test(String(c.claim_id||'')));trace.innerHTML=((p.evidence||[]).filter(c=>!/^CL-S6-action/.test(String(c.claim_id||''))).map(c=>{const rs=c.evidence_refs||[];return '<div class=trace><b>'+esc(c.text||claimName(c.claim_id))+'</b><div class=evidence>依据：'+esc(rs.slice(0,4).map(refCn).join(' · '))+(rs.length>4?' 等 '+rs.length+' 条':'')+'</div></div>'}).join('')||'<span class=warn>暂无可展示证据</span>')+(acts.length?'<div class=sub style="font-size:12px;margin-top:8px">另有 '+acts.length+' 条处置动作，逐条见下方「决策事件流」</div>':'');status.textContent=p.publishable?'可发布结论':'需要人工复核';loadLog();playFloodScenario();loadQuantRefs()}
 let lastV1=null,lastV4=null;
 async function renderScene(v){status.textContent='渲染 '+v+' …';
  const r=await fetch('/api/render?policy='+v);const j=await r.json();
@@ -708,7 +822,19 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
                 return _error(f"评分提交被拒：{exc}", 400)
         return _json(review_payload())
     if segments[:2] == ["api", "demo"]:
-        return _json(build_demo_payload())
+        try:
+            return _json(build_demo_payload(scenario=(query.get("scenario") or [""])[0]))
+        except KeyError:
+            known = "、".join(sorted(SCENARIO_ROOTS)) or "（无）"
+            return _error(f"未知情景，可选：{known}", 400)
+
+    if segments[:2] == ["api", "weather-replay"]:
+        payload = weather_replay()
+        return _json(payload, 200 if "error" not in payload else 503)
+
+    if segments[:2] == ["api", "quant-references"]:
+        payload = quant_references()
+        return _json(payload, 200 if "error" not in payload else 503)
 
     if segments[:2] == ["api", "timeline"]:
         # 决策事件流：从 /api/demo 同一份 payload 派生，只排顺序不重算。

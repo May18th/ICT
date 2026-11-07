@@ -1,0 +1,695 @@
+{
+  "schema_version": "semantic-anchors-1",
+  "description": "城市内涝事件 WO-20261029-007 的语义锚点（最小绑定切片）",
+  "projection": {
+    "lat0": 30.657,
+    "lon0": 104.066,
+    "k_lat": 110540.0,
+    "k_lon": 95761.381
+  },
+  "hop_order": [
+    "observed",
+    "affected",
+    "owner",
+    "conflict",
+    "resource",
+    "action"
+  ],
+  "osm_snapshot_sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5",
+  "entities": [
+    {
+      "twin_id": "RD-DONGHUAMEN",
+      "kind": "road",
+      "label": "东华门街",
+      "osm_type": "way",
+      "osm_id": 115625961,
+      "location": [
+        30.85,
+        894.98,
+        3.19
+      ],
+      "size": [
+        10.93,
+        953.21,
+        8.0
+      ],
+      "state": "closed",
+      "hop": "affected",
+      "evidence_locators": [
+        "road_network/v1.1#row:2",
+        "emergency_plan/v2.0#line:29"
+      ],
+      "source": {
+        "type": "osm",
+        "license": "ODbL 1.0 (© OpenStreetMap contributors)",
+        "file": "out/osm_chengdu_centre.json",
+        "sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5"
+      }
+    },
+    {
+      "twin_id": "RD-SHUNCHENG",
+      "kind": "road",
+      "label": "顺城大街",
+      "osm_type": "way",
+      "osm_id": 1369175166,
+      "location": [
+        236.67,
+        1673.8,
+        3.19
+      ],
+      "size": [
+        71.63,
+        423.4,
+        8.0
+      ],
+      "state": "normal",
+      "hop": "affected",
+      "evidence_locators": [
+        "road_network/v1.1#row:5"
+      ],
+      "source": {
+        "type": "osm",
+        "license": "ODbL 1.0 (© OpenStreetMap contributors)",
+        "file": "out/osm_chengdu_centre.json",
+        "sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5"
+      }
+    },
+    {
+      "twin_id": "RD-RENMINZHONG",
+      "kind": "road",
+      "label": "人民中路一段",
+      "osm_type": "way",
+      "osm_id": 459057751,
+      "location": [
+        -331.53,
+        934.27,
+        3.19
+      ],
+      "size": [
+        146.3,
+        1170.3,
+        8.0
+      ],
+      "state": "detour",
+      "hop": "action",
+      "evidence_locators": [
+        "road_network/v1.1#row:7"
+      ],
+      "source": {
+        "type": "osm",
+        "license": "ODbL 1.0 (© OpenStreetMap contributors)",
+        "file": "out/osm_chengdu_centre.json",
+        "sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5"
+      }
+    },
+    {
+      "twin_id": "RD-DONGYU",
+      "kind": "road",
+      "label": "东御街",
+      "osm_type": "way",
+      "osm_id": 837186660,
+      "location": [
+        97.12,
+        210.76,
+        3.19
+      ],
+      "size": [
+        355.65,
+        9.54,
+        8.0
+      ],
+      "state": "normal",
+      "hop": "affected",
+      "evidence_locators": [
+        "road_network/v1.1#row:9"
+      ],
+      "source": {
+        "type": "osm",
+        "license": "ODbL 1.0 (© OpenStreetMap contributors)",
+        "file": "out/osm_chengdu_centre.json",
+        "sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5"
+      }
+    },
+    {
+      "twin_id": "RD-XIYU",
+      "kind": "road",
+      "label": "西御街",
+      "osm_type": "way",
+      "osm_id": 672331734,
+      "location": [
+        -528.23,
+        210.44,
+        3.19
+      ],
+      "size": [
+        340.16,
+        36.18,
+        8.0
+      ],
+      "state": "normal",
+      "hop": "affected",
+      "evidence_locators": [
+        "road_network/v1.1#row:11"
+      ],
+      "source": {
+        "type": "osm",
+        "license": "ODbL 1.0 (© OpenStreetMap contributors)",
+        "file": "out/osm_chengdu_centre.json",
+        "sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5"
+      }
+    },
+    {
+      "twin_id": "TN-TIANFU",
+      "kind": "tunnel",
+      "label": "天府广场下穿隧道",
+      "osm_type": "way",
+      "osm_id": 211820797,
+      "location": [
+        -60.05,
+        427.03,
+        -1.8
+      ],
+      "size": [
+        814.37,
+        19.53,
+        6.0
+      ],
+      "state": "flooded",
+      "hop": "observed",
+      "evidence_locators": [
+        "road_network/v1.1#row:2",
+        "drainage_facilities/v1#row:4"
+      ],
+      "source": {
+        "type": "osm",
+        "license": "ODbL 1.0 (© OpenStreetMap contributors)",
+        "file": "out/osm_chengdu_centre.json",
+        "sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5"
+      }
+    },
+    {
+      "twin_id": "AREA-MOHECHI",
+      "kind": "park",
+      "label": "摩诃池公园",
+      "osm_type": "way",
+      "osm_id": 993208555,
+      "location": [
+        -405.6,
+        1064.21,
+        3.19
+      ],
+      "size": [
+        278.7,
+        183.65,
+        24.0
+      ],
+      "state": "normal",
+      "hop": "affected",
+      "evidence_locators": [
+        "emergency_plan/v2.0#line:41"
+      ],
+      "source": {
+        "type": "osm",
+        "license": "ODbL 1.0 (© OpenStreetMap contributors)",
+        "file": "out/osm_chengdu_centre.json",
+        "sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5"
+      }
+    },
+    {
+      "twin_id": "AREA-RENMIN",
+      "kind": "park",
+      "label": "人民公园",
+      "osm_type": "way",
+      "osm_id": 103295076,
+      "location": [
+        -944.66,
+        239.62,
+        3.19
+      ],
+      "size": [
+        507.6,
+        396.3,
+        24.0
+      ],
+      "state": "normal",
+      "hop": "affected",
+      "evidence_locators": [
+        "emergency_plan/v2.0#line:44"
+      ],
+      "source": {
+        "type": "osm",
+        "license": "ODbL 1.0 (© OpenStreetMap contributors)",
+        "file": "out/osm_chengdu_centre.json",
+        "sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5"
+      }
+    },
+    {
+      "twin_id": "AREA-HOUZIMEN",
+      "kind": "park",
+      "label": "后子门游园",
+      "osm_type": "way",
+      "osm_id": 239424751,
+      "location": [
+        -263.72,
+        828.7,
+        3.19
+      ],
+      "size": [
+        81.57,
+        82.85,
+        24.0
+      ],
+      "state": "normal",
+      "hop": "affected",
+      "evidence_locators": [
+        "emergency_plan/v2.0#line:46"
+      ],
+      "source": {
+        "type": "osm",
+        "license": "ODbL 1.0 (© OpenStreetMap contributors)",
+        "file": "out/osm_chengdu_centre.json",
+        "sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5"
+      }
+    },
+    {
+      "twin_id": "AREA-DONGTUO",
+      "kind": "heritage",
+      "label": "成都东华门遗址公园",
+      "osm_type": "way",
+      "osm_id": 1204383950,
+      "location": [
+        -103.95,
+        803.93,
+        3.19
+      ],
+      "size": [
+        196.73,
+        106.98,
+        24.0
+      ],
+      "state": "normal",
+      "hop": "affected",
+      "evidence_locators": [
+        "emergency_plan/v2.0#line:48"
+      ],
+      "source": {
+        "type": "osm",
+        "license": "ODbL 1.0 (© OpenStreetMap contributors)",
+        "file": "out/osm_chengdu_centre.json",
+        "sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5"
+      }
+    },
+    {
+      "twin_id": "BLD-MUSEUM",
+      "kind": "building",
+      "label": "成都博物馆",
+      "osm_type": "way",
+      "osm_id": 929666443,
+      "location": [
+        -472.05,
+        310.83,
+        3.19
+      ],
+      "size": [
+        53.71,
+        158.9,
+        24.0
+      ],
+      "state": "normal",
+      "hop": "affected",
+      "evidence_locators": [
+        "emergency_plan/v2.0#line:52"
+      ],
+      "source": {
+        "type": "osm",
+        "license": "ODbL 1.0 (© OpenStreetMap contributors)",
+        "file": "out/osm_chengdu_centre.json",
+        "sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5"
+      }
+    },
+    {
+      "twin_id": "BLD-ART",
+      "kind": "building",
+      "label": "四川美术馆",
+      "osm_type": "way",
+      "osm_id": 430059676,
+      "location": [
+        -639.24,
+        465.06,
+        3.19
+      ],
+      "size": [
+        132.34,
+        38.64,
+        24.0
+      ],
+      "state": "normal",
+      "hop": "affected",
+      "evidence_locators": [
+        "emergency_plan/v2.0#line:54"
+      ],
+      "source": {
+        "type": "osm",
+        "license": "ODbL 1.0 (© OpenStreetMap contributors)",
+        "file": "out/osm_chengdu_centre.json",
+        "sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5"
+      }
+    },
+    {
+      "twin_id": "BLD-THEATRE",
+      "kind": "building",
+      "label": "四川大剧院",
+      "osm_type": "way",
+      "osm_id": 815834575,
+      "location": [
+        -24.59,
+        504.36,
+        3.19
+      ],
+      "size": [
+        103.19,
+        62.74,
+        24.0
+      ],
+      "state": "normal",
+      "hop": "affected",
+      "evidence_locators": [
+        "emergency_plan/v2.0#line:56"
+      ],
+      "source": {
+        "type": "osm",
+        "license": "ODbL 1.0 (© OpenStreetMap contributors)",
+        "file": "out/osm_chengdu_centre.json",
+        "sha256": "6ace2f93317d95519ebd89ac598afc5f4a28bdfbb92cd434c0507d4ab21331f5"
+      }
+    },
+    {
+      "twin_id": "OBS-FLOOD",
+      "kind": "observation",
+      "label": "隧道积水观测点",
+      "osm_type": null,
+      "osm_id": null,
+      "location": [
+        300.0,
+        423.0,
+        -0.4
+      ],
+      "size": [
+        8.0,
+        8.0,
+        1.5
+      ],
+      "state": "flooded",
+      "hop": "observed",
+      "evidence_locators": [
+        "samples/assets/urban/decision_snapshot.json#event"
+      ],
+      "source": {
+        "type": "synthetic_event_layer",
+        "license": "scene assets: CC0 (Poly Haven/ambientCG/Kenney)",
+        "file": "blender/2026-10-30-S5-chengdu-r3-facade.blend",
+        "sha256": "pending"
+      }
+    },
+    {
+      "twin_id": "BLK-PORTAL",
+      "kind": "obstruction",
+      "label": "隧道洞口封路围挡",
+      "osm_type": null,
+      "osm_id": null,
+      "location": [
+        352.0,
+        423.0,
+        3.19
+      ],
+      "size": [
+        6.0,
+        34.0,
+        1.0
+      ],
+      "state": "closed",
+      "hop": "action",
+      "evidence_locators": [
+        "samples/assets/urban/decision_snapshot.json#event"
+      ],
+      "source": {
+        "type": "synthetic_event_layer",
+        "license": "scene assets: CC0 (Poly Haven/ambientCG/Kenney)",
+        "file": "blender/2026-10-30-S5-chengdu-r3-facade.blend",
+        "sha256": "pending"
+      }
+    },
+    {
+      "twin_id": "WTR-FLOOD",
+      "kind": "flood_water",
+      "label": "下穿段积水体",
+      "osm_type": null,
+      "osm_id": null,
+      "location": [
+        260.0,
+        423.0,
+        -0.6
+      ],
+      "size": [
+        200.0,
+        26.0,
+        1.2
+      ],
+      "state": "flooded",
+      "hop": "observed",
+      "evidence_locators": [
+        "samples/assets/urban/decision_snapshot.json#event"
+      ],
+      "source": {
+        "type": "synthetic_event_layer",
+        "license": "scene assets: CC0 (Poly Haven/ambientCG/Kenney)",
+        "file": "blender/2026-10-30-S5-chengdu-r3-facade.blend",
+        "sha256": "pending"
+      }
+    },
+    {
+      "twin_id": "FAC-PS-01",
+      "kind": "pump_station",
+      "label": "DF-PS-01 泵站",
+      "osm_type": null,
+      "osm_id": null,
+      "location": [
+        372.0,
+        452.0,
+        3.19
+      ],
+      "size": [
+        16.0,
+        12.0,
+        6.0
+      ],
+      "state": "fault",
+      "hop": "owner",
+      "evidence_locators": [
+        "samples/assets/urban/decision_snapshot.json#event"
+      ],
+      "source": {
+        "type": "synthetic_event_layer",
+        "license": "scene assets: CC0 (Poly Haven/ambientCG/Kenney)",
+        "file": "blender/2026-10-30-S5-chengdu-r3-facade.blend",
+        "sha256": "pending"
+      }
+    },
+    {
+      "twin_id": "BLD-A03",
+      "kind": "district",
+      "label": "A-03 受淹小区",
+      "osm_type": null,
+      "osm_id": null,
+      "location": [
+        20.0,
+        850.0,
+        3.19
+      ],
+      "size": [
+        40.0,
+        60.0,
+        18.0
+      ],
+      "state": "affected",
+      "hop": "affected",
+      "evidence_locators": [
+        "samples/assets/urban/decision_snapshot.json#event"
+      ],
+      "source": {
+        "type": "synthetic_event_layer",
+        "license": "scene assets: CC0 (Poly Haven/ambientCG/Kenney)",
+        "file": "blender/2026-10-30-S5-chengdu-r3-facade.blend",
+        "sha256": "pending"
+      }
+    },
+    {
+      "twin_id": "DEPT-EMERG",
+      "kind": "department",
+      "label": "应急管理部门责任区",
+      "osm_type": null,
+      "osm_id": null,
+      "location": [
+        60.0,
+        780.0,
+        3.19
+      ],
+      "size": [
+        120.0,
+        180.0,
+        2.0
+      ],
+      "state": "active",
+      "hop": "owner",
+      "evidence_locators": [
+        "samples/assets/urban/decision_snapshot.json#event"
+      ],
+      "source": {
+        "type": "synthetic_event_layer",
+        "license": "scene assets: CC0 (Poly Haven/ambientCG/Kenney)",
+        "file": "blender/2026-10-30-S5-chengdu-r3-facade.blend",
+        "sha256": "pending"
+      }
+    },
+    {
+      "twin_id": "CF-ROADCTRL",
+      "kind": "conflict_point",
+      "label": "封路与绕行管控点",
+      "osm_type": null,
+      "osm_id": null,
+      "location": [
+        378.0,
+        404.0,
+        3.19
+      ],
+      "size": [
+        10.0,
+        10.0,
+        7.0
+      ],
+      "state": "watch",
+      "hop": "conflict",
+      "evidence_locators": [
+        "samples/assets/urban/decision_snapshot.json#event"
+      ],
+      "source": {
+        "type": "synthetic_event_layer",
+        "license": "scene assets: CC0 (Poly Haven/ambientCG/Kenney)",
+        "file": "blender/2026-10-30-S5-chengdu-r3-facade.blend",
+        "sha256": "pending"
+      }
+    },
+    {
+      "twin_id": "RES-PUMP-TEAM",
+      "kind": "resource",
+      "label": "移动泵车组（存量 6 台）",
+      "osm_type": null,
+      "osm_id": null,
+      "location": [
+        364.0,
+        423.0,
+        3.19
+      ],
+      "size": [
+        8.0,
+        6.0,
+        3.0
+      ],
+      "state": "deployed",
+      "hop": "resource",
+      "evidence_locators": [
+        "samples/assets/urban/decision_snapshot.json#event"
+      ],
+      "source": {
+        "type": "synthetic_event_layer",
+        "license": "scene assets: CC0 (Poly Haven/ambientCG/Kenney)",
+        "file": "blender/2026-10-30-S5-chengdu-r3-facade.blend",
+        "sha256": "pending"
+      }
+    },
+    {
+      "twin_id": "RES-FIRE",
+      "kind": "resource",
+      "label": "消防车",
+      "osm_type": null,
+      "osm_id": null,
+      "location": [
+        392.0,
+        406.0,
+        3.19
+      ],
+      "size": [
+        8.0,
+        4.0,
+        3.0
+      ],
+      "state": "standby",
+      "hop": "resource",
+      "evidence_locators": [
+        "samples/assets/urban/decision_snapshot.json#event"
+      ],
+      "source": {
+        "type": "synthetic_event_layer",
+        "license": "scene assets: CC0 (Poly Haven/ambientCG/Kenney)",
+        "file": "blender/2026-10-30-S5-chengdu-r3-facade.blend",
+        "sha256": "pending"
+      }
+    },
+    {
+      "twin_id": "RES-AMB",
+      "kind": "resource",
+      "label": "救护车",
+      "osm_type": null,
+      "osm_id": null,
+      "location": [
+        398.0,
+        448.0,
+        3.19
+      ],
+      "size": [
+        7.0,
+        4.0,
+        3.0
+      ],
+      "state": "standby",
+      "hop": "resource",
+      "evidence_locators": [
+        "samples/assets/urban/decision_snapshot.json#event"
+      ],
+      "source": {
+        "type": "synthetic_event_layer",
+        "license": "scene assets: CC0 (Poly Haven/ambientCG/Kenney)",
+        "file": "blender/2026-10-30-S5-chengdu-r3-facade.blend",
+        "sha256": "pending"
+      }
+    },
+    {
+      "twin_id": "ACT-CLOSE-ROAD",
+      "kind": "action",
+      "label": "封路绕行（R-101→R-102/103/104）",
+      "osm_type": null,
+      "osm_id": null,
+      "location": [
+        233.0,
+        760.0,
+        3.19
+      ],
+      "size": [
+        260.0,
+        40.0,
+        2.0
+      ],
+      "state": "in_progress",
+      "hop": "action",
+      "evidence_locators": [
+        "samples/assets/urban/decision_snapshot.json#event"
+      ],
+      "source": {
+        "type": "synthetic_event_layer",
+        "license": "scene assets: CC0 (Poly Haven/ambientCG/Kenney)",
+        "file": "blender/2026-10-30-S5-chengdu-r3-facade.blend",
+        "sha256": "pending"
+      }
+    }
+  ]
+}

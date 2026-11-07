@@ -1,0 +1,52 @@
+{
+  "generated_by": "scripts/swmm_bypass.py",
+  "inputs": {
+    "rain_depth_mm": 60.0,
+    "rain_duration_h": 3.0,
+    "area_ha": 22.1,
+    "runoff_coefficient": 0.7,
+    "pipe_dn_m": 1.4,
+    "pipe_slope": 0.0015
+  },
+  "runoff": {
+    "ours_m3s": 0.8594,
+    "swmm_m3s": 1.1011,
+    "ratio": 1.281,
+    "swmm_effective_psi": 0.799
+  },
+  "trunk": {
+    "ours_capacity_m3h": 8199.7,
+    "swmm_peak_m3h": 3961.0,
+    "verdict": "干管不约束（两模型一致）"
+  },
+  "forebay": {
+    "warning_stage_m": 2.4,
+    "time_to_warning_h": {
+      "no_pump": {
+        "ours": 0.078,
+        "swmm": 0.633
+      },
+      "pump_avail": {
+        "ours": 0.105,
+        "swmm": 0.817
+      }
+    },
+    "overflow_h": {
+      "no_pump": {
+        "ours": 0.097,
+        "swmm": 0.783,
+        "swmm_volume_m3": 9589.0
+      },
+      "pump_avail": {
+        "ours": 0.131,
+        "swmm": 1.0,
+        "swmm_volume_m3": 6269.0
+      }
+    }
+  },
+  "conclusions": [
+    "干管输水判定一致：Manning 满流公式与 EPA SWMM 动态波同判「不约束」",
+    "产流洪峰差 1.28 倍：定值 ψ vs Horton 衰减，方法假设差异非对拍误差",
+    "到警/溢流时间我方偏早（保守侧）：无管网调蓄假设的量化后果，可当上界不可当精确预测"
+  ]
+}
