@@ -16,12 +16,12 @@
 """
 from __future__ import annotations
 
-import csv
 import json
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
 from .allocation import AllocationPolicy, AllocationUnavailable, decide
+from ._shared import dataset_root, read_csv_rows
 from .deduction import DistrictSignal
 from .timeline import SKILL_TOOL
 from .urban_dataset import DEFAULT_DATASET_ROOT
@@ -100,15 +100,11 @@ ALTERNATIVE_POLICY: dict[str, Any] = {
 
 
 def _root(root: Path | str | None = None) -> Path:
-    return Path(root) if root else Path(DEFAULT_DATASET_ROOT)
+    return dataset_root(root, DEFAULT_DATASET_ROOT)
 
 
 def _read_rows(path: Path) -> list[dict[str, str]]:
-    if not path.is_file():
-        return []
-    # utf-8-sig：台账首列带 BOM，用 utf-8 读会把第一列名读成 "\ufeffresource_id"
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        return [dict(row) for row in csv.DictReader(handle)]
+    return read_csv_rows(path)
 
 
 # --- 工单 -----------------------------------------------------------------
