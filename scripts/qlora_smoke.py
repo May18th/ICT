@@ -2,17 +2,14 @@
 from __future__ import annotations
 
 import torch
+import json
+from pathlib import Path
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 
 MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
-TEXTS = [
-    "城市内涝发生时，先确认积水深度和受影响对象，再协调排水与交通部门。",
-    "资源不足时，应优先保障人员安全和关键基础设施。",
-    "调度结论必须附带证据来源和可执行动作。",
-    "道路封闭后，应重新评估泵车到场路线和预计时间。",
-]
+DATASET = Path(__file__).resolve().parents[1] / "dist/qlora/train.jsonl"
 
 
 def main() -> None:
@@ -23,6 +20,8 @@ def main() -> None:
         bnb_4bit_quant_type="nf4",
         bnb_4bit_compute_dtype=torch.float16,
     )
+    rows = [json.loads(line) for line in DATASET.read_text(encoding="utf-8").splitlines()]
+    texts = ["\n".join(message["content"] for message in row["messages"]) for row in rows]
     tokenizer = AutoTokenizer.from_pretrained(MODEL)
     model = AutoModelForCausalLM.from_pretrained(
         MODEL, quantization_config=quant, device_map="auto"
@@ -39,7 +38,7 @@ def main() -> None:
         ),
     )
     model.train()
-    batch = tokenizer(TEXTS, return_tensors="pt", padding=True, truncation=True).to(model.device)
+    batch = tokenizer(texts, return_tensors="pt", padding=True, truncation=True).to(model.device)
     batch["labels"] = batch["input_ids"].clone()
     out = model(**batch)
     out.loss.backward()
