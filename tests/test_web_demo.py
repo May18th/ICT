@@ -160,3 +160,18 @@ def test_page_script_parses(tmp_path):
         [node, "--check", str(target)], capture_output=True, text=True, timeout=60
     )
     assert completed.returncode == 0, completed.stderr
+
+
+def test_flood_playback_is_event_driven():
+    """动态内涝推演的时序必须由事件流驱动，不许退回硬编码节拍。
+
+    真实事故：playFloodScenario 里节拍、水位、阶段文案全是写死的——650ms 一拍、
+    水位线性涨到 30 cm、六个阶段标题是字符串常量，事件流的 29 条数据在页面上
+    只贡献"事件 29 条"一个数字。评委若问"涨水节奏根据什么算的"就答不出来。
+    """
+    html = build_html()
+    assert "filter(e=>e.kind==='stage')" in html, "播放必须从事件流取 stage 事件驱动"
+    assert "e.title||e.phase" in html, "阶段文案必须来自事件本身"
+    assert "降雨与屋面汇流" not in html, "硬编码阶段文案又回来了"
+    assert "maxDepth" in html and "depth_cm" in html, \
+        "水位终值必须取实测（观测事件 detail 或 facts.depth_cm），不允许只写死 30"
