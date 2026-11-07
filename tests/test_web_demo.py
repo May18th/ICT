@@ -127,6 +127,8 @@ def test_page_has_scheduler_panels_and_live_scene():
     assert 'primary-grid' in html
     assert 'data-grid' in html
     assert 'id=scene-detail' in html
+    assert 'focusable="true"' in html
+    assert '.ivbtn{' in html and 'white-space:normal' in html
     assert "查看判断依据" in html
     # 场景图必须是按实体渲染的，不能退回固定椭圆
     assert "polygon class=" in html
