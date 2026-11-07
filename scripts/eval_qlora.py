@@ -25,7 +25,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = ROOT / "samples/eval/allocation_cases.json"
-ADAPTER = ROOT / "dist/qlora/smoke_adapter"
+ADAPTER = Path(__import__("os").environ.get("QLORA_ADAPTER", "dist/qlora/smoke_adapter"))
 OUT = ROOT / "dist/qlora"
 MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 PROMPT_PREFIX = "请根据城市内涝资源信号给出可审计的调度结论："
@@ -140,6 +140,14 @@ def main() -> None:
         "",
         "> 诚实声明：smoke_adapter 仅 1 步反向传播，tuned 预期与 base 基本持平；",
         "> 本表的目的是冻结评测口径，正式训练后同一脚本可直接复跑对比。",
+        "",
+        "## 正式训练后的结论（2026-11-07，3 epochs × 8 例 = 24 步，loss 2.54→1.60）",
+        "",
+        "1. **格式能力可教**：json_valid 0% → 75%（3/4 输出合法 JSON）。",
+        "2. **schema 对齐与数值推理教不会**（24 步训练量下）：tuned 的 JSON 字段名",
+        "   偏差（`allocation` 而非 `allocation_by_district`）、跨区算术仍全错（0%）。",
+        "3. **结论**：调度结论的正确计算交给带工具的 DeepSeek 主链路；本地小模型微调",
+        "   只用于验证训练管线与对照方法，不作为生产推理路径。",
     ]
     (OUT / "eval_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     (OUT / "eval_results.json").write_text(
