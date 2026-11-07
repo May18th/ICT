@@ -13,7 +13,7 @@
 
 | # | 事项 | 现状 | 怎么处理 |
 | --- | --- | --- | --- |
-| 1 | **测试数口径** | 本文件按仓库冻结口径写 **908 测试**（`samples/eval/evidence_expectations.json` 的 `test_baseline.collected=908`，`evidence_check` 的 `test_suite.docs_declared` 也是 908）。任务下达时写的是 745 | 答辩前跑一次 `python -m decision_poc.evidence_check`：**输出显示几就讲几**，并以输出为唯一口径；若确为 745，先按 AGENTS.md「对外数字：单一 owner + 一次性同步五处」同步期望文件与三份文档，再改本页 |
+| 1 | **测试数口径** | 本文件按仓库冻结口径写 **913 测试**（`samples/eval/evidence_expectations.json` 的 `test_baseline.collected=913`，`evidence_check` 的 `test_suite.docs_declared` 也是 913）。任务下达时写的是 745 | 答辩前跑一次 `python -m decision_poc.evidence_check`：**输出显示几就讲几**，并以输出为唯一口径；若确为 745，先按 AGENTS.md「对外数字：单一 owner + 一次性同步五处」同步期望文件与三份文档，再改本页 |
 | 2 | **资源缺口口径** | 讲 **缺口 2 台**（[preliminary-submission-draft](preliminary-submission-draft.md) §8、[winning-gap-audit](winning-gap-audit.md) §3 同口径）。注意 [answer-mainline](answer-mainline.md) §5 记的是"需 7 / 库存 6 / 缺口 1（含 80% 折算）"，属 **v1 另一写法** | PPT 只出现一次缺口数，并加脚注"缺口口径 v1，P12 场景 v2 将重算（[标定报告](../reports/p12-scenario-v2-calibration-report.md) §4）"；被追问时**先认口径不一致**，再给复算命令 |
 | 3 | **官方模板** | 模板 2 文件本体未取得（直链已定位） | 先按本页序出内容，套版时只换标题措辞；**不要为了套版改内容顺序**——顺序是按评委记忆曲线排的 |
 
@@ -40,7 +40,7 @@
   2. 每条结论带 `asset_id#locator`
   3. 冲突不许被"综合判断"抹平
   4. 反馈过门禁才改策略，改坏可回滚
-  5. 平台真机 8/8 · 908 测试 · 108 项自检
+  5. 平台真机 8/8 · 913 测试 · 108 项自检
 - **截图 / 证据**：封面不放截图（评委先记人再记字）。背景底图用
   `docs/competition/video-clips/VD02-A-incident-stills.mp4` 首帧（**静帧**，播放键不要出现在封面），
   底图右下角一行小字："离线渲染画面，非实时引擎"。
@@ -203,7 +203,7 @@
 - **要点（≤5 条，先边界后路线）**
   1. **边界**：数据合成；专家反馈是角色扮演；真实用户评分样本 **0**；UE **未实机验收**（`docs/reports/p3-ue/ue-acceptance-checklist.md` 自记"尚未执行"）；定量层**未接管**六跳缺口口径（仍有 80% 折算）
   2. **可视化口径**：3D 是"设计中有 + Blender 侧静帧/短片"，**不是实时引擎**；引擎没起只影响 delivery，不影响决策
-  3. **可复现**：`pytest`（908）/ `evidence_check`（108/108，指纹 `c06b7f1eab2a58e2`）/ `urban_eval`（22/22）/ `nexent_urban`（8/8）四条命令；`scripts/reproduce.py` 一键复跑
+  3. **可复现**：`pytest`（913）/ `evidence_check`（108/108，指纹 `14070e22fff848e6`）/ `urban_eval`（22/22）/ `nexent_urban`（8/8）四条命令；`scripts/reproduce.py` 一键复跑
   4. **三级降级**：公网 Demo（已上线）→ 本机离线内核 + A/B → 截图与真机证据 JSON（每级都演练过）
   5. **后续**：第二场真实公开事件（P2）→ 真实用户评分 3–5 人（P1）→ 协同层接 MCP/平台（设计中）
 - **截图 / 证据**：`docs/reports/evidence-check-report.md`（108 项逐条表）；
