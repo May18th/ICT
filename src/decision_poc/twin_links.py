@@ -504,7 +504,9 @@ def build_twin_links(
         "cards": card_rows,
         "claims": claims,
         "entities": entity_rows,
-        "results": build_results(payload, cards=card_rows, entities=entity_rows, orders=orders),
+        "results": build_results(
+            payload, cards=card_rows, entities=entity_rows, orders=orders, claims=claims
+        ),
         # 组织代码 → 中文名，页面显示"上报 ORG-DRAIN"没人看得懂。
         # 原文（detail / evidence）不改写，保留可追溯性；只翻译结构化字段。
         "organizations": {
@@ -530,11 +532,17 @@ def build_results(
     cards: Sequence[Mapping[str, Any]],
     entities: Mapping[str, Mapping[str, Any]],
     orders: Sequence[Mapping[str, Any]],
+    claims: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """处置前后对照。
+    """处置前后对照，每行回指支撑它的断言。
 
     只比**算得出来**的项。积水深度的回落是三维动画的示意效果，没有任何实测或
     模型回演数据支撑，所以 `after` 一律给 null 并写明原因——宁缺不编。
+
+    `claim_ids` 只指向**已有**断言：结果行是统计视图，不是推演步骤。
+    为它新造一条 `CL-S7-result-*` 会让六跳结构与审计账本一起变，那是推演层的改动，
+    展示层不做。挂不上的行（工单台账计数、残余风险清单）就老实给空数组，
+    并在 `basis` 里写清来自台账还是推演输出。
     """
     facts = payload.get("facts") or {}
     deduction = payload.get("deduction") or {}
@@ -543,6 +551,7 @@ def build_results(
     open_orders = [item for item in orders if str(item.get("status") or "") == "open"]
     linked_entity_count = len([row for row in entities.values() if row["card_ids"]])
     action_cards = [row for row in cards if row.get("stage") == "action"]
+    claim_index = dict(claims or {})
 
     # 动作卡覆盖到哪些未闭环工单：卡片 → 工单号（依据 evidence_refs 行号）
     covered: set[str] = set()
@@ -553,6 +562,19 @@ def build_results(
     def count(state: str, rows: Sequence[Mapping[str, Any]]) -> int:
         return len([row for row in rows if row.get("state") == state])
 
+    def claim_refs(card_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, str]]:
+        """从一组卡片上把 claim 并起来，按六跳顺序排好，只留台账里真有的。"""
+        ordered: list[str] = []
+        for row in card_rows:
+            for claim_id in row.get("claim_ids") or []:
+                if claim_id in claim_index and claim_id not in ordered:
+                    ordered.append(claim_id)
+        ordered.sort(key=lambda cid: (STAGE_JUMPS.index(claim_index[cid]["stage"]) if claim_index[cid]["stage"] in STAGE_JUMPS else 99, cid))
+        return [{"claim_id": cid, "label": claim_index[cid]["label"]} for cid in ordered]
+
+    def single(claim_id: str) -> list[dict[str, str]]:
+        return [{"claim_id": claim_id, "label": claim_index[claim_id]["label"]}] if claim_id in claim_index else []
+
     rows: list[dict[str, Any]] = [
         {
             "key": "depth_cm",
@@ -562,6 +584,9 @@ def build_results(
             "unit": "cm",
             "basis": "facts.depth_cm（工单实测）",
             "note": "处置后深度无实测回传、也未做水力回演，沙盘上的回落只是动画示意，不作结论",
+            # 观测断言的 detail 里就写着"积水 30.0 cm"，深度这个数是它报出来的
+            "claim_ids": [ref["claim_id"] for ref in single("CL-S1-observed")],
+            "claims": single("CL-S1-observed"),
         },
         {
             "key": "open_orders",
@@ -569,8 +594,10 @@ def build_results(
             "before": len(open_orders),
             "after": len(open_orders),
             "unit": "件",
-            "basis": "work_orders.csv status=open",
+            "basis": "work_orders.csv status=open（台账，不经推演断言）",
             "note": "处置动作没有回写通道，工单状态不会自动变更；这里如实给同一数值",
+            "claim_ids": [],
+            "claims": [],
         },
         {
             "key": "covered_orders",
@@ -580,6 +607,10 @@ def build_results(
             "unit": "件",
             "basis": "cards[*].work_order_ids ∩ status=open",
             "note": "「覆盖」指已有部门动作卡指向该工单，不等于已办结",
+            # 覆盖关系由处置动作卡（S6）建立，所以依据只挂动作类断言，
+            # 把 S1..S5 也带上会把这一行撑成十几条标签
+            "claim_ids": [ref["claim_id"] for ref in claim_refs(action_cards)],
+            "claims": claim_refs(action_cards),
         },
         {
             "key": "action_cards",
@@ -590,6 +621,9 @@ def build_results(
             "basis": "collab cards(stage=action) 按当前跳次派生状态",
             "note": "已完成为推演状态；另有 " + str(count("needs_confirm", cards)) + " 张需会签、"
             + str(count("running", action_cards)) + " 张仍在执行",
+            # 已完成的那几张卡各自挂的断言——"办完了"这件事的依据是这些卡
+            "claim_ids": [ref["claim_id"] for ref in claim_refs([row for row in action_cards if row.get("state") == "done"])],
+            "claims": claim_refs([row for row in action_cards if row.get("state") == "done"]),
         },
         {
             "key": "linked_objects",
@@ -599,6 +633,9 @@ def build_results(
             "unit": "个",
             "basis": "entities[*].card_ids 非空计数",
             "note": "动作卡与对象的关联依据为工单行号证据，不是空间邻近猜测",
+            # 对象之所以进这次事件，依据是"影响了哪些对象"这条断言
+            "claim_ids": [ref["claim_id"] for ref in single("CL-S2-affected")],
+            "claims": single("CL-S2-affected"),
         },
         {
             "key": "gap",
@@ -608,6 +645,8 @@ def build_results(
             "unit": "台",
             "basis": "deduction.resource_gaps",
             "note": "缺口由库存与需求折算决定，处置动作不会改变台账库存，前后必然相同",
+            "claim_ids": [ref["claim_id"] for ref in single("CL-S5-resource")],
+            "claims": single("CL-S5-resource"),
         },
         {
             "key": "residual_risks",
@@ -615,15 +654,19 @@ def build_results(
             "before": len(deduction.get("residual_risks") or []),
             "after": len(deduction.get("residual_risks") or []),
             "unit": "条",
-            "basis": "deduction.residual_risks",
+            "basis": "deduction.residual_risks（推演结论清单，未单独成断言）",
             "note": "推演结论条目，处置动作不消除已识别的残余风险",
+            "claim_ids": [],
+            "claims": [],
         },
     ]
+    bound = [row for row in rows if row["claim_ids"]]
     return {
         "before_label": "事件发生时",
         "after_label": "当前跳次处置后",
         "rows": rows,
         "measured": False,
+        "claim_coverage": {"rows": len(rows), "bound": len(bound), "unbound": len(rows) - len(bound)},
         "source": "全部取自推演输出与台账；不含量测回传",
     }
 
