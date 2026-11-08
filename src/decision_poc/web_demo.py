@@ -908,12 +908,16 @@ def build_twin3d_html() -> str:
 #hud{position:fixed;left:18px;top:16px;z-index:5;pointer-events:none}
 #hud b{display:block;font-size:18px;color:#e8f3fb;letter-spacing:.5px}
 #hud span{display:block;margin-top:5px;font-size:12.5px;color:#93a7bb}
+#event-bar{position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:5;pointer-events:none;text-align:center;padding:8px 18px;border-radius:10px;background:rgba(7,18,28,.72);border:1px solid rgba(122,162,198,.35)}
+#event-bar b{display:block;font-size:15px;color:#e0f2fe;letter-spacing:.5px}
+#event-bar span{display:block;margin-top:3px;font-size:12px;color:#8fb7d6}
 #legend{position:fixed;left:18px;bottom:16px;z-index:5;pointer-events:none;font-size:12px;color:#93a7bb;line-height:1.9}
 #legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 #tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}
 canvas{display:block}</style>
 <div id=hud><b>城市内涝三维数字孪生 · 写实沙盘</b><span>兴华路片区(A-03) 与 建设大道片区(B-01) · 坐标来自 scene.json 台账实时投影</span></div>
-<div id=legend><span><i style=background:#4a6fa5></i>积水段</span> &nbsp; <span><i style=background:#e0a965></i>已封路</span> &nbsp; <span><i style=background:#5a6a7a></i>泵站</span></div>
+<div id=event-bar><b>暴雨来袭 · 积水上涨</b><span>事件推演 · 阶段 1/4</span></div>
+<div id=legend><span><i style=background:#4a6fa5></i>积水段</span> &nbsp; <span><i style=background:#e0a965></i>已封路</span> &nbsp; <span><i style=background:#5a6a7a></i>泵站</span> &nbsp; <span><i style=background:#ff2d2d></i>故障告警</span></div>
 <div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
 <script src="/three.min.js"></script>
 <script src="/RGBELoader.js"></script>
@@ -1046,7 +1050,7 @@ function build(sched){
     'R-105':[[360,160],[360,250]],// 兴华支路(支路)
   };
   const TWIN3D_FAC={'DF-PS-01':[285,174],'DF-PS-02':[228,231],'DF-IN-101':[258,78],'DF-IN-103':[120,146],'DF-IN-201':[633,146],'DF-IN-202':[526,176],'DF-PS-03':[560,105]};
-  const TWIN3D_WATER={'WO-20261029-007':[[250,156],[330,156],[330,164],[250,164]],'WO-20261029-011':[[545,155],[635,155],[635,165],[545,165]]};
+  const TWIN3D_WATER={'WO-20261029-007':[[250,156],[330,156],[330,164],[250,164]],'WO-20261029-011':[[584,100],[596,100],[596,220],[584,220]]};
   const netRoads=roads.map(function(e){return{id:e.id,label:e.label,detail:e.detail||'',pts:(TWIN3D_ROADS[e.id]||String(e.points||'').split(' ').map(function(p){return p.split(',').map(Number)}))}});
   const seeded=(function(){let s=20260801;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296}})();
   // ---- 道路：沥青 PBR + 车道标线 + 路缘 + 斑马线 ----
@@ -1131,6 +1135,7 @@ function build(sched){
   });
   // ---- 积水段：高饱和蓝水面 + 白色描边，从灰地面强对比跳出 ----
   // 直接在 XZ 平面铺顶点（与道路同一坐标语义），正常参与深度，紧贴路面不悬浮
+  window.__waterMeshes=[];   // 供事件动画引用：{mesh, baseY, label}
   const waterMat=new THREE.MeshStandardMaterial({color:0x1a7fd4,roughness:.15,metalness:.25,transparent:true,opacity:.9,side:THREE.DoubleSide});
   const strokeMat=new THREE.LineBasicMaterial({color:0xbfe3ff});
   water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));
@@ -1144,6 +1149,7 @@ function build(sched){
     const varr=new Float32Array(verts);
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(varr,3));g.computeVertexNormals();
     const m=new THREE.Mesh(g,waterMat);m.position.y=0.43;m.receiveShadow=true;scene3.add(m);
+    window.__waterMeshes.push({mesh:m,baseY:0.43,mat:waterMat});
     // 白色描边（沿积水轮廓，同样 XZ 平面直接铺）
     const lpts=[];
     for(let i=0;i<=pts.length;i++){const p=pts[i%pts.length];lpts.push(p[0],0,p[1]);}
@@ -1152,16 +1158,68 @@ function build(sched){
     // 积水标注（白色衬底蓝字）
     const lb=makeLabel((e.label||'积水')+' '+((e.detail||'').match(/\\d+[.]?\\d*\\s*cm/)||[''])[0],'#ffffff');lb.position.set(cx,3.0,cz);scene3.add(lb)});
   // ---- 设施：泵站(写实小楼) + 雨水口(井盖) ----
+  window.__pumpAlarms=[];   // 供事件动画引用：故障泵站的告警灯 mesh
   fac.forEach(e=>{const fpos=TWIN3D_FAC[e.id]||[Number(e.cx),Number(e.cy)];const[wx,wz]=W(fpos[0],fpos[1]);const ps=e.id.indexOf('DF-PS')===0;
-    if(ps){makeBuilding(2.6,2.6,2.6,wx,wz,0);
-      const sign=makeLabel(String(e.label||e.id).replace('雨水泵站','泵站'),'#cfe0ef');sign.position.set(wx,4.6,wz);scene3.add(sign)}
+    if(ps){const b=makeBuilding(2.6,2.6,2.6,wx,wz,0);
+      const sign=makeLabel(String(e.label||e.id).replace('雨水泵站','泵站'),'#cfe0ef');sign.position.set(wx,4.6,wz);scene3.add(sign);
+      // 故障泵站(DF-PS-01)挂红色告警灯，动画阶段闪红
+      if(/fault|待修|故障/.test(e.detail||'')){
+        const lamp=new THREE.Mesh(new THREE.SphereGeometry(0.22,12,10),new THREE.MeshBasicMaterial({color:0xff2d2d}));
+        lamp.position.set(wx,3.4,wz);scene3.add(lamp);window.__pumpAlarms.push({lamp:lamp});
+      }}
     else{const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.12,16),new THREE.MeshStandardMaterial({color:0x5a6a7a,roughness:.5,metalness:.6}));
       cap.position.set(wx,0.4,wz);cap.receiveShadow=true;scene3.add(cap)}});
+  // ---- 封路路障：在已封路段放置黄色护栏，动画阶段点亮/出现 ----
+  window.__roadBlocks=[];   // 供事件动画引用：封路护栏
+  const blockMat=new THREE.MeshStandardMaterial({color:0xffc21a,roughness:.5,metalness:.2});
+  netRoads.forEach(rd=>{if(!/已封|under_construction|closed/.test(rd.label||'')&&!/已封|closed/.test(rd.detail||''))return;
+    const ps=rd.pts;if(!ps||ps.length<2)return;
+    const mid=ps[Math.floor(ps.length/2)];const[mx,mz]=W(mid[0],mid[1]);
+    const bar=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.5,0.18),blockMat);
+    bar.position.set(mx,0.62,mz);bar.castShadow=true;scene3.add(bar);window.__roadBlocks.push({mesh:bar,mat:blockMat});
+  });
 }
 function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(9,2.25,1);return sp}
+// ---- 事件线动画状态机：六跳推演压缩为 4 个可视阶段，循环播放 ----
+// 阶段：0 暴雨积水上涨 -> 1 泵站告警闪红 -> 2 封路 -> 3 调泵排水回落
+let __evtClock=0, __evtPhase=-1;
+const __EVT_PHASES=[
+  {name:'暴雨来袭 · 积水上涨', dur:3.5, step:null},
+  {name:'泵站告警 · 兴华路泵站故障', dur:3.0, step:null},
+  {name:'封路管控 · 兴华路/滨河路封闭', dur:3.0, step:null},
+  {name:'调度调泵 · 积水回落', dur:3.5, step:null},
+];
+function __evtStep(dt){
+  __evtClock+=dt;
+  const total=__EVT_PHASES.reduce((a,p)=>a+p.dur,0);
+  const t=__evtClock%total;
+  // 计算当前阶段
+  let acc=0, ph=0;
+  for(let i=0;i<__EVT_PHASES.length;i++){acc+=__EVT_PHASES[i].dur;if(t<acc){ph=i;break;}}
+  if(ph!==__evtPhase){
+    __evtPhase=ph;
+    const bar=document.getElementById('event-bar');
+    if(bar)bar.innerHTML='<b>'+__EVT_PHASES[ph].name+'</b><span>事件推演 · 阶段 '+(ph+1)+'/4</span>';
+  }
+  const phT=t-(acc-__EVT_PHASES[ph].dur), phDur=__EVT_PHASES[ph].dur, k=Math.min(1,phT/phDur);
+  // 各阶段驱动
+  (window.__waterMeshes||[]).forEach(w=>{
+    if(ph===0){w.mesh.position.y=w.baseY+k*0.8;w.mat.opacity=0.85+k*0.15;}
+    else if(ph===3){w.mesh.position.y=w.baseY+(1-k)*0.8;w.mat.opacity=1.0-k*0.15;}
+  });
+  (window.__pumpAlarms||[]).forEach(p=>{
+    if(ph===1){p.lamp.visible=(Math.floor(__evtClock*6)%2===0);}
+    else{p.lamp.visible=false;}
+  });
+  (window.__roadBlocks||[]).forEach(b=>{
+    b.mesh.visible=(ph>=2);
+    if(ph===2){b.mat.color.setHex(0xffc21a);b.mesh.position.y=0.62+Math.sin(__evtClock*8)*0.04;}
+  });
+}
 function tick(){
   if(controls)controls.update();
   if(rain){const p=rainGeo.attributes.position;for(let i=0;i<p.count;i++){p.array[i*3+1]-=0.22;if(p.array[i*3+1]<-2)p.array[i*3+1]=54;p.array[i*3]+=(Math.random()-0.5)*0.04;p.array[i*3+2]+=(Math.random()-0.5)*0.04}p.needsUpdate=true}
+  if(window.__waterMeshes)__evtStep(1/60);
   renderer.render(scene3,camera);
 }
 init();
