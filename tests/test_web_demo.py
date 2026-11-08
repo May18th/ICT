@@ -175,3 +175,12 @@ def test_flood_playback_is_event_driven():
     assert "降雨与屋面汇流" not in html, "硬编码阶段文案又回来了"
     assert "maxDepth" in html and "depth_cm" in html, \
         "水位终值必须取实测（观测事件 detail 或 facts.depth_cm），不允许只写死 30"
+    assert "id=flood-cap-title" in html and "id=flood-cap-detail" in html
+    assert "document.getElementById('flood-cap-detail').textContent=deptEl.textContent" in html
+    assert "id=flood-gap" in html
+    assert "class=flood-gap-value" in html
+    assert ".flood-gap-value{font-size:28px" in html
+    run_body = html.split("async function run(isSwitch)", 1)[1].split("\n let lastV1", 1)[0]
+    assert "playFloodScenario()" not in run_body
+    assert "setTimeout(function(){runChain()" not in html
+    assert "loadScheduler().then(function(){chainAll(true)})" in html
