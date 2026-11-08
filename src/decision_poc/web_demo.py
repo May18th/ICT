@@ -1032,10 +1032,21 @@ function makeRain(){
 function build(sched){
   const ents=(sched.scene&&sched.scene.entities)||[];
   const roads=ents.filter(e=>e.kind==='road'),water=ents.filter(e=>e.kind==='water'),fac=ents.filter(e=>e.kind==='facility'),dist=ents.filter(e=>e.kind==='district');
-  // 规划路网（台账重排，路名/状态/等级仍取台账）
-  const TWIN3D_ROADS={'R-104':[[-20,65],[400,65]],'R-101':[[-20,160],[345,160]],'R-103':[[20,245],[340,245]],'R-102':[[150,-20],[150,350]],'R-105':[[250,120],[250,245]],'R-202':[[345,160],[730,160]],'R-201':[[600,40],[600,290]]};
-  const TWIN3D_FAC={'DF-PS-01':[285,174],'DF-PS-02':[228,231],'DF-IN-101':[258,78],'DF-IN-103':[60,146],'DF-IN-201':[633,146],'DF-IN-202':[526,176],'DF-PS-03':[616,105]};
-  const TWIN3D_WATER={'WO-20261029-007':[[225,150],[320,150],[320,174],[225,174]],'WO-20261029-011':[[545,150],[655,150],[655,174],[545,174]]};
+  // 规划路网：以两个片区中心为锚的正交网格（主干贯穿、次干连接、支路切分街区）
+  // 坐标统一为「场景坐标」，A-03 中心(199,161)、B-01 中心(591,161)，东西并列
+  const TWIN3D_ROADS={
+    // 东西向主干（贯穿两片区）：环城北路(北) + 兴华路-工业大道走廊(中) + 民生街(南)
+    'R-104':[[70,70],[720,70]],   // 环城北路(主干)
+    'R-101':[[70,160],[525,160]], // 兴华路(次干,已封)
+    'R-202':[[525,160],[720,160]],// 工业大道(主干)
+    'R-103':[[100,250],[700,250]],// 民生街(支路)
+    // 南北向：建设大道(主干,贯穿A-03) + 滨河路(次干,贯穿B-01) + 支路
+    'R-102':[[200,40],[200,280]], // 建设大道(主干)
+    'R-201':[[590,40],[590,280]], // 滨河路(次干,已封)
+    'R-105':[[360,160],[360,250]],// 兴华支路(支路)
+  };
+  const TWIN3D_FAC={'DF-PS-01':[285,174],'DF-PS-02':[228,231],'DF-IN-101':[258,78],'DF-IN-103':[120,146],'DF-IN-201':[633,146],'DF-IN-202':[526,176],'DF-PS-03':[560,105]};
+  const TWIN3D_WATER={'WO-20261029-007':[[250,150],[330,150],[330,172],[250,172]],'WO-20261029-011':[[545,150],[635,150],[635,172],[545,172]]};
   const netRoads=roads.map(function(e){return{id:e.id,label:e.label,detail:e.detail||'',pts:(TWIN3D_ROADS[e.id]||String(e.points||'').split(' ').map(function(p){return p.split(',').map(Number)}))}});
   const seeded=(function(){let s=20260801;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296}})();
   // ---- 道路：沥青 PBR + 车道标线 + 路缘 + 斑马线 ----
@@ -1061,35 +1072,31 @@ function build(sched){
     const lb=makeLabel(String(e.label||'').split('（')[0],closed?'#e0a965':'#cfe0ef');lb.position.set(mx,3.2,mz);scene3.add(lb)});
   // 路口斑马线
   const zebraMat=new THREE.MeshBasicMaterial({color:0xd5dce2});
-  [[150,65],[150,160],[150,245],[250,160],[250,245],[600,160]].forEach(function(j){const[jx,jz]=W(j[0],j[1]);
+  [[200,70],[200,160],[200,250],[360,160],[590,70],[590,160],[590,250]].forEach(function(j){const[jx,jz]=W(j[0],j[1]);
     for(let k=-2;k<=2;k++){const a=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.015,0.2),zebraMat);a.position.set(jx+k*0.32,0.4,jz);scene3.add(a);
       const b=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.015,1.5),zebraMat);b.position.set(jx,0.4,jz+k*0.32);scene3.add(b)}});
-  // ---- 楼栋：混凝土立面，沿街密集 + 内层稀疏，高低错落 ----
-  dist.forEach(e=>{const r=Math.min(e.r,96);
-    const cx=e.cx,cy=e.cy;
-    // 沿道路两侧布楼：先沿每条路两侧撒
-    const placed=[];
-    netRoads.forEach(rd=>{if(rd.pts.length<2)return;
-      for(let i=0;i<rd.pts.length-1;i++){const p0=rd.pts[i],p1=rd.pts[i+1];
-        const dx=p1[0]-p0[0],dy=p1[1]-p0[1];const len=Math.hypot(dx,dy);if(len<5)continue;
-        const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;
-        const off=18;
-        let t=10;while(t<len-10){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
-          [-1,1].forEach(function(side){
-            const px=bx+nx*side*off,py=by+ny*side*off;
-            if(Math.hypot(px-e.cx,py-e.cy)>r*0.95)return;
-            if(placed.some(q=>Math.hypot(q[0]-px,q[1]-py)<18))return;
-            // 避开积水面（内涝核心，楼栋不得压盖积水段）
-            let nearWater=false;
-            Object.values(TWIN3D_WATER).forEach(wp=>{const wc=wp.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/wp.length);
-              if(Math.hypot(px-wc[0],py-wc[1])<16)nearWater=true});
-            if(nearWater)return;
-            placed.push([px,py])});t+=16+seeded()*10}}
+  // ---- 楼栋：落在街区内部（正交网格围成的街区），每街区 1-3 栋，疏朗有规划感 ----
+  // 街区中心点：由主次干道网格围成的空地中心
+  const blocks=[[135,115],[280,115],[135,205],[280,205],[475,115],[655,115],[475,205],[655,205]];
+  dist.forEach(e=>{
+    const r=Math.min(e.r,96);
+    blocks.forEach(bc=>{
+      // 只在该片区范围内布楼
+      if(Math.hypot(bc[0]-e.cx,bc[1]-e.cy)>r*0.9)return;
+      // 该街区放 1-3 栋
+      const n=1+Math.floor(seeded()*3);
+      for(let k=0;k<n;k++){
+        const px=bc[0]+(seeded()-0.5)*22,py=bc[1]+(seeded()-0.5)*22;
+        // 避开积水面
+        let nearWater=false;
+        Object.values(TWIN3D_WATER).forEach(wp=>{const wc=wp.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/wp.length);
+          if(Math.hypot(px-wc[0],py-wc[1])<20)nearWater=true});
+        if(nearWater)continue;
+        const w=5+seeded()*3,d=5+seeded()*3,h=3.5+seeded()*seeded()*9;
+        const[wx,wz]=W(px,py);
+        makeBuilding(w,h,d,wx,wz,Math.floor(seeded()*4)*Math.PI/2);
+      }
     });
-    placed.forEach(p=>{
-      const w=4.5+seeded()*4,d=4.5+seeded()*4,h=3.2+seeded()*seeded()*8;
-      const[wx,wz]=W(p[0],p[1]);
-      makeBuilding(w,h,d,wx,wz,Math.floor(seeded()*4)*Math.PI/2)});
   });
   // ---- 行道树（沿主干路两侧）+ 片区内部点缀 ----
   netRoads.forEach(rd=>{if(rd.pts.length<2)return;
@@ -1099,8 +1106,8 @@ function build(sched){
       const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;
       let t=8;while(t<len-8){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
         if(main){[-1,1].forEach(function(side){const px=bx+nx*side*8,py=by+ny*side*8;
-          if(seeded()>0.7){const[wx,wz]=W(px,py);makeTree(wx,wz,0.7+seeded()*0.5)}})}
-        t+=16+seeded()*8}}
+          if(seeded()>0.82){const[wx,wz]=W(px,py);makeTree(wx,wz,0.7+seeded()*0.5)}})}
+        t+=20+seeded()*8}}
   });
   // ---- 路灯（主干路两侧） ----
   netRoads.forEach(rd=>{if(rd.pts.length<2)return;
