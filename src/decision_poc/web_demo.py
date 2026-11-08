@@ -1134,7 +1134,7 @@ function build(sched){
   water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));
     const cen=ps.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/ps.length);
     const sh=new THREE.Shape();
-    ps.forEach((p,i)=>{const[wx,wz]=W(p[0],p[1]);if(i===0)sh.moveTo(wx,-wz);else sh.lineTo(wx,-wz)});
+    ps.forEach((p,i)=>{const[wx,wz]=W(p[0],p[1]);if(i===0)sh.moveTo(wx,wz);else sh.lineTo(wx,wz)});
     const g=new THREE.ShapeGeometry(sh);const m=new THREE.Mesh(g,waterMat);
     m.rotation.x=Math.PI/2;m.position.y=0.55;m.renderOrder=999;scene3.add(m);
     // 白色描边（沿积水轮廓）
