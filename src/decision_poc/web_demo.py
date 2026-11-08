@@ -917,7 +917,7 @@ let renderer,scene3,camera,earth;
 let az=0.9,polar=1.05,radius=52,drag=null,autoSpin=true;
 const K=0.10,CX=350,CY=165;
 function W(x,y){return[(x-CX)*K,(y-CY)*K]}
-function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(6,12,20,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#bfe0ff';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(7,1.75,1);return sp}
+function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 36px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(6,12,20,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#bfe0ff';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(7,1.75,1);return sp}
 function segDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay;const L=dx*dx+dy*dy;let t=L?((px-ax)*dx+(py-ay)*dy)/L:0;t=Math.max(0,Math.min(1,t));const qx=ax+t*dx,qy=ay+t*dy;return Math.hypot(px-qx,py-qy)}
 function init(){
  renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(renderer.domElement);
@@ -943,7 +943,7 @@ function build(sched){
  const roads=ents.filter(e=>e.kind==='road'),water=ents.filter(e=>e.kind==='water'),fac=ents.filter(e=>e.kind==='facility'),dist=ents.filter(e=>e.kind==='district');
  // 三维视图专用规划路网：横平竖直的城市骨架（路名/封闭状态/道路等级仍来自台账）。
  // 台账折线是为二维平面图设计的，直接拉进三维会交叉生硬，故展示层重排，数据层不动。
- const TWIN3D_ROADS={'R-104':[[40,65],[330,65]],'R-101':[[45,160],[330,160]],'R-103':[[60,245],[310,245]],'R-102':[[150,40],[150,300]],'R-105':[[250,120],[250,245]],'R-202':[[345,160],[695,160]],'R-201':[[600,70],[600,255]]};
+ const TWIN3D_ROADS={'R-104':[[-20,65],[400,65]],'R-101':[[-20,160],[345,160]],'R-103':[[20,245],[340,245]],'R-102':[[150,-20],[150,350]],'R-105':[[250,120],[250,245]],'R-202':[[345,160],[730,160]],'R-201':[[600,40],[600,290]]};
  const TWIN3D_FAC={'DF-PS-01':[285,174],'DF-PS-02':[228,231],'DF-IN-101':[258,78],'DF-IN-103':[60,146],'DF-IN-201':[633,146],'DF-IN-202':[526,176],'DF-PS-03':[616,105]};
  const TWIN3D_WATER={'WO-20261029-007':[[250,153],[310,153],[310,167],[250,167]],'WO-20261029-011':[[565,153],[640,153],[640,167],[565,167]]};
  const netRoads=roads.map(function(e){return{id:e.id,label:e.label,detail:e.detail||'',pts:(TWIN3D_ROADS[e.id]||String(e.points||'').split(' ').map(function(p){return p.split(',').map(Number)}))}});
@@ -956,8 +956,8 @@ function build(sched){
   const lb=makeLabel(e.label+' 片区','#9fc3e8');lb.position.set(wx,7.5,wz-r-1.2);scene3.add(lb)});
  // 道路条带（规划路网；主干/次干/支路分级宽度，已封=橙色）
  netRoads.forEach(e=>{const ps=e.pts;const closed=/已封/.test(e.label||'');
-  const wid=/主干路/.test(e.detail)?1.35:(/次干路/.test(e.detail)?1.15:0.92);
-  const mat=new THREE.MeshStandardMaterial({color:closed?0xb08034:0x2b3d55,roughness:.9});
+  const wid=/主干路/.test(e.detail)?1.1:(/次干路/.test(e.detail)?0.95:0.8);
+  const mat=new THREE.MeshStandardMaterial({color:0x2c405c,roughness:.9});
   for(let i=0;i<ps.length-1;i++){const[ax,ay]=W(ps[i][0],ps[i][1]),[bx,by]=W(ps[i+1][0],ps[i+1][1]);
    const len=Math.hypot(bx-ax,by-ay);if(len<0.05)continue;
    const m=new THREE.Mesh(new THREE.BoxGeometry(len+wid,0.12,wid),mat);
@@ -967,7 +967,7 @@ function build(sched){
  // 积水面
  water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));const sh=new THREE.Shape();
   ps.forEach((p,i)=>{const[wx,wz]=W(p[0],p[1]);if(i===0)sh.moveTo(wx,-wz);else sh.lineTo(wx,-wz)});
-  const g=new THREE.ShapeGeometry(sh);const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0x2f8fd6,transparent:true,opacity:0.8,roughness:.25,metalness:.1,side:THREE.DoubleSide}));
+  const g=new THREE.ShapeGeometry(sh);const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0x2f8fd6,emissive:0x1d6fae,transparent:true,opacity:0.85,roughness:.2,metalness:.1,side:THREE.DoubleSide}));
   m.rotation.x=Math.PI/2;m.position.y=0.52;scene3.add(m)});
  // 设施：泵站塔 / 雨水口柱 + 名牌
  fac.forEach(e=>{const fpos=TWIN3D_FAC[e.id]||[Number(e.cx),Number(e.cy)];const[wx,wz]=W(fpos[0],fpos[1]);const ps=e.id.indexOf('DF-PS')===0;
@@ -978,9 +978,9 @@ function build(sched){
    const lb=makeLabel(String(e.label||e.id).replace('雨水泵站','泵站'),'#bfe0ff');lb.scale.set(6,1.5,1);lb.position.set(wx,5.1,wz);scene3.add(lb)}
   else{const c=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.58,1.15,18),new THREE.MeshStandardMaterial({color:0xb98a35,roughness:.6}));
    c.position.set(wx,0.92,wz);c.castShadow=true;scene3.add(c)}});
- // 程序化楼栋白模：片区圆盘内铺格子，避开道路/设施/水面
- const seeded=(function(){let s=20260801;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296}})();
- dist.forEach(e=>{const r=Math.min(e.r,96);const step=30;
+ // 程序化楼栋白模：默认关闭（评委画面要留白，城市密度需要时置 true）
+ const SHOW_BUILDINGS=false;const seeded=(function(){let s=20260801;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296}})();
+ if(SHOW_BUILDINGS)dist.forEach(e=>{const r=Math.min(e.r,96);const step=30;
   for(let gx=-r;gx<=r;gx+=step){for(let gy=-r;gy<=r;gy+=step){
    const px=e.cx+gx+(seeded()-0.5)*8,py=e.cy+gy+(seeded()-0.5)*8;
    if(Math.hypot(px-e.cx,py-e.cy)>r*0.88)continue;
