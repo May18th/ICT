@@ -941,6 +941,12 @@ function init(){
 function build(sched){
  const ents=(sched.scene&&sched.scene.entities)||[];
  const roads=ents.filter(e=>e.kind==='road'),water=ents.filter(e=>e.kind==='water'),fac=ents.filter(e=>e.kind==='facility'),dist=ents.filter(e=>e.kind==='district');
+ // 三维视图专用规划路网：横平竖直的城市骨架（路名/封闭状态/道路等级仍来自台账）。
+ // 台账折线是为二维平面图设计的，直接拉进三维会交叉生硬，故展示层重排，数据层不动。
+ const TWIN3D_ROADS={'R-104':[[40,65],[330,65]],'R-101':[[45,160],[330,160]],'R-103':[[60,245],[310,245]],'R-102':[[150,40],[150,300]],'R-105':[[250,120],[250,245]],'R-202':[[345,160],[695,160]],'R-201':[[600,70],[600,255]]};
+ const TWIN3D_FAC={'DF-PS-01':[285,174],'DF-PS-02':[228,231],'DF-IN-101':[258,78],'DF-IN-103':[60,146],'DF-IN-201':[633,146],'DF-IN-202':[526,176],'DF-PS-03':[616,105]};
+ const TWIN3D_WATER={'WO-20261029-007':[[250,153],[310,153],[310,167],[250,167]],'WO-20261029-011':[[565,153],[640,153],[640,167],[565,167]]};
+ const netRoads=roads.map(function(e){return{id:e.id,label:e.label,detail:e.detail||'',pts:(TWIN3D_ROADS[e.id]||String(e.points||'').split(' ').map(function(p){return p.split(',').map(Number)}))}});
  // 片区展台
  dist.forEach(e=>{const r=Math.min(e.r,96)*K*1.05;const[wx,wz]=W(e.cx,e.cy);
   const d=new THREE.Mesh(new THREE.CylinderGeometry(r,r,0.34,56),new THREE.MeshStandardMaterial({color:0x17293f,roughness:.95}));
@@ -948,29 +954,30 @@ function build(sched){
   const rim=new THREE.Mesh(new THREE.TorusGeometry(r,0.045,10,72),new THREE.MeshStandardMaterial({color:0x35577d,roughness:.6}));
   rim.rotation.x=Math.PI/2;rim.position.set(wx,0.36,wz);scene3.add(rim);
   const lb=makeLabel(e.label+' 片区','#9fc3e8');lb.position.set(wx,7.5,wz-r-1.2);scene3.add(lb)});
- // 道路条带
- roads.forEach(e=>{const ps=String(e.points||'').split(' ').map(p=>p.split(',').map(Number));const closed=/已封/.test(e.label||'');
+ // 道路条带（规划路网；主干/次干/支路分级宽度，已封=橙色）
+ netRoads.forEach(e=>{const ps=e.pts;const closed=/已封/.test(e.label||'');
+  const wid=/主干路/.test(e.detail)?1.35:(/次干路/.test(e.detail)?1.15:0.92);
   const mat=new THREE.MeshStandardMaterial({color:closed?0xb08034:0x2b3d55,roughness:.9});
   for(let i=0;i<ps.length-1;i++){const[ax,ay]=W(ps[i][0],ps[i][1]),[bx,by]=W(ps[i+1][0],ps[i+1][1]);
    const len=Math.hypot(bx-ax,by-ay);if(len<0.05)continue;
-   const m=new THREE.Mesh(new THREE.BoxGeometry(len+1.0,0.12,1.05),mat);
-   m.position.set((ax+bx)/2,0.12,(ay+by)/2);m.rotation.y=-Math.atan2(by-ay,bx-ax);m.receiveShadow=true;scene3.add(m)}
+   const m=new THREE.Mesh(new THREE.BoxGeometry(len+wid,0.12,wid),mat);
+   m.position.set((ax+bx)/2,0.42,(ay+by)/2);m.rotation.y=-Math.atan2(by-ay,bx-ax);m.receiveShadow=true;scene3.add(m)}
   const mid=ps[Math.floor(ps.length/2)];const[mx,mz]=W(mid[0],mid[1]);
-  const lb=makeLabel(String(e.label||'').split('（')[0],closed?'#e0a965':'#7f95ad');lb.scale.set(5,1.25,1);lb.position.set(mx,2.6,mz);scene3.add(lb)});
+  const lb=makeLabel(String(e.label||'').split('（')[0],closed?'#e0a965':'#7f95ad');lb.scale.set(5,1.25,1);lb.position.set(mx,2.7,mz);scene3.add(lb)});
  // 积水面
- water.forEach(e=>{const ps=String(e.points||'').split(' ').map(p=>p.split(',').map(Number));const sh=new THREE.Shape();
+ water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));const sh=new THREE.Shape();
   ps.forEach((p,i)=>{const[wx,wz]=W(p[0],p[1]);if(i===0)sh.moveTo(wx,-wz);else sh.lineTo(wx,-wz)});
   const g=new THREE.ShapeGeometry(sh);const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0x2f8fd6,transparent:true,opacity:0.8,roughness:.25,metalness:.1,side:THREE.DoubleSide}));
-  m.rotation.x=Math.PI/2;m.position.y=0.46;scene3.add(m)});
+  m.rotation.x=Math.PI/2;m.position.y=0.52;scene3.add(m)});
  // 设施：泵站塔 / 雨水口柱 + 名牌
- fac.forEach(e=>{const[wx,wz]=W(Number(e.cx),Number(e.cy));const ps=e.id.indexOf('DF-PS')===0;
+ fac.forEach(e=>{const fpos=TWIN3D_FAC[e.id]||[Number(e.cx),Number(e.cy)];const[wx,wz]=W(fpos[0],fpos[1]);const ps=e.id.indexOf('DF-PS')===0;
   if(ps){const t=new THREE.Mesh(new THREE.BoxGeometry(2.0,3.0,2.0),new THREE.MeshStandardMaterial({color:0x3d87b8,roughness:.55}));
-   t.position.set(wx,1.72,wz);t.castShadow=true;scene3.add(t);
+   t.position.set(wx,1.88,wz);t.castShadow=true;scene3.add(t);
    const roof=new THREE.Mesh(new THREE.BoxGeometry(2.4,0.28,2.4),new THREE.MeshStandardMaterial({color:0x77b6de,roughness:.4}));
-   roof.position.set(wx,3.35,wz);roof.castShadow=true;scene3.add(roof);
+   roof.position.set(wx,3.52,wz);roof.castShadow=true;scene3.add(roof);
    const lb=makeLabel(String(e.label||e.id).replace('雨水泵站','泵站'),'#bfe0ff');lb.scale.set(6,1.5,1);lb.position.set(wx,5.1,wz);scene3.add(lb)}
   else{const c=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.58,1.15,18),new THREE.MeshStandardMaterial({color:0xb98a35,roughness:.6}));
-   c.position.set(wx,0.75,wz);c.castShadow=true;scene3.add(c)}});
+   c.position.set(wx,0.92,wz);c.castShadow=true;scene3.add(c)}});
  // 程序化楼栋白模：片区圆盘内铺格子，避开道路/设施/水面
  const seeded=(function(){let s=20260801;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296}})();
  dist.forEach(e=>{const r=Math.min(e.r,96);const step=30;
@@ -978,8 +985,8 @@ function build(sched){
    const px=e.cx+gx+(seeded()-0.5)*8,py=e.cy+gy+(seeded()-0.5)*8;
    if(Math.hypot(px-e.cx,py-e.cy)>r*0.88)continue;
    let ok=true;
-   roads.forEach(rd=>{if(!ok)return;const ps=String(rd.points||'').split(' ').map(p=>p.split(',').map(Number));
-    for(let i=0;i<ps.length-1;i++){if(segDist(px,py,ps[i][0],ps[i][1],ps[i+1][0],ps[i+1][1])<13){ok=false;break}}});
+   netRoads.forEach(rd=>{if(!ok)return;const ps=rd.pts;
+    for(let i=0;i<ps.length-1;i++){if(segDist(px,py,ps[i][0],ps[i][1],ps[i+1][0],ps[i+1][1])<17){ok=false;break}}});
    if(ok)fac.forEach(f=>{if(Math.hypot(px-Number(f.cx),py-Number(f.cy))<16)ok=false});
    if(ok)water.forEach(wt=>{const p0=String(wt.points||'').split(' ')[0].split(',').map(Number);if(Math.hypot(px-p0[0],py-p0[1])<22)ok=false});
    if(!ok)continue;
@@ -987,7 +994,7 @@ function build(sched){
    const[wx,wz]=W(px,py);
    const gcol=new THREE.Color().setHSL(0.58,0.08,0.68+seeded()*0.18);
    const bd=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:gcol,roughness:.85}));
-   bd.scale.set(fw,hh,fd);bd.position.set(wx,hh/2+0.3,wz);bd.castShadow=true;bd.receiveShadow=true;scene3.add(bd);
+   bd.scale.set(fw,hh,fd);bd.position.set(wx,hh/2+0.37,wz);bd.castShadow=true;bd.receiveShadow=true;scene3.add(bd);
   }}});
 }
 function tick(){
