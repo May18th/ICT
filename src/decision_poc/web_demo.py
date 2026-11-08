@@ -1174,6 +1174,7 @@ canvas{display:block}
 <script src="/three.min.js"></script>
 <script src="/RGBELoader.js"></script>
 <script src="/OrbitControls.js"></script>
+<script src="/GLTFLoader.js"></script>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let renderer,scene3,camera,controls,envTex=null;
@@ -1364,16 +1365,25 @@ function build(sched){
     [590,720, 70,160],   // B-01 北
     [590,720,160,250],   // B-01 南
   ];
-  // 每街区一栋楼，尺寸按片区特性固定（确定性，无 seeded 随机），留足楼间距与退线
-  const blockBld=[{w:7,h:5.5,d:9},{w:8,h:7.5,d:8},{w:6,h:4.5,d:7},{w:9,h:6,d:9},{w:7,h:5,d:8},{w:6,h:4,d:7},{w:8,h:7,d:8},{w:7,h:5.5,d:9}];
+  // 每个街区用不同的 KayKit 建筑模型（building_A~H），scale 放大到真实街区尺度
+  const KAYKIT_BLD=['building_A','building_B','building_C','building_D','building_E','building_F','building_G','building_H'];
+  const gltfLoader=new THREE.GLTFLoader();
   blocks.forEach((b,i)=>{
     const bx=(b[0]+b[1])/2, bz=(b[2]+b[3])/2;   // 街区中心（场景坐标）
-    const bb=blockBld[i]||{w:7,h:5,d:8};
-    // 楼体边长不得超过街区短边的 60%，保证留白
-    const bxLen=b[1]-b[0], bzLen=b[3]-b[2];
-    const w=Math.min(bb.w, bxLen*0.6), d=Math.min(bb.d, bzLen*0.6), h=bb.h;
     const[wx,wz]=W(bx,bz);
-    makeBuilding(w,h,d,wx,wz,0);   // 朝向固定 0°，与路网正交对齐
+    const name=KAYKIT_BLD[i%8];
+    gltfLoader.load('/assets/kaykit/'+name+'.gltf',function(gltf){
+      const model=gltf.scene;
+      // KayKit 模型约 2×2 米底面，放大到街区尺度（约 7~9 世界单位 = 3.5~4.5 倍）
+      const scale=4.2;
+      model.scale.set(scale,scale,scale);
+      model.position.set(wx,0.37,wz);
+      model.rotation.y=(i%2===0?0:Math.PI/2);   // 交错朝向，打破千篇一律
+      // 建筑是背景，不挂 entityId（不参与点击详情/光环），只开阴影
+      model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+      scene3.add(model);
+      (window.__buildings=window.__buildings||[]).push({model:model,index:i,name:name});
+    },undefined,function(err){console.warn('建筑模型加载失败',name,err);});
   });
   // ---- 行道树（沿主干路两侧）+ 片区内部点缀 ----
   netRoads.forEach(rd=>{if(rd.pts.length<2)return;
@@ -1816,11 +1826,24 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
             return _error("three.min.js missing (assets/three.min.js)", 404)
         return 200, "application/javascript; charset=utf-8", three.read_bytes()
     # 三维写实沙盘的静态依赖（RGBELoader/OrbitControls）与 PBR 贴图/HDR，全部本地分发、断网可用
-    if parsed.path in {"/RGBELoader.js", "/OrbitControls.js"}:
+    if parsed.path in {"/RGBELoader.js", "/OrbitControls.js", "/GLTFLoader.js"}:
         f = _assets_dir() / parsed.path[1:]
         if not f.exists():
             return _error(f"{parsed.path} missing", 404)
         return 200, "application/javascript; charset=utf-8", f.read_bytes()
+    if parsed.path.startswith("/assets/kaykit/"):
+        # KayKit 城市资产：gltf(JSON) / bin(几何) / png(纹理图集)，CC0，本地分发
+        name = parsed.path.rsplit("/", 1)[1]
+        f = _assets_dir() / "kaykit" / name
+        if not f.exists():
+            return _error("kaykit asset missing", 404)
+        if name.endswith(".gltf"):
+            return 200, "model/gltf+json; charset=utf-8", f.read_bytes()
+        if name.endswith(".bin"):
+            return 200, "application/octet-stream", f.read_bytes()
+        if name.endswith(".png"):
+            return 200, "image/png", f.read_bytes()
+        return 200, "application/octet-stream", f.read_bytes()
     if parsed.path.startswith("/assets/tex/") and parsed.path.endswith(".jpg"):
         f = _assets_dir() / "tex" / parsed.path.rsplit("/", 1)[1]
         if not f.exists():
