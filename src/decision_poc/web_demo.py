@@ -895,131 +895,263 @@ def _assets_dir():
 
 
 def build_twin3d_html() -> str:
-    """三维数字孪生白模预览页（独立路由 /twin3d，主页面不动）。
+    """三维数字孪生写实沙盘（独立路由 /twin3d，主页面不动）。
 
-    方向确认用：楼栋/道路/水面全部由代码程序化生成，不依赖任何建模资产；
-    场景坐标来自 /api/scheduler 的 scene.entities 投影。
+    两个片区全景：混凝土立面楼栋、沥青/人行道 PBR 材质、行道树、路灯、
+    路侧车辆、积水段(镜面反射+涟漪)、雨丝粒子、阴雨 HDR 天空。
+    场景坐标来自 /api/scheduler 的 scene.entities；材质为 CC0(Poly Haven)，
+    全部本地分发，断网可用。
     """
     return """<!doctype html><html lang=zh-CN><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>
-<title>三维数字孪生 · 白模预览</title>
-<style>html,body{margin:0;height:100%;background:#0d1420;overflow:hidden;font:14px system-ui;color:#cfe3f7}
-#hud{position:fixed;left:16px;top:14px;z-index:5;pointer-events:none}
-#hud b{display:block;font-size:17px;color:#bae6fd}
-#hud span{display:block;margin-top:4px;font-size:12.5px;color:#8fa4bd}
-#tip{position:fixed;right:16px;bottom:12px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}
+<title>城市内涝三维数字孪生 · 写实沙盘</title>
+<style>html,body{margin:0;height:100%;background:#0b0e13;overflow:hidden;font:14px system-ui;color:#d7e4f0}
+#hud{position:fixed;left:18px;top:16px;z-index:5;pointer-events:none}
+#hud b{display:block;font-size:18px;color:#e8f3fb;letter-spacing:.5px}
+#hud span{display:block;margin-top:5px;font-size:12.5px;color:#93a7bb}
+#legend{position:fixed;left:18px;bottom:16px;z-index:5;pointer-events:none;font-size:12px;color:#93a7bb;line-height:1.9}
+#legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+#tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}
 canvas{display:block}</style>
-<div id=hud><b>城市内涝三维数字孪生 · 白模预览 v1</b><span>楼栋/道路/水面均为代码程序化生成 · 实体坐标来自 scene.json 台账投影</span></div>
-<div id=tip>拖动旋转 · 滚轮缩放</div>
+<div id=hud><b>城市内涝三维数字孪生 · 写实沙盘</b><span>兴华路片区(A-03) 与 建设大道片区(B-01) · 坐标来自 scene.json 台账实时投影</span></div>
+<div id=legend><span><i style=background:#4a6fa5></i>积水段</span> &nbsp; <span><i style=background:#e0a965></i>已封路</span> &nbsp; <span><i style=background:#5a6a7a></i>泵站</span></div>
+<div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
 <script src="/three.min.js"></script>
+<script src="/RGBELoader.js"></script>
+<script src="/OrbitControls.js"></script>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let renderer,scene3,camera,earth;
-let az=0.8,polar=0.58,radius=70,drag=null,autoSpin=false;
+let renderer,scene3,camera,controls,envTex=null;
+let rain=null,rainGeo=null;
 const K=0.10,CX=350,CY=165;
 function W(x,y){return[(x-CX)*K,(y-CY)*K]}
-function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 36px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(6,12,20,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#bfe0ff';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(7,1.75,1);return sp}
-function segDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay;const L=dx*dx+dy*dy;let t=L?((px-ax)*dx+(py-ay)*dy)/L:0;t=Math.max(0,Math.min(1,t));const qx=ax+t*dx,qy=ay+t*dy;return Math.hypot(px-qx,py-qy)}
+// ---- 材质加载：一次加载、repeat 平铺、缓存复用 ----
+const texCache={};
+function loadTex(name){if(texCache[name])return texCache[name];
+  const t=new THREE.TextureLoader().load('/assets/tex/'+name+'.jpg');
+  t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;return texCache[name]=t}
+function stdMat(name,extra){const m=new THREE.MeshStandardMaterial(Object.assign({map:loadTex(name+'_diffuse'),roughnessMap:loadTex(name+'_rough'),normalMap:loadTex(name+'_normal'),roughness:.95,metalness:.02},extra||{}));return m}
+// 写实楼栋：混凝土立面，UV 按楼面大小平铺让窗户肌理自然
+// 程序化楼栋立面：Canvas 画窗户格子，生成一张可平铺的立面贴图
+let __facadeTex=null;
+function facadeTex(){if(__facadeTex)return __facadeTex;
+  const cv=document.createElement('canvas');cv.width=256;cv.height=512;const g=cv.getContext('2d');
+  // 墙体底色
+  g.fillStyle='#8a9096';g.fillRect(0,0,256,512);
+  // 横向楼层分隔
+  for(let y=0;y<512;y+=64){g.fillStyle='#6d7379';g.fillRect(0,y,256,3)}
+  // 竖向柱
+  for(let x=0;x<256;x+=64){g.fillStyle='#7a8086';g.fillRect(x,0,3,512)}
+  // 窗户（每格一个，深色玻璃带微反光）
+  for(let y=16;y<512;y+=64){for(let x=16;x<256;x+=64){
+    g.fillStyle='#2a3a4a';g.fillRect(x,y,40,40);       // 玻璃
+    g.fillStyle='#1d2834';g.fillRect(x,y,40,6);        // 上沿阴影
+    g.fillStyle='rgba(180,210,230,.35)';g.fillRect(x+6,y+8,12,24); // 反光
+  }}
+  const t=new THREE.CanvasTexture(cv);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;
+  return __facadeTex=t}
+function makeBuilding(w,h,d,x,z,rotY){
+  const g=new THREE.BoxGeometry(w,h,d);
+  // 程序化立面：每栋楼独立材质，按楼面尺寸平铺窗户格子（写实窗户肌理）
+  const ft=facadeTex().clone();ft.needsUpdate=true;
+  const mat=new THREE.MeshStandardMaterial({color:0xd8dde0,map:ft,roughness:.82,metalness:.06});
+  const b=new THREE.Mesh(g,mat);b.castShadow=true;b.receiveShadow=true;
+  b.position.set(x,h/2+0.37,z);if(rotY)b.rotation.y=rotY;
+  // 按楼面尺寸平铺：宽约 1 格/1.6 单位，高约 1 层/1.5 单位
+  ft.repeat.set(Math.max(1,Math.round(w/1.6)),Math.max(1,Math.round(h/1.5)));
+  scene3.add(b);
+  // 楼顶女儿墙 + 底面稍内收，增强真实感
+  const cap=new THREE.Mesh(new THREE.BoxGeometry(w*1.02,0.14,d*1.02),new THREE.MeshStandardMaterial({color:0x3a424a,roughness:.9}));
+  cap.position.set(x,h+0.44,z);cap.castShadow=true;scene3.add(cap);
+  return b}
+// 行道树：分叉树干 + 双层树冠
+function makeTree(x,z,s){
+  const g=new THREE.Group();
+  const trunkMat=new THREE.MeshStandardMaterial({color:0x5a4632,roughness:.95});
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.22*s,0.34*s,1.6*s,8),trunkMat);
+  trunk.position.y=0.8*s;trunk.castShadow=true;g.add(trunk);
+  const leafMat=new THREE.MeshStandardMaterial({color:0x2e5b36,roughness:.9});
+  const leafMat2=new THREE.MeshStandardMaterial({color:0x3a6b42,roughness:.9});
+  [[0,1.7*s,0.9*s,leafMat2],[0.4*s,2.2*s,0.65*s,leafMat],[-0.3*s,2.3*s,0.55*s,leafMat2]].forEach(c=>{
+    const b=new THREE.Mesh(new THREE.SphereGeometry(c[2],12,10),c[3]);b.position.set(c[0],c[1],0);b.castShadow=true;g.add(b)});
+  g.position.set(x,0.37,z);scene3.add(g);return g}
+// 路灯：杆 + 弯臂 + 暖光
+function makeLamp(x,z,rotY){
+  const g=new THREE.Group();
+  const poleMat=new THREE.MeshStandardMaterial({color:0x2a3038,roughness:.6,metalness:.6});
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.12,4.6,10),poleMat);pole.position.y=2.3;pole.castShadow=true;g.add(pole);
+  const arm=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.06,1.0),poleMat);arm.position.set(0,4.4,0.5);g.add(arm);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.22,10,8),new THREE.MeshStandardMaterial({color:0xfff2cc,emissive:0xffc766,emissiveIntensity:1.4}));
+  head.position.set(0,4.4,1.0);g.add(head);
+  g.position.set(x,0.37,z);if(rotY)g.rotation.y=rotY;scene3.add(g);return g}
+// 车辆：车身+车窗+轮
+function makeCar(x,z,rotY,color){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.BoxGeometry(1.7,0.55,0.85),new THREE.MeshStandardMaterial({color:color||0x8899aa,roughness:.35,metalness:.7}));
+  body.position.y=0.55;body.castShadow=true;g.add(body);
+  const cabin=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.42,0.78),new THREE.MeshStandardMaterial({color:0x2a3642,roughness:.2,metalness:.9}));
+  cabin.position.set(-0.1,0.98,0);cabin.castShadow=true;g.add(cabin);
+  [[-0.55,0.3],[0.55,0.3],[-0.55,-0.3],[0.55,-0.3]].forEach(p=>{
+    const w=new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.26,0.22,12),new THREE.MeshStandardMaterial({color:0x111,roughness:.8}));
+    w.rotation.z=Math.PI/2;w.position.set(p[0],0.26,p[1]);g.add(w)});
+  g.position.set(x,0.37,z);if(rotY)g.rotation.y=rotY;scene3.add(g);return g}
 function init(){
- renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(renderer.domElement);
- scene3=new THREE.Scene();scene3.background=new THREE.Color(0x0d1420);scene3.fog=new THREE.Fog(0x0d1420,70,170);
- camera=new THREE.PerspectiveCamera(34,innerWidth/innerHeight,0.1,400);
- scene3.add(new THREE.HemisphereLight(0x8fb3d9,0x0c1420,0.85));
- const sun=new THREE.DirectionalLight(0xfff2df,1.0);sun.position.set(28,46,18);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
- const sc=sun.shadow.camera;sc.left=-45;sc.right=45;sc.top=45;sc.bottom=-45;sc.far=140;scene3.add(sun);
- const ground=new THREE.Mesh(new THREE.PlaneGeometry(360,360),new THREE.MeshStandardMaterial({color:0x0f1928,roughness:1}));
- ground.rotation.x=-Math.PI/2;ground.position.y=-0.02;ground.receiveShadow=true;scene3.add(ground);
- const grid=new THREE.GridHelper(240,80,0x1b2b42,0x132133);grid.position.y=0.005;scene3.add(grid);
- fetch('/api/scheduler').then(r=>r.json()).then(build);
- addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
- const el=renderer.domElement;
- el.addEventListener('pointerdown',ev=>{drag={x:ev.clientX,y:ev.clientY,az:az,po:polar};autoSpin=false;el.setPointerCapture(ev.pointerId)});
- el.addEventListener('pointermove',ev=>{if(!drag)return;az=drag.az+(ev.clientX-drag.x)*0.005;polar=Math.max(0.35,Math.min(1.35,drag.po+(ev.clientY-drag.y)*0.004))});
- el.addEventListener('pointerup',()=>{drag=null});
- el.addEventListener('wheel',ev=>{radius=Math.max(16,Math.min(120,radius+ev.deltaY*0.03));ev.preventDefault()},{passive:false});
- renderer.setAnimationLoop(tick);
+  renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.82;
+  document.body.appendChild(renderer.domElement);
+  scene3=new THREE.Scene();scene3.background=new THREE.Color(0x1a2028);scene3.fog=new THREE.Fog(0x5a646e,70,200);
+  camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,0.1,500);
+  camera.position.set(30,44,58);
+  controls=new THREE.OrbitControls(camera,renderer.domElement);controls.target.set(0,0.5,0);controls.maxPolarAngle=1.42;controls.minDistance=18;controls.maxDistance=120;controls.enableDamping=true;controls.dampingFactor=0.08;controls.update();
+  // 阴雨天空 HDR + 环境反射
+  new THREE.RGBELoader().setDataType(THREE.UnsignedByteType).load('/assets/hdr/cloudy.hdr',function(hdr){
+    hdr.mapping=THREE.EquirectangularReflectionMapping;
+    const pmrem=new THREE.PMREMGenerator(renderer);envTex=pmrem.fromEquirectangular(hdr).texture;
+    scene3.environment=envTex;scene3.background=envTex;scene3.backgroundIntensity=0.6;hdr.dispose();pmrem.dispose()});
+  // 阴天柔和光照：半球光 + 弱方向光
+  scene3.add(new THREE.HemisphereLight(0x8fa4b8,0x2a3322,0.55));
+  const sun=new THREE.DirectionalLight(0xcfd8e0,0.38);sun.position.set(40,60,25);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+  const sc=sun.shadow.camera;sc.left=-70;sc.right=70;sc.top=70;sc.bottom=-70;sc.far=200;scene3.add(sun);
+  // 城市基底：自然地面(草/土)大平面
+  const base=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshStandardMaterial({color:0x6f767c,roughness:.96,metalness:.02}));
+  base.rotation.x=-Math.PI/2;base.position.y=-0.02;base.receiveShadow=true;
+  // 地面贴图大范围平铺
+  ['ground_diffuse','ground_rough','ground_normal'].forEach(n=>{const t=loadTex(n);t.repeat.set(60,60)});
+  scene3.add(base);
+  fetch('/api/scheduler').then(r=>r.json()).then(build);
+  addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+  // 雨丝粒子
+  makeRain();
+  renderer.setAnimationLoop(tick);
 }
+function makeRain(){
+  const N=900;const pos=new Float32Array(N*3);
+  for(let i=0;i<N;i++){pos[i*3]=(Math.random()-0.5)*140;pos[i*3+1]=Math.random()*55;pos[i*3+2]=(Math.random()-0.5)*140}
+  rainGeo=new THREE.BufferGeometry();rainGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const m=new THREE.PointsMaterial({color:0xbfd4e6,size:0.12,transparent:true,opacity:0.45,depthWrite:false});
+  rain=new THREE.Points(rainGeo,m);rain.frustumCulled=false;scene3.add(rain)}
 function build(sched){
- const ents=(sched.scene&&sched.scene.entities)||[];
- const roads=ents.filter(e=>e.kind==='road'),water=ents.filter(e=>e.kind==='water'),fac=ents.filter(e=>e.kind==='facility'),dist=ents.filter(e=>e.kind==='district');
- // 三维视图专用规划路网：横平竖直的城市骨架（路名/封闭状态/道路等级仍来自台账）。
- // 台账折线是为二维平面图设计的，直接拉进三维会交叉生硬，故展示层重排，数据层不动。
- const TWIN3D_ROADS={'R-104':[[-20,65],[400,65]],'R-101':[[-20,160],[345,160]],'R-103':[[20,245],[340,245]],'R-102':[[150,-20],[150,350]],'R-105':[[250,120],[250,245]],'R-202':[[345,160],[730,160]],'R-201':[[600,40],[600,290]]};
- const TWIN3D_FAC={'DF-PS-01':[285,174],'DF-PS-02':[228,231],'DF-IN-101':[258,78],'DF-IN-103':[60,146],'DF-IN-201':[633,146],'DF-IN-202':[526,176],'DF-PS-03':[616,105]};
- const TWIN3D_WATER={'WO-20261029-007':[[250,153],[310,153],[310,167],[250,167]],'WO-20261029-011':[[565,153],[640,153],[640,167],[565,167]]};
- const netRoads=roads.map(function(e){return{id:e.id,label:e.label,detail:e.detail||'',pts:(TWIN3D_ROADS[e.id]||String(e.points||'').split(' ').map(function(p){return p.split(',').map(Number)}))}});
- // 片区展台
- dist.forEach(e=>{const r=Math.min(e.r,96)*K*1.05;const[wx,wz]=W(e.cx,e.cy);
-  const d=new THREE.Mesh(new THREE.CylinderGeometry(r,r,0.34,56),new THREE.MeshStandardMaterial({color:0x17293f,roughness:.95}));
-  d.position.set(wx,0.17,wz);d.receiveShadow=true;scene3.add(d);
-  const rim=new THREE.Mesh(new THREE.TorusGeometry(r,0.045,10,72),new THREE.MeshStandardMaterial({color:0x35577d,roughness:.6}));
-  rim.rotation.x=Math.PI/2;rim.position.set(wx,0.36,wz);scene3.add(rim);
-  const lb=makeLabel(e.label+' 片区','#9fc3e8');lb.position.set(wx,7.5,wz-r-1.2);scene3.add(lb)});
- // 道路：参考 CargoTwin buildStreets 画法——路面=薄平面，"线条"来自车道虚线/路缘细线/路口斑马线
- const roadMat=new THREE.MeshStandardMaterial({color:0x22344c,roughness:.96});
- const edgeMat=new THREE.MeshBasicMaterial({color:0x3b5273});
- const dashMat=new THREE.MeshBasicMaterial({color:0xa8bdd2});
- const zebraMat=new THREE.MeshBasicMaterial({color:0x8fa6bd});
- const junctions=[[150,65],[150,160],[150,245],[250,160],[250,245],[600,160]];
- netRoads.forEach(e=>{const ps=e.pts;const closed=/已封/.test(e.label||'');
-  const wid=/主干路/.test(e.detail)?1.15:(/次干路/.test(e.detail)?0.95:0.78);
-  for(let i=0;i<ps.length-1;i++){const[ax,ay]=W(ps[i][0],ps[i][1]),[bx,by]=W(ps[i+1][0],ps[i+1][1]);
-   const len=Math.hypot(bx-ax,by-ay);if(len<0.05)continue;const ang=-Math.atan2(by-ay,bx-ax);
-   const road=new THREE.Mesh(new THREE.BoxGeometry(len+wid,0.03,wid),roadMat);
-   road.position.set((ax+bx)/2,0.42,(ay+by)/2);road.rotation.y=ang;road.receiveShadow=true;scene3.add(road);
-   // 路缘细线 ×2
-   const nx=Math.sin(ang),nz=Math.cos(ang);
-   [-1,1].forEach(function(side){const eg=new THREE.Mesh(new THREE.BoxGeometry(len+wid,0.008,0.045),edgeMat);
-    eg.position.set((ax+bx)/2+nx*side*wid*0.5,0.442,(ay+by)/2+nz*side*wid*0.5);eg.rotation.y=ang;scene3.add(eg)});
-   // 车道中央虚线（已封路不画，暗示不可通行）
-   if(!closed){let t=1.2;while(t<len-1.2){const d=new THREE.Mesh(new THREE.BoxGeometry(0.85,0.008,0.06),dashMat);
-     d.position.set(ax+(bx-ax)*t/len,0.443,ay+(by-ay)*t/len);d.rotation.y=ang;scene3.add(d);t+=1.75}}
-  }
-  const mid=ps[Math.floor(ps.length/2)];const[mx,mz]=W(mid[0],mid[1]);
-  const lb=makeLabel(String(e.label||'').split('（')[0],closed?'#e0a965':'#7f95ad');lb.scale.set(5,1.25,1);lb.position.set(mx,2.7,mz);scene3.add(lb)});
- // 路口斑马线：横竖两组细条
- junctions.forEach(function(j){const[jx,jz]=W(j[0],j[1]);
-  for(let k=-2;k<=2;k++){const a=new THREE.Mesh(new THREE.BoxGeometry(1.05,0.008,0.13),zebraMat);
-   a.position.set(jx+k*0.24,0.445,jz);scene3.add(a);
-   const b=new THREE.Mesh(new THREE.BoxGeometry(0.13,0.008,1.05),zebraMat);
-   b.position.set(jx,0.445,jz+k*0.24);scene3.add(b)}});
- // 积水面
- water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));const sh=new THREE.Shape();
-  ps.forEach((p,i)=>{const[wx,wz]=W(p[0],p[1]);if(i===0)sh.moveTo(wx,-wz);else sh.lineTo(wx,-wz)});
-  const g=new THREE.ShapeGeometry(sh);const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0x2f8fd6,emissive:0x1d6fae,transparent:true,opacity:0.85,roughness:.2,metalness:.1,side:THREE.DoubleSide}));
-  m.rotation.x=Math.PI/2;m.position.y=0.52;scene3.add(m)});
- // 设施：泵站塔 / 雨水口柱 + 名牌
- fac.forEach(e=>{const fpos=TWIN3D_FAC[e.id]||[Number(e.cx),Number(e.cy)];const[wx,wz]=W(fpos[0],fpos[1]);const ps=e.id.indexOf('DF-PS')===0;
-  if(ps){const t=new THREE.Mesh(new THREE.BoxGeometry(2.0,3.0,2.0),new THREE.MeshStandardMaterial({color:0x3d87b8,roughness:.55}));
-   t.position.set(wx,1.88,wz);t.castShadow=true;scene3.add(t);
-   const roof=new THREE.Mesh(new THREE.BoxGeometry(2.4,0.28,2.4),new THREE.MeshStandardMaterial({color:0x77b6de,roughness:.4}));
-   roof.position.set(wx,3.52,wz);roof.castShadow=true;scene3.add(roof);
-   const lb=makeLabel(String(e.label||e.id).replace('雨水泵站','泵站'),'#bfe0ff');lb.scale.set(6,1.5,1);lb.position.set(wx,5.1,wz);scene3.add(lb)}
-  else{const c=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.58,1.15,18),new THREE.MeshStandardMaterial({color:0xb98a35,roughness:.6}));
-   c.position.set(wx,0.92,wz);c.castShadow=true;scene3.add(c)}});
- // 程序化楼栋白模：默认关闭（评委画面要留白，城市密度需要时置 true）
- const SHOW_BUILDINGS=false;const seeded=(function(){let s=20260801;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296}})();
- if(SHOW_BUILDINGS)dist.forEach(e=>{const r=Math.min(e.r,96);const step=30;
-  for(let gx=-r;gx<=r;gx+=step){for(let gy=-r;gy<=r;gy+=step){
-   const px=e.cx+gx+(seeded()-0.5)*8,py=e.cy+gy+(seeded()-0.5)*8;
-   if(Math.hypot(px-e.cx,py-e.cy)>r*0.88)continue;
-   let ok=true;
-   netRoads.forEach(rd=>{if(!ok)return;const ps=rd.pts;
-    for(let i=0;i<ps.length-1;i++){if(segDist(px,py,ps[i][0],ps[i][1],ps[i+1][0],ps[i+1][1])<17){ok=false;break}}});
-   if(ok)fac.forEach(f=>{if(Math.hypot(px-Number(f.cx),py-Number(f.cy))<16)ok=false});
-   if(ok)water.forEach(wt=>{const p0=String(wt.points||'').split(' ')[0].split(',').map(Number);if(Math.hypot(px-p0[0],py-p0[1])<22)ok=false});
-   if(!ok)continue;
-   const fw=(13+seeded()*11)*K,fd=(13+seeded()*11)*K;const hh=1.1+seeded()*seeded()*5.6;
-   const[wx,wz]=W(px,py);
-   const gcol=new THREE.Color().setHSL(0.58,0.08,0.68+seeded()*0.18);
-   const bd=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:gcol,roughness:.85}));
-   bd.scale.set(fw,hh,fd);bd.position.set(wx,hh/2+0.37,wz);bd.castShadow=true;bd.receiveShadow=true;scene3.add(bd);
-  }}});
+  const ents=(sched.scene&&sched.scene.entities)||[];
+  const roads=ents.filter(e=>e.kind==='road'),water=ents.filter(e=>e.kind==='water'),fac=ents.filter(e=>e.kind==='facility'),dist=ents.filter(e=>e.kind==='district');
+  // 规划路网（台账重排，路名/状态/等级仍取台账）
+  const TWIN3D_ROADS={'R-104':[[-20,65],[400,65]],'R-101':[[-20,160],[345,160]],'R-103':[[20,245],[340,245]],'R-102':[[150,-20],[150,350]],'R-105':[[250,120],[250,245]],'R-202':[[345,160],[730,160]],'R-201':[[600,40],[600,290]]};
+  const TWIN3D_FAC={'DF-PS-01':[285,174],'DF-PS-02':[228,231],'DF-IN-101':[258,78],'DF-IN-103':[60,146],'DF-IN-201':[633,146],'DF-IN-202':[526,176],'DF-PS-03':[616,105]};
+  const TWIN3D_WATER={'WO-20261029-007':[[225,150],[320,150],[320,174],[225,174]],'WO-20261029-011':[[545,150],[655,150],[655,174],[545,174]]};
+  const netRoads=roads.map(function(e){return{id:e.id,label:e.label,detail:e.detail||'',pts:(TWIN3D_ROADS[e.id]||String(e.points||'').split(' ').map(function(p){return p.split(',').map(Number)}))}});
+  const seeded=(function(){let s=20260801;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296}})();
+  // ---- 道路：沥青 PBR + 车道标线 + 路缘 + 斑马线 ----
+  const roadMat=stdMat('asphalt',{roughness:.88});roadMat.color.set(0x6a7076);
+  const laneMat=new THREE.MeshBasicMaterial({color:0xe8e4d8});
+  const curbMat=new THREE.MeshStandardMaterial({color:0x8a9299,roughness:.7});
+  netRoads.forEach(e=>{const ps=e.pts;const closed=/已封/.test(e.label||'');
+    const wid=/主干路/.test(e.detail)?1.6:(/次干路/.test(e.detail)?1.3:1.05);
+    for(let i=0;i<ps.length-1;i++){const[ax,ay]=W(ps[i][0],ps[i][1]),[bx,by]=W(ps[i+1][0],ps[i+1][1]);
+      const len=Math.hypot(bx-ax,by-ay);if(len<0.05)continue;const ang=-Math.atan2(by-ay,bx-ax);
+      const road=new THREE.Mesh(new THREE.BoxGeometry(len+wid,0.05,wid),roadMat);
+      road.position.set((ax+bx)/2,0.36,(ay+by)/2);road.rotation.y=ang;road.receiveShadow=true;scene3.add(road);
+      // 路缘石
+      const nx=Math.sin(ang),nz=Math.cos(ang);
+      [-1,1].forEach(function(side){const eg=new THREE.Mesh(new THREE.BoxGeometry(len+wid,0.12,0.16),curbMat);
+        eg.position.set((ax+bx)/2+nx*side*(wid/2+0.08),0.36,(ay+by)/2+nz*side*(wid/2+0.08));eg.rotation.y=ang;eg.receiveShadow=true;scene3.add(eg)});
+      // 中央车道线（已封路画实线黄）
+      if(!closed){let t=2.4;while(t<len-2.4){const d=new THREE.Mesh(new THREE.BoxGeometry(1.1,0.015,0.11),laneMat);
+        d.position.set(ax+(bx-ax)*t/len,0.395,ay+(by-ay)*t/len);d.rotation.y=ang;scene3.add(d);t+=2.6}}
+    }
+    // 路名标签
+    const mid=ps[Math.floor(ps.length/2)];const[mx,mz]=W(mid[0],mid[1]);
+    const lb=makeLabel(String(e.label||'').split('（')[0],closed?'#e0a965':'#cfe0ef');lb.position.set(mx,3.2,mz);scene3.add(lb)});
+  // 路口斑马线
+  const zebraMat=new THREE.MeshBasicMaterial({color:0xd5dce2});
+  [[150,65],[150,160],[150,245],[250,160],[250,245],[600,160]].forEach(function(j){const[jx,jz]=W(j[0],j[1]);
+    for(let k=-2;k<=2;k++){const a=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.015,0.2),zebraMat);a.position.set(jx+k*0.32,0.4,jz);scene3.add(a);
+      const b=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.015,1.5),zebraMat);b.position.set(jx,0.4,jz+k*0.32);scene3.add(b)}});
+  // ---- 楼栋：混凝土立面，沿街密集 + 内层稀疏，高低错落 ----
+  dist.forEach(e=>{const r=Math.min(e.r,96);
+    const cx=e.cx,cy=e.cy;
+    // 沿道路两侧布楼：先沿每条路两侧撒
+    const placed=[];
+    netRoads.forEach(rd=>{if(rd.pts.length<2)return;
+      for(let i=0;i<rd.pts.length-1;i++){const p0=rd.pts[i],p1=rd.pts[i+1];
+        const dx=p1[0]-p0[0],dy=p1[1]-p0[1];const len=Math.hypot(dx,dy);if(len<5)continue;
+        const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;
+        const off=14;
+        let t=6;while(t<len-6){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
+          [-1,1].forEach(function(side){
+            const px=bx+nx*side*off,py=by+ny*side*off;
+            if(Math.hypot(px-e.cx,py-e.cy)>r*0.95)return;
+            if(placed.some(q=>Math.hypot(q[0]-px,q[1]-py)<11))return;
+            // 避开积水面（内涝核心，楼栋不得压盖积水段）
+            let nearWater=false;
+            Object.values(TWIN3D_WATER).forEach(wp=>{const wc=wp.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/wp.length);
+              if(Math.hypot(px-wc[0],py-wc[1])<16)nearWater=true});
+            if(nearWater)return;
+            placed.push([px,py])});t+=10+seeded()*8}}
+    });
+    placed.forEach(p=>{
+      const w=4.5+seeded()*4,d=4.5+seeded()*4,h=3.2+seeded()*seeded()*8;
+      const[wx,wz]=W(p[0],p[1]);
+      makeBuilding(w,h,d,wx,wz,Math.floor(seeded()*4)*Math.PI/2)});
+  });
+  // ---- 行道树（沿主干路两侧）+ 片区内部点缀 ----
+  netRoads.forEach(rd=>{if(rd.pts.length<2)return;
+    const main=/主干路|次干路/.test(rd.detail);
+    for(let i=0;i<rd.pts.length-1;i++){const p0=rd.pts[i],p1=rd.pts[i+1];
+      const dx=p1[0]-p0[0],dy=p1[1]-p0[1];const len=Math.hypot(dx,dy);if(len<5)continue;
+      const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;
+      let t=8;while(t<len-8){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
+        if(main){[-1,1].forEach(function(side){const px=bx+nx*side*7,py=by+ny*side*7;
+          if(seeded()>0.25){const[wx,wz]=W(px,py);makeTree(wx,wz,0.7+seeded()*0.5)}})}
+        t+=9+seeded()*6}}
+  });
+  // ---- 路灯（主干路两侧） ----
+  netRoads.forEach(rd=>{if(rd.pts.length<2)return;
+    if(!/主干路/.test(rd.detail))return;
+    for(let i=0;i<rd.pts.length-1;i++){const p0=rd.pts[i],p1=rd.pts[i+1];
+      const dx=p1[0]-p0[0],dy=p1[1]-p0[1];const len=Math.hypot(dx,dy);if(len<5)continue;
+      const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;
+      let t=12;while(t<len-12){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
+        const[wx,wz]=W(bx+nx*5,by+ny*5);makeLamp(wx,wz);t+=20}}
+  });
+  // ---- 路侧车辆 ----
+  const carColors=[0x8899aa,0x6b7b8a,0x9aa7b2,0x5a6b7a,0x77828d];
+  netRoads.forEach(rd=>{if(rd.pts.length<2)return;
+    for(let i=0;i<rd.pts.length-1;i++){const p0=rd.pts[i],p1=rd.pts[i+1];
+      const dx=p1[0]-p0[0],dy=p1[1]-p0[1];const len=Math.hypot(dx,dy);if(len<5)continue;
+      const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;const ang=-Math.atan2(ny,nx);
+      let t=16;while(t<len-16){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
+        if(seeded()>0.55){const[wx,wz]=W(bx+nx*8,by+ny*8);
+          makeCar(wx,wz,ang,carColors[Math.floor(seeded()*carColors.length)])}t+=14}}
+  });
+  // ---- 积水段：淹没车道，明显蓝色 + 镜面反射 + 边缘水渍 ----
+  const waterMat=new THREE.MeshBasicMaterial({color:0x00b8ff,depthTest:false});
+  const waterEdgeMat=new THREE.MeshBasicMaterial({color:0x66d4ff,transparent:true,opacity:0.75,depthTest:false});
+  water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));
+    const cen=ps.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/ps.length);
+    const sh=new THREE.Shape();
+    ps.forEach((p,i)=>{const[wx,wz]=W(p[0],p[1]);if(i===0)sh.moveTo(wx,-wz);else sh.lineTo(wx,-wz)});
+    // 主水面（略高于路面）
+    const g=new THREE.ShapeGeometry(sh);const m=new THREE.Mesh(g,waterMat);
+    m.rotation.x=Math.PI/2;m.position.y=0.55;m.receiveShadow=true;m.renderOrder=999;scene3.add(m);
+    // 外扩水渍边缘
+    const sh2=new THREE.Shape();
+    ps.forEach((p,i)=>{const dx=p[0]-cen[0],dy=p[1]-cen[1];const L=Math.hypot(dx,dy)||1;const ex=dx/L*3,ey=dy/L*3;
+      const[wx,wz]=W(p[0]+ex,p[1]+ey);if(i===0)sh2.moveTo(wx,-wz);else sh2.lineTo(wx,-wz)});
+    const g2=new THREE.ShapeGeometry(sh2);const m2=new THREE.Mesh(g2,waterEdgeMat);
+    m2.rotation.x=Math.PI/2;m2.position.y=0.53;m2.renderOrder=998;scene3.add(m2);
+    // 积水标注（蓝色高亮）
+    const[wx,wz]=W(cen[0],cen[1]);
+    const lb=makeLabel((e.label||'积水')+' '+((e.detail||'').match(/\\d+[.]?\\d*\\s*cm/)||[''])[0],'#7dc4f0');lb.position.set(wx,3.0,wz);scene3.add(lb)});
+  // ---- 设施：泵站(写实小楼) + 雨水口(井盖) ----
+  fac.forEach(e=>{const fpos=TWIN3D_FAC[e.id]||[Number(e.cx),Number(e.cy)];const[wx,wz]=W(fpos[0],fpos[1]);const ps=e.id.indexOf('DF-PS')===0;
+    if(ps){makeBuilding(2.6,2.6,2.6,wx,wz,0);
+      const sign=makeLabel(String(e.label||e.id).replace('雨水泵站','泵站'),'#cfe0ef');sign.position.set(wx,4.6,wz);scene3.add(sign)}
+    else{const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.12,16),new THREE.MeshStandardMaterial({color:0x5a6a7a,roughness:.5,metalness:.6}));
+      cap.position.set(wx,0.4,wz);cap.receiveShadow=true;scene3.add(cap)}});
 }
+function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(9,2.25,1);return sp}
 function tick(){
- if(autoSpin&&!drag)az+=0.0022;
- camera.position.set(radius*Math.sin(polar)*Math.sin(az),radius*Math.cos(polar),radius*Math.sin(polar)*Math.cos(az));
- camera.lookAt(0,0.5,0);
- renderer.render(scene3,camera);
+  if(controls)controls.update();
+  if(rain){const p=rainGeo.attributes.position;for(let i=0;i<p.count;i++){p.array[i*3+1]-=0.22;if(p.array[i*3+1]<-2)p.array[i*3+1]=54;p.array[i*3]+=(Math.random()-0.5)*0.04;p.array[i*3+2]+=(Math.random()-0.5)*0.04}p.needsUpdate=true}
+  renderer.render(scene3,camera);
 }
 init();
 </script></html>"""
@@ -1042,6 +1174,22 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         if not three.exists():
             return _error("three.min.js missing (assets/three.min.js)", 404)
         return 200, "application/javascript; charset=utf-8", three.read_bytes()
+    # 三维写实沙盘的静态依赖（RGBELoader/OrbitControls）与 PBR 贴图/HDR，全部本地分发、断网可用
+    if parsed.path in {"/RGBELoader.js", "/OrbitControls.js"}:
+        f = _assets_dir() / parsed.path[1:]
+        if not f.exists():
+            return _error(f"{parsed.path} missing", 404)
+        return 200, "application/javascript; charset=utf-8", f.read_bytes()
+    if parsed.path.startswith("/assets/tex/") and parsed.path.endswith(".jpg"):
+        f = _assets_dir() / "tex" / parsed.path.rsplit("/", 1)[1]
+        if not f.exists():
+            return _error("texture missing", 404)
+        return 200, "image/jpeg", f.read_bytes()
+    if parsed.path.startswith("/assets/hdr/") and parsed.path.endswith(".hdr"):
+        f = _assets_dir() / "hdr" / parsed.path.rsplit("/", 1)[1]
+        if not f.exists():
+            return _error("hdr missing", 404)
+        return 200, "application/octet-stream", f.read_bytes()
     if parsed.path == "/evolution":
         return 200, "text/html; charset=utf-8", build_evolution_html().encode("utf-8")
     if segments[:3] == ["api", "evolution", "gate"]:
