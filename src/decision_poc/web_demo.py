@@ -1429,28 +1429,36 @@ function build(sched){
         }
         t+=30}}   // 步进加大到 30 场景单位(≈4.8 世界单位)，避免车长 4 米重叠
   });
-  // ---- 积水段：立体水体（ExtrudeGeometry 挤出厚度），水位连续涨落 = 水体体积立体变化 ----
-  // 多边形沿 Y 轴挤出，厚度 = 积水深度。水位升高时水体立体"涨"起来，下降时立体"缩"下去。
-  window.__waterMeshes=[];   // 供事件动画引用：{mesh, label, depthMax}
+  // ---- 积水段：立体水体（ExtrudeGeometry 挤出厚度）+ shader 波纹水面 ----
+  // 主体是有厚度的水体（水位涨落=体积变化），顶面用 shader 做真实波纹+反射。
+  window.__waterMeshes=[];   // 供事件动画引用：{mesh, surface, label, depthMax}
   water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));
     const cen=ps.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/ps.length);
     const pts=ps.map(p=>{const[wx,wz]=W(p[0],p[1]);return[wx,wz]});
     const[cx,cz]=W(cen[0],cen[1]);
+    // 积水矩形世界尺寸（用于 shader 水面 Plane）
+    const xs=pts.map(p=>p[0]),zs=pts.map(p=>p[1]);
+    const ww=Math.max(...xs)-Math.min(...xs), wd=Math.max(...zs)-Math.min(...zs);
     // Shape 在 XZ 平面（x→shape.x，z→shape.y），再绕 X 轴 -90° 转回世界，挤出沿 +Y
     const sh=new THREE.Shape();
     pts.forEach((p,i)=>{if(i===0)sh.moveTo(p[0],p[1]);else sh.lineTo(p[0],p[1])});
     sh.closePath();
-    // 每个积水段独立材质（颜色随深度实时变），存到 __waterMeshes
-    const mat=new THREE.MeshStandardMaterial({color:0x3a9be0,roughness:.12,metalness:.3,transparent:true,opacity:.88,side:THREE.DoubleSide});
+    // 水体主体：半透明深色，侧面能看到"有水"的厚度
+    const mat=new THREE.MeshStandardMaterial({color:0x1a5e96,roughness:.15,metalness:.35,transparent:true,opacity:.82,side:THREE.DoubleSide});
     const g=new THREE.ExtrudeGeometry(sh,{depth:1.0,bevelEnabled:false});
     g.rotateX(-Math.PI/2);   // Shape 在 XY 平面，转成 XZ，挤出轴变成 Y
     const m=new THREE.Mesh(g,mat);
     m.userData={entityId:e.id,name:e.label||"积水段",kind:"water",detail:e.detail||""};
     m.position.y=0.44;m.castShadow=true;m.receiveShadow=true;scene3.add(m);
+    // shader 波纹水面：盖在主体顶部，随水位一起升降
+    const surf=makeWaterSurface(ww,wd);
+    surf.position.set(cx,1.0,cz);   // 相对水体的顶面（主体 scale.y 后顶面在 1.0*depthMax 处）
+    surf.userData={entityId:e.id,isWaterSurface:true};
+    scene3.add(surf);
     // depthMax：该积水段的峰值水位高度（世界单位）。放大到接近楼体量级，
     // 让"涨水"在远景相机下也有肉眼可见的体积——峰值约 3 单位，接近一层楼高。
     const depthMax=/A-03/.test(e.label||'')?2.8:2.2;
-    window.__waterMeshes.push({mesh:m,mat:mat,label:(e.label||'积水'),depthMax:depthMax,cx:cx,cz:cz});
+    window.__waterMeshes.push({mesh:m,surface:surf,mat:mat,label:(e.label||'积水'),depthMax:depthMax,cx:cx,cz:cz});
     // 积水标注：只留深度数字，随跳次更新（updateWaterLabel 里刷新）
     const lb=makeLabel('','#eaf6ff');lb.position.set(cx,2.2,cz);lb.userData={waterLabel:true};
     m.userData.waterLabel=lb;scene3.add(lb);window.__waterMeshes[window.__waterMeshes.length-1].labelSprite=lb;
@@ -1546,7 +1554,63 @@ function build(sched){
 function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(9,2.25,1);return sp}
 // 只生成 CanvasTexture（供积水深度标注动态刷新文字用），不包 Sprite
 function makeLabelTex(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;return tex}
-// ---- 六跳推演：连续时间轴驱动（不再是离散跳变） ----
+// ---- 水面 shader：真实波纹 + Fresnel 反射 + 深度浑浊 ----
+// 顶点波浪 + 片元程序化波纹纹理（俯视也可见明暗涟漪）+ 边缘 Fresnel 亮边
+function makeWaterSurface(w,d){
+  const geo=new THREE.PlaneGeometry(w,d,64,64);geo.rotateX(-Math.PI/2);
+  const mat=new THREE.ShaderMaterial({
+    uniforms:{
+      uTime:{value:0},
+      uWaterColor:{value:new THREE.Color(0x3a8fd0)},
+      uDeepColor:{value:new THREE.Color(0x0e3f60)},
+      uSkyColor:{value:new THREE.Color(0xa8b8c8)},
+      uWaveAmp:{value:0.22},
+    },
+    vertexShader:[
+      'uniform float uTime;uniform float uWaveAmp;',
+      'varying vec2 vUv;varying vec3 vPos;varying vec3 vNormal;',
+      'void main(){',
+      '  vUv=uv;',
+      '  vec3 p=position;',
+      '  float w=sin(p.x*2.0+uTime*2.5)*0.5+sin(p.z*2.7+uTime*1.9)*0.5;',
+      '  w+=sin((p.x+p.z)*3.5+uTime*3.2)*0.35;',
+      '  p.y+=w*uWaveAmp;',
+      '  vec4 mv=modelViewMatrix*vec4(p,1.0);',
+      '  vPos=mv.xyz;',
+      '  vNormal=normalize(normalMatrix*normalize(vec3(-cos(p.x*2.0+uTime*2.5)*uWaveAmp,1.0,-cos(p.z*2.7+uTime*1.9)*uWaveAmp)));',
+      '  gl_Position=projectionMatrix*mv;',
+      '}',
+    ].join(' '),
+    fragmentShader:[
+      'uniform float uTime;',
+      'uniform vec3 uWaterColor;uniform vec3 uDeepColor;uniform vec3 uSkyColor;',
+      'varying vec2 vUv;varying vec3 vPos;varying vec3 vNormal;',
+      'void main(){',
+      '  vec3 N=normalize(vNormal);',
+      '  vec3 V=normalize(-vPos);',
+      '  float fres=pow(1.0-max(dot(N,V),0.0),2.5);',
+      '  vec3 H=normalize(V+vec3(0.0,1.0,0.0));',
+      '  float spec=pow(max(dot(N,H),0.0),90.0);',
+      // 中频波纹条纹（俯视可见），多方向叠加
+      '  float a=sin(vUv.x*22.0+uTime*3.0);',
+      '  float b=sin(vUv.y*22.0-uTime*2.6);',
+      '  float c=sin((vUv.x+vUv.y)*16.0+uTime*2.0);',
+      '  float ripple=a*0.35+b*0.35+c*0.3;',
+      '  float light=0.78+0.44*ripple;',
+      '  vec3 col=uWaterColor*light;',
+      '  col=mix(col,uSkyColor,clamp(fres*0.85,0.0,0.9));',
+      '  col+=spec*vec3(0.8,0.9,1.0)*1.0;',
+      '  gl_FragColor=vec4(col,1.0);',
+      '}',
+    ].join(' '),
+    transparent:true,
+    side:THREE.DoubleSide,
+    depthWrite:false,
+  });
+  const surf=new THREE.Mesh(geo,mat);
+  surf.renderOrder=100;   // 排在积水主体(透明)之后渲染，确保水面不被主体顶面盖住
+  return surf;
+}// ---- 六跳推演：连续时间轴驱动（不再是离散跳变） ----
 // 整条事件线是一条连续时间轴 t∈[0,1]：暴雨→积水上涨→部门落位→派单→施工队到场封路→调泵回落。
 // 跳次按钮/进度条只是把 t 定位到某个值，所有视觉量（水位/雨势/告警/封路/施工队/派单气泡）都由 t 连续驱动。
 let __evtClock=0,__evtPlaying=false,__lastFrame=performance.now();
@@ -1647,29 +1711,41 @@ function applyTimeline(t){
   const colorIdx=Math.min(WATER_COLORS.length-1,L.i);
   const colorA=WATER_COLORS[colorIdx],colorB=WATER_COLORS[Math.min(WATER_COLORS.length-1,colorIdx+1)];
   const waterColor=lerpColor(colorA,colorB,L.frac);
-  // 立体水体：水位连续涨落，体积连续变化
+  // 立体水体：水位连续涨落，体积连续变化；shader 水面跟随水位升降
   (window.__waterMeshes||[]).forEach(w=>{
-    w.mesh.scale.y=Math.max(0.06,v.water)*w.depthMax;
+    const depth=Math.max(0.06,v.water)*w.depthMax;   // 当前水深
+    w.mesh.scale.y=depth;
     w.mat.color.setHex(waterColor);
     w.mat.opacity=0.82+v.water*0.16;
+    // shader 水面：贴在水体顶面，随水位升降，颜色/波纹幅度随深度变化
+    if(w.surface){
+      w.surface.position.y=0.44+depth+0.15;   // 抬高到主体顶面之上，避免被遮挡
+      w.surface.visible=v.water>0.06;
+      const um=w.surface.material.uniforms;
+      if(um){
+        um.uWaterColor.value.setHex(waterColor);
+        um.uWaveAmp.value=0.08+v.water*0.3;   // 水越深波纹越大
+      }
+    }
     if(w.labelSprite){
       const baseCm=/A-03/.test(w.label)?30:18;
       const cm=Math.max(1,Math.round(v.water*baseCm));
       w.labelSprite.material.map=makeLabelTex('积水 '+cm+' cm','#eaf6ff');
       w.labelSprite.material.needsUpdate=true;
-      w.labelSprite.position.y=0.44+v.water*w.depthMax+0.7;
+      w.labelSprite.position.y=0.44+depth+0.7;
     }
   });
   // 告警：光柱 + 顶灯（顶灯在 tick 里闪烁）
   (window.__pumpAlarms||[]).forEach(p=>{p.on=!!v.alarm;if(p.beam)p.beam.visible=!!v.alarm;});
-  // 封路护栏：事件触发——封路阶段才出现（施工队到场后放下）
-  (window.__roadBlocks||[]).forEach(b=>{b.mesh.visible=!!v.block;});
-  // 派单气泡：部门落位→派活阶段显示
-  if(window.__dispatchBubble){window.__dispatchBubble.visible=!!v.dispatch;}
-  // 施工队：到场阶段显示，位置在 tick 里做移动插值
-  if(window.__roadCrew){window.__roadCrew.group.visible=!!v.crew;if(window.__roadCrew.marker)window.__roadCrew.marker.visible=!!v.crew;}
+  // 封路护栏/派单气泡/施工队 = 离散事件，显隐+淡入由 fadeInOut() 统一处理（tick 每帧驱动）
   // 雨势：雨丝透明度连续变化
   if(rain&&rain.material){rain.material.opacity=0.12+v.rain*0.55;}
+  // 氛围：暴雨时雾变浓、视野收窄、天空变暗（沉浸式"暴雨来临"）
+  if(scene3.fog){
+    scene3.fog.near=70-v.rain*28;scene3.fog.far=200-v.rain*70;
+    scene3.fog.color.setHex(lerpColor(0x6a7680,0x3a444e,v.rain));
+  }
+  if(scene3.background&&scene3.background.isTexture){scene3.backgroundIntensity=0.6-v.rain*0.3;}
 }
 function lerpColor(a,b,f){const ar=(a>>16)&255,ag=(a>>8)&255,ab=a&255;const br=(b>>16)&255,bg=(b>>8)&255,bb=b&255;
   return (Math.round(ar+(br-ar)*f)<<16)|(Math.round(ag+(bg-ag)*f)<<8)|Math.round(ab+(bb-ab)*f);}
@@ -1881,9 +1957,11 @@ function tick(){
   });
   // 施工队到场后：从路边走到路口（连续移动插值，不是瞬移）
   moveCrew();
-  // 水面微起伏：让立体水体顶部有波动，更接近真实积水
+  // 事件淡入：派单气泡/封路护栏出现时透明度从 0→1 平滑过渡（不是瞬间冒出）
+  fadeInOut();
+  // shader 水面：推进波纹时间（顶点波浪随时间流动）
   (window.__waterMeshes||[]).forEach(w=>{
-    if(w.mesh&&w.mesh.scale.y>0.1){w.mesh.scale.y+=(Math.sin(now/700+w.cx)*0.012);}
+    if(w.surface&&w.surface.material.uniforms){w.surface.material.uniforms.uTime.value=now/1000;}
   });
   Object.keys(RINGS).forEach(id=>{const fx=RINGS[id];if(!fx||!fx.ring.visible)return;
     const dim=fx.ring.material.color.getHex()===0x5a6b7a;
@@ -1926,7 +2004,39 @@ function moveCrew(){
   c.group.position.x=c.from.x+(c.to.x-c.from.x)*e;
   c.group.position.z=c.from.z+(c.to.z-c.from.z)*e;
 }
-// 关键动作相机运镜：封路阶段平滑拉近到封路点（现场镜头），结束后拉回全景
+// 事件淡入淡出：派单气泡、封路护栏、施工队在"该出现"的时间点附近做透明度过渡，避免瞬间冒出
+function fadeInOut(){
+  const t=__evtClock/EVT_DURATION;
+  const FADE=0.04;   // 淡入窗口（占时间轴比例）
+  // 派单气泡：dispatch 从 EVT_JUMPS[2]（部门落位）开始
+  if(window.__dispatchBubble){
+    const a=EVT_JUMPS[2];
+    const f=clamp01((t-a)/FADE);
+    const on=t>=a&&t<EVT_JUMPS[6];
+    window.__dispatchBubble.visible=on;
+    if(on)window.__dispatchBubble.material.opacity=f;
+  }
+  // 施工队：crew 从 EVT_JUMPS[4] 出现，走到位后停留；marker 光柱同步
+  if(window.__roadCrew){
+    const a4=EVT_JUMPS[4];
+    const on=t>=a4;
+    window.__roadCrew.group.visible=on;
+    if(window.__roadCrew.marker)window.__roadCrew.marker.visible=on;
+  }
+  // 封路护栏：block 从 EVT_JUMPS[5] 开始，组内子元素依次淡入 = "一根根放下"
+  const a5=EVT_JUMPS[5];
+  const f5=clamp01((t-a5)/FADE);
+  (window.__roadBlocks||[]).forEach(b=>{
+    const on=t>=a5;
+    b.mesh.visible=on;
+    if(on){
+      b.mesh.children.forEach((child,idx)=>{
+        if(child.isMesh&&child.material){child.material.transparent=true;child.material.opacity=clamp01(f5*3-idx*0.4);}
+      });
+    }
+  });
+}
+function clamp01(x){return Math.max(0,Math.min(1,x));}
 const CAM_HOME={x:18,y:34,z:52}, CAM_CLOSE={x:22,y:14,z:20};
 function driveCamera(t){
   const a=EVT_JUMPS[4]-0.04, b=EVT_JUMPS[5];   // 封路阶段窗口
