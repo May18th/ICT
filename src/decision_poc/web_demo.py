@@ -1075,28 +1075,29 @@ function build(sched){
   [[200,70],[200,160],[200,250],[360,160],[590,70],[590,160],[590,250]].forEach(function(j){const[jx,jz]=W(j[0],j[1]);
     for(let k=-2;k<=2;k++){const a=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.015,0.2),zebraMat);a.position.set(jx+k*0.32,0.4,jz);scene3.add(a);
       const b=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.015,1.5),zebraMat);b.position.set(jx,0.4,jz+k*0.32);scene3.add(b)}});
-  // ---- 楼栋：落在街区内部（正交网格围成的街区），每街区 1-3 栋，疏朗有规划感 ----
-  // 街区中心点：由主次干道网格围成的空地中心
-  const blocks=[[135,115],[280,115],[135,205],[280,205],[475,115],[655,115],[475,205],[655,205]];
-  dist.forEach(e=>{
-    const r=Math.min(e.r,96);
-    blocks.forEach(bc=>{
-      // 只在该片区范围内布楼
-      if(Math.hypot(bc[0]-e.cx,bc[1]-e.cy)>r*0.9)return;
-      // 该街区放 1-3 栋
-      const n=1+Math.floor(seeded()*3);
-      for(let k=0;k<n;k++){
-        const px=bc[0]+(seeded()-0.5)*22,py=bc[1]+(seeded()-0.5)*22;
-        // 避开积水面
-        let nearWater=false;
-        Object.values(TWIN3D_WATER).forEach(wp=>{const wc=wp.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/wp.length);
-          if(Math.hypot(px-wc[0],py-wc[1])<20)nearWater=true});
-        if(nearWater)continue;
-        const w=5+seeded()*3,d=5+seeded()*3,h=3.5+seeded()*seeded()*9;
-        const[wx,wz]=W(px,py);
-        makeBuilding(w,h,d,wx,wz,Math.floor(seeded()*4)*Math.PI/2);
-      }
-    });
+  // ---- 楼栋：严格贴街区网格，固定退线、固定朝向、绝不随机穿插 ----
+  // 由路网围成的规则街区（场景坐标），每街区放 1 栋，位置 = 街区中心（确定性，无随机偏移）
+  // 街区定义：[x0,x1,y0,y1]，中心即楼栋锚点；退线固定，楼体方正对齐路网
+  const blocks=[
+    [ 70,200, 70,160],   // A-03 西北
+    [200,360, 70,160],   // A-03 北中
+    [ 70,200,160,250],   // A-03 西南
+    [200,360,160,250],   // A-03 南中
+    [360,590, 70,160],   // 中部北
+    [360,590,160,250],   // 中部南
+    [590,720, 70,160],   // B-01 北
+    [590,720,160,250],   // B-01 南
+  ];
+  // 每街区一栋楼，尺寸按片区特性固定（确定性，无 seeded 随机），留足楼间距与退线
+  const blockBld=[{w:7,h:5.5,d:9},{w:8,h:7.5,d:8},{w:6,h:4.5,d:7},{w:9,h:6,d:9},{w:7,h:5,d:8},{w:6,h:4,d:7},{w:8,h:7,d:8},{w:7,h:5.5,d:9}];
+  blocks.forEach((b,i)=>{
+    const bx=(b[0]+b[1])/2, bz=(b[2]+b[3])/2;   // 街区中心（场景坐标）
+    const bb=blockBld[i]||{w:7,h:5,d:8};
+    // 楼体边长不得超过街区短边的 60%，保证留白
+    const bxLen=b[1]-b[0], bzLen=b[3]-b[2];
+    const w=Math.min(bb.w, bxLen*0.6), d=Math.min(bb.d, bzLen*0.6), h=bb.h;
+    const[wx,wz]=W(bx,bz);
+    makeBuilding(w,h,d,wx,wz,0);   // 朝向固定 0°，与路网正交对齐
   });
   // ---- 行道树（沿主干路两侧）+ 片区内部点缀 ----
   netRoads.forEach(rd=>{if(rd.pts.length<2)return;
@@ -1129,12 +1130,12 @@ function build(sched){
           makeCar(wx,wz,ang,carColors[Math.floor(seeded()*carColors.length)])}t+=22}}
   });
   // ---- 积水段：高饱和蓝水面 + 白色描边，从灰地面强对比跳出 ----
-  // 直接用 XZ 平面铺顶点（与道路同一坐标语义：W→[x,z]），彻底消除 ShapeGeometry 旋转的轴向翻转错位
-  const waterMat=new THREE.MeshBasicMaterial({color:0x0a8cff,depthTest:false,side:THREE.DoubleSide});
-  const strokeMat=new THREE.LineBasicMaterial({color:0xffffff,linewidth:2,depthTest:false});
+  // 直接在 XZ 平面铺顶点（与道路同一坐标语义），正常参与深度，紧贴路面不悬浮
+  const waterMat=new THREE.MeshStandardMaterial({color:0x1a7fd4,roughness:.15,metalness:.25,transparent:true,opacity:.9,side:THREE.DoubleSide});
+  const strokeMat=new THREE.LineBasicMaterial({color:0xbfe3ff});
   water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));
     const cen=ps.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/ps.length);
-    // 多边形凸包三角剖分（fan）：以质心为锚，拆成三角形，避免凹多边形破洞
+    // 多边形三角剖分（fan）：以质心为锚，拆成三角形
     const pts=ps.map(p=>{const[wx,wz]=W(p[0],p[1]);return[wx,wz]});
     const[cx,cz]=W(cen[0],cen[1]);
     const verts=[];
@@ -1142,12 +1143,12 @@ function build(sched){
       verts.push(cx,0,cz, a[0],0,a[1], b[0],0,b[1]);}
     const varr=new Float32Array(verts);
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(varr,3));g.computeVertexNormals();
-    const m=new THREE.Mesh(g,waterMat);m.position.y=0.55;m.renderOrder=999;scene3.add(m);
+    const m=new THREE.Mesh(g,waterMat);m.position.y=0.43;m.receiveShadow=true;scene3.add(m);
     // 白色描边（沿积水轮廓，同样 XZ 平面直接铺）
     const lpts=[];
     for(let i=0;i<=pts.length;i++){const p=pts[i%pts.length];lpts.push(p[0],0,p[1]);}
     const lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(lpts),3));
-    const line=new THREE.Line(lg,strokeMat);line.position.y=0.56;line.renderOrder=1000;scene3.add(line);
+    const line=new THREE.Line(lg,strokeMat);line.position.y=0.45;scene3.add(line);
     // 积水标注（白色衬底蓝字）
     const lb=makeLabel((e.label||'积水')+' '+((e.detail||'').match(/\\d+[.]?\\d*\\s*cm/)||[''])[0],'#ffffff');lb.position.set(cx,3.0,cz);scene3.add(lb)});
   // ---- 设施：泵站(写实小楼) + 雨水口(井盖) ----
