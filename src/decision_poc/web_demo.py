@@ -1206,19 +1206,37 @@ function facadeTex(){if(__facadeTex)return __facadeTex;
   const t=new THREE.CanvasTexture(cv);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;
   return __facadeTex=t}
 function makeBuilding(w,h,d,x,z,rotY){
-  const g=new THREE.BoxGeometry(w,h,d);
-  // 程序化立面：每栋楼独立材质，按楼面尺寸平铺窗户格子（写实窗户肌理）
+  const grp=new THREE.Group();
+  // 主体
   const ft=facadeTex().clone();ft.needsUpdate=true;
   const mat=new THREE.MeshStandardMaterial({color:0xd8dde0,map:ft,roughness:.82,metalness:.06});
-  const b=new THREE.Mesh(g,mat);b.castShadow=true;b.receiveShadow=true;
-  b.position.set(x,h/2+0.37,z);if(rotY)b.rotation.y=rotY;
-  // 按楼面尺寸平铺：宽约 1 格/1.6 单位，高约 1 层/1.5 单位
+  const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);b.castShadow=true;b.receiveShadow=true;
+  b.position.y=h/2;grp.add(b);
   ft.repeat.set(Math.max(1,Math.round(w/1.6)),Math.max(1,Math.round(h/1.5)));
-  scene3.add(b);
-  // 楼顶女儿墙 + 底面稍内收，增强真实感
-  const cap=new THREE.Mesh(new THREE.BoxGeometry(w*1.02,0.14,d*1.02),new THREE.MeshStandardMaterial({color:0x3a424a,roughness:.9}));
-  cap.position.set(x,h+0.44,z);cap.castShadow=true;scene3.add(cap);
-  return b}
+  // 裙楼基座：底部一圈深色体量，打破"纯积木"感
+  const base=new THREE.Mesh(new THREE.BoxGeometry(w*1.06,0.7,d*1.06),
+    new THREE.MeshStandardMaterial({color:0x5c646c,roughness:.75,metalness:.1}));
+  base.position.y=0.35;base.castShadow=true;base.receiveShadow=true;grp.add(base);
+  // 楼层腰线：每隔约 1.5 单位高加一圈浅色横条，增强立面横向节奏
+  const nLines=Math.max(1,Math.floor(h/1.5));
+  for(let i=1;i<nLines;i++){
+    const line=new THREE.Mesh(new THREE.BoxGeometry(w+0.02,0.06,d+0.02),
+      new THREE.MeshStandardMaterial({color:0xc4ccd2,roughness:.7}));
+    line.position.y=i*1.5;grp.add(line);
+  }
+  // 屋顶女儿墙（收在顶部，深色）
+  const cap=new THREE.Mesh(new THREE.BoxGeometry(w*1.02,0.16,d*1.02),
+    new THREE.MeshStandardMaterial({color:0x3a424a,roughness:.9}));
+  cap.position.y=h+0.08;cap.castShadow=true;grp.add(cap);
+  // 屋顶设备：水箱/空调外机几个小方块，让屋顶不死板
+  const roofMat=new THREE.MeshStandardMaterial({color:0x8a929a,roughness:.6,metalness:.3});
+  for(let k=0;k<2;k++){
+    const rw=0.8+Math.abs(Math.sin(w*7+k*3))*0.6, rd=0.6, rh=0.5;
+    const box=new THREE.Mesh(new THREE.BoxGeometry(rw,rh,rd),roofMat);
+    box.position.set((k===0?-1:1)*w*0.22,h+0.4,k===0?-d*0.1:d*0.12);box.castShadow=true;grp.add(box);
+  }
+  grp.position.set(x,0.37,z);if(rotY)grp.rotation.y=rotY;
+  scene3.add(grp);return grp}
 // 行道树：分叉树干 + 双层树冠
 function makeTree(x,z,s){
   const g=new THREE.Group();
@@ -1547,7 +1565,9 @@ function applyVisual(v){
 function buildRings(){
   const box=new THREE.Box3(),center=new THREE.Vector3();
   scene3.traverse(o=>{
-    const id=o.userData&&o.userData.entityId;if(!id||!o.isMesh)return;
+    const id=o.userData&&o.userData.entityId;if(!id)return;
+    // 楼体现在是 Group（含主体/裙楼/腰线/屋顶），锚点按整个 Group 的包围盒中心算
+    if(!(o.isMesh||o.isGroup))return;
     box.setFromObject(o);box.getCenter(center);
     if(!ANCHORS[id])ANCHORS[id]=center.clone();
     else ANCHORS[id].lerp(center,0.5);
@@ -1760,9 +1780,12 @@ function bindUI(){
     pointer.x=(ev.clientX/innerWidth)*2-1;pointer.y=-(ev.clientY/innerHeight)*2+1;
     raycaster.setFromCamera(pointer,camera);
     const hits=raycaster.intersectObjects(scene3.children,true);
-    const hit=hits.find(h=>h.object.userData&&h.object.userData.entityId);
-    if(!hit)return;
-    twinState.selectedEntity=hit.object.userData.entityId;
+    // 命中的可能是楼体 Group 内的子 mesh（主体/裙楼/腰线），entityId 挂在 Group 上，
+    // 需要沿 parent 链向上找带 entityId 的对象
+    let hit=null,id=null;
+    for(const h of hits){let o=h.object;while(o){if(o.userData&&o.userData.entityId){hit=h;id=o.userData.entityId;break;}o=o.parent;}if(id)break;}
+    if(!id)return;
+    twinState.selectedEntity=id;
     renderEntityCard(twinState.selectedEntity);
   });
   document.getElementById('prev').onclick=()=>setJump(twinState.currentJump-1);
