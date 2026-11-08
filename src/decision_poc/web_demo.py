@@ -31,7 +31,8 @@ from .road_graph import RoadGraph, RoadGraphUnavailable
 from .skills import SkillPipeline, SkillRuntime
 from .semantic import build_urban_semantic_store
 from .timeline import build_event_stream, build_timeline, compare_branches
-from .twin_links import build_twin_links, resolve_deeplink
+from .twin_links import MAX_JUMP, build_twin_links, resolve_deeplink
+from . import execution_ledger
 
 EVENT_ID = "WO-20261029-007"
 AS_OF = "2026-10-29T09:40:00+08:00"
@@ -400,7 +401,17 @@ IMPACT_STYLE = '''<style>.impact-card{--impact-ink:#173238;--impact-muted:#667a7
 @media(max-width:800px){.scene-detail-grid{grid-template-columns:1fr}.impact-flow{display:flex;flex-wrap:wrap}.impact-flow span{flex:1 1 28%}.impact-flow b{flex:0 0 auto}}
 .deep{color:var(--impact-teal);font-weight:600;text-decoration:none;border-bottom:1px dashed rgba(15,118,110,.45);white-space:nowrap}
 .deep:hover{border-bottom-style:solid}
-.tl .mt .deep{font-size:11.5px}</style>'''
+.tl .mt .deep{font-size:11.5px}
+.exrow{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed #e2e8e6;font-size:13px;color:#3f5357}
+.exrow .who{flex:0 0 130px;color:#0f766e;font-weight:600}
+.exrow .act{flex:1 1 auto;min-width:0;color:#42585c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exrow button{padding:4px 10px;font-size:12px;flex:0 0 auto}
+.st{font-size:11px;padding:1px 6px;border-radius:4px;background:#eef2f1;color:#5b6d70;flex:0 0 auto}
+.st.done{background:#e4f2ef;color:#0f766e}.st.running{background:#e6f0fa;color:#1d5c8f}
+.st.needs_confirm{background:#fdf1dc;color:#9a5b1f}.st.cancelled{background:#fbeaea;color:#a03a3a}
+.exmsg{margin-top:8px;font-size:12px;color:#9a5b1f;min-height:16px}
+.exclose{margin-top:10px;padding:8px 10px;border:1px solid #d6e1df;border-radius:8px;background:#f7faf8;font-size:12px;color:#42585c}
+.exclose b{color:#9a5b1f}</style>'''
 PAGE_STYLE = '''<style>
 :root{--page-bg:#eef2ef;--ink:#173238;--muted:#6c7e7f;--line:#d9e3e0;--surface:#fff;--accent:#0f766e;--accent-soft:#e2f1ed;--warning:#c56d45;--shadow:0 10px 28px rgba(23,50,56,.07)}
 *{box-sizing:border-box}body{font-family:"Inter","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;background:var(--page-bg);color:var(--ink);line-height:1.55}main{max-width:1360px;padding:36px 40px 72px}.page-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;padding:22px 0 30px;border-bottom:1px solid var(--line)}.page-hero .eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--accent);text-transform:uppercase}.page-hero h1{margin:7px 0 8px;color:var(--ink);font-size:clamp(28px,3vw,42px);line-height:1.12;font-weight:800}.page-hero .sub{max-width:760px;color:var(--muted);font-size:15px}.guide{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0 0;border-top:0}.guide>div{min-height:112px;padding:17px 18px;background:rgba(255,255,255,.72);border:1px solid var(--line);border-radius:14px;color:var(--muted);line-height:1.55}.guide>div:first-child{padding-left:18px;border-left:1px solid var(--line)}.guide b{color:var(--accent);font:800 11px ui-monospace,monospace;letter-spacing:.08em}.guide span{color:var(--ink);font-size:16px;margin:6px 0 5px}.toolbar{gap:10px;margin:18px 0}.toolbar button,button{min-height:42px;padding:10px 16px;border:1px solid transparent;border-radius:10px;background:var(--accent);color:#fff;font-weight:750;box-shadow:0 5px 12px rgba(15,118,110,.16);transition:background 180ms ease,transform 180ms ease,box-shadow 180ms ease}.toolbar button:hover,button:hover{background:#0b625d;transform:translateY(-1px);box-shadow:0 8px 16px rgba(15,118,110,.22)}button:focus-visible,a:focus-visible{outline:3px solid rgba(197,109,69,.45);outline-offset:3px}.navlink{color:var(--accent);font-weight:750}.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--shadow)}section.card{margin-top:20px!important}.card h2{margin:0 0 16px;color:var(--ink);font-size:19px;line-height:1.25}.card h2 span{color:var(--muted)!important;font-size:12px!important;font-weight:500!important}.sub{color:var(--muted)}#summary{padding:24px 26px;background:#183b3f;border-color:#183b3f;color:#fff;box-shadow:0 16px 32px rgba(24,59,63,.18)}#summary h2{color:#fff}#summary .sub{color:#c7dcd8}#metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.metric{display:block;margin:0;padding:14px 15px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);border-radius:12px;color:#c7dcd8}.metric b{margin-bottom:4px;color:#fff;font-size:24px;line-height:1.1}.primary-grid{grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);gap:20px;align-items:start}.primary-grid>.card{height:100%}.data-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.data-grid>.card{min-height:220px}.process-card{background:#f8fbfa}.chain{gap:2px}.lnk{grid-template-columns:32px 150px minmax(0,1fr) minmax(0,220px);padding:12px 0 12px 14px;border-left-color:#c9d9d6}.lnk.on{border-left-color:var(--accent);opacity:1}.lnk .no{color:#78908f}.lnk .who{color:#68807f}.lnk .what b{color:var(--ink)}.lnk .what div{color:var(--muted)}.lnk .tool{color:var(--accent)}.row,.ord{border-bottom-color:#e3ebe8}.row b{color:var(--accent)}.pill,.tag{background:#edf5f3;color:var(--accent);border:1px solid #d5e4e0}.warn{color:var(--warning)}.ok{color:#247a58}.trace{border-left-color:var(--accent)}.plan{gap:12px}.plan .col{background:#f8fbfa;border-color:var(--line);border-radius:12px}.plan .col h3{color:var(--ink)}.plan .col.now{border-color:#78b7a9;background:#f0f9f5}.plan .col.alt{border-color:#e2b493;background:#fff8f2}.ivbtn,.ghost,.cat{background:#edf5f3!important;color:var(--accent)!important;border:1px solid #cfe1dc!important;box-shadow:none!important}.ivbtn:hover,.ghost:hover,.cat:hover{background:#dceee9!important}.cat.sel{background:var(--accent)!important;color:#fff!important}.tl li{border-left-color:#d4e1de}.tl li.on{border-left-color:var(--accent)}.tl .ttl{color:var(--ink)}.tl .dsc{color:var(--muted)}.tl .mt{color:#78908f}.tl ul.basis{color:var(--muted)}.tech{margin-top:28px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.62)}.tech>summary{padding:17px 20px;color:var(--ink);font-size:14px}.tech>summary::before{color:var(--accent)}.tech>div{padding:0 20px 22px}.tech .card{box-shadow:none;background:#fbfdfc}.tech #panel,.tech #comparebody,.tech #llmbody{color:var(--muted)}#log{border-color:var(--line)}.impact-card{box-shadow:var(--shadow)}@media(max-width:960px){main{padding:26px 24px 56px}.page-hero{display:block}.page-hero .navlink{display:inline-block;margin-top:14px}.primary-grid,.data-grid{grid-template-columns:1fr}.primary-grid>.card{height:auto}#metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.lnk{grid-template-columns:32px minmax(0,1fr)}.lnk .who,.lnk .what,.lnk .tool{grid-column:2;text-align:left}}@media(max-width:640px){main{padding:20px 16px 44px}.page-hero{padding:12px 0 22px}.page-hero h1{font-size:30px}.guide{grid-template-columns:1fr}.guide>div{min-height:auto}.toolbar{align-items:stretch}.toolbar button{width:100%}#metrics{grid-template-columns:1fr 1fr}.metric b{font-size:20px}.card{padding:18px}.data-grid{gap:14px}}
@@ -501,6 +512,7 @@ def build_html() -> str:
 <section class=card style='margin-top:16px'><h2>微调度台 · 决策事件流 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（六类事件同源派生，每条都能对回推演字段）</span></h2><div class=toolbar style='margin:0 0 10px'><button onclick="playTimeline()">回放事件流</button><span id=tlstatus class=sub>未加载</span></div><div id=cats class=cats></div><ol id=timeline class=tl></ol><div id=tlfoot class=sub style='margin-top:10px'></div></section>
 <section class=card style='margin-top:16px'><h2>人工干预 · 重新推演 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（改一个条件，系统重算并说明改了什么）</span></h2><div id=ivbtns class=toolbar style='margin:0 0 10px'></div><div id=ivout class=sub>点上面任一项，观察推演结果怎么变</div></section>
 <section class=card style='margin-top:16px'><h2>协同复核 · 谁接哪张卡 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（1 总控 + 5 部门，只读复核、不改推演数字）</span></h2><div id=cvsum class=sub>未加载</div><div id=cvcards style='margin-top:10px'></div><div id=cvhand class=sub style='margin-top:10px'></div></section>
+<section class=card id=exec-section style='margin-top:16px'><h2>执行账本 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（计划 vs 实际 · 演示执行账本：无真实身份系统，actor 由服务端固定）</span></h2><div id=exec-summary class=sub>加载中</div><div id=exec-cards style='margin-top:10px'></div><div id=exec-close></div><div id=exec-msg class=exmsg></div><details style='margin-top:10px'><summary class=sub style='cursor:pointer'>最近事件（账本原始记录，只追加不改写）</summary><div id=exec-events class=sub style='margin-top:8px'></div></details></section>
 <style>.ghost{background:#1e3a55;color:#bae6fd}#log{max-height:360px;overflow:auto;font:12px ui-monospace,monospace}.logrow{padding:6px 8px;border-bottom:1px solid #1e3250;white-space:nowrap}.logrow .mcp{color:#86efac}.logrow .manual{color:#fbbf24}#panel{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}#comparebody{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}.tl{list-style:none;padding:0;margin:0}.tl li{border-left:2px solid #263a55;padding:8px 0 8px 14px;opacity:.2;transition:opacity .35s,border-color .35s}.tl li.on{opacity:1;border-left-color:#38bdf8}.tl .hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.tl .seq{color:#64748b;font:12px ui-monospace,monospace}.tl .ttl{font-weight:700;color:#bae6fd}.tl .dsc{color:#cfe3f7;font-size:13px;margin-top:3px}.tl .mt{color:#7f93ab;font:11px ui-monospace,monospace;margin-top:5px;word-break:break-all}.tl ul.basis{margin:7px 0 0;padding-left:16px;color:#b8c7d9;font-size:12px}.tl ul.basis li{margin:2px 0;border:0;padding:0;opacity:1}.tag{font-size:11px;padding:1px 6px;border-radius:4px;background:#20344d;color:#9fb1c8}.k-conflict{color:#fbbf24}.k-gap{color:#fca5a5}.k-audit{color:#86efac}.ivbtn{background:#1e3a55;color:#bae6fd;border:0;border-radius:6px;padding:10px 14px;font-weight:700;cursor:pointer;text-align:left;max-width:330px;min-width:0;white-space:normal;overflow-wrap:anywhere;flex:1 1 280px}.ivbtn small{display:block;font-weight:400;color:#8fa4bd;font-size:11px;margin-top:4px;line-height:1.4}.row{display:flex;gap:12px;padding:5px 0;border-bottom:1px dashed #1e3250;font-size:13px}.row>span:first-child{flex:1 1 auto;min-width:0}.row b{margin-left:auto;color:#7dd3fc;flex:0 0 auto;padding-left:12px;white-space:nowrap}.chain{display:flex;flex-direction:column;gap:0}.lnk{display:grid;grid-template-columns:26px 140px minmax(0,1fr) minmax(0,200px);gap:12px;padding:9px 0 9px 14px;border-left:2px solid #263a55;opacity:.32;transition:opacity .3s,border-color .3s}.lnk.on{opacity:1;border-left-color:#38bdf8}.lnk .no{color:#64748b;font:12px ui-monospace,monospace}.lnk .who{font:11px ui-monospace,monospace;color:#8fa4bd;line-height:1.55}.lnk .what{min-width:0}.lnk .what b{color:#bae6fd}.lnk .what div{font-size:12px;color:#b8c7d9;margin-top:3px}.lnk .tool{font:11px ui-monospace,monospace;color:#86efac;text-align:right;word-break:break-all}.ord{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:7px 0;border-bottom:1px dashed #1e3250;font-size:13px}.ord .id{font:11px ui-monospace,monospace;color:#8fa4bd}.ord .ds{grid-column:1/3;color:#b8c7d9;font-size:12px}.ord.ev{background:#14283d;border-left:2px solid #38bdf8;padding-left:8px}.ord .sev{padding:1px 6px;border-radius:4px;font-size:11px;background:#20344d}.sev.high{color:#fca5a5}.sev.medium{color:#fbbf24}.plan{display:grid;grid-template-columns:1fr 1fr;gap:14px}.plan .col{background:#101d30;border:1px solid #22344d;border-radius:8px;padding:12px}.plan .col h3{margin:0 0 8px;font-size:14px;color:#bae6fd}.plan .col.now{border-color:#2b6f8f}.plan .col.alt{border-color:#7c5a1f}.plan .kv{display:flex;font-size:13px;padding:3px 0}.plan .kv b{margin-left:auto;color:#7dd3fc}.ent{cursor:pointer}.ent:hover{filter:brightness(1.35)}.ent.selected{filter:brightness(1.45);stroke:#fff;stroke-width:3}.cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.cat{background:#1e3a55;color:#bae6fd;border:0;border-radius:99px;padding:5px 11px;font-size:12px;cursor:pointer}.cat.sel{background:#38bdf8;color:#0b1220;font-weight:700}@media(max-width:800px){.grid{grid-template-columns:1fr}.plan{grid-template-columns:1fr}.lnk{grid-template-columns:26px minmax(0,1fr);row-gap:3px}.lnk .who{grid-column:2}.lnk .what{grid-column:2}.lnk .tool{grid-column:2;text-align:left}}</style>
 <details class=tech><summary>技术附录 · 开发调试用，评委可跳过（渲染快照、工具原始日志、模型对照）</summary><div>
 <div class=toolbar style='margin:0 0 12px'><button class=ghost onclick="renderScene('v1')">渲染方案一快照</button><button class=ghost onclick="renderScene('v4')">渲染方案二快照</button><button class=ghost onclick="diffScenes()">对比两版快照</button><button class=ghost onclick="runLLM()">大模型独立决策对照</button></div>
@@ -630,6 +642,98 @@ async function loadCollab(){const r=await fetch('/api/collab-review');const d=aw
  cvcards.innerHTML=Object.keys(byAgent).map(a=>'<div class=cvwho>'+esc(orgName(a))+'<span class=tag>'+byAgent[a].length+' 张动作卡</span></div>'+byAgent[a].map(x=>'<div class=cvrow><span class=tag>'+esc(zh(CSTAGE,x.stage))+'</span><span class=cvact title="'+esc(x.action)+'">'+esc(clipText(x.action,80))+'</span><b class="'+(x.status==='accepted'?'ok':'warn')+'">'+esc(zh(CSTAT,x.status))+'</b></div>').join('')).join('');
  cvhand.textContent=(d.handoffs||[]).length?'交接关系：'+d.handoffs.map(h=>orgName(h.from_agent)+' → '+orgName(h.to_agent)+'（'+h.card_ids.length+' 张）').join(' ｜ '):'本次无需角色交接；每个部门只复核自己职责范围内的动作卡'}
 let SCHED=null,TLINKS=null;
+// ---- 执行账本：计划（推演派生） vs 实际（账本事件） ----
+let EXEC=null,PENDING_CLOSE='';
+async function loadExecution(){
+  try{const r=await fetch('/api/execution');EXEC=await r.json();renderExecution()}
+  catch(e){EXEC=null;const s=document.getElementById('exec-summary');if(s)s.innerHTML='<span class=warn>执行账本不可用（/api/execution 未能加载）</span>'}
+}
+function execMsg(text,ok){
+  const el=document.getElementById('exec-msg');if(!el)return;
+  el.innerHTML=text?'<span class="'+(ok?'ok':'warn')+'">'+esc(text)+'</span>':'';
+}
+function renderExecution(){
+  const s=document.getElementById('exec-summary');if(!s)return;
+  if(!EXEC){s.innerHTML='<span class=warn>执行账本不可用</span>';return}
+  const p=EXEC.plan;
+  s.innerHTML='计划完成 <b>'+p.planned_done+'</b> 张 · 账本实际完成 <b>'+p.actual_done+'</b> 张 · 偏差 '
+    +'<b class="'+(p.delta<0?'warn':'ok')+'">'+(p.delta>0?'+':'')+p.delta+'</b>'
+    +(p.behind.length?' · 未落地 '+p.behind.length+' 张':'')
+    +'<div style="margin-top:6px;font-size:11.5px;color:#7f93ab">身份：'+esc(EXEC.actor.actor_org)+' / '+esc(EXEC.actor.actor_role)
+    +' · 账本目录：'+esc(EXEC.ledger)+' · 工单台账不动，关闭只记在账本</div>';
+
+  const box=document.getElementById('exec-cards');
+  if(!box)return;
+  box.innerHTML=(EXEC.cards||[]).map(function(c){
+    let label='',act='',to='';
+    if(c.can_start){label='开始执行';act='transition';to='running'}
+    else if(c.can_finish&&c.co_sign_required.length){label='申请会签';act='transition';to='needs_confirm'}
+    else if(c.can_finish){label='提交完成';act='transition';to='done'}
+    else if(c.can_confirm){label='会签确认';act='sign';to=''}
+    const btn=label?'<button data-card="'+esc(c.card_id)+'" data-act="'+act+'" data-to="'+to+'" data-ver="'+c.version+'">'+label+'</button>':'';
+    const sign=c.co_sign_required.length?' · 需会签 '+esc(c.co_sign_required.join('、')):'';
+    return '<div class=exrow><span class="st '+esc(c.state)+'">'+esc(c.state_label)+'</span>'
+      +'<span class=who>'+esc(c.org_name)+'</span>'
+      +'<span class=act title="'+esc(c.action)+sign+'">'+esc(c.action)+'</span>'+btn+'</div>';
+  }).join('')||'<span class=sub>本次事件没有可执行的处置动作卡</span>';
+  box.querySelectorAll('button[data-card]').forEach(function(b){
+    b.onclick=function(){execAct(b.dataset.card,b.dataset.act,b.dataset.to,Number(b.dataset.ver))};
+  });
+
+  const cb=document.getElementById('exec-close');
+  if(cb){
+    if(PENDING_CLOSE){
+      cb.innerHTML='<div class=exclose><b>确认关闭工单 '+esc(PENDING_CLOSE)+'？</b>'
+        +' 这是人工确认动作：会写入执行账本并留痕，但**不改**冻结的 work_orders.csv。'
+        +'<div style="margin-top:8px"><button data-close="'+esc(PENDING_CLOSE)+'">确认关闭</button> '
+        +'<button class=ghost data-cancel="1">取消</button></div></div>';
+    }else if((EXEC.closable_orders||[]).length){
+      cb.innerHTML='<div class=exclose>动作卡已全部完成，可申请关闭：'
+        +EXEC.closable_orders.map(function(o){return '<b>'+esc(o)+'</b> <button data-request="'+esc(o)+'">申请关闭</button>'}).join(' ')
+        +'<div style="margin-top:6px;color:#7f93ab">关闭需人工确认，不会自动发生。</div></div>';
+    }else{
+      // 没到可关闭条件时也要说清差多少，否则用户以为按钮坏了
+      const prog=(EXEC.order_progress||[]).map(function(p){
+        return esc(p.order_id)+' '+p.done+'/'+p.total+(p.closed?'（账本已关闭）':'');
+      }).join(' · ');
+      cb.innerHTML=prog?'<div class=exclose>工单完成进度：'+prog+'<div style="margin-top:6px;color:#7f93ab">全部动作卡完成后才出现「申请关闭」；关闭不会自动发生。</div></div>':'';
+    }
+    cb.querySelectorAll('button[data-close]').forEach(function(b){b.onclick=function(){execClose(b.dataset.close)}});
+    cb.querySelectorAll('button[data-request]').forEach(function(b){b.onclick=function(){PENDING_CLOSE=b.dataset.request;renderExecution()}});
+    cb.querySelectorAll('button[data-cancel]').forEach(function(b){b.onclick=function(){PENDING_CLOSE='';renderExecution()}});
+  }
+
+  const ev=document.getElementById('exec-events');
+  if(ev){
+    ev.innerHTML=(EXEC.events||[]).slice().reverse().map(function(e){
+      const what=e.action==='sign'?'会签（'+esc(e.actor_org)+'）':(e.to_state==='order_closed'?'关闭工单 '+esc(e.order_id):esc(e.from_state||'')+' → '+esc(e.to_state));
+      return '<div class=row><span>'+esc(e.event_id)+' · '+esc(e.card_id)+'</span><b>'+what+'</b></div>';
+    }).join('')||'<span class=sub>暂无事件：账本为空时所有卡都是「待执行」</span>';
+  }
+}
+async function execAct(cardId,action,toState,version){
+  const body={event_id:'UI-'+Date.now()+'-'+cardId,card_id:cardId,action:action,expected_version:version};
+  if(toState)body.to_state=toState;
+  execMsg('提交中…',true);
+  const r=await fetch('/api/execution/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d=await r.json();
+  if(d.status==='error'){execMsg('被拒绝（'+d.code+'）：'+d.error,false);return}
+  if(d.status==='duplicate'){execMsg('已忽略：同一张卡同一状态已提交过（幂等）',true);await loadExecution();return}
+  execMsg('已写入账本：'+d.event.event_id+' · '+cardId,true);
+  await loadExecution();
+}
+async function execClose(orderId){
+  // 关闭事件仍要挂在一张卡上（审计要求"谁的动作触发了关单"），取该工单关联的第一张卡
+  const card=(EXEC.cards||[]).find(function(c){return (c.order_ids||[]).indexOf(orderId)>=0})||(EXEC.cards||[])[0];
+  if(!card){execMsg('账本里找不到与该工单关联的动作卡',false);return}
+  execMsg('提交关闭…',true);
+  const r=await fetch('/api/execution/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({event_id:'UI-CLOSE-'+Date.now(),card_id:card.card_id,action:'close_order',order_id:orderId,expected_version:0,note:'人工确认关闭（演示）'})});
+  const d=await r.json();
+  PENDING_CLOSE='';
+  if(d.status==='error'){execMsg('关闭被拒绝（'+d.code+'）：'+d.error,false);await loadExecution();return}
+  execMsg('工单 '+orderId+' 已在账本中标记关闭（台账未改动）',true);
+  await loadExecution();
+}
 // 沙盘关联层：主页面只借两样东西——六跳的跳次号与"这一跳挂了哪些对象"。
 // 跳次号必须来自后端，前端自己数会把冲突明细算成第 5、6 跳。
 async function loadTwinLinks(){try{const r=await fetch('/api/twin-links?jump=7');TLINKS=await r.json()}catch(e){TLINKS=null}return TLINKS}
@@ -704,7 +808,7 @@ async function runChain(){if(!SCHED){chainstatus.textContent='加载中…';awai
  const ls=[...document.getElementById('chain').children];chainstatus.textContent='执行中 0/'+ls.length;
  for(let i=0;i<ls.length;i++){ls[i].classList.remove('on');await new Promise(done=>setTimeout(done,200));ls[i].classList.add('on');chainstatus.textContent='第 '+(i+1)+'/'+ls.length+' 环：'+(((SCHED.chain||{}).stages||[])[i]||{}).title}
  chainstatus.textContent='链路完成：'+((SCHED.chain||{}).counts||{}).stages+' 环'}
-loadPlatform();loadLog();loadInterventions();loadCollab();run();try{if(localStorage.getItem('urban-proj')==='1'||new URLSearchParams(location.search).get('proj')==='1')toggleProjection()}catch(e){}loadTwinLinks().then(loadStream);loadScheduler().then(function(){chainAll(true)});</script></html>""".replace("</style>\n<main>", "</style>"+IMPACT_STYLE+"\n<main>").replace("</style><main>", "</style>"+IMPACT_STYLE+"<main>").replace("</div></details></main>\n<script>", "</div></details>"+PAGE_STYLE+"</main>\n<script>")
+loadPlatform();loadLog();loadInterventions();loadCollab();run();try{if(localStorage.getItem('urban-proj')==='1'||new URLSearchParams(location.search).get('proj')==='1')toggleProjection()}catch(e){}loadTwinLinks().then(loadStream);loadScheduler().then(function(){chainAll(true)});loadExecution();</script></html>""".replace("</style>\n<main>", "</style>"+IMPACT_STYLE+"\n<main>").replace("</style><main>", "</style>"+IMPACT_STYLE+"<main>").replace("</div></details></main>\n<script>", "</div></details>"+PAGE_STYLE+"</main>\n<script>")
 
 
 # --- 可视化端点 -----------------------------------------------------------
@@ -911,6 +1015,95 @@ def scheduler_view(*, refresh: bool = False) -> dict[str, Any]:
         "baseline": baseline_compare.compare(payload, collab=collab),
     }
     return _VIEW_CACHE[key]
+
+
+def execution_cards() -> dict[str, dict[str, Any]]:
+    """执行账本认的动作卡清单。
+
+    卡片来自关联层（与沙盘同一份），账本只认这里有的 card_id——
+    否则前端可以凭空提交一张不存在的卡，把账本写脏。
+    """
+    links = build_twin_links(scheduler_view(), current_jump=MAX_JUMP)
+    cards: dict[str, dict[str, Any]] = {}
+    for card in links["cards"]:
+        # 执行账本只收 **action 阶段** 的卡：观测/影响/责任/冲突/资源这五跳是推演的
+        # 分析产物，不是谁去现场执行的动作。把它们也纳入账本，会逼人给"观测"点开工。
+        if card["stage"] != "action":
+            continue
+        cards[str(card["card_id"])] = {
+            "card_id": card["card_id"],
+            "order_ids": [str(item) for item in card.get("work_order_ids") or []],
+            "co_sign_required": [str(item) for item in card.get("co_sign_required") or []],
+            "claim_ids": [str(item) for item in card.get("claim_ids") or []],
+            "evidence_refs": [str(item) for item in card.get("evidence_refs") or []],
+            "org_name": card["org_name"],
+            "stage": card["stage"],
+            "jump": card["jump"],
+            "action": card["action"],
+            "planned_state": card["state"],
+        }
+    return cards
+
+
+def execution_view() -> dict[str, Any]:
+    """计划（推演派生） vs 实际（账本）对照。"""
+    cards = execution_cards()
+    projected = execution_ledger.current_state(cards)
+    plan = execution_ledger.compare_plan(list(cards.values()), projected)
+    rows = []
+    for card_id, row in projected["cards"].items():
+        source = cards[card_id]
+        rows.append(
+            {
+                **row,
+                "org_name": source["org_name"],
+                "stage": source["stage"],
+                "jump": source["jump"],
+                "action": source["action"],
+                "planned_state": source["planned_state"],
+                "planned_label": execution_ledger.STATE_LABEL.get(source["planned_state"], ""),
+                "state_label": execution_ledger.STATE_LABEL.get(row["state"], row["state"]),
+                "can_start": row["state"] == "pending",
+                "can_finish": row["state"] == "running",
+                "can_confirm": row["state"] == "needs_confirm",
+            }
+        )
+    rows.sort(key=lambda item: (item["jump"], item["card_id"]))
+
+    # 哪些工单已经"卡全完成、可以申请关闭"：由后端算，页面不重复一遍状态机
+    by_order: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        for order_id in row["order_ids"]:
+            by_order.setdefault(order_id, []).append(row)
+    closed_ids = set(projected["closed_orders"])
+    closable = [
+        order_id
+        for order_id, items in by_order.items()
+        if items and order_id not in closed_ids and all(item["state"] == "done" for item in items)
+    ]
+    order_progress = [
+        {
+            "order_id": order_id,
+            "total": len(items),
+            "done": len([item for item in items if item["state"] == "done"]),
+            "closed": order_id in closed_ids,
+        }
+        for order_id, items in sorted(by_order.items())
+    ]
+
+    return {
+        "status": "ok",
+        "plan": plan,
+        "counts": projected["counts"],
+        "cards": rows,
+        "closable_orders": sorted(closable),
+        "order_progress": order_progress,
+        "closed_orders": list(projected["closed_orders"].values()),
+        "events": execution_ledger.read_events()[-20:],
+        "actor": dict(execution_ledger.DEFAULT_ACTOR),
+        "ledger": str(execution_ledger.execution_dir()),
+        "source": "计划=推演按跳次派生；实际=执行账本 events.jsonl（演示，无真实身份系统）",
+    }
 
 
 def _error(message: str, status: int = 404) -> tuple[int, str, bytes]:
@@ -1638,6 +1831,32 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
             {"id": entity, "found": entity in links["entities"]} if entity else None
         )
         return _json(links)
+
+    if segments[:2] == ["api", "execution"]:
+        # 执行账本：GET 看计划/实际对照，POST 才写。写入口没有鉴权（PoC 无登录系统），
+        # 但 actor 由服务端固定，前端传了也不认。
+        if segments[2:3] == ["events"]:
+            if method.upper() != "POST":
+                return _error("执行事件只接受 POST", 405)
+            try:
+                payload = json.loads((body or b"{}").decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                return _error("请求体不是合法 JSON", 400)
+            if not isinstance(payload, dict):
+                return _error("请求体必须是 JSON 对象", 400)
+            try:
+                result = execution_ledger.append_event(payload, cards=execution_cards())
+            except execution_ledger.LedgerError as exc:
+                return _json({"status": "error", "code": exc.code, "error": str(exc), "detail": exc.detail}, exc.status)
+            return _json(result, 201 if result.get("status") != "duplicate" else 200)
+        if segments[2:3] == ["export"]:
+            if method.upper() != "POST":
+                return _error("导出快照请用 POST", 405)
+            path = execution_ledger.export_snapshot(cards=execution_cards())
+            return _json({"status": "ok", "path": str(path)})
+        if method.upper() != "GET":
+            return _error("执行账本读接口只接受 GET", 405)
+        return _json(execution_view())
 
     # 下面四个是"只取一块"的细粒度端点：外部脚本与测试用，省一次整包传输。
     if segments[:2] == ["api", "work-orders"]:

@@ -24,11 +24,37 @@
 - [x] 增加一条端到端测试：事件 → 判断 → 动作 → 状态 → 结果 → 证据。
       `tests/test_twin3d_e2e.py`，另含状态单调性、页面级绑定顺序回归。
 
+## 工单状态写回（已完成，写进独立账本）
+
+台账 `work_orders.csv` 是冻结数据资产（推演快照哈希、108 项自检都锚着它），
+**一个字节都不改**。执行状态写进 `artifacts/execution/`：
+
+- `events.jsonl` 唯一事实源，只追加；`state.json` 是投影缓存，删掉可重放重建；
+- 入口：`GET /api/execution`（计划 vs 实际）、`POST /api/execution/events`、`POST /api/execution/export`；
+- 页面：主页面「执行账本」卡片，逐卡 开始执行 / 提交完成 / 申请会签 / 会签确认，
+  工单进度 `done/total`，全部完成才出现「申请关闭」（需人工二次确认）。
+
+契约落点与边界：
+
+| 项 | 落点 | 边界 |
+|---|---|---|
+| 状态机 | `execution_ledger.TRANSITIONS` | 跳步一律 409 `illegal_transition`，不自动补中间态 |
+| 幂等 | `sha256(card_id + to_state)` | 粒度不含 `from_state`，所以 `done` 后的重开请求会以 `duplicate` 返回（效果同为拒绝，错误码不同） |
+| 乐观锁 | `expected_version` | 不符返回 409 `version_conflict` 带当前版本 |
+| 会签 | `co_sign_required` | 转 `done` 前必须逐部门 `sign`，缺一个 409 `co_sign_incomplete` |
+| 身份 | 服务端 `DEFAULT_ACTOR` | 前端传 `actor_org/actor_role` 一律忽略；无真实登录，页面标注"演示执行账本" |
+| 关单 | `close_order` 事件 | 需人工确认且该工单全部卡 `done`；台账不改，只在账本记关闭 |
+| 导出 | `POST /api/execution/export` | 脱敏：`actor_role` 与 `note` 抹除，部门代码保留 |
+
+**执行账本只收 `stage=action` 的卡**：观测/影响/责任/冲突/资源五跳是推演的分析产物，
+不是谁去现场执行的动作，纳入账本会逼人给「观测」点开工。
+
 ## 尚未做
 
-- [ ] 工单状态回写：台账 `status` 目前只读，处置动作不会改它。若要做"办结"闭环，
-      得先有写入通道与审计（谁改的、依据哪张卡），否则就是假闭环。
-      暂缓到审计契约确定后再做。
+- [ ] `claim_id` 之外的审计维度：目前没有操作人真实身份（无登录系统），只有部门代码
+      与固定角色。接真实身份要先有账号体系，不能靠前端传。
+- [ ] 关单与台账的最终同步：账本记了"已关闭"，但 `work_orders.csv` 仍是 `open`。
+      要真正结案需要一个受控的写回通道（带审批与回滚），不在当前范围。
 
 ## 结果行回指断言（已完成，但不新建断言）
 
@@ -50,6 +76,6 @@
 ## 验证口径
 
 ```
-python -m pytest -q                     # 956 项，1 skipped（可选依赖 openai）
-python -m decision_poc.evidence_check    # 108/108，指纹 00354b21254a9f1a
+python -m pytest -q                     # 977 项，1 skipped（可选依赖 openai）
+python -m decision_poc.evidence_check    # 108/108，指纹 b0a3ecbead0bb678
 ```
