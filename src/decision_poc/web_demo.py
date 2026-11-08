@@ -1387,56 +1387,74 @@ function build(sched){
         if(seeded()>0.88){const[wx,wz]=W(bx+nx*8,by+ny*8);
           makeCar(wx,wz,ang,carColors[Math.floor(seeded()*carColors.length)])}t+=22}}
   });
-  // ---- 积水段：高饱和蓝水面 + 白色描边，从灰地面强对比跳出 ----
-  // 直接在 XZ 平面铺顶点（与道路同一坐标语义），正常参与深度，紧贴路面不悬浮
-  window.__waterMeshes=[];   // 供事件动画引用：{mesh, baseY, label}
-  const waterMat=new THREE.MeshStandardMaterial({color:0x1a7fd4,roughness:.15,metalness:.25,transparent:true,opacity:.9,side:THREE.DoubleSide});
-  const strokeMat=new THREE.LineBasicMaterial({color:0xbfe3ff});
+  // ---- 积水段：立体水体（ExtrudeGeometry 挤出厚度），水位连续涨落 = 水体体积立体变化 ----
+  // 多边形沿 Y 轴挤出，厚度 = 积水深度。水位升高时水体立体"涨"起来，下降时立体"缩"下去。
+  window.__waterMeshes=[];   // 供事件动画引用：{mesh, label, depthMax}
   water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));
     const cen=ps.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/ps.length);
-    // 多边形三角剖分（fan）：以质心为锚，拆成三角形
     const pts=ps.map(p=>{const[wx,wz]=W(p[0],p[1]);return[wx,wz]});
     const[cx,cz]=W(cen[0],cen[1]);
-    const verts=[];
-    for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];
-      verts.push(cx,0,cz, a[0],0,a[1], b[0],0,b[1]);}
-    const varr=new Float32Array(verts);
-    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(varr,3));g.computeVertexNormals();
-    const m=new THREE.Mesh(g,waterMat);m.userData={entityId:e.id,name:e.label||"积水段",kind:"water",detail:e.detail||""};m.position.y=0.43;m.receiveShadow=true;scene3.add(m);
-    window.__waterMeshes.push({mesh:m,baseY:0.43,mat:waterMat});
-    // 白色描边（沿积水轮廓，同样 XZ 平面直接铺）
-    const lpts=[];
-    for(let i=0;i<=pts.length;i++){const p=pts[i%pts.length];lpts.push(p[0],0,p[1]);}
-    const lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(lpts),3));
-    const line=new THREE.Line(lg,strokeMat);line.position.y=0.45;scene3.add(line);
-    // 积水标注（白色衬底蓝字）
-    const lb=makeLabel((e.label||'积水')+' '+((e.detail||'').match(/\\d+[.]?\\d*\\s*cm/)||[''])[0],'#ffffff');lb.position.set(cx,3.0,cz);scene3.add(lb)});
+    // Shape 在 XZ 平面（x→shape.x，z→shape.y），再绕 X 轴 -90° 转回世界，挤出沿 +Y
+    const sh=new THREE.Shape();
+    pts.forEach((p,i)=>{if(i===0)sh.moveTo(p[0],p[1]);else sh.lineTo(p[0],p[1])});
+    sh.closePath();
+    // 每个积水段独立材质（颜色随深度实时变），存到 __waterMeshes
+    const mat=new THREE.MeshStandardMaterial({color:0x3a9be0,roughness:.12,metalness:.3,transparent:true,opacity:.88,side:THREE.DoubleSide});
+    const g=new THREE.ExtrudeGeometry(sh,{depth:1.0,bevelEnabled:false});
+    g.rotateX(-Math.PI/2);   // Shape 在 XY 平面，转成 XZ，挤出轴变成 Y
+    const m=new THREE.Mesh(g,mat);
+    m.userData={entityId:e.id,name:e.label||"积水段",kind:"water",detail:e.detail||""};
+    m.position.y=0.44;m.castShadow=true;m.receiveShadow=true;scene3.add(m);
+    // depthMax：该积水段的峰值水位高度（世界单位）。放大到接近楼体量级，
+    // 让"涨水"在远景相机下也有肉眼可见的体积——峰值约 3 单位，接近一层楼高。
+    const depthMax=/A-03/.test(e.label||'')?2.8:2.2;
+    window.__waterMeshes.push({mesh:m,mat:mat,label:(e.label||'积水'),depthMax:depthMax,cx:cx,cz:cz});
+    // 积水标注：只留深度数字，随跳次更新（updateWaterLabel 里刷新）
+    const lb=makeLabel('','#eaf6ff');lb.position.set(cx,2.2,cz);lb.userData={waterLabel:true};
+    m.userData.waterLabel=lb;scene3.add(lb);window.__waterMeshes[window.__waterMeshes.length-1].labelSprite=lb;
+  });
   // ---- 设施：泵站(写实小楼) + 雨水口(井盖) ----
   window.__pumpAlarms=[];   // 供事件动画引用：故障泵站的告警灯 mesh
   fac.forEach(e=>{const fpos=TWIN3D_FAC[e.id]||[Number(e.cx),Number(e.cy)];const[wx,wz]=W(fpos[0],fpos[1]);const ps=e.id.indexOf('DF-PS')===0;
     if(ps){const b=makeBuilding(2.6,2.6,2.6,wx,wz,0);b.userData={entityId:e.id,name:e.label||"泵站",kind:"pump",detail:e.detail||""};
       const sign=makeLabel(String(e.label||e.id).replace('雨水泵站','泵站'),'#cfe0ef');sign.position.set(wx,4.6,wz);scene3.add(sign);
-      // 故障泵站(DF-PS-01)挂红色告警灯，动画阶段闪红
+      // 故障泵站(DF-PS-01)挂红色警示光柱（向上投射的半透明红光柱 + 顶部闪烁灯），比小球醒目
       if(/fault|待修|故障/.test(e.detail||'')){
-        const lamp=new THREE.Mesh(new THREE.SphereGeometry(0.22,12,10),new THREE.MeshBasicMaterial({color:0xff2d2d}));
-        lamp.position.set(wx,3.4,wz);scene3.add(lamp);window.__pumpAlarms.push({lamp:lamp});
+        const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.85,6.5,16,1,true),
+          new THREE.MeshBasicMaterial({color:0xff2d2d,transparent:true,opacity:.35,side:THREE.DoubleSide,depthWrite:false}));
+        beam.position.set(wx,4.5,wz);scene3.add(beam);
+        const lamp=new THREE.Mesh(new THREE.SphereGeometry(0.34,12,10),new THREE.MeshBasicMaterial({color:0xff3b30}));
+        lamp.position.set(wx,7.6,wz);scene3.add(lamp);
+        window.__pumpAlarms.push({lamp:lamp,beam:beam});
       }}
     else{const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.12,16),new THREE.MeshStandardMaterial({color:0x5a6a7a,roughness:.5,metalness:.6}));
       cap.position.set(wx,0.4,wz);cap.receiveShadow=true;scene3.add(cap)}});
-  // ---- 封路路障：在已封路段放置黄色护栏，动画阶段点亮/出现 ----
-  window.__roadBlocks=[];   // 供事件动画引用：封路护栏
+  // ---- 封路路障：在已封路段放置成组护栏 + 警示锥，动画阶段整体出现 ----
+  window.__roadBlocks=[];   // 供事件动画引用：封路护栏组（每组一个 Group）
   const blockMat=new THREE.MeshStandardMaterial({color:0xffc21a,roughness:.5,metalness:.2});
+  const coneMat=new THREE.MeshStandardMaterial({color:0xff5a2d,roughness:.4});
   netRoads.forEach(rd=>{if(!/已封|under_construction|closed/.test(rd.label||'')&&!/已封|closed/.test(rd.detail||''))return;
     const ps=rd.pts;if(!ps||ps.length<2)return;
-    const mid=ps[Math.floor(ps.length/2)];const[mx,mz]=W(mid[0],mid[1]);
-    const bar=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.5,0.18),blockMat);
-    bar.position.set(mx,0.62,mz);bar.castShadow=true;scene3.add(bar);window.__roadBlocks.push({mesh:bar,mat:blockMat});
+    // 沿路段取 3 个点，每个点放一组护栏 + 2 个警示锥
+    const grp=new THREE.Group();
+    for(let k=1;k<=3;k++){
+      const f=k/(3+1);const px=ps[0][0]+(ps[1][0]-ps[0][0])*f, py=ps[0][1]+(ps[1][1]-ps[0][1])*f;
+      const[wx,wz]=W(px,py);
+      const bar=new THREE.Mesh(new THREE.BoxGeometry(2.6,0.55,0.2),blockMat);
+      bar.position.set(wx,0.68,wz);bar.castShadow=true;grp.add(bar);
+      const leg1=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.6,0.18),blockMat);leg1.position.set(wx-1.15,0.3,wz);grp.add(leg1);
+      const leg2=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.6,0.18),blockMat);leg2.position.set(wx+1.15,0.3,wz);grp.add(leg2);
+      const cone=new THREE.Mesh(new THREE.ConeGeometry(0.28,0.55,10),coneMat);cone.position.set(wx+0.5,0.28,wz+0.5);grp.add(cone);
+    }
+    grp.visible=false;scene3.add(grp);window.__roadBlocks.push({mesh:grp});
   });
   // 场景摆完才建光环与锚点：此时每个实体的 mesh 已经挂在 scene 上
   buildRings();
   loadTwinLinks().then(()=>setJump(twinState.currentJump));
 }
 function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(9,2.25,1);return sp}
+// 只生成 CanvasTexture（供积水深度标注动态刷新文字用），不包 Sprite
+function makeLabelTex(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;return tex}
 // ---- 六跳推演状态机：跳次是唯一事实来源，视觉、详情、对照都跟着跳次走 ----
 // 1..6 是推演的六跳（来自 /api/twin-links 的 jumps），7 是"处置后"——六跳全过，
 // 只用于看处置结果，不是第七个阶段。
@@ -1445,13 +1463,14 @@ let LINKS=null,CARD_INDEX={},RINGS={},ANCHORS={};
 const MAX_JUMP=7;
 const RING_COLOR={pending:0x5a6b7a,running:0x4fc3f7,needs_confirm:0xf5c063,done:0x34d399};
 const JUMP_VISUAL=[
-  {water:0.18,alarm:false,block:false},
-  {water:0.45,alarm:false,block:false},
-  {water:0.55,alarm:true, block:false},
-  {water:0.62,alarm:true, block:false},
-  {water:0.70,alarm:true, block:true},
-  {water:0.40,alarm:false,block:true},
-  {water:0.10,alarm:false,block:true},
+  // water: 水位系数(0~1，驱动立体水体厚度)；waterColor: 水体主色(浅清→深浊)；rain: 雨势(0~1)
+  {water:0.12, waterColor:0x3aa0e0, rain:0.25, alarm:false, block:false},
+  {water:0.38, waterColor:0x2f8fd0, rain:0.55, alarm:false, block:false},
+  {water:0.55, waterColor:0x277fc0, rain:0.70, alarm:true,  block:false},
+  {water:0.68, waterColor:0x1f6fb0, rain:0.80, alarm:true,  block:false},
+  {water:0.88, waterColor:0x1a5e96, rain:0.90, alarm:true,  block:true},
+  {water:0.42, waterColor:0x277fb0, rain:0.45, alarm:false, block:true},
+  {water:0.10, waterColor:0x3a90c8, rain:0.15, alarm:false, block:true},
 ];
 function requestedParams(){
   const q=new URLSearchParams(location.search);
@@ -1503,10 +1522,26 @@ function setJump(i){
     +(twinState.currentJump===6?'7 步 · 处置后':(twinState.currentJump+1)+'/6 跳')+'</span>';
 }
 function applyVisual(v){
-  (window.__waterMeshes||[]).forEach(w=>{w.mesh.position.y=w.baseY+v.water*0.8;w.mat.opacity=0.85+v.water*0.2});
-  // 用 visible 闪烁而不是改 opacity：告警灯的材质没开 transparent，调 opacity 是无效的
-  (window.__pumpAlarms||[]).forEach(p=>{p.on=!!v.alarm;p.lamp.visible=p.on});
+  // 立体水体：scale.y = 水位系数 × 峰值厚度，水体从地面"涨"起来/缩下去，体积连续变化
+  (window.__waterMeshes||[]).forEach(w=>{
+    w.mesh.scale.y=Math.max(0.06,v.water)*w.depthMax;   // 立体厚度随水位（峰值约 3 单位，肉眼可见）
+    w.mat.color.setHex(v.waterColor||0x3a9be0);      // 颜色随深度：浅清→深浊
+    w.mat.opacity=0.82+v.water*0.16;
+    // 同步更新积水深度标注：文字=当前深度，位置跟随水面
+    if(w.labelSprite){
+      const baseCm=/A-03/.test(w.label)?30:18;
+      const cm=Math.max(1,Math.round(v.water*baseCm));
+      w.labelSprite.material.map=makeLabelTex('积水 '+cm+' cm','#eaf6ff');
+      w.labelSprite.material.needsUpdate=true;
+      w.labelSprite.position.y=0.44+v.water*w.depthMax+0.7;
+    }
+  });
+  // 告警：光柱 + 顶灯
+  (window.__pumpAlarms||[]).forEach(p=>{p.on=!!v.alarm;if(p.beam)p.beam.visible=!!v.alarm;if(p.lamp)p.lamp.visible=!!v.alarm});
+  // 封路：护栏组整体显隐
   (window.__roadBlocks||[]).forEach(b=>{b.mesh.visible=!!v.block});
+  // 雨势：雨丝透明度随跳次（暴雨→积水→处置转小）
+  if(rain&&rain.material){rain.material.opacity=0.12+v.rain*0.55;}
 }
 // ---- 关联对象高亮：光环颜色 = 该对象当前跳的动作卡状态 ----
 function buildRings(){
@@ -1700,7 +1735,15 @@ function tick(){
   // 告警灯与光环的呼吸动画不依赖播放状态，暂停时也要能看出"哪里在告警"
   if(__evtPlaying&&rain){const p=rainGeo.attributes.position;for(let i=0;i<p.count;i++){p.array[i*3+1]-=0.22;if(p.array[i*3+1]<-2)p.array[i*3+1]=54;p.array[i*3]+=(Math.random()-0.5)*0.04;p.array[i*3+2]+=(Math.random()-0.5)*0.04}p.needsUpdate=true}
   const beat=Math.sin(now/380)*0.5+0.5;
-  (window.__pumpAlarms||[]).forEach(p=>{p.lamp.visible=!!p.on&&(Math.floor(now/320)%2===0)});
+  (window.__pumpAlarms||[]).forEach(p=>{
+    // 光柱常亮（告警时），顶灯闪烁
+    if(p.beam)p.beam.visible=!!p.on;
+    if(p.lamp)p.lamp.visible=!!p.on&&(Math.floor(now/320)%2===0);
+  });
+  // 水面微起伏：让立体水体顶部有波动，更接近真实积水
+  (window.__waterMeshes||[]).forEach(w=>{
+    if(w.mesh&&w.mesh.scale.y>0.1){w.mesh.scale.y+=(Math.sin(now/700+w.cx)*0.012);}
+  });
   Object.keys(RINGS).forEach(id=>{const fx=RINGS[id];if(!fx||!fx.ring.visible)return;
     const dim=fx.ring.material.color.getHex()===0x5a6b7a;
     fx.ring.material.opacity=dim?0.4:(0.5+0.45*beat);
