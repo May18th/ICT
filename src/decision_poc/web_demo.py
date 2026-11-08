@@ -1046,7 +1046,7 @@ function build(sched){
     'R-105':[[360,160],[360,250]],// 兴华支路(支路)
   };
   const TWIN3D_FAC={'DF-PS-01':[285,174],'DF-PS-02':[228,231],'DF-IN-101':[258,78],'DF-IN-103':[120,146],'DF-IN-201':[633,146],'DF-IN-202':[526,176],'DF-PS-03':[560,105]};
-  const TWIN3D_WATER={'WO-20261029-007':[[250,150],[330,150],[330,172],[250,172]],'WO-20261029-011':[[545,150],[635,150],[635,172],[545,172]]};
+  const TWIN3D_WATER={'WO-20261029-007':[[250,156],[330,156],[330,164],[250,164]],'WO-20261029-011':[[545,155],[635,155],[635,165],[545,165]]};
   const netRoads=roads.map(function(e){return{id:e.id,label:e.label,detail:e.detail||'',pts:(TWIN3D_ROADS[e.id]||String(e.points||'').split(' ').map(function(p){return p.split(',').map(Number)}))}});
   const seeded=(function(){let s=20260801;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296}})();
   // ---- 道路：沥青 PBR + 车道标线 + 路缘 + 斑马线 ----
