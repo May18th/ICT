@@ -1396,24 +1396,38 @@ function build(sched){
           if(seeded()>0.82){const[wx,wz]=W(px,py);makeTree(wx,wz,0.7+seeded()*0.5)}})}
         t+=20+seeded()*8}}
   });
-  // ---- 路灯（主干路两侧） ----
+  // ---- 路灯（主干路两侧）：KayKit streetlight 模型 ----
   netRoads.forEach(rd=>{if(rd.pts.length<2)return;
     if(!/主干路/.test(rd.detail))return;
     for(let i=0;i<rd.pts.length-1;i++){const p0=rd.pts[i],p1=rd.pts[i+1];
       const dx=p1[0]-p0[0],dy=p1[1]-p0[1];const len=Math.hypot(dx,dy);if(len<5)continue;
       const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;
       let t=12;while(t<len-12){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
-        const[wx,wz]=W(bx+nx*5,by+ny*5);makeLamp(wx,wz);t+=34}}
+        const[wx,wz]=W(bx+nx*5,by+ny*5);
+        gltfLoader.load('/assets/kaykit/streetlight.gltf',function(g){
+          const m=g.scene;const s=5.0;m.scale.set(s,s,s);   // KayKit 路灯模型高 0.96 米，放大到 ~5 米
+          m.position.set(wx,0.37,wz);m.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+          scene3.add(m);
+        });
+        t+=34}}
   });
-  // ---- 路侧车辆 ----
-  const carColors=[0x8899aa,0x6b7b8a,0x9aa7b2,0x5a6b7a,0x77828d];
+  // ---- 路侧车辆：KayKit 车辆模型（轿车/出租车/掀背随机） ----
+  const KAYKIT_CARS=['car_sedan','car_taxi','car_hatchback','car_stationwagon'];
   netRoads.forEach(rd=>{if(rd.pts.length<2)return;
     for(let i=0;i<rd.pts.length-1;i++){const p0=rd.pts[i],p1=rd.pts[i+1];
       const dx=p1[0]-p0[0],dy=p1[1]-p0[1];const len=Math.hypot(dx,dy);if(len<5)continue;
       const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;const ang=-Math.atan2(ny,nx);
       let t=16;while(t<len-16){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
-        if(seeded()>0.88){const[wx,wz]=W(bx+nx*8,by+ny*8);
-          makeCar(wx,wz,ang,carColors[Math.floor(seeded()*carColors.length)])}t+=22}}
+        if(seeded()>0.90){const[wx,wz]=W(bx+nx*10,by+ny*10);   // 偏移加大，车在车道内
+          const carName=KAYKIT_CARS[Math.floor(seeded()*KAYKIT_CARS.length)];
+          gltfLoader.load('/assets/kaykit/'+carName+'.gltf',function(g){
+            const m=g.scene;const s=4.3;m.scale.set(s,s,s);   // KayKit 车辆长 0.94 米，放大到 ~4 米
+            m.position.set(wx,0.37,wz);m.rotation.y=ang;
+            m.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+            scene3.add(m);
+          });
+        }
+        t+=30}}   // 步进加大到 30 场景单位(≈4.8 世界单位)，避免车长 4 米重叠
   });
   // ---- 积水段：立体水体（ExtrudeGeometry 挤出厚度），水位连续涨落 = 水体体积立体变化 ----
   // 多边形沿 Y 轴挤出，厚度 = 积水深度。水位升高时水体立体"涨"起来，下降时立体"缩"下去。
