@@ -1168,7 +1168,7 @@ canvas{display:block}
 #jump-buttons button.settle.active{background:#2f8a63}
 #hud small{display:block;margin-top:4px;font-size:11px;color:#6f8499}</style>
 <div id=hud><b>城市内涝三维数字孪生 · 写实沙盘</b><span>兴华路片区(A-03) 与 建设大道片区(B-01) · 坐标来自 scene.json 台账实时投影</span><small id=hud-src>关联层加载中…</small></div>
-<div id=event-bar><b>暴雨来袭 · 积水上涨</b><span>事件推演 · 阶段 1/4</span></div>
+<div id=event-bar><b>观测：事件识别</b><span>事件推演 · 第 1/6 跳</span></div>
 <div id=legend><span><i style=background:#4a6fa5></i>积水段</span> &nbsp; <span><i style=background:#e0a965></i>已封路</span> &nbsp; <span><i style=background:#5a6a7a></i>泵站</span> &nbsp; <span><i style=background:#ff2d2d></i>故障告警</span></div>
 <div id=evidence-card><b>当前跳次证据</b><span id=evidence-body>等待事件数据…</span><br><a href="/" style="color:#7ed4ff">返回主页面事件台</a></div><div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span><div id=entity-links></div></div><div id=results-card><b>处置前后结果</b><details id=results-details open><summary id=results-summary>展开对照</summary><div id=results-body>加载中…</div><div id=results-note style='margin-top:6px;color:#64788c;font-size:10.5px'></div></details></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><button id=settle>处置后</button><span id=jump-buttons></span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
 <script src="/three.min.js"></script>
