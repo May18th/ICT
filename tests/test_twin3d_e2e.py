@@ -105,6 +105,14 @@ def test_results_agree_with_card_states(links: dict) -> None:
     assert rows["action_cards"]["after"] == len(action_done)
     assert rows["linked_objects"]["after"] == len([row for row in links["entities"].values() if row["card_ids"]])
 
+    # 已完成动作卡那一行的依据，必须就是那几张卡各自挂的断言
+    expected: list[str] = []
+    for card in action_done:
+        for claim_id in card["claim_ids"]:
+            if claim_id not in expected:
+                expected.append(claim_id)
+    assert set(rows["action_cards"]["claim_ids"]) == set(expected)
+
 
 def test_every_jump_highlights_at_least_one_object(links: dict) -> None:
     """每一跳都要能在沙盘上指出"看哪儿"，否则跳次按钮就是摆设。"""

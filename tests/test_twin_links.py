@@ -246,6 +246,24 @@ def test_results_do_not_invent_measurements(view: dict) -> None:
     assert rows["gap"]["before"] == rows["gap"]["after"] == 2
     assert after["results"]["measured"] is False
 
+    # 结果行回指断言：能挂的挂上，挂不上的留空并写明来源
+    by_key = {row["key"]: row for row in after["results"]["rows"]}
+    coverage = after["results"]["claim_coverage"]
+    assert coverage["rows"] == len(by_key)
+    assert coverage["bound"] + coverage["unbound"] == coverage["rows"]
+    assert coverage["bound"] >= 5, "至少五行的数字要能说清依据"
+    for row in after["results"]["rows"]:
+        assert row["claim_ids"] == [ref["claim_id"] for ref in row["claims"]]
+        for claim_id in row["claim_ids"]:
+            assert claim_id in after["claims"], f"{row['key']} 指向不存在的断言 {claim_id}"
+    # 缺口这种纯推演数字必须挂在资源断言上
+    assert by_key["gap"]["claim_ids"] == ["CL-S5-resource"]
+    # 台账计数没有对应断言，不许硬编一条
+    assert by_key["open_orders"]["claim_ids"] == []
+    assert "台账" in by_key["open_orders"]["basis"]
+    assert by_key["residual_risks"]["claim_ids"] == []
+    assert "未单独成断言" in by_key["residual_risks"]["basis"]
+
 
 def test_results_progress_with_jump(view: dict) -> None:
     first = {row["key"]: row for row in build_twin_links(view, current_jump=1)["results"]["rows"]}

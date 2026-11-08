@@ -968,6 +968,9 @@ canvas{display:block}
 .rc-row .v{color:#dbe9f5;font-weight:600}
 .rc-row .v i{color:#6f8499;font-style:normal;font-weight:400}
 .rc-row .n{display:block;color:#6f8499;font-size:10.5px;margin-top:2px;line-height:1.4}
+.rc-basis{display:block;margin-top:3px;font-size:10.5px;color:#7b93aa}
+.rc-basis .badge{display:inline-block;margin:2px 3px 0 0;font-size:10px;padding:0 5px}
+.rc-basis.rc-none{color:#5d7085}
 #jump-buttons button.settle{background:#1d4a3a;border-color:#3f8a6a}
 #jump-buttons button.settle.active{background:#2f8a63}
 #hud small{display:block;margin-top:4px;font-size:11px;color:#6f8499}</style>
@@ -1470,7 +1473,16 @@ function renderResults(){
   box.innerHTML=(r.rows||[]).map(row=>{
     const before=row.before==null?'—':row.before;
     const after=row.after==null?'无实测':row.after;
-    return '<div class="rc-row"><span>'+esc(row.label)+'</span> <span class="v">'+esc(before)+' → '+esc(after)+' <i>'+esc(row.unit||'')+'</i></span><span class="n">'+esc(row.note||'')+'</span></div>';
+    // 结果行回指断言：能挂几条就挂几条，超过 3 条折叠成 +N，避免把对照表撑散
+    const cl=(row.claims||[]);
+    let basis='';
+    if(cl.length){
+      const shown=cl.slice(0,3).map(c=>'<span class="badge">'+esc(c.label)+'</span>').join(' ');
+      basis='<span class="rc-basis">依据 '+shown+(cl.length>3?' <span class="badge">+'+(cl.length-3)+'</span>':'')+'</span>';
+    }else{
+      basis='<span class="rc-basis rc-none">无断言支撑（见来源注解）</span>';
+    }
+    return '<div class="rc-row"><span>'+esc(row.label)+'</span> <span class="v">'+esc(before)+' → '+esc(after)+' <i>'+esc(row.unit||'')+'</i></span><span class="n">'+esc(row.note||'')+'</span>'+basis+'</div>';
   }).join('');
   if(note)note.textContent=r.source+' · 当前停在第 '+(twinState.currentJump===6?'7 步（处置后）':(twinState.currentJump+1)+' 跳')+'，对照口径为六跳全部执行完';
 }
