@@ -913,12 +913,12 @@ def build_twin3d_html() -> str:
 #event-bar span{display:block;margin-top:3px;font-size:12px;color:#8fb7d6}
 #legend{position:fixed;left:18px;bottom:16px;z-index:5;pointer-events:none;font-size:12px;color:#93a7bb;line-height:1.9}
 #legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-#tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}#entity-card{position:fixed;right:18px;top:84px;width:250px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);display:none}#entity-card b{color:#e0f2fe}#entity-card span{display:block;margin-top:6px;color:#a9bfd2;font-size:12px}#timeline{position:fixed;left:18px;right:18px;bottom:48px;z-index:6;display:flex;gap:6px;align-items:center;background:rgba(7,18,28,.84);padding:8px 10px;border-radius:10px}#timeline button{background:#1a3042;color:#d7e4f0;border:1px solid #496579;border-radius:5px;padding:4px 8px;cursor:pointer}#timeline button.active{background:#1976a8}
+#tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}#evidence-card{position:fixed;left:18px;top:84px;width:260px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);font-size:12px;color:#a9bfd2}#evidence-card b{color:#e0f2fe;display:block;margin-bottom:6px}#entity-card{position:fixed;right:18px;top:84px;width:250px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);display:none}#entity-card b{color:#e0f2fe}#entity-card span{display:block;margin-top:6px;color:#a9bfd2;font-size:12px}#timeline{position:fixed;left:18px;right:18px;bottom:48px;z-index:6;display:flex;gap:6px;align-items:center;background:rgba(7,18,28,.84);padding:8px 10px;border-radius:10px}#timeline button{background:#1a3042;color:#d7e4f0;border:1px solid #496579;border-radius:5px;padding:4px 8px;cursor:pointer}#timeline button.active{background:#1976a8}
 canvas{display:block}</style>
 <div id=hud><b>城市内涝三维数字孪生 · 写实沙盘</b><span>兴华路片区(A-03) 与 建设大道片区(B-01) · 坐标来自 scene.json 台账实时投影</span></div>
 <div id=event-bar><b>暴雨来袭 · 积水上涨</b><span>事件推演 · 阶段 1/4</span></div>
 <div id=legend><span><i style=background:#4a6fa5></i>积水段</span> &nbsp; <span><i style=background:#e0a965></i>已封路</span> &nbsp; <span><i style=background:#5a6a7a></i>泵站</span> &nbsp; <span><i style=background:#ff2d2d></i>故障告警</span></div>
-<div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><span id=jump-buttons></span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
+<div id=evidence-card><b>当前跳次证据</b><span id=evidence-body>等待事件数据…</span></div><div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><span id=jump-buttons></span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
 <script src="/three.min.js"></script>
 <script src="/RGBELoader.js"></script>
 <script src="/OrbitControls.js"></script>
@@ -1190,7 +1190,8 @@ function makeLabel(text,color){const cv=document.createElement('canvas');cv.widt
 let __evtClock=0, __evtPhase=-1, __evtPlaying=true;
 const twinState={jumps:[],currentJump:0,selectedEntity:null,scheduler:null};
 function renderJumpControls(){const box=document.getElementById("jump-buttons");if(!box)return;box.innerHTML=twinState.jumps.map((j,i)=>`<button class="${i===twinState.currentJump?"active":""}" data-jump="${i}">${i+1}. ${esc(j.name||("事件"+(i+1)))}</button>`).join("");box.querySelectorAll("button").forEach(b=>b.onclick=()=>setJump(Number(b.dataset.jump)));document.getElementById("play").textContent=__evtPlaying?"暂停":"播放";}
-function setJump(i){twinState.currentJump=Math.max(0,Math.min(twinState.jumps.length-1,i));__evtClock=twinState.currentJump*3.5;renderJumpControls();}
+function updateEvidence(){const j=twinState.jumps[twinState.currentJump]||{};const e=j.source||{};const body=document.getElementById("evidence-body");if(body)body.innerHTML="事件："+(j.name||"未命名")+"<br>动作："+(e.detail||e.description||"状态同步")+"<br>来源：scheduler 事件流<br>状态：演示推演";}
+function setJump(i){twinState.currentJump=Math.max(0,Math.min(twinState.jumps.length-1,i));__evtClock=twinState.currentJump*3.5;renderJumpControls();updateEvidence();}
 
 const __EVT_PHASES=[
   {name:'暴雨来袭 · 积水上涨', dur:3.5, step:null},
