@@ -914,7 +914,7 @@ canvas{display:block}</style>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let renderer,scene3,camera,earth;
-let az=0.9,polar=1.05,radius=52,drag=null,autoSpin=true;
+let az=0.8,polar=0.58,radius=70,drag=null,autoSpin=false;
 const K=0.10,CX=350,CY=165;
 function W(x,y){return[(x-CX)*K,(y-CY)*K]}
 function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 36px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(6,12,20,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#bfe0ff';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(7,1.75,1);return sp}
@@ -922,7 +922,7 @@ function segDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay;const L=dx*dx+dy*dy;
 function init(){
  renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(renderer.domElement);
  scene3=new THREE.Scene();scene3.background=new THREE.Color(0x0d1420);scene3.fog=new THREE.Fog(0x0d1420,70,170);
- camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,0.1,400);
+ camera=new THREE.PerspectiveCamera(34,innerWidth/innerHeight,0.1,400);
  scene3.add(new THREE.HemisphereLight(0x8fb3d9,0x0c1420,0.85));
  const sun=new THREE.DirectionalLight(0xfff2df,1.0);sun.position.set(28,46,18);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
  const sc=sun.shadow.camera;sc.left=-45;sc.right=45;sc.top=45;sc.bottom=-45;sc.far=140;scene3.add(sun);
@@ -934,7 +934,7 @@ function init(){
  const el=renderer.domElement;
  el.addEventListener('pointerdown',ev=>{drag={x:ev.clientX,y:ev.clientY,az:az,po:polar};autoSpin=false;el.setPointerCapture(ev.pointerId)});
  el.addEventListener('pointermove',ev=>{if(!drag)return;az=drag.az+(ev.clientX-drag.x)*0.005;polar=Math.max(0.35,Math.min(1.35,drag.po+(ev.clientY-drag.y)*0.004))});
- el.addEventListener('pointerup',()=>{drag=null;setTimeout(()=>autoSpin=true,2600)});
+ el.addEventListener('pointerup',()=>{drag=null});
  el.addEventListener('wheel',ev=>{radius=Math.max(16,Math.min(120,radius+ev.deltaY*0.03));ev.preventDefault()},{passive:false});
  renderer.setAnimationLoop(tick);
 }
@@ -954,16 +954,34 @@ function build(sched){
   const rim=new THREE.Mesh(new THREE.TorusGeometry(r,0.045,10,72),new THREE.MeshStandardMaterial({color:0x35577d,roughness:.6}));
   rim.rotation.x=Math.PI/2;rim.position.set(wx,0.36,wz);scene3.add(rim);
   const lb=makeLabel(e.label+' 片区','#9fc3e8');lb.position.set(wx,7.5,wz-r-1.2);scene3.add(lb)});
- // 道路条带（规划路网；主干/次干/支路分级宽度，已封=橙色）
+ // 道路：参考 CargoTwin buildStreets 画法——路面=薄平面，"线条"来自车道虚线/路缘细线/路口斑马线
+ const roadMat=new THREE.MeshStandardMaterial({color:0x22344c,roughness:.96});
+ const edgeMat=new THREE.MeshBasicMaterial({color:0x3b5273});
+ const dashMat=new THREE.MeshBasicMaterial({color:0xa8bdd2});
+ const zebraMat=new THREE.MeshBasicMaterial({color:0x8fa6bd});
+ const junctions=[[150,65],[150,160],[150,245],[250,160],[250,245],[600,160]];
  netRoads.forEach(e=>{const ps=e.pts;const closed=/已封/.test(e.label||'');
-  const wid=/主干路/.test(e.detail)?1.1:(/次干路/.test(e.detail)?0.95:0.8);
-  const mat=new THREE.MeshStandardMaterial({color:0x2c405c,roughness:.9});
+  const wid=/主干路/.test(e.detail)?1.15:(/次干路/.test(e.detail)?0.95:0.78);
   for(let i=0;i<ps.length-1;i++){const[ax,ay]=W(ps[i][0],ps[i][1]),[bx,by]=W(ps[i+1][0],ps[i+1][1]);
-   const len=Math.hypot(bx-ax,by-ay);if(len<0.05)continue;
-   const m=new THREE.Mesh(new THREE.BoxGeometry(len+wid,0.12,wid),mat);
-   m.position.set((ax+bx)/2,0.42,(ay+by)/2);m.rotation.y=-Math.atan2(by-ay,bx-ax);m.receiveShadow=true;scene3.add(m)}
+   const len=Math.hypot(bx-ax,by-ay);if(len<0.05)continue;const ang=-Math.atan2(by-ay,bx-ax);
+   const road=new THREE.Mesh(new THREE.BoxGeometry(len+wid,0.03,wid),roadMat);
+   road.position.set((ax+bx)/2,0.42,(ay+by)/2);road.rotation.y=ang;road.receiveShadow=true;scene3.add(road);
+   // 路缘细线 ×2
+   const nx=Math.sin(ang),nz=Math.cos(ang);
+   [-1,1].forEach(function(side){const eg=new THREE.Mesh(new THREE.BoxGeometry(len+wid,0.008,0.045),edgeMat);
+    eg.position.set((ax+bx)/2+nx*side*wid*0.5,0.442,(ay+by)/2+nz*side*wid*0.5);eg.rotation.y=ang;scene3.add(eg)});
+   // 车道中央虚线（已封路不画，暗示不可通行）
+   if(!closed){let t=1.2;while(t<len-1.2){const d=new THREE.Mesh(new THREE.BoxGeometry(0.85,0.008,0.06),dashMat);
+     d.position.set(ax+(bx-ax)*t/len,0.443,ay+(by-ay)*t/len);d.rotation.y=ang;scene3.add(d);t+=1.75}}
+  }
   const mid=ps[Math.floor(ps.length/2)];const[mx,mz]=W(mid[0],mid[1]);
   const lb=makeLabel(String(e.label||'').split('（')[0],closed?'#e0a965':'#7f95ad');lb.scale.set(5,1.25,1);lb.position.set(mx,2.7,mz);scene3.add(lb)});
+ // 路口斑马线：横竖两组细条
+ junctions.forEach(function(j){const[jx,jz]=W(j[0],j[1]);
+  for(let k=-2;k<=2;k++){const a=new THREE.Mesh(new THREE.BoxGeometry(1.05,0.008,0.13),zebraMat);
+   a.position.set(jx+k*0.24,0.445,jz);scene3.add(a);
+   const b=new THREE.Mesh(new THREE.BoxGeometry(0.13,0.008,1.05),zebraMat);
+   b.position.set(jx,0.445,jz+k*0.24);scene3.add(b)}});
  // 积水面
  water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));const sh=new THREE.Shape();
   ps.forEach((p,i)=>{const[wx,wz]=W(p[0],p[1]);if(i===0)sh.moveTo(wx,-wz);else sh.lineTo(wx,-wz)});
