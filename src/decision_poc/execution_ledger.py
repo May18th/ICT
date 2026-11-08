@@ -16,6 +16,7 @@
 --------------------------------
 1. **非法状态迁移直接拒**：`pending → done` 这种跳步不认，也不会被"自动补一条 running"；
 2. **幂等**：`idempotency_key = sha256(card_id + to_state)`，重复提交返回 `duplicate`，不再追加；
+   "重试"与"重开"由状态回答——已在目标状态算重试，状态机不允许则算非法迁移（见 `idempotency_key()`）；
 3. **乐观锁**：请求必须带 `expected_version`，与服务端版本不一致就 `409`，由调用方决定重读；
 4. **会签**：带 `co_sign_required` 的卡要转 `done`，必须先把这些部门全部签过。
 
@@ -103,11 +104,17 @@ def read_events() -> list[dict[str, Any]]:
 def idempotency_key(card_id: str, to_state: str) -> str:
     """幂等键：同一张卡同一目标状态只算一次。
 
-    粒度是契约定的 `(card_id, to_state)`，代价要说清：**同一张卡第二次提交同一个目标状态，
-    无论中间状态怎么变，都会被当成重试吸收**。所以 `done` 之后的重开请求不会报
-    `illegal_transition`，而是返回 `duplicate`——效果一样是拒绝，但错误码不同。
-    要精确区分"重试"和"重开"，幂等键得带上 `from_state` 或客户端 `request_id`，
-    那是契约变更，不在本次范围。
+    粒度是契约定的 `(card_id, to_state)`，**不含 `from_state`**。这个粒度本身分辨不出
+    "重试"与"重开"，所以不能只靠它判重：`done` 之后请求重开到 `running` 时，
+    当初 `pending → running` 的那条键还在账本里。
+
+    口径由此固定在 `append_event()` 的判定顺序上，键的格式不动：
+
+    1. 目标状态 == 当前状态 → `duplicate`（`reason=already_in_state`），这就是重试；
+    2. 状态机不允许该迁移 → `409 illegal_transition`，重开走这条；
+    3. 两者都不命中才查键 → `duplicate`（`reason=repeated_request`），当前无环状态下是兜底。
+
+    也就是说"是重试还是重开"由**状态**回答，不由键回答，键只负责"别写第二条"。
     """
     return hashlib.sha256(f"{card_id}|{to_state}".encode("utf-8")).hexdigest()[:32]
 
@@ -289,8 +296,28 @@ def append_event(
     from_state = current["state"]
 
     key = idempotency_key(card_id, to_state)
-    if any(event.get("idempotency_key") == key for event in events):
-        return {"status": "duplicate", "code": "duplicate", "event": None, "card": current, "idempotency_key": key}
+
+    # 判定顺序：先「是否已在目标状态」→ 再「状态机允不允许」→ 最后才是幂等键。
+    #
+    # 为什么不能先查幂等键：`done` 之后请求重开到 `running`，账本里还留着当初
+    # `pending → running` 的 `(card_id, running)` 幂等键，于是"重开"被当成"重试"
+    # 吸收成 `duplicate`。同样是拒绝，但理由说错了，前端也无法区分。
+    #
+    # 为什么不能直接先判状态机：合法的重试提交（`pending → running` 再提一次）
+    # 此时 `from_state` 已经是 `running`，而 `running → running` 不在允许表里，
+    # 会被误判成非法迁移，把重试打成错误。
+    #
+    # 真正的分界线是「当前状态是否已经等于目标状态」：请求成功过一次，状态就落在
+    # 目标上，重试必然命中这一条；而"重开"的目标状态一定不同于当前状态。
+    if to_state == from_state:
+        return {
+            "status": "duplicate",
+            "code": "duplicate",
+            "reason": "already_in_state",
+            "event": None,
+            "card": current,
+            "idempotency_key": key,
+        }
 
     if to_state not in TRANSITIONS.get(from_state, ()):
         raise LedgerError(
@@ -299,6 +326,19 @@ def append_event(
             code="illegal_transition",
             detail={"from_state": from_state, "to_state": to_state, "allowed": list(TRANSITIONS.get(from_state, ()))},
         )
+
+    # 兜底：当前状态机无环（`done` / `cancelled` 没有出口），正常路径走不到这里。
+    # 留着是为了将来放开"终止态重开"时仍然幂等——那时也必须留在合法性判定之后，
+    # 不能让一条历史幂等键把非法迁移吞成 duplicate。
+    if any(event.get("idempotency_key") == key for event in events):
+        return {
+            "status": "duplicate",
+            "code": "duplicate",
+            "reason": "repeated_request",
+            "event": None,
+            "card": current,
+            "idempotency_key": key,
+        }
 
     expected = int(payload.get("expected_version") or 0)
     if expected != current["version"]:

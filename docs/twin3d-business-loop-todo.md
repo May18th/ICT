@@ -39,7 +39,7 @@
 | 项 | 落点 | 边界 |
 |---|---|---|
 | 状态机 | `execution_ledger.TRANSITIONS` | 跳步一律 409 `illegal_transition`，不自动补中间态 |
-| 幂等 | `sha256(card_id + to_state)` | 粒度不含 `from_state`，所以 `done` 后的重开请求会以 `duplicate` 返回（效果同为拒绝，错误码不同） |
+| 幂等 | `sha256(card_id + to_state)` | 键格式不变；"重试 vs 重开"由**状态**回答，不由键回答：目标状态 == 当前状态 → `duplicate(already_in_state)`；状态机不允许 → 409 `illegal_transition`；两者都不命中才查键（当前状态机无环，属兜底） |
 | 乐观锁 | `expected_version` | 不符返回 409 `version_conflict` 带当前版本 |
 | 会签 | `co_sign_required` | 转 `done` 前必须逐部门 `sign`，缺一个 409 `co_sign_incomplete` |
 | 身份 | 服务端 `DEFAULT_ACTOR` | 前端传 `actor_org/actor_role` 一律忽略；无真实登录，页面标注"演示执行账本" |

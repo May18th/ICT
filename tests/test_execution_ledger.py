@@ -86,21 +86,35 @@ def test_illegal_transition_is_rejected(env: dict) -> None:
     assert exc.value.detail["allowed"] == ["running", "cancelled"]
     assert ledger.read_events() == []
 
+    # 重开不能被历史幂等键吞掉：先合法跑到 running（账本里落下 (AC-T-01, running) 的键），
+    # 再取消，然后请求重开到 running。那条键还在，但这不是重试，是非法重开，
+    # 必须报 illegal_transition 而不是 duplicate。
+    ledger.append_event(_payload("AC-T-01", "running"), cards=env)
+    ledger.append_event(_payload("AC-T-01", "cancelled", version=1), cards=env)
+    with pytest.raises(ledger.LedgerError) as reopen:
+        ledger.append_event(_payload("AC-T-01", "running", version=2), cards=env)
+    assert reopen.value.status == 409
+    assert reopen.value.code == "illegal_transition"
+    assert reopen.value.detail["from_state"] == "cancelled"
+    assert _state("AC-T-01", env) == "cancelled"
+    assert len(ledger.read_events()) == 2
+
 
 def test_done_is_terminal(env: dict) -> None:
-    """已完成的卡不会再动：要么被幂等吸收，要么被判非法迁移，状态都不许变。
+    """已完成的卡不会再动：重开必须报非法迁移，不能被幂等吸收成 duplicate。
 
-    幂等键粒度是 `(card_id, to_state)`，所以重开请求多半会以 `duplicate` 返回——
-    这属于契约已知边界（见 `idempotency_key` 的说明），断言只要求"状态不变、不追加事件"。
+    口径：`(card_id, to_state)` 的键分辨不出"重试"与"重开"，所以判定顺序固定为
+    先看状态、再看状态机、最后才查键。`done → running` 走到状态机就停，报 409。
     """
     ledger.append_event(_payload("AC-T-01", "running"), cards=env)
     ledger.append_event(_payload("AC-T-01", "done", version=1), cards=env)
     before = len(ledger.read_events())
-    try:
-        result = ledger.append_event(_payload("AC-T-01", "running", version=2), cards=env)
-        assert result["status"] == "duplicate"
-    except ledger.LedgerError as exc:
-        assert exc.code in {"illegal_transition", "version_conflict"}
+    with pytest.raises(ledger.LedgerError) as exc:
+        ledger.append_event(_payload("AC-T-01", "running", version=2), cards=env)
+    assert exc.value.status == 409
+    assert exc.value.code == "illegal_transition"
+    assert exc.value.detail["from_state"] == "done"
+    assert exc.value.detail["allowed"] == []
     assert _state("AC-T-01", env) == "done"
     assert len(ledger.read_events()) == before
 
@@ -113,6 +127,9 @@ def test_duplicate_submission_does_not_append(env: dict) -> None:
     second = ledger.append_event(_payload("AC-T-01", "running"), cards=env)
     assert first["status"] == "ok"
     assert second["status"] == "duplicate"
+    # 合法重试落在「已在目标状态」，不能报成非法迁移
+    assert second["reason"] == "already_in_state"
+    assert second["card"]["state"] == "running"
     assert len(ledger.read_events()) == 1
 
 

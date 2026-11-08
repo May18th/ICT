@@ -718,7 +718,7 @@ async function execAct(cardId,action,toState,version){
   const r=await fetch('/api/execution/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   const d=await r.json();
   if(d.status==='error'){execMsg('被拒绝（'+d.code+'）：'+d.error,false);return}
-  if(d.status==='duplicate'){execMsg('已忽略：同一张卡同一状态已提交过（幂等）',true);await loadExecution();return}
+  if(d.status==='duplicate'){execMsg(d.reason==='already_in_state'?'已忽略：该卡已处于这个状态（重复提交）':'已忽略：同一张卡同一状态已写过（幂等）',true);await loadExecution();return}
   execMsg('已写入账本：'+d.event.event_id+' · '+cardId,true);
   await loadExecution();
 }
