@@ -1039,6 +1039,7 @@ function build(sched){
   twinState.jumps=raw.filter(e=>e.category==='timeline').slice(0,6).map((e,i)=>({name:e.title||e.label||e.kind||(`事件 ${i+1}`),source:e}));
   if(!twinState.jumps.length)twinState.jumps=__EVT_PHASES.map(p=>({name:p.name}));
   renderJumpControls();
+  if(requestedJump)twinState.currentJump=requestedJump;
   const ents=(sched.scene&&sched.scene.entities)||[];
   const roads=ents.filter(e=>e.kind==='road'),water=ents.filter(e=>e.kind==='water'),fac=ents.filter(e=>e.kind==='facility'),dist=ents.filter(e=>e.kind==='district');
   // 规划路网：以两个片区中心为锚的正交网格（主干贯穿、次干连接、支路切分街区）
@@ -1189,6 +1190,7 @@ function makeLabel(text,color){const cv=document.createElement('canvas');cv.widt
 // 阶段：0 暴雨积水上涨 -> 1 泵站告警闪红 -> 2 封路 -> 3 调泵排水回落
 let __evtClock=0, __evtPhase=-1, __evtPlaying=true;
 const twinState={jumps:[],currentJump:0,selectedEntity:null,scheduler:null};
+const requestedJump=Math.max(0,Number(new URLSearchParams(location.search).get("jump")||0));
 function renderJumpControls(){const box=document.getElementById("jump-buttons");if(!box)return;box.innerHTML=twinState.jumps.map((j,i)=>`<button class="${i===twinState.currentJump?"active":""}" data-jump="${i}">${i+1}. ${esc(j.name||("事件"+(i+1)))}</button>`).join("");box.querySelectorAll("button").forEach(b=>b.onclick=()=>setJump(Number(b.dataset.jump)));document.getElementById("play").textContent=__evtPlaying?"暂停":"播放";}
 function updateEvidence(){const j=twinState.jumps[twinState.currentJump]||{};const e=j.source||{};const body=document.getElementById("evidence-body");if(body)body.innerHTML="事件："+(j.name||"未命名")+"<br>动作："+(e.detail||e.description||"状态同步")+"<br>来源：scheduler 事件流<br>状态：演示推演";}
 function setJump(i){twinState.currentJump=Math.max(0,Math.min(twinState.jumps.length-1,i));__evtClock=twinState.currentJump*3.5;renderJumpControls();updateEvidence();}
