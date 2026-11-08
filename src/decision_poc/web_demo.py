@@ -918,7 +918,7 @@ canvas{display:block}</style>
 <div id=hud><b>城市内涝三维数字孪生 · 写实沙盘</b><span>兴华路片区(A-03) 与 建设大道片区(B-01) · 坐标来自 scene.json 台账实时投影</span></div>
 <div id=event-bar><b>暴雨来袭 · 积水上涨</b><span>事件推演 · 阶段 1/4</span></div>
 <div id=legend><span><i style=background:#4a6fa5></i>积水段</span> &nbsp; <span><i style=background:#e0a965></i>已封路</span> &nbsp; <span><i style=background:#5a6a7a></i>泵站</span> &nbsp; <span><i style=background:#ff2d2d></i>故障告警</span></div>
-<div id=evidence-card><b>当前跳次证据</b><span id=evidence-body>等待事件数据…</span></div><div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><span id=jump-buttons></span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
+<div id=evidence-card><b>当前跳次证据</b><span id=evidence-body>等待事件数据…</span><br><a href="/" style="color:#7ed4ff">返回主页面事件台</a></div><div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><span id=jump-buttons></span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
 <script src="/three.min.js"></script>
 <script src="/RGBELoader.js"></script>
 <script src="/OrbitControls.js"></script>
@@ -1067,7 +1067,7 @@ function build(sched){
     for(let i=0;i<ps.length-1;i++){const[ax,ay]=W(ps[i][0],ps[i][1]),[bx,by]=W(ps[i+1][0],ps[i+1][1]);
       const len=Math.hypot(bx-ax,by-ay);if(len<0.05)continue;const ang=-Math.atan2(by-ay,bx-ax);
       const road=new THREE.Mesh(new THREE.BoxGeometry(len+wid,0.05,wid),roadMat);
-      road.position.set((ax+bx)/2,0.36,(ay+by)/2);road.rotation.y=ang;road.receiveShadow=true;scene3.add(road);
+      road.position.set((ax+bx)/2,0.36,(ay+by)/2);road.rotation.y=ang;road.userData={entityId:e.id,name:e.label||e.id,kind:"road",detail:e.detail||""};road.receiveShadow=true;scene3.add(road);
       // 路缘石
       const nx=Math.sin(ang),nz=Math.cos(ang);
       [-1,1].forEach(function(side){const eg=new THREE.Mesh(new THREE.BoxGeometry(len+wid,0.12,0.16),curbMat);
