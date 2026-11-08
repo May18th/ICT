@@ -31,6 +31,7 @@ from .road_graph import RoadGraph, RoadGraphUnavailable
 from .skills import SkillPipeline, SkillRuntime
 from .semantic import build_urban_semantic_store
 from .timeline import build_event_stream, build_timeline, compare_branches
+from .twin_links import build_twin_links, resolve_deeplink
 
 EVENT_ID = "WO-20261029-007"
 AS_OF = "2026-10-29T09:40:00+08:00"
@@ -237,6 +238,12 @@ def collab_review(*, event_id: str = EVENT_ID, as_of: str = AS_OF) -> dict[str, 
             "co_sign_required": list(card.co_sign_required),
             "evidence_count": len(card.evidence_refs),
             "claim_count": len(card.claim_ids),
+            # 原始引用必须给出去：沙盘靠里面的 `work_order#row:N` 才能把动作卡落到具体对象上，
+            # 只给条数就只能"知道有 5 条证据"却指不出是哪张工单（twin_links 依赖这两个字段）。
+            "evidence_refs": list(card.evidence_refs),
+            "claim_ids": list(card.claim_ids),
+            "depends_on": list(card.depends_on),
+            "quantity": card.quantity,
             "no_action_reason": card.no_action_reason,
         }
         for card in result.cards
@@ -1311,8 +1318,7 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         # 决策事件流：从 /api/demo 同一份 payload 派生，只排顺序不重算。
         return _json(build_timeline(build_demo_payload()))
 
-    if segments[:2] == ["api", "scheduler"]:
-        # 微调度台总入口：一次返回链路 / 六类事件流 / 工单 / 资源 / 场景 / 方案。
+    if segments[:2] == ["api", "scheduler"]:        # 微调度台总入口：一次返回链路 / 六类事件流 / 工单 / 资源 / 场景 / 方案。
         view = scheduler_view(refresh=(query.get("refresh") or ["0"])[0] in {"1", "true"})
         return _json(
             {
@@ -1330,6 +1336,17 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
                 "publishable": bool(view["payload"].get("publishable")),
             }
         )
+
+    if segments[:2] == ["api", "twin-links"]:
+        # 沙盘的关联层：对象 ↔ 工单 ↔ 动作卡 ↔ 证据，外加六跳索引与处置前后对照。
+        # `jump` 决定动作卡的推演状态（1..6 六跳，7=处置后）；`entity` 只是回显，
+        # 由页面判断是否命中——404 会把"参数写错"和"对象不存在"搅成同一个现象。
+        jump, entity = resolve_deeplink(query)
+        links = build_twin_links(scheduler_view(), current_jump=jump)
+        links["requested_entity"] = (
+            {"id": entity, "found": entity in links["entities"]} if entity else None
+        )
+        return _json(links)
 
     # 下面四个是"只取一块"的细粒度端点：外部脚本与测试用，省一次整包传输。
     if segments[:2] == ["api", "work-orders"]:
