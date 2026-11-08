@@ -1134,7 +1134,7 @@ def build_twin3d_html() -> str:
 #event-bar span{display:block;margin-top:3px;font-size:12px;color:#8fb7d6}
 #legend{position:fixed;left:18px;bottom:16px;z-index:5;pointer-events:none;font-size:12px;color:#93a7bb;line-height:1.9}
 #legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-#tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}#evidence-card{position:fixed;left:18px;top:84px;width:260px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);font-size:12px;color:#a9bfd2}#evidence-card b{color:#e0f2fe;display:block;margin-bottom:6px}#entity-card{position:fixed;right:18px;top:84px;width:250px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);display:none}#entity-card b{color:#e0f2fe}#entity-card span{display:block;margin-top:6px;color:#a9bfd2;font-size:12px}#timeline{position:fixed;left:18px;right:18px;bottom:48px;z-index:6;display:flex;gap:6px;align-items:center;background:rgba(7,18,28,.84);padding:8px 10px;border-radius:10px}#timeline button{background:#1a3042;color:#d7e4f0;border:1px solid #496579;border-radius:5px;padding:4px 8px;cursor:pointer}#timeline button.active{background:#1976a8}
+#tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}#evidence-card{position:fixed;left:18px;top:84px;width:260px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);font-size:12px;color:#a9bfd2}#evidence-card b{color:#e0f2fe;display:block;margin-bottom:6px}#entity-card{position:fixed;right:18px;top:84px;width:250px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);display:none}#entity-card b{color:#e0f2fe}#entity-card span{display:block;margin-top:6px;color:#a9bfd2;font-size:12px}#timeline{position:fixed;left:18px;right:18px;bottom:48px;z-index:6;display:flex;gap:6px;align-items:center;background:rgba(7,18,28,.84);padding:8px 10px;border-radius:10px;flex-wrap:wrap}#timeline button{background:#1a3042;color:#d7e4f0;border:1px solid #496579;border-radius:5px;padding:4px 8px;cursor:pointer}#timeline button.active{background:#1976a8}#timeline #jump-buttons{display:flex;gap:4px;flex-wrap:wrap}#progress{flex:1;min-width:140px;accent-color:#4fc3f7;height:20px;cursor:pointer}#progress-time{font-size:11px;color:#8fb7d6;font-family:ui-monospace,monospace;min-width:44px;text-align:center}
 canvas{display:block}
 #entity-card{width:322px;max-height:calc(100vh - 190px);overflow:auto}
 #entity-card::-webkit-scrollbar{width:6px}#entity-card::-webkit-scrollbar-thumb{background:#2c4459;border-radius:3px}
@@ -1170,7 +1170,7 @@ canvas{display:block}
 <div id=hud><b>城市内涝三维数字孪生 · 写实沙盘</b><span>兴华路片区(A-03) 与 建设大道片区(B-01) · 坐标来自 scene.json 台账实时投影</span><small id=hud-src>关联层加载中…</small></div>
 <div id=event-bar><b>观测：事件识别</b><span>事件推演 · 第 1/6 跳</span></div>
 <div id=legend><span><i style=background:#4a6fa5></i>积水段</span> &nbsp; <span><i style=background:#e0a965></i>已封路</span> &nbsp; <span><i style=background:#5a6a7a></i>泵站</span> &nbsp; <span><i style=background:#ff2d2d></i>故障告警</span></div>
-<div id=evidence-card><b>当前跳次证据</b><span id=evidence-body>等待事件数据…</span><br><a href="/" style="color:#7ed4ff">返回主页面事件台</a></div><div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span><div id=entity-links></div></div><div id=results-card><b>处置前后结果</b><details id=results-details open><summary id=results-summary>展开对照</summary><div id=results-body>加载中…</div><div id=results-note style='margin-top:6px;color:#64788c;font-size:10.5px'></div></details></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><button id=settle>处置后</button><span id=jump-buttons></span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
+<div id=evidence-card><b>当前跳次证据</b><span id=evidence-body>等待事件数据…</span><br><a href="/" style="color:#7ed4ff">返回主页面事件台</a></div><div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span><div id=entity-links></div></div><div id=results-card><b>处置前后结果</b><details id=results-details open><summary id=results-summary>展开对照</summary><div id=results-body>加载中…</div><div id=results-note style='margin-top:6px;color:#64788c;font-size:10.5px'></div></details></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><button id=settle>处置后</button><span id=jump-buttons></span><input id=progress type=range min=0 max=1000 value=0 title="拖动到事件线任意时刻"><span id=progress-time>00:00</span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
 <script src="/three.min.js"></script>
 <script src="/RGBELoader.js"></script>
 <script src="/OrbitControls.js"></script>
@@ -1509,10 +1509,36 @@ function build(sched){
     // 封路标牌
     const sign=makeLabel('封路','#ffc21a');sign.position.set(grp.children.length?grp.children[0].position.x:W(ps[0][0],ps[0][1])[0],3.0,grp.children.length?grp.children[0].position.z:W(ps[0][0],ps[0][1])[1]);
     grp.add(sign);
-    grp.visible=true;   // 台账「已封/施工」= 持久封路，始终显示
+    grp.visible=false;   // 封路是事件动作：施工队到场后才出现，不在一开始就摆着
     grp.userData={entityId:rd.id,name:rd.label||'封路',kind:'road',detail:rd.detail||''};
     scene3.add(grp);window.__roadBlocks.push({mesh:grp});
   });
+  // ---- 施工队：封路动作的执行者（低多边形小人，到场后走到路口放下栏杆）----
+  // 选 R-101 兴华路（主积水点旁）作封路点，施工队从路侧出发走到路中
+  (function buildCrew(){
+    const from=W(262,148), to=W(292,160);   // 场景坐标：从路口一侧走到封路点
+    const grp=new THREE.Group();
+    const m1=makeCrewMember();m1.position.set(0,0.37,0);grp.add(m1);
+    const m2=makeCrewMember();m2.position.set(1.0,0.37,0.25);grp.add(m2);
+    const m3=makeCrewMember();m3.position.set(0.5,0.37,-0.3);grp.add(m3);
+    grp.scale.set(1.6,1.6,1.6);              // 整体放大，远景也清晰可辨
+    grp.position.set(from[0],0,from[1]);grp.visible=false;
+    scene3.add(grp);
+    // 施工队到场时加橙色光柱标记（像泵站告警光柱），远景也能一眼锁定"施工队在这里"
+    const marker=new THREE.Mesh(new THREE.CylinderGeometry(0.8,1.4,7,14,1,true),
+      new THREE.MeshBasicMaterial({color:0xff8c2d,transparent:true,opacity:.32,side:THREE.DoubleSide,depthWrite:false}));
+    marker.position.set(to[0],4.2,to[1]);marker.visible=false;
+    scene3.add(marker);
+    window.__roadCrew={group:grp,marker:marker,from:{x:from[0],z:from[1]},to:{x:to[0],z:to[1]}};
+  })();
+  // ---- 派单气泡：部门落位→派活（跨部门协作的可视化）----
+  (function buildDispatch(){
+    const pos=W(330,120);   // 调度中心附近
+    const bub=makeLabel('派单·排水→养护','#ffd36b');
+    bub.position.set(pos[0],5.5,pos[1]);bub.visible=false;
+    scene3.add(bub);
+    window.__dispatchBubble=bub;
+  })();
   // 场景摆完才建光环与锚点：此时每个实体的 mesh 已经挂在 scene 上
   buildRings();
   loadTwinLinks().then(()=>setJump(twinState.currentJump));
@@ -1520,23 +1546,28 @@ function build(sched){
 function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(9,2.25,1);return sp}
 // 只生成 CanvasTexture（供积水深度标注动态刷新文字用），不包 Sprite
 function makeLabelTex(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;return tex}
-// ---- 六跳推演状态机：跳次是唯一事实来源，视觉、详情、对照都跟着跳次走 ----
-// 1..6 是推演的六跳（来自 /api/twin-links 的 jumps），7 是"处置后"——六跳全过，
-// 只用于看处置结果，不是第七个阶段。
-let __evtClock=0,__evtPhase=-1,__evtPlaying=false,__lastFrame=performance.now();
+// ---- 六跳推演：连续时间轴驱动（不再是离散跳变） ----
+// 整条事件线是一条连续时间轴 t∈[0,1]：暴雨→积水上涨→部门落位→派单→施工队到场封路→调泵回落。
+// 跳次按钮/进度条只是把 t 定位到某个值，所有视觉量（水位/雨势/告警/封路/施工队/派单气泡）都由 t 连续驱动。
+let __evtClock=0,__evtPlaying=false,__lastFrame=performance.now();
+const EVT_DURATION=26;         // 整条事件线总时长（秒），播放/拖动都映射到这个区间
+const EVT_JUMPS=[              // 7 个节点在时间轴上的位置（0~1）：跳次→时间刻度
+  0.00, 0.14, 0.28, 0.44, 0.60, 0.78, 1.00,
+];
+// 每个"跳"的视觉目标值（water 水位系数 0~1、rain 雨势、alarm 告警、block 封路、crew 施工队到场、dispatch 派单气泡）
+const JUMP_VISUAL=[
+  {water:0.12, rain:0.30, alarm:false, block:false, crew:false, dispatch:false},
+  {water:0.38, rain:0.60, alarm:false, block:false, crew:false, dispatch:false},
+  {water:0.55, rain:0.72, alarm:false, block:false, crew:false, dispatch:true },  // 部门落位→派单
+  {water:0.70, rain:0.80, alarm:true,  block:false, crew:false, dispatch:true },  // 资源缺口→告警
+  {water:0.88, rain:0.88, alarm:true,  block:false, crew:true,  dispatch:true },  // 施工队到场
+  {water:0.60, rain:0.55, alarm:false, block:true,  crew:true,  dispatch:true },  // 封路完成
+  {water:0.10, rain:0.15, alarm:false, block:true,  crew:true,  dispatch:false},  // 处置后：排水回落
+];
+const RING_COLOR={pending:0x5a6b7a,running:0x4fc3f7,needs_confirm:0xf5c063,done:0x34d399};
+const WATER_COLORS=[0x3aa0e0,0x3195d5,0x2a86c4,0x2377b3,0x1b6896,0x2a82b8,0x3a90c8];  // 随深度：浅清→深浊→回落
 let LINKS=null,CARD_INDEX={},RINGS={},ANCHORS={};
 const MAX_JUMP=7;
-const RING_COLOR={pending:0x5a6b7a,running:0x4fc3f7,needs_confirm:0xf5c063,done:0x34d399};
-const JUMP_VISUAL=[
-  // water: 水位系数(0~1，驱动立体水体厚度)；waterColor: 水体主色(浅清→深浊)；rain: 雨势(0~1)
-  {water:0.12, waterColor:0x3aa0e0, rain:0.25, alarm:false, block:false},
-  {water:0.38, waterColor:0x2f8fd0, rain:0.55, alarm:false, block:false},
-  {water:0.55, waterColor:0x277fc0, rain:0.70, alarm:true,  block:false},
-  {water:0.68, waterColor:0x1f6fb0, rain:0.80, alarm:true,  block:false},
-  {water:0.88, waterColor:0x1a5e96, rain:0.90, alarm:true,  block:true},
-  {water:0.42, waterColor:0x277fb0, rain:0.45, alarm:false, block:true},
-  {water:0.10, waterColor:0x3a90c8, rain:0.15, alarm:false, block:true},
-];
 function requestedParams(){
   const q=new URLSearchParams(location.search);
   let jump=Math.round(Number(q.get('jump')||1));
@@ -1577,22 +1608,50 @@ function updateEvidence(){
 }
 function setJump(i){
   twinState.currentJump=Math.max(0,Math.min(6,i));
-  const v=JUMP_VISUAL[twinState.currentJump];__evtPhase=-1;
-  applyVisual(v);
+  __evtPlaying=false;                       // 手动跳步时暂停自动播放，避免两者抢时间轴
+  __evtClock=EVT_JUMPS[twinState.currentJump]*EVT_DURATION;
+  applyTimeline(__evtClock/EVT_DURATION);
   paintHighlights();
   renderJumpControls();updateEvidence();renderResults();
   if(twinState.selectedEntity)renderEntityCard(twinState.selectedEntity);
   const bar=document.getElementById('event-bar');
   if(bar)bar.innerHTML='<b>'+esc(jumpTitle(twinState.currentJump))+'</b><span>事件推演 · 第 '
     +(twinState.currentJump===6?'7 步 · 处置后':(twinState.currentJump+1)+'/6 跳')+'</span>';
+  syncProgress();
+  // 手动跳到封路相关跳次时，相机也切近给现场镜头（否则看不到施工队动作）
+  if(twinState.currentJump>=4&&window.__roadCrew){driveCamera(twinState.currentJump===6?1.0:0.72);}
 }
-function applyVisual(v){
-  // 立体水体：scale.y = 水位系数 × 峰值厚度，水体从地面"涨"起来/缩下去，体积连续变化
+// 在两个相邻跳次之间做连续线性插值：让水位/雨势/颜色平滑过渡，而不是瞬间跳变
+function lerpJump(t){
+  const n=EVT_JUMPS.length;
+  if(t<=EVT_JUMPS[0])return {v:JUMP_VISUAL[0],i:0,frac:0};
+  if(t>=EVT_JUMPS[n-1])return {v:JUMP_VISUAL[n-1],i:n-1,frac:0};
+  let i=0;while(i<n-1&&EVT_JUMPS[i+1]<t)i++;
+  const a=EVT_JUMPS[i],b=EVT_JUMPS[i+1],frac=(t-a)/(b-a);
+  const va=JUMP_VISUAL[i],vb=JUMP_VISUAL[i+1];
+  return {v:{
+    water:va.water+(vb.water-va.water)*frac,
+    rain:va.rain+(vb.rain-va.rain)*frac,
+    alarm:frac<0.5?va.alarm:vb.alarm,      // 告警/封路/派单/施工队是离散事件，用阈值切换
+    block:frac<0.5?va.block:vb.block,
+    crew:frac<0.5?va.crew:vb.crew,
+    dispatch:frac<0.5?va.dispatch:vb.dispatch,
+  },i:i,frac:frac};
+}
+// 连续时间轴驱动所有视觉量：t∈[0,1]
+function applyTimeline(t){
+  t=Math.max(0,Math.min(1,t));
+  const L=lerpJump(t);
+  const v=L.v;
+  // 水体主色：随水位连续插值（浅清→深浊→回落）
+  const colorIdx=Math.min(WATER_COLORS.length-1,L.i);
+  const colorA=WATER_COLORS[colorIdx],colorB=WATER_COLORS[Math.min(WATER_COLORS.length-1,colorIdx+1)];
+  const waterColor=lerpColor(colorA,colorB,L.frac);
+  // 立体水体：水位连续涨落，体积连续变化
   (window.__waterMeshes||[]).forEach(w=>{
-    w.mesh.scale.y=Math.max(0.06,v.water)*w.depthMax;   // 立体厚度随水位（峰值约 3 单位，肉眼可见）
-    w.mat.color.setHex(v.waterColor||0x3a9be0);      // 颜色随深度：浅清→深浊
+    w.mesh.scale.y=Math.max(0.06,v.water)*w.depthMax;
+    w.mat.color.setHex(waterColor);
     w.mat.opacity=0.82+v.water*0.16;
-    // 同步更新积水深度标注：文字=当前深度，位置跟随水面
     if(w.labelSprite){
       const baseCm=/A-03/.test(w.label)?30:18;
       const cm=Math.max(1,Math.round(v.water*baseCm));
@@ -1601,12 +1660,19 @@ function applyVisual(v){
       w.labelSprite.position.y=0.44+v.water*w.depthMax+0.7;
     }
   });
-  // 告警：光柱 + 顶灯
-  (window.__pumpAlarms||[]).forEach(p=>{p.on=!!v.alarm;if(p.beam)p.beam.visible=!!v.alarm;if(p.lamp)p.lamp.visible=!!v.alarm});
-  // 封路护栏：台账「已封/施工」是持久状态，始终显示，不随跳次显隐
-  // 雨势：雨丝透明度随跳次（暴雨→积水→处置转小）
+  // 告警：光柱 + 顶灯（顶灯在 tick 里闪烁）
+  (window.__pumpAlarms||[]).forEach(p=>{p.on=!!v.alarm;if(p.beam)p.beam.visible=!!v.alarm;});
+  // 封路护栏：事件触发——封路阶段才出现（施工队到场后放下）
+  (window.__roadBlocks||[]).forEach(b=>{b.mesh.visible=!!v.block;});
+  // 派单气泡：部门落位→派活阶段显示
+  if(window.__dispatchBubble){window.__dispatchBubble.visible=!!v.dispatch;}
+  // 施工队：到场阶段显示，位置在 tick 里做移动插值
+  if(window.__roadCrew){window.__roadCrew.group.visible=!!v.crew;if(window.__roadCrew.marker)window.__roadCrew.marker.visible=!!v.crew;}
+  // 雨势：雨丝透明度连续变化
   if(rain&&rain.material){rain.material.opacity=0.12+v.rain*0.55;}
 }
+function lerpColor(a,b,f){const ar=(a>>16)&255,ag=(a>>8)&255,ab=a&255;const br=(b>>16)&255,bg=(b>>8)&255,bb=b&255;
+  return (Math.round(ar+(br-ar)*f)<<16)|(Math.round(ag+(bg-ag)*f)<<8)|Math.round(ab+(bb-ab)*f);}
 // ---- 关联对象高亮：光环颜色 = 该对象当前跳的动作卡状态 ----
 function buildRings(){
   const box=new THREE.Box3(),center=new THREE.Vector3();
@@ -1797,8 +1863,15 @@ function loadTwinLinks(){
 function tick(){
   const now=performance.now();const dt=Math.min(0.1,Math.max(0,now-__lastFrame)/1000);__lastFrame=now;
   if(controls)controls.update();
-  if(__evtPlaying){__evtClock+=dt}
-  // 告警灯与光环的呼吸动画不依赖播放状态，暂停时也要能看出"哪里在告警"
+  if(__evtPlaying){__evtClock+=dt;if(__evtClock>=EVT_DURATION){__evtClock=EVT_DURATION;__evtPlaying=false;renderJumpControls();}}
+  // 播放中：时间轴连续驱动画面；暂停/手动跳步后：applyTimeline 已把状态定住，这里只做呼吸/闪烁
+  const t=__evtClock/EVT_DURATION;
+  if(__evtPlaying)applyTimeline(t);
+  // 播放中同步当前跳次（供证据面板/按钮高亮跟随时间轴）
+  if(__evtPlaying){syncJumpFromClock();}
+  // 关键动作相机运镜：封路阶段（施工队到场→放下栏杆）自动拉近到封路点，给"现场镜头"
+  if(__evtPlaying&&camera&&window.__roadCrew){driveCamera(t);}
+  // 雨丝动画只在播放时动
   if(__evtPlaying&&rain){const p=rainGeo.attributes.position;for(let i=0;i<p.count;i++){p.array[i*3+1]-=0.22;if(p.array[i*3+1]<-2)p.array[i*3+1]=54;p.array[i*3]+=(Math.random()-0.5)*0.04;p.array[i*3+2]+=(Math.random()-0.5)*0.04}p.needsUpdate=true}
   const beat=Math.sin(now/380)*0.5+0.5;
   (window.__pumpAlarms||[]).forEach(p=>{
@@ -1806,6 +1879,8 @@ function tick(){
     if(p.beam)p.beam.visible=!!p.on;
     if(p.lamp)p.lamp.visible=!!p.on&&(Math.floor(now/320)%2===0);
   });
+  // 施工队到场后：从路边走到路口（连续移动插值，不是瞬移）
+  moveCrew();
   // 水面微起伏：让立体水体顶部有波动，更接近真实积水
   (window.__waterMeshes||[]).forEach(w=>{
     if(w.mesh&&w.mesh.scale.y>0.1){w.mesh.scale.y+=(Math.sin(now/700+w.cx)*0.012);}
@@ -1816,6 +1891,87 @@ function tick(){
     fx.beam.material.opacity=dim?0.07:(0.12+0.12*beat);
     const s=1+0.04*beat;fx.ring.scale.set(s,s,1)});
   renderer.render(scene3,camera);
+}
+// 根据时间轴时钟反推当前跳次，让证据面板/按钮高亮/事件栏跟随播放
+function syncJumpFromClock(){
+  const t=__evtClock/EVT_DURATION;
+  let idx=0;for(let i=0;i<EVT_JUMPS.length;i++){if(t>=EVT_JUMPS[i]-0.0001)idx=i;}
+  if(idx!==twinState.currentJump){
+    twinState.currentJump=idx;
+    paintHighlights();renderJumpControls();updateEvidence();renderResults();
+    if(twinState.selectedEntity)renderEntityCard(twinState.selectedEntity);
+    const bar=document.getElementById('event-bar');
+    if(bar)bar.innerHTML='<b>'+esc(jumpTitle(idx))+'</b><span>事件推演 · 第 '
+      +(idx===6?'7 步 · 处置后':(idx+1)+'/6 跳')+'</span>';
+  }
+  syncProgress();
+}
+// 进度条同步：把当前时钟映射到进度条位置 + 时间文字
+function syncProgress(){
+  const bar=document.getElementById('progress'),timeEl=document.getElementById('progress-time');
+  if(bar){bar.value=Math.round(__evtClock/EVT_DURATION*1000);}
+  if(timeEl){const s=Math.round(__evtClock);const mm=String(Math.floor(s/60)).padStart(2,'0'),ss=String(s%60).padStart(2,'0');timeEl.textContent=mm+':'+ss;}
+}
+// 施工队：到场阶段，从路口一侧走到封路点（连续移动，不是瞬移）
+function moveCrew(){
+  if(!window.__roadCrew)return;
+  const c=window.__roadCrew;
+  const t=__evtClock/EVT_DURATION;
+  // crew 在 EVT_JUMPS[4]=0.60 出现，到 EVT_JUMPS[5]=0.78 前完成"走到位"
+  const a=EVT_JUMPS[4],b=EVT_JUMPS[5];
+  if(t<a){c.group.visible=false;return;}
+  c.group.visible=true;
+  const f=Math.min(1,(t-a)/(b-a));      // 0→1 从起点走到终点
+  const e=f*f*(3-2*f);                    // smoothstep 缓动
+  c.group.position.x=c.from.x+(c.to.x-c.from.x)*e;
+  c.group.position.z=c.from.z+(c.to.z-c.from.z)*e;
+}
+// 关键动作相机运镜：封路阶段平滑拉近到封路点（现场镜头），结束后拉回全景
+const CAM_HOME={x:18,y:34,z:52}, CAM_CLOSE={x:22,y:14,z:20};
+function driveCamera(t){
+  const a=EVT_JUMPS[4]-0.04, b=EVT_JUMPS[5];   // 封路阶段窗口
+  const hold=b+0.03;                             // 拉近后停留
+  const release=EVT_JUMPS[6];
+  let k=0;   // 0=全景，1=特写
+  if(t>=a&&t<=b)k=(t-a)/(b-a);
+  else if(t>b&&t<hold)k=1;
+  else if(t>=hold&&t<release)k=1-(t-hold)/(release-hold);
+  k=Math.max(0,Math.min(1,k));
+  const e=k*k*(3-2*k);
+  camera.position.x=CAM_HOME.x+(CAM_CLOSE.x-CAM_HOME.x)*e;
+  camera.position.y=CAM_HOME.y+(CAM_CLOSE.y-CAM_HOME.y)*e;
+  camera.position.z=CAM_HOME.z+(CAM_CLOSE.z-CAM_HOME.z)*e;
+  const tx=window.__roadCrew?window.__roadCrew.to.x:0, tz=window.__roadCrew?window.__roadCrew.to.z:0;
+  controls.target.x=(0+(tx-0)*e);controls.target.z=(0+(tz-0)*e);
+  controls.target.y=0.5;
+  controls.update();
+}
+// 低多边形施工队员：橙色反光背心 + 头盔，用几何体拼（KayKit 无人物模型）
+// 尺寸放大到约 1.8m 高（远景可见），躯干/四肢按真人比例
+function makeCrewMember(){
+  const g=new THREE.Group();
+  const vest=new THREE.MeshStandardMaterial({color:0xff7b2d,roughness:.6});
+  const pants=new THREE.MeshStandardMaterial({color:0x2f3f4f,roughness:.8});
+  const skin=new THREE.MeshStandardMaterial({color:0xd9a57c,roughness:.7});
+  const helmet=new THREE.MeshStandardMaterial({color:0xffc21a,roughness:.5});
+  // 躯干（橙色反光背心）
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.75,0.32),vest);body.position.y=0.92;g.add(body);
+  // 反光条（亮银，突出"反光背心"）
+  const strip=new THREE.Mesh(new THREE.BoxGeometry(0.58,0.16,0.34),new THREE.MeshStandardMaterial({color:0xe8f0f8,roughness:.2,metalness:.4,emissive:0x334455,emissiveIntensity:.5}));
+  strip.position.y=0.98;g.add(strip);
+  const strip2=new THREE.Mesh(new THREE.BoxGeometry(0.58,0.16,0.34),new THREE.MeshStandardMaterial({color:0xe8f0f8,roughness:.2,metalness:.4,emissive:0x334455,emissiveIntensity:.5}));
+  strip2.position.y=0.82;g.add(strip2);
+  // 头 + 安全头盔
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.24,12,10),skin);head.position.y=1.62;g.add(head);
+  const hm=new THREE.Mesh(new THREE.SphereGeometry(0.28,12,8,0,Math.PI*2,0,Math.PI/2),helmet);hm.position.y=1.66;g.add(hm);
+  // 双腿
+  const legL=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.65,0.2),pants);legL.position.set(-0.14,0.32,0);g.add(legL);
+  const legR=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.65,0.2),pants);legR.position.set(0.14,0.32,0);g.add(legR);
+  // 双臂（橙色袖）
+  const armL=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.55,0.18),vest);armL.position.set(-0.4,1.0,0);armL.rotation.z=0.1;g.add(armL);
+  const armR=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.55,0.18),vest);armR.position.set(0.4,1.0,0);armR.rotation.z=-0.1;g.add(armR);
+  g.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+  return g;
 }
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
 // 点击与按钮绑定必须等 renderer 建好再挂：顶层直接取 renderer.domElement
@@ -1836,9 +1992,20 @@ function bindUI(){
   });
   document.getElementById('prev').onclick=()=>setJump(twinState.currentJump-1);
   document.getElementById('next').onclick=()=>setJump(twinState.currentJump+1);
-  document.getElementById('restart').onclick=()=>setJump(0);
+  document.getElementById('restart').onclick=()=>{__evtClock=0;__evtPlaying=false;setJump(0);};
   document.getElementById('settle').onclick=()=>setJump(6);
-  document.getElementById('play').onclick=()=>{__evtPlaying=!__evtPlaying;renderJumpControls();};
+  document.getElementById('play').onclick=()=>{
+    if(__evtClock>=EVT_DURATION)__evtClock=0;   // 播到末尾再点播放 = 从头重播
+    __evtPlaying=!__evtPlaying;renderJumpControls();
+  };
+  // 进度条拖动 = seek 到任意时刻
+  const prog=document.getElementById('progress');
+  prog.addEventListener('input',()=>{
+    __evtPlaying=false;
+    __evtClock=Number(prog.value)/1000*EVT_DURATION;
+    applyTimeline(__evtClock/EVT_DURATION);
+    syncJumpFromClock();
+  });
 }
 init();
 </script></html>"""
