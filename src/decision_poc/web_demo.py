@@ -1429,39 +1429,29 @@ function build(sched){
         }
         t+=30}}   // 步进加大到 30 场景单位(≈4.8 世界单位)，避免车长 4 米重叠
   });
-  // ---- 积水段：立体水体（ExtrudeGeometry 挤出厚度）+ shader 波纹水面 ----
-  // 主体是有厚度的水体（水位涨落=体积变化），顶面用 shader 做真实波纹+反射。
-  window.__waterMeshes=[];   // 供事件动画引用：{mesh, surface, label, depthMax}
+  // ---- 积水段：贴地 shader 水面（薄薄一层，随水位轻微抬升 + 面积扩散 + 颜色加深）----
+  // 真实内涝积水 = 路面上一薄层水。不用 ExtrudeGeometry 立体柱（会像悬浮蓝板），
+  // 改为贴地 PlaneGeometry + shader 波纹，水位变化体现为水面 y 轻微升高 + 面积扩大 + 颜色加深。
+  window.__waterMeshes=[];   // 供事件动画引用：{surface, label, depthMax, baseW, baseD, cx, cz}
   water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));
     const cen=ps.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/ps.length);
     const pts=ps.map(p=>{const[wx,wz]=W(p[0],p[1]);return[wx,wz]});
     const[cx,cz]=W(cen[0],cen[1]);
-    // 积水矩形世界尺寸（用于 shader 水面 Plane）
+    // 积水矩形世界尺寸（积水基准面积）
     const xs=pts.map(p=>p[0]),zs=pts.map(p=>p[1]);
     const ww=Math.max(...xs)-Math.min(...xs), wd=Math.max(...zs)-Math.min(...zs);
-    // Shape 在 XZ 平面（x→shape.x，z→shape.y），再绕 X 轴 -90° 转回世界，挤出沿 +Y
-    const sh=new THREE.Shape();
-    pts.forEach((p,i)=>{if(i===0)sh.moveTo(p[0],p[1]);else sh.lineTo(p[0],p[1])});
-    sh.closePath();
-    // 水体主体：半透明深色，侧面能看到"有水"的厚度
-    const mat=new THREE.MeshStandardMaterial({color:0x1a5e96,roughness:.15,metalness:.35,transparent:true,opacity:.82,side:THREE.DoubleSide});
-    const g=new THREE.ExtrudeGeometry(sh,{depth:1.0,bevelEnabled:false});
-    g.rotateX(-Math.PI/2);   // Shape 在 XY 平面，转成 XZ，挤出轴变成 Y
-    const m=new THREE.Mesh(g,mat);
-    m.userData={entityId:e.id,name:e.label||"积水段",kind:"water",detail:e.detail||""};
-    m.position.y=0.44;m.castShadow=true;m.receiveShadow=true;scene3.add(m);
-    // shader 波纹水面：盖在主体顶部，随水位一起升降
+    // shader 波纹水面：贴地，水位变化 = y 轻微升高
     const surf=makeWaterSurface(ww,wd);
-    surf.position.set(cx,1.0,cz);   // 相对水体的顶面（主体 scale.y 后顶面在 1.0*depthMax 处）
-    surf.userData={entityId:e.id,isWaterSurface:true};
+    surf.position.set(cx,0.44,cz);   // 底面贴路面（道路顶面约 0.41）
+    surf.userData={entityId:e.id,name:e.label||"积水段",kind:"water",detail:e.detail||"",isWaterSurface:true};
+    surf.receiveShadow=true;
     scene3.add(surf);
-    // depthMax：该积水段的峰值水位高度（世界单位）。放大到接近楼体量级，
-    // 让"涨水"在远景相机下也有肉眼可见的体积——峰值约 3 单位，接近一层楼高。
-    const depthMax=/A-03/.test(e.label||'')?2.8:2.2;
-    window.__waterMeshes.push({mesh:m,surface:surf,mat:mat,label:(e.label||'积水'),depthMax:depthMax,cx:cx,cz:cz});
-    // 积水标注：只留深度数字，随跳次更新（updateWaterLabel 里刷新）
-    const lb=makeLabel('','#eaf6ff');lb.position.set(cx,2.2,cz);lb.userData={waterLabel:true};
-    m.userData.waterLabel=lb;scene3.add(lb);window.__waterMeshes[window.__waterMeshes.length-1].labelSprite=lb;
+    // depthMax：峰值水位（世界单位，真实积水深度，A-03 约 30cm→0.30，B-01 约 18cm→0.20）
+    const depthMax=/A-03/.test(e.label||'')?0.30:0.20;
+    window.__waterMeshes.push({surface:surf,label:(e.label||'积水'),depthMax:depthMax,cx:cx,cz:cz,baseW:ww,baseD:wd});
+    // 积水标注：只留深度数字，紧贴水面（不飘在高空）
+    const lb=makeLabel('','#eaf6ff');lb.position.set(cx,0.9,cz);lb.userData={waterLabel:true};
+    surf.userData.waterLabel=lb;scene3.add(lb);window.__waterMeshes[window.__waterMeshes.length-1].labelSprite=lb;
   });
   // ---- 设施：泵站(写实小楼) + 雨水口(井盖) ----
   window.__pumpAlarms=[];   // 供事件动画引用：故障泵站的告警灯 mesh
@@ -1567,17 +1557,12 @@ function makeWaterSurface(w,d){
       uWaveAmp:{value:0.22},
     },
     vertexShader:[
-      'uniform float uTime;uniform float uWaveAmp;',
       'varying vec2 vUv;varying vec3 vPos;varying vec3 vNormal;',
       'void main(){',
       '  vUv=uv;',
-      '  vec3 p=position;',
-      '  float w=sin(p.x*2.0+uTime*2.5)*0.5+sin(p.z*2.7+uTime*1.9)*0.5;',
-      '  w+=sin((p.x+p.z)*3.5+uTime*3.2)*0.35;',
-      '  p.y+=w*uWaveAmp;',
-      '  vec4 mv=modelViewMatrix*vec4(p,1.0);',
+      '  vec4 mv=modelViewMatrix*vec4(position,1.0);',
       '  vPos=mv.xyz;',
-      '  vNormal=normalize(normalMatrix*normalize(vec3(-cos(p.x*2.0+uTime*2.5)*uWaveAmp,1.0,-cos(p.z*2.7+uTime*1.9)*uWaveAmp)));',
+      '  vNormal=normalize(normalMatrix*vec3(0.0,1.0,0.0));',
       '  gl_Position=projectionMatrix*mv;',
       '}',
     ].join(' '),
@@ -1711,20 +1696,18 @@ function applyTimeline(t){
   const colorIdx=Math.min(WATER_COLORS.length-1,L.i);
   const colorA=WATER_COLORS[colorIdx],colorB=WATER_COLORS[Math.min(WATER_COLORS.length-1,colorIdx+1)];
   const waterColor=lerpColor(colorA,colorB,L.frac);
-  // 立体水体：水位连续涨落，体积连续变化；shader 水面跟随水位升降
+  // 贴地积水水面：水位连续涨落（y 轻微升高）+ 面积随水位扩散 + 颜色加深
   (window.__waterMeshes||[]).forEach(w=>{
-    const depth=Math.max(0.06,v.water)*w.depthMax;   // 当前水深
-    w.mesh.scale.y=depth;
-    w.mat.color.setHex(waterColor);
-    w.mat.opacity=0.82+v.water*0.16;
-    // shader 水面：贴在水体顶面，随水位升降，颜色/波纹幅度随深度变化
+    const depth=v.water*w.depthMax;                 // 当前水深（真实比例，几厘米到几十厘米）
     if(w.surface){
-      w.surface.position.y=0.44+depth+0.15;   // 抬高到主体顶面之上，避免被遮挡
-      w.surface.visible=v.water>0.06;
+      w.surface.position.y=0.44+Math.max(0.01,depth*0.35);   // 水面轻微抬升，始终贴地
+      w.surface.visible=v.water>0.05;
+      const spread=0.6+0.4*v.water;                 // 积水随水位向四周扩散
+      w.surface.scale.set(spread,1,spread);
       const um=w.surface.material.uniforms;
       if(um){
         um.uWaterColor.value.setHex(waterColor);
-        um.uWaveAmp.value=0.08+v.water*0.3;   // 水越深波纹越大
+        um.uWaveAmp.value=0.04+v.water*0.10;         // 微起伏，不翘起
       }
     }
     if(w.labelSprite){
@@ -1732,7 +1715,7 @@ function applyTimeline(t){
       const cm=Math.max(1,Math.round(v.water*baseCm));
       w.labelSprite.material.map=makeLabelTex('积水 '+cm+' cm','#eaf6ff');
       w.labelSprite.material.needsUpdate=true;
-      w.labelSprite.position.y=0.44+depth+0.7;
+      w.labelSprite.position.y=0.9;   // 标注紧贴水面，不飘高空
     }
   });
   // 告警：光柱 + 顶灯（顶灯在 tick 里闪烁）
@@ -1778,10 +1761,10 @@ function buildRings(){
     ring.rotation.x=-Math.PI/2;ring.position.set(p.x,big?0.5:0.56,p.z);ring.visible=false;
     scene3.add(ring);
     const beam=new THREE.Mesh(
-      new THREE.CylinderGeometry(0.5,0.5,7,14,1,true),
-      new THREE.MeshBasicMaterial({color:0x7ed4ff,transparent:true,opacity:.16,side:THREE.DoubleSide,depthWrite:false})
+      new THREE.CylinderGeometry(0.4,0.4,2.6,14,1,true),
+      new THREE.MeshBasicMaterial({color:0x7ed4ff,transparent:true,opacity:.12,side:THREE.DoubleSide,depthWrite:false})
     );
-    beam.position.set(p.x,3.7,p.z);beam.visible=false;
+    beam.position.set(p.x,1.4,p.z);beam.visible=false;
     scene3.add(beam);
     RINGS[id]={ring:ring,beam:beam};
   });
