@@ -2,15 +2,17 @@
 
 ## 已验收（2026-11-08）
 
-- [x] 统一 `event_id / jump_id / entity_id / work_order_id / action_card_id`。
+- [x] 统一 `event_id / jump_id / entity_id / work_order_id / action_card_id / claim_id`。
       关联层 `src/decision_poc/twin_links.py` 一处产出，页面不再各自猜。
-      `claim_id` 目前只到卡片级（`cards[].claim_ids`），未落到沙盘对象上——见下方待办。
 - [x] 主页面通过 URL 参数定位沙盘跳次，沙盘可返回主页面对应事件。
       `/twin3d?jump=N&entity=ID`，`N` 取 1..6 六跳、7 表"处置后"；`entity` 不静默纠正，
       未命中时接口回 `requested_entity.found=false` 由页面提示。
 - [x] 将场景对象与工单、ActionCard、证据引用建立映射。
       依据链：`cards[].evidence_refs` 里的 `work_order#row:N` → 台账第 N 行 → 工单 →
       `entity.links.work_orders` → 对象。每一步都能回溯，不做空间邻近猜测。
+- [x] `claim_id` 落到沙盘对象：对象详情新增「判断依据」区块，列出挂在它上面的断言
+      （中文名 + 是否成立 + 证据条数）。claim 由动作卡的 `claim_ids` 并集得到，
+      不是另算一遍；断言名在后端 `twin_links.claim_label` 统一翻译，页面不再各写一份。
 - [x] 同步 ActionCard 状态：待执行、执行中、已完成、待人工确认。
       由当前跳次派生（`twin_links.card_state`），规则四条、可断言；
       台账里没有任何"已开工/已完工"字段，页面上标注为**推演状态**，不是现场回传。
@@ -24,9 +26,6 @@
 
 ## 尚未做
 
-- [ ] `claim_id` 落到沙盘对象：现在点对象能看到动作卡的证据，但看不到"这条判断支撑哪条断言"。
-      补法是在 `twin_links` 里把 `cards[].claim_ids` 合并到 `entity.claim_ids`，
-      页面加一行"判断依据（claim）"。**不需要改推演内核**。
 - [ ] 工单状态回写：台账 `status` 目前只读，处置动作不会改它。若要做"办结"闭环，
       得先有写入通道与审计（谁改的、依据哪张卡），否则就是假闭环。
 - [ ] 结果回指 claim：`results.rows` 现在只挂台账来源，未挂 claim_id。
@@ -35,6 +34,6 @@
 ## 验证口径
 
 ```
-python -m pytest -q                     # 952 项，1 skipped（可选依赖 openai）
-python -m decision_poc.evidence_check    # 108/108，指纹 a8acecc032b02a4b
+python -m pytest -q                     # 956 项，1 skipped（可选依赖 openai）
+python -m decision_poc.evidence_check    # 108/108，指纹 00354b21254a9f1a
 ```

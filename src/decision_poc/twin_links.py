@@ -69,6 +69,65 @@ WORK_ORDER_ROW = re.compile(r"work_order[^#]*#row:(\d+)")
 #: 台账里的工单号，例如 WO-20261029-011。
 WORK_ORDER_ID = re.compile(r"WO-\d{8}-\d{3}")
 
+#: 断言（claim）的中文说法。这套映射原来只有前端 JS 写了一份，后端要用就得再写一份，
+#: 两处必然漂。现在放这里，`/api/twin-links` 直接给 `label`，页面不再自己拼。
+CLAIM_LABEL = {
+    "CL-S1-observed": "发生了什么",
+    "CL-S2-affected": "影响了哪些对象",
+    "CL-S3-owner": "该谁负责",
+    "CL-S4-conflict": "暴露了哪些冲突",
+    "CL-S5-resource": "资源缺多少",
+}
+CLAIM_ACTION = re.compile(r"^CL-S6-action-(\d+)$")
+#: claim 编号 → 所属跳次阶段，用于把断言挂回六跳（S1..S6）。
+CLAIM_STAGE = {
+    "S1": "observed",
+    "S2": "affected",
+    "S3": "owner",
+    "S4": "conflict",
+    "S5": "resource",
+    "S6": "action",
+}
+
+
+def claim_label(claim_id: str) -> str:
+    """`CL-S6-action-07` → 「处置动作第 7 条」；认不出的原样返回，不猜。"""
+    if claim_id in CLAIM_LABEL:
+        return CLAIM_LABEL[claim_id]
+    match = CLAIM_ACTION.match(claim_id)
+    if match:
+        return f"处置动作第 {int(match.group(1))} 条"
+    return claim_id
+
+
+def claim_stage(claim_id: str) -> str:
+    """`CL-S4-conflict` → `conflict`。只认 `CL-S<n>-` 前缀，其余返回空串。"""
+    match = re.match(r"^CL-(S\d)-", claim_id)
+    return CLAIM_STAGE.get(match.group(1), "") if match else ""
+
+
+def _claim_index(payload: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    """断言表：id → 中文名、是否成立、支撑证据。
+
+    这里不产出新结论，只是把 `audit.claims` 换成"人和页面都读得懂"的形状。
+    """
+    index: dict[str, dict[str, Any]] = {}
+    for claim in (payload.get("audit") or {}).get("claims") or []:
+        claim_id = str(claim.get("claim_id") or "")
+        if not claim_id:
+            continue
+        refs = [str(ref) for ref in claim.get("evidence_refs") or []]
+        index[claim_id] = {
+            "claim_id": claim_id,
+            "label": claim_label(claim_id),
+            "stage": claim_stage(claim_id),
+            "supported": bool(claim.get("supported")),
+            "kind": str(claim.get("kind") or ""),
+            "evidence_count": len(refs),
+            "evidence_refs": refs,
+        }
+    return index
+
 
 def _entity_pattern(entity_id: str) -> re.Pattern[str]:
     """实体 id 的整词匹配。
@@ -344,6 +403,7 @@ def build_twin_links(
                 "co_sign_required": [str(item) for item in card.get("co_sign_required") or []],
                 "entity_ids": card_entities.get(card_id, []),
                 "work_order_ids": cards_by_order.get(card_id, []),
+                "claim_ids": [str(item) for item in card.get("claim_ids") or []],
                 "evidence_count": int(card.get("evidence_count") or 0),
                 "evidence_refs": [str(ref) for ref in card.get("evidence_refs") or []],
             }
@@ -351,6 +411,8 @@ def build_twin_links(
 
     # 按跳次排一遍：页面从"观测"往下读，而不是按 card_id 字典序读
     card_rows.sort(key=lambda row: (row["jump"], row["card_id"]))
+
+    claims = _claim_index(payload)
 
     # ---- 对象详情 ----
     entity_rows: dict[str, dict[str, Any]] = {}
@@ -360,6 +422,13 @@ def build_twin_links(
         linked_orders = [str(item) for item in links.get("work_orders") or []]
         linked_cards = [row for row in card_rows if entity_id in row["entity_ids"]]
         linked_resources = [str(item) for item in links.get("resources") or []]
+        # 对象的判断依据：把挂着它的动作卡上的 claim 并起来去重。
+        # 这样点开一个泵站，能看到"它为什么被判成待维修/该谁管"，而不只是"谁出了卡"。
+        linked_claim_ids: list[str] = []
+        for card in linked_cards:
+            for claim_id in card.get("claim_ids") or []:
+                if claim_id not in linked_claim_ids:
+                    linked_claim_ids.append(claim_id)
         states = [row["state"] for row in linked_cards]
         # 对象视觉取"最需要人看"的那张卡：待确认 > 执行中 > 待执行 > 已完成。
         # 没有卡的对象退回自身的静态状态（积水/封路等），不给它编一个执行态。
@@ -390,8 +459,7 @@ def build_twin_links(
                 for order_id in linked_orders
                 if order_id in order_by_id
             ],
-            "card_ids": [row["card_id"] for row in linked_cards],
-            # 卡片明细只在顶层 `cards` 里存一份。26 张卡挂在 9 个对象上，
+            "card_ids": [row["card_id"] for row in linked_cards],            # 卡片明细只在顶层 `cards` 里存一份。26 张卡挂在 9 个对象上，
             # 每个对象再复制一遍全量卡片会让整包从 20KB 涨到 150KB，
             # 而页面本来就按 card_id 查表——重复没有收益。
             "departments": sorted({row["org_name"] for row in linked_cards if row["org_name"]}),
@@ -407,6 +475,20 @@ def build_twin_links(
                 for item in resources
                 if str(item.get("resource_id")) in linked_resources
             ],
+            # claim 只给精简版（名 + 证据条数），完整证据放顶层 claims 一处，
+            # 避免 28 条引用在 9 个对象里各复制一遍
+            "claim_ids": linked_claim_ids,
+            "claims": [
+                {
+                    "claim_id": claim_id,
+                    "label": claims[claim_id]["label"],
+                    "stage": claims[claim_id]["stage"],
+                    "supported": claims[claim_id]["supported"],
+                    "evidence_count": claims[claim_id]["evidence_count"],
+                }
+                for claim_id in linked_claim_ids
+                if claim_id in claims
+            ],
             "evidence": [str(item) for item in links.get("evidence") or []],
             "card_state": owner_state,
             "card_state_label": CARD_STATE_LABEL.get(owner_state, ""),
@@ -420,6 +502,7 @@ def build_twin_links(
         "current_jump": current_jump,
         "jumps": jumps,
         "cards": card_rows,
+        "claims": claims,
         "entities": entity_rows,
         "results": build_results(payload, cards=card_rows, entities=entity_rows, orders=orders),
         # 组织代码 → 中文名，页面显示"上报 ORG-DRAIN"没人看得懂。

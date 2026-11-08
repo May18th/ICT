@@ -71,6 +71,14 @@ def test_event_to_evidence_walks_the_whole_chain(view: dict, links: dict) -> Non
     for card_id in entity["card_ids"]:
         assert cards[card_id]["state"] in CARD_STATE_LABEL
 
+    # ⑥ 判断依据：对象的 claim 必须能在 audit.claims 里找到，且带证据
+    assert entity["claim_ids"], "事件对象没有断言支撑"
+    audit_ids = {claim["claim_id"] for claim in claims}
+    for claim_id in entity["claim_ids"]:
+        assert claim_id in audit_ids, f"{claim_id} 不在 audit.claims 里"
+        assert claim_id in links["claims"]
+        assert links["claims"][claim_id]["evidence_refs"]
+
 
 def test_states_only_move_forward(links: dict, view: dict) -> None:
     """跳次递增时，卡的状态只准往前走，不准从已完成退回待执行。"""

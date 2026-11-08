@@ -5,7 +5,7 @@
 
 用法：
 
-    uv run --locked python scripts/reproduce.py              # 全量（含 952 项测试，约 3-6 分钟）
+    uv run --locked python scripts/reproduce.py              # 全量（含 956 项测试，约 3-6 分钟）
     uv run --locked python scripts/reproduce.py --fast       # 跳过 pytest，约 30 秒
     uv run --locked python scripts/reproduce.py --list       # 只列步骤
     uv run --locked python scripts/reproduce.py --keep-going # 出错也继续跑完，最后统一汇报
