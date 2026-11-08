@@ -1134,7 +1134,7 @@ def build_twin3d_html() -> str:
 #event-bar span{display:block;margin-top:3px;font-size:12px;color:#8fb7d6}
 #legend{position:fixed;left:18px;bottom:16px;z-index:5;pointer-events:none;font-size:12px;color:#93a7bb;line-height:1.9}
 #legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-#tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}#evidence-card{position:fixed;left:18px;top:84px;width:260px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);font-size:12px;color:#a9bfd2}#evidence-card b{color:#e0f2fe;display:block;margin-bottom:6px}#entity-card{position:fixed;right:18px;top:84px;width:250px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);display:none}#entity-card b{color:#e0f2fe}#entity-card span{display:block;margin-top:6px;color:#a9bfd2;font-size:12px}#timeline{position:fixed;left:18px;right:18px;bottom:48px;z-index:6;display:flex;gap:6px;align-items:center;background:rgba(7,18,28,.84);padding:8px 10px;border-radius:10px;flex-wrap:wrap}#timeline button{background:#1a3042;color:#d7e4f0;border:1px solid #496579;border-radius:5px;padding:4px 8px;cursor:pointer}#timeline button.active{background:#1976a8}#timeline #jump-buttons{display:flex;gap:4px;flex-wrap:wrap}#progress{flex:1;min-width:140px;accent-color:#4fc3f7;height:20px;cursor:pointer}#progress-time{font-size:11px;color:#8fb7d6;font-family:ui-monospace,monospace;min-width:44px;text-align:center}
+#tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}#evidence-card{position:fixed;left:18px;top:84px;width:236px;z-index:7;padding:11px;border-radius:10px;background:rgba(7,18,28,.78);backdrop-filter:blur(8px);border:1px solid rgba(122,162,198,.4);font-size:11.5px;color:#a9bfd2}#evidence-card b{color:#e0f2fe;display:block;margin-bottom:6px}#entity-card{position:fixed;right:18px;top:84px;width:250px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.82);backdrop-filter:blur(8px);border:1px solid rgba(122,162,198,.4);display:none}#entity-card b{color:#e0f2fe}#entity-card span{display:block;margin-top:6px;color:#a9bfd2;font-size:12px}#timeline{position:fixed;left:18px;right:18px;bottom:48px;z-index:6;display:flex;gap:6px;align-items:center;background:rgba(7,18,28,.84);padding:8px 10px;border-radius:10px;flex-wrap:wrap}#timeline button{background:#1a3042;color:#d7e4f0;border:1px solid #496579;border-radius:5px;padding:4px 8px;cursor:pointer}#timeline button.active{background:#1976a8}#timeline #jump-buttons{display:flex;gap:4px;flex-wrap:wrap}#progress{flex:1;min-width:140px;accent-color:#4fc3f7;height:20px;cursor:pointer}#progress-time{font-size:11px;color:#8fb7d6;font-family:ui-monospace,monospace;min-width:44px;text-align:center}
 canvas{display:block}
 #entity-card{width:322px;max-height:calc(100vh - 190px);overflow:auto}
 #entity-card::-webkit-scrollbar{width:6px}#entity-card::-webkit-scrollbar-thumb{background:#2c4459;border-radius:3px}
@@ -1154,7 +1154,7 @@ canvas{display:block}
 .badge.b-done{color:#6ee7a8;border-color:#2f7a56;background:rgba(20,80,55,.35)}
 .badge.b-alert{color:#f5c063;border-color:#8a6a2a;background:rgba(110,80,20,.35)}
 .ec-empty{color:#64788c;font-size:11.5px}
-#results-card{position:fixed;left:18px;bottom:92px;z-index:7;width:300px;max-height:46vh;overflow:auto;padding:10px 12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);font-size:11.5px;color:#a9bfd2}
+#results-card{position:fixed;right:18px;bottom:92px;z-index:7;width:272px;max-height:30vh;overflow:auto;padding:10px 12px;border-radius:10px;background:rgba(7,18,28,.78);backdrop-filter:blur(8px);border:1px solid rgba(122,162,198,.4);font-size:11.5px;color:#a9bfd2}
 #results-card>b{color:#e0f2fe;display:block;margin-bottom:6px;font-size:12px}
 #results-card summary{cursor:pointer;color:#7ed4ff;font-size:12px;margin-bottom:4px}
 .rc-row{padding:5px 0;border-bottom:1px dashed rgba(122,162,198,.18)}
@@ -1166,11 +1166,17 @@ canvas{display:block}
 .rc-basis.rc-none{color:#5d7085}
 #jump-buttons button.settle{background:#1d4a3a;border-color:#3f8a6a}
 #jump-buttons button.settle.active{background:#2f8a63}
+#timeline .tl-sep{width:1px;height:22px;background:#2c4459;margin:0 2px}
+#timeline button.final{background:#1d4a3a;color:#bfe8d2;border:1px solid #3f8a6a}
+#timeline button.final.active{background:#2f8a63;color:#e8fff2}
+#exec-card{position:fixed;left:18px;bottom:92px;z-index:7;width:272px;padding:10px 12px;border-radius:10px;background:rgba(7,18,28,.78);backdrop-filter:blur(8px);border:1px solid rgba(122,162,198,.4);font-size:11.5px;color:#a9bfd2}
+#exec-card>b{color:#e0f2fe;display:block;margin-bottom:6px;font-size:12px}
+#exec-card .delta-behind{color:#f5c063}
 #hud small{display:block;margin-top:4px;font-size:11px;color:#6f8499}</style>
-<div id=hud><b>城市内涝三维数字孪生 · 写实沙盘</b><span>兴华路片区(A-03) 与 建设大道片区(B-01) · 坐标来自 scene.json 台账实时投影</span><small id=hud-src>关联层加载中…</small></div>
+<div id=hud><b>城市内涝三维数字孪生 · 写实沙盘</b><span>兴华路片区(A-03) 与 建设大道片区(B-01) · 坐标来自 scene.json 台账实时投影</span><small id=hud-src>正在加载关联层（动作卡 / 对象 / 证据）…</small></div>
 <div id=event-bar><b>观测：事件识别</b><span>事件推演 · 第 1/6 跳</span></div>
 <div id=legend><span><i style=background:#4a6fa5></i>积水段</span> &nbsp; <span><i style=background:#e0a965></i>已封路</span> &nbsp; <span><i style=background:#5a6a7a></i>泵站</span> &nbsp; <span><i style=background:#ff2d2d></i>故障告警</span></div>
-<div id=evidence-card><b>当前跳次证据</b><span id=evidence-body>等待事件数据…</span><br><a href="/" style="color:#7ed4ff">返回主页面事件台</a></div><div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span><div id=entity-links></div></div><div id=results-card><b>处置前后结果</b><details id=results-details open><summary id=results-summary>展开对照</summary><div id=results-body>加载中…</div><div id=results-note style='margin-top:6px;color:#64788c;font-size:10.5px'></div></details></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><button id=settle>处置后</button><span id=jump-buttons></span><input id=progress type=range min=0 max=1000 value=0 title="拖动到事件线任意时刻"><span id=progress-time>00:00</span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
+<div id=evidence-card><b>当前跳次证据</b><span id=evidence-body>正在读取六跳证据…</span><br><a href="/" style="color:#7ed4ff">返回主页面事件台</a></div><div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span><div id=entity-links></div></div><div id=exec-card><b>执行账本（计划 vs 实际）</b><span id=exec-body>正在读取执行账本…</span></div><div id=results-card><b>处置前后结果</b><details id=results-details><summary id=results-summary>展开对照</summary><div id=results-body>正在读取…</div><div id=results-note style='margin-top:6px;color:#64788c;font-size:10.5px'></div></details></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><span id=jump-buttons></span><span class=tl-sep></span><button id=settle class=final>最终状态</button><input id=progress type=range min=0 max=1000 value=0 title="拖动到事件线任意时刻"><span id=progress-time>00:00</span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
 <script src="/three.min.js"></script>
 <script src="/RGBELoader.js"></script>
 <script src="/OrbitControls.js"></script>
@@ -1287,17 +1293,30 @@ function init(){
   const sun=new THREE.DirectionalLight(0xcfd8e0,0.38);sun.position.set(40,60,25);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
   const sc=sun.shadow.camera;sc.left=-70;sc.right=70;sc.top=70;sc.bottom=-70;sc.far=200;scene3.add(sun);
   // 城市基底：自然地面(草/土)大平面
-  const base=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshStandardMaterial({color:0x6f767c,roughness:.96,metalness:.02}));
+  const baseMat=new THREE.MeshStandardMaterial({color:0x858b90,map:loadTex('ground_diffuse'),roughnessMap:loadTex('ground_rough'),normalMap:loadTex('ground_normal'),roughness:.96,metalness:.02});
+  const base=new THREE.Mesh(new THREE.PlaneGeometry(500,500),baseMat);
   base.rotation.x=-Math.PI/2;base.position.y=-0.02;base.receiveShadow=true;
   // 地面贴图大范围平铺
   ['ground_diffuse','ground_rough','ground_normal'].forEach(n=>{const t=loadTex(n);t.repeat.set(60,60)});
   scene3.add(base);
   fetch('/api/scheduler').then(r=>r.json()).then(build);
+  fetch('/api/execution').then(r=>r.json()).then(renderExec).catch(()=>{const el=document.getElementById('exec-body');if(el)el.textContent='执行账本不可用（/api/execution 未能加载）';});
   addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
   // 雨丝粒子
   makeRain();
   renderer.setAnimationLoop(tick);
   bindUI();
+}
+// 执行账本摘要：计划（推演派生）vs 实际（账本），补到沙盘左下角，不再只存在于主页面
+function renderExec(d){
+  const el=document.getElementById('exec-body');if(!el)return;
+  if(!d||d.status!=='ok'){el.textContent='执行账本不可用';return;}
+  const p=d.plan||{},c=d.counts||{};
+  const delta=p.delta==null?'—':(p.delta>0?'+'+p.delta:p.delta);
+  const deltaCls=p.delta<0?'delta-behind':(p.delta>0?'':'');
+  el.innerHTML='<div>计划完成 <b>'+p.planned_done+'</b> 张 · 账本实际完成 <b>'+p.actual_done+'</b> 张 · 偏差 <b class="'+deltaCls+'">'+delta+'</b></div>'
+    +'<div style="margin-top:4px;color:#7b93aa;font-size:10.5px">账本状态：待执行 '+c.pending+' · 已完成 '+c.done+' · 待人工确认 '+c.needs_confirm+'</div>'
+    +'<div style="margin-top:3px;color:#64788c;font-size:10px">账本只记动作卡执行，不改冻结的 work_orders.csv</div>';
 }
 function makeRain(){
   const N=900;const pos=new Float32Array(N*3);
@@ -1541,7 +1560,7 @@ function build(sched){
   buildRings();
   loadTwinLinks().then(()=>setJump(twinState.currentJump));
 }
-function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(9,2.25,1);return sp}
+function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=512;cv.height=96;const g=cv.getContext('2d');g.font='bold 26px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=5;g.strokeStyle='rgba(10,16,22,.88)';g.strokeText(text,256,48);g.fillStyle=color||'#d5e4f0';g.fillText(text,256,48);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:true,depthWrite:false});const sp=new THREE.Sprite(mat);sp.scale.set(6.4,1.2,1);return sp}
 // 只生成 CanvasTexture（供积水深度标注动态刷新文字用），不包 Sprite
 function makeLabelTex(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;return tex}
 // ---- 水面 shader：真实波纹 + Fresnel 反射 + 深度浑浊 ----
@@ -1589,6 +1608,7 @@ function makeWaterSurface(w,d){
       '}',
     ].join(' '),
     transparent:true,
+    opacity:0.86,
     side:THREE.DoubleSide,
     depthWrite:false,
   });
@@ -1626,7 +1646,7 @@ function requestedParams(){
 const REQUESTED=requestedParams();
 const twinState={jumps:[],currentJump:REQUESTED.jump-1,selectedEntity:REQUESTED.entity||null,scheduler:null};
 function jumpTitle(i){
-  if(i>=6)return '处置后 · 六跳动作执行完毕';
+  if(i>=6)return '最终状态 · 六跳动作执行完毕';
   const j=LINKS&&LINKS.jumps&&LINKS.jumps[i];
   return j?j.title:'第 '+(i+1)+' 跳';
 }
@@ -1640,17 +1660,19 @@ function renderJumpControls(){
   const box=document.getElementById('jump-buttons');if(!box)return;
   let html='';
   for(let i=0;i<6;i++)html+='<button class="'+(i===twinState.currentJump?'active':'')+'" data-jump="'+i+'" title="'+esc(jumpTitle(i))+'">'+(i+1)+'. '+esc(shortTitle(jumpTitle(i)))+'</button>';
-  html+='<button class="settle'+(twinState.currentJump===6?' active':'')+'" data-jump="6">处置后</button>';
   box.innerHTML=html;
   box.querySelectorAll('button').forEach(b=>b.onclick=()=>setJump(Number(b.dataset.jump)));
+  // 「最终状态」按钮单独分组在 jump-buttons 之外，这里只同步它的高亮
+  const settle=document.getElementById('settle');
+  if(settle)settle.classList.toggle('active',twinState.currentJump===6);
   document.getElementById('play').textContent=__evtPlaying?'暂停':'播放';
 }
 function updateEvidence(){
   const body=document.getElementById('evidence-body');if(!body)return;
-  if(!LINKS){body.textContent='关联层加载中…';return}
+  if(!LINKS){body.textContent='正在读取六跳证据…';return}
   const j=LINKS.jumps[jumpRealIndex(twinState.currentJump)]||{};
   const atSettle=twinState.currentJump===6;
-  body.innerHTML='<b style="color:#cfe3f7">'+(atSettle?'处置后':esc(j.title||''))+'</b><br>'
+  body.innerHTML='<b style="color:#cfe3f7">'+(atSettle?'最终状态':esc(j.title||''))+'</b><br>'
     +(atSettle?'六跳动作全部执行完毕，按会签要求待人工确认':esc(j.detail||'—'))
     +'<br>关联对象 '+(atSettle?(LINKS.jumps[5]||{}).entity_ids||[]:j.entity_ids||[]).length
     +' 个 · 动作卡 '+(atSettle?LINKS.cards.length:(j.card_ids||[]).length)+' 张 · 证据 '+(atSettle?0:j.ref_count||0)+' 条';
@@ -1665,7 +1687,7 @@ function setJump(i){
   if(twinState.selectedEntity)renderEntityCard(twinState.selectedEntity);
   const bar=document.getElementById('event-bar');
   if(bar)bar.innerHTML='<b>'+esc(jumpTitle(twinState.currentJump))+'</b><span>事件推演 · 第 '
-    +(twinState.currentJump===6?'7 步 · 处置后':(twinState.currentJump+1)+'/6 跳')+'</span>';
+    +(twinState.currentJump===6?'最终状态':(twinState.currentJump+1)+'/6 跳')+'</span>';
   syncProgress();
   // 手动跳到封路相关跳次时，相机也切近给现场镜头（否则看不到施工队动作）
   if(twinState.currentJump>=4&&window.__roadCrew){driveCamera(twinState.currentJump===6?1.0:0.72);}
@@ -1903,7 +1925,7 @@ function renderResults(){
     }
     return '<div class="rc-row"><span>'+esc(row.label)+'</span> <span class="v">'+esc(before)+' → '+esc(after)+' <i>'+esc(row.unit||'')+'</i></span><span class="n">'+esc(row.note||'')+'</span>'+basis+'</div>';
   }).join('');
-  if(note)note.textContent=r.source+' · 当前停在第 '+(twinState.currentJump===6?'7 步（处置后）':(twinState.currentJump+1)+' 跳')+'，对照口径为六跳全部执行完';
+  if(note)note.textContent=r.source+' · 当前停在第 '+(twinState.currentJump===6?'最终状态':(twinState.currentJump+1)+' 跳')+'，对照口径为六跳全部执行完';
 }
 function loadTwinLinks(){
   return fetch('/api/twin-links?jump='+MAX_JUMP).then(r=>r.json()).then(data=>{
@@ -1963,7 +1985,7 @@ function syncJumpFromClock(){
     if(twinState.selectedEntity)renderEntityCard(twinState.selectedEntity);
     const bar=document.getElementById('event-bar');
     if(bar)bar.innerHTML='<b>'+esc(jumpTitle(idx))+'</b><span>事件推演 · 第 '
-      +(idx===6?'7 步 · 处置后':(idx+1)+'/6 跳')+'</span>';
+      +(idx===6?'最终状态':(idx+1)+'/6 跳')+'</span>';
   }
   syncProgress();
 }
