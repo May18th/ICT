@@ -1195,7 +1195,7 @@ function build(sched){
 function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(9,2.25,1);return sp}
 // ---- 事件线动画状态机：六跳推演压缩为 4 个可视阶段，循环播放 ----
 // 阶段：0 暴雨积水上涨 -> 1 泵站告警闪红 -> 2 封路 -> 3 调泵排水回落
-let __evtClock=0, __evtPhase=-1, __evtPlaying=true;
+let __evtClock=0, __evtPhase=-1, __evtPlaying=true, __lastFrame=performance.now();
 const twinState={jumps:[],currentJump:0,selectedEntity:null,scheduler:null};
 const requestedJump=Math.max(0,Number(new URLSearchParams(location.search).get("jump")||0));
 function renderJumpControls(){const box=document.getElementById("jump-buttons");if(!box)return;box.innerHTML=twinState.jumps.map((j,i)=>`<button class="${i===twinState.currentJump?"active":""}" data-jump="${i}">${i+1}. ${esc(j.name||("事件"+(i+1)))}</button>`).join("");box.querySelectorAll("button").forEach(b=>b.onclick=()=>setJump(Number(b.dataset.jump)));document.getElementById("play").textContent=__evtPlaying?"暂停":"播放";}
@@ -1236,10 +1236,11 @@ function __evtStep(dt){
   });
 }
 function tick(){
+  const now=performance.now();const dt=Math.min(0.1,Math.max(0,now-__lastFrame)/1000);__lastFrame=now;
   if(controls)controls.update();
   if(!__evtPlaying){renderer.render(scene3,camera);return;}
   if(rain){const p=rainGeo.attributes.position;for(let i=0;i<p.count;i++){p.array[i*3+1]-=0.22;if(p.array[i*3+1]<-2)p.array[i*3+1]=54;p.array[i*3]+=(Math.random()-0.5)*0.04;p.array[i*3+2]+=(Math.random()-0.5)*0.04}p.needsUpdate=true}
-  if(window.__waterMeshes)__evtStep(1/60);
+  if(window.__waterMeshes)__evtStep(dt);
   renderer.render(scene3,camera);
 }
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();renderer.domElement.addEventListener("click",ev=>{pointer.x=(ev.clientX/innerWidth)*2-1;pointer.y=-(ev.clientY/innerHeight)*2+1;raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(scene3.children,true);const hit=hits.find(h=>h.object.userData&&h.object.userData.entityId);if(!hit)return;const d=hit.object.userData;const card=document.getElementById("entity-card");document.getElementById("entity-title").textContent=d.name+" · "+d.entityId;document.getElementById("entity-body").textContent="类型："+d.kind+"；状态："+(d.detail||"演示状态")+"；当前跳次："+(twinState.currentJump+1);card.style.display="block";twinState.selectedEntity=d;});
