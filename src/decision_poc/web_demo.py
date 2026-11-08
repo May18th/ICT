@@ -913,12 +913,12 @@ def build_twin3d_html() -> str:
 #event-bar span{display:block;margin-top:3px;font-size:12px;color:#8fb7d6}
 #legend{position:fixed;left:18px;bottom:16px;z-index:5;pointer-events:none;font-size:12px;color:#93a7bb;line-height:1.9}
 #legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-#tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}#timeline{position:fixed;left:18px;right:18px;bottom:48px;z-index:6;display:flex;gap:6px;align-items:center;background:rgba(7,18,28,.84);padding:8px 10px;border-radius:10px}#timeline button{background:#1a3042;color:#d7e4f0;border:1px solid #496579;border-radius:5px;padding:4px 8px;cursor:pointer}#timeline button.active{background:#1976a8}
+#tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}#entity-card{position:fixed;right:18px;top:84px;width:250px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);display:none}#entity-card b{color:#e0f2fe}#entity-card span{display:block;margin-top:6px;color:#a9bfd2;font-size:12px}#timeline{position:fixed;left:18px;right:18px;bottom:48px;z-index:6;display:flex;gap:6px;align-items:center;background:rgba(7,18,28,.84);padding:8px 10px;border-radius:10px}#timeline button{background:#1a3042;color:#d7e4f0;border:1px solid #496579;border-radius:5px;padding:4px 8px;cursor:pointer}#timeline button.active{background:#1976a8}
 canvas{display:block}</style>
 <div id=hud><b>城市内涝三维数字孪生 · 写实沙盘</b><span>兴华路片区(A-03) 与 建设大道片区(B-01) · 坐标来自 scene.json 台账实时投影</span></div>
 <div id=event-bar><b>暴雨来袭 · 积水上涨</b><span>事件推演 · 阶段 1/4</span></div>
 <div id=legend><span><i style=background:#4a6fa5></i>积水段</span> &nbsp; <span><i style=background:#e0a965></i>已封路</span> &nbsp; <span><i style=background:#5a6a7a></i>泵站</span> &nbsp; <span><i style=background:#ff2d2d></i>故障告警</span></div>
-<div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><span id=jump-buttons></span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
+<div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><span id=jump-buttons></span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
 <script src="/three.min.js"></script>
 <script src="/RGBELoader.js"></script>
 <script src="/OrbitControls.js"></script>
@@ -1153,7 +1153,7 @@ function build(sched){
       verts.push(cx,0,cz, a[0],0,a[1], b[0],0,b[1]);}
     const varr=new Float32Array(verts);
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(varr,3));g.computeVertexNormals();
-    const m=new THREE.Mesh(g,waterMat);m.position.y=0.43;m.receiveShadow=true;scene3.add(m);
+    const m=new THREE.Mesh(g,waterMat);m.userData={entityId:e.id,name:e.label||"积水段",kind:"water",detail:e.detail||""};m.position.y=0.43;m.receiveShadow=true;scene3.add(m);
     window.__waterMeshes.push({mesh:m,baseY:0.43,mat:waterMat});
     // 白色描边（沿积水轮廓，同样 XZ 平面直接铺）
     const lpts=[];
@@ -1165,7 +1165,7 @@ function build(sched){
   // ---- 设施：泵站(写实小楼) + 雨水口(井盖) ----
   window.__pumpAlarms=[];   // 供事件动画引用：故障泵站的告警灯 mesh
   fac.forEach(e=>{const fpos=TWIN3D_FAC[e.id]||[Number(e.cx),Number(e.cy)];const[wx,wz]=W(fpos[0],fpos[1]);const ps=e.id.indexOf('DF-PS')===0;
-    if(ps){const b=makeBuilding(2.6,2.6,2.6,wx,wz,0);
+    if(ps){const b=makeBuilding(2.6,2.6,2.6,wx,wz,0);b.userData={entityId:e.id,name:e.label||"泵站",kind:"pump",detail:e.detail||""};
       const sign=makeLabel(String(e.label||e.id).replace('雨水泵站','泵站'),'#cfe0ef');sign.position.set(wx,4.6,wz);scene3.add(sign);
       // 故障泵站(DF-PS-01)挂红色告警灯，动画阶段闪红
       if(/fault|待修|故障/.test(e.detail||'')){
@@ -1232,6 +1232,7 @@ function tick(){
   if(window.__waterMeshes)__evtStep(1/60);
   renderer.render(scene3,camera);
 }
+const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();renderer.domElement.addEventListener("click",ev=>{pointer.x=(ev.clientX/innerWidth)*2-1;pointer.y=-(ev.clientY/innerHeight)*2+1;raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(scene3.children,true);const hit=hits.find(h=>h.object.userData&&h.object.userData.entityId);if(!hit)return;const d=hit.object.userData;const card=document.getElementById("entity-card");document.getElementById("entity-title").textContent=d.name+" · "+d.entityId;document.getElementById("entity-body").textContent="类型："+d.kind+"；状态："+(d.detail||"演示状态")+"；当前跳次："+(twinState.currentJump+1);card.style.display="block";twinState.selectedEntity=d;});
 document.getElementById("prev").onclick=()=>setJump(twinState.currentJump-1);document.getElementById("next").onclick=()=>setJump(twinState.currentJump+1);document.getElementById("restart").onclick=()=>setJump(0);document.getElementById("play").onclick=()=>{__evtPlaying=!__evtPlaying;renderJumpControls();};
 init();
 </script></html>"""
