@@ -74,11 +74,26 @@ def generate(model, tokenizer, messages: list[dict]) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--cases", type=Path, default=CASES)
+    parser.add_argument(
+        "--out-stem",
+        default=None,
+        help="报告文件名主干；默认用 eval，换了 --cases 则自动改为 eval_<文件名>，避免覆盖冻结报告",
+    )
+    parser.add_argument("--limit", type=int, default=0, help="只跑前 N 例（0=全部），便于快速试跑")
+    parser.add_argument("--adapter", type=Path, default=ADAPTER, help="tuned 侧 adapter 目录")
     args = parser.parse_args()
     if not torch.cuda.is_available():
         raise SystemExit("CUDA is required")
     cases = [c for c in json.loads(args.cases.read_text(encoding="utf-8"))["cases"]
              if c.get("split") == "holdout"]
+    if args.limit:
+        cases = cases[: args.limit]
+    if not cases:
+        raise SystemExit(f"{args.cases} 里没有 split=holdout 的用例")
+    stem = args.out_stem or (
+        "eval" if args.cases.resolve() == CASES.resolve() else f"eval_{args.cases.stem}"
+    )
+    is_frozen = args.cases.resolve() == CASES.resolve()
     quant = BitsAndBytesConfig(
         load_in_4bit=True, bnb_4bit_quant_type="nf4",
         bnb_4bit_compute_dtype=torch.float16,
@@ -86,7 +101,7 @@ def main() -> None:
     tokenizer = AutoTokenizer.from_pretrained(MODEL)
 
     results: dict[str, list] = {}
-    for label, adapter in (("base", None), ("tuned", ADAPTER)):
+    for label, adapter in (("base", None), ("tuned", args.adapter)):
         if adapter is not None and not adapter.is_dir():
             raise SystemExit(f"adapter 不存在：{adapter}（先跑 scripts/qlora_smoke.py）")
         model = AutoModelForCausalLM.from_pretrained(
@@ -122,10 +137,17 @@ def main() -> None:
         }
 
     lines = [
-        "# QLoRA 微调对照（base vs tuned，allocation holdout 4 例）",
+        f"# QLoRA 微调对照（base vs tuned，{args.cases.name} holdout {len(cases)} 例）",
         "",
-        f"- 模型：{MODEL}（4bit NF4）；tuned = base + `{ADAPTER.name}`（qlora_smoke 1-step 产物）",
+        f"- 模型：{MODEL}（4bit NF4）；tuned = base + `{args.adapter.name}`",
         "- 口径：allocation_cases 为受控合成场景（eval-dataset-spec §2），非真实工单数据。",
+    ]
+    if not is_frozen:
+        lines.append(
+            f"- 注意：本表用扩容集（{args.cases.name}）评测，与冻结 12 例口径 **不可混用**；"
+            "标签由 decide() 在 v3 参数下复算，不是人工判读。"
+        )
+    lines += [
         "",
         "| 案例 | 维度 | base | tuned |",
         "| --- | --- | --- | --- |",
@@ -135,30 +157,31 @@ def main() -> None:
             lines.append(f"| {case['case_id']} | {key} | {'✅' if b[key] else '❌'} | {'✅' if t[key] else '❌'} |")
     lines += [
         "",
-        "| 汇总（4 例命中率） | base | tuned |",
+        f"| 汇总（{len(cases)} 例命中率） | base | tuned |",
         "| --- | --- | --- |",
     ]
     for key in ["json_valid"] + EXPECT_KEYS:
         lines.append(f"| {key} | {summary['base'][key]:.0%} | {summary['tuned'][key]:.0%} |")
-    lines += [
-        "",
-        "> 诚实声明：smoke_adapter 仅 1 步反向传播，tuned 预期与 base 基本持平；",
-        "> 本表的目的是冻结评测口径，正式训练后同一脚本可直接复跑对比。",
-        "",
-        "## 正式训练后的结论（2026-11-07，3 epochs × 8 例 = 24 步，loss 2.54→1.60）",
-        "",
-        "1. **格式能力可教**：json_valid 0% → 75%（3/4 输出合法 JSON）。",
-        "2. **schema 对齐与数值推理教不会**（24 步训练量下）：tuned 的 JSON 字段名",
-        "   偏差（`allocation` 而非 `allocation_by_district`）、跨区算术仍全错（0%）。",
-        "3. **结论**：调度结论的正确计算交给带工具的 DeepSeek 主链路；本地小模型微调",
-        "   只用于验证训练管线与对照方法，不作为生产推理路径。",
-    ]
-    (OUT / "eval_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    (OUT / "eval_results.json").write_text(
+    if is_frozen:
+        lines += [
+            "",
+            "> 诚实声明：smoke_adapter 仅 1 步反向传播，tuned 预期与 base 基本持平；",
+            "> 本表的目的是冻结评测口径，正式训练后同一脚本可直接复跑对比。",
+            "",
+            "## 正式训练后的结论（2026-11-07，3 epochs × 8 例 = 24 步，loss 2.54→1.60）",
+            "",
+            "1. **格式能力可教**：json_valid 0% → 75%（3/4 输出合法 JSON）。",
+            "2. **schema 对齐与数值推理教不会**（24 步训练量下）：tuned 的 JSON 字段名",
+            "   偏差（`allocation` 而非 `allocation_by_district`）、跨区算术仍全错（0%）。",
+            "3. **结论**：调度结论的正确计算交给带工具的 DeepSeek 主链路；本地小模型微调",
+            "   只用于验证训练管线与对照方法，不作为生产推理路径。",
+        ]
+    (OUT / f"{stem}_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (OUT / f"{stem}_results.json").write_text(
         json.dumps({"summary": summary, "detail": results}, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    print("report:", OUT / "eval_report.md")
+    print("report:", OUT / f"{stem}_report.md")
     print("summary:", json.dumps(summary, ensure_ascii=False))
 
 
