@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import re
+import argparse
 from pathlib import Path
 
 import torch
@@ -71,9 +72,12 @@ def generate(model, tokenizer, messages: list[dict]) -> str:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cases", type=Path, default=CASES)
+    args = parser.parse_args()
     if not torch.cuda.is_available():
         raise SystemExit("CUDA is required")
-    cases = [c for c in json.loads(CASES.read_text(encoding="utf-8"))["cases"]
+    cases = [c for c in json.loads(args.cases.read_text(encoding="utf-8"))["cases"]
              if c.get("split") == "holdout"]
     quant = BitsAndBytesConfig(
         load_in_4bit=True, bnb_4bit_quant_type="nf4",
