@@ -922,7 +922,7 @@ canvas{display:block}</style>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let renderer,scene3,camera,controls,envTex=null;
 let rain=null,rainGeo=null;
-const K=0.10,CX=350,CY=165;
+const K=0.16,CX=350,CY=165;   // 投影缩放：放大间距，元素之间更疏朗
 function W(x,y){return[(x-CX)*K,(y-CY)*K]}
 // ---- 材质加载：一次加载、repeat 平铺、缓存复用 ----
 const texCache={};
@@ -1000,8 +1000,8 @@ function init(){
   document.body.appendChild(renderer.domElement);
   scene3=new THREE.Scene();scene3.background=new THREE.Color(0x1a2028);scene3.fog=new THREE.Fog(0x5a646e,70,200);
   camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,0.1,500);
-  camera.position.set(30,44,58);
-  controls=new THREE.OrbitControls(camera,renderer.domElement);controls.target.set(0,0.5,0);controls.maxPolarAngle=1.42;controls.minDistance=18;controls.maxDistance=120;controls.enableDamping=true;controls.dampingFactor=0.08;controls.update();
+  camera.position.set(48,68,92);
+  controls=new THREE.OrbitControls(camera,renderer.domElement);controls.target.set(0,0.5,0);controls.maxPolarAngle=1.42;controls.minDistance=30;controls.maxDistance=200;controls.enableDamping=true;controls.dampingFactor=0.08;controls.update();
   // 阴雨天空 HDR + 环境反射
   new THREE.RGBELoader().setDataType(THREE.UnsignedByteType).load('/assets/hdr/cloudy.hdr',function(hdr){
     hdr.mapping=THREE.EquirectangularReflectionMapping;
@@ -1129,21 +1129,27 @@ function build(sched){
           makeCar(wx,wz,ang,carColors[Math.floor(seeded()*carColors.length)])}t+=22}}
   });
   // ---- 积水段：高饱和蓝水面 + 白色描边，从灰地面强对比跳出 ----
+  // 直接用 XZ 平面铺顶点（与道路同一坐标语义：W→[x,z]），彻底消除 ShapeGeometry 旋转的轴向翻转错位
   const waterMat=new THREE.MeshBasicMaterial({color:0x0a8cff,depthTest:false,side:THREE.DoubleSide});
   const strokeMat=new THREE.LineBasicMaterial({color:0xffffff,linewidth:2,depthTest:false});
   water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));
     const cen=ps.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/ps.length);
-    const sh=new THREE.Shape();
-    ps.forEach((p,i)=>{const[wx,wz]=W(p[0],p[1]);if(i===0)sh.moveTo(wx,wz);else sh.lineTo(wx,wz)});
-    const g=new THREE.ShapeGeometry(sh);const m=new THREE.Mesh(g,waterMat);
-    m.rotation.x=Math.PI/2;m.position.y=0.55;m.renderOrder=999;scene3.add(m);
-    // 白色描边（沿积水轮廓）
-    const edges=new THREE.EdgesGeometry(g);
-    const line=new THREE.LineSegments(edges,strokeMat);
-    line.rotation.x=Math.PI/2;line.position.y=0.56;line.renderOrder=1000;scene3.add(line);
+    // 多边形凸包三角剖分（fan）：以质心为锚，拆成三角形，避免凹多边形破洞
+    const pts=ps.map(p=>{const[wx,wz]=W(p[0],p[1]);return[wx,wz]});
+    const[cx,cz]=W(cen[0],cen[1]);
+    const verts=[];
+    for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];
+      verts.push(cx,0,cz, a[0],0,a[1], b[0],0,b[1]);}
+    const varr=new Float32Array(verts);
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(varr,3));g.computeVertexNormals();
+    const m=new THREE.Mesh(g,waterMat);m.position.y=0.55;m.renderOrder=999;scene3.add(m);
+    // 白色描边（沿积水轮廓，同样 XZ 平面直接铺）
+    const lpts=[];
+    for(let i=0;i<=pts.length;i++){const p=pts[i%pts.length];lpts.push(p[0],0,p[1]);}
+    const lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(lpts),3));
+    const line=new THREE.Line(lg,strokeMat);line.position.y=0.56;line.renderOrder=1000;scene3.add(line);
     // 积水标注（白色衬底蓝字）
-    const[wx,wz]=W(cen[0],cen[1]);
-    const lb=makeLabel((e.label||'积水')+' '+((e.detail||'').match(/\\d+[.]?\\d*\\s*cm/)||[''])[0],'#ffffff');lb.position.set(wx,3.0,wz);scene3.add(lb)});
+    const lb=makeLabel((e.label||'积水')+' '+((e.detail||'').match(/\\d+[.]?\\d*\\s*cm/)||[''])[0],'#ffffff');lb.position.set(cx,3.0,cz);scene3.add(lb)});
   // ---- 设施：泵站(写实小楼) + 雨水口(井盖) ----
   fac.forEach(e=>{const fpos=TWIN3D_FAC[e.id]||[Number(e.cx),Number(e.cy)];const[wx,wz]=W(fpos[0],fpos[1]);const ps=e.id.indexOf('DF-PS')===0;
     if(ps){makeBuilding(2.6,2.6,2.6,wx,wz,0);
