@@ -1073,18 +1073,18 @@ function build(sched){
       for(let i=0;i<rd.pts.length-1;i++){const p0=rd.pts[i],p1=rd.pts[i+1];
         const dx=p1[0]-p0[0],dy=p1[1]-p0[1];const len=Math.hypot(dx,dy);if(len<5)continue;
         const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;
-        const off=14;
-        let t=6;while(t<len-6){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
+        const off=18;
+        let t=10;while(t<len-10){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
           [-1,1].forEach(function(side){
             const px=bx+nx*side*off,py=by+ny*side*off;
             if(Math.hypot(px-e.cx,py-e.cy)>r*0.95)return;
-            if(placed.some(q=>Math.hypot(q[0]-px,q[1]-py)<11))return;
+            if(placed.some(q=>Math.hypot(q[0]-px,q[1]-py)<18))return;
             // 避开积水面（内涝核心，楼栋不得压盖积水段）
             let nearWater=false;
             Object.values(TWIN3D_WATER).forEach(wp=>{const wc=wp.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/wp.length);
               if(Math.hypot(px-wc[0],py-wc[1])<16)nearWater=true});
             if(nearWater)return;
-            placed.push([px,py])});t+=10+seeded()*8}}
+            placed.push([px,py])});t+=16+seeded()*10}}
     });
     placed.forEach(p=>{
       const w=4.5+seeded()*4,d=4.5+seeded()*4,h=3.2+seeded()*seeded()*8;
@@ -1098,9 +1098,9 @@ function build(sched){
       const dx=p1[0]-p0[0],dy=p1[1]-p0[1];const len=Math.hypot(dx,dy);if(len<5)continue;
       const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;
       let t=8;while(t<len-8){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
-        if(main){[-1,1].forEach(function(side){const px=bx+nx*side*7,py=by+ny*side*7;
-          if(seeded()>0.25){const[wx,wz]=W(px,py);makeTree(wx,wz,0.7+seeded()*0.5)}})}
-        t+=9+seeded()*6}}
+        if(main){[-1,1].forEach(function(side){const px=bx+nx*side*8,py=by+ny*side*8;
+          if(seeded()>0.7){const[wx,wz]=W(px,py);makeTree(wx,wz,0.7+seeded()*0.5)}})}
+        t+=16+seeded()*8}}
   });
   // ---- 路灯（主干路两侧） ----
   netRoads.forEach(rd=>{if(rd.pts.length<2)return;
@@ -1109,7 +1109,7 @@ function build(sched){
       const dx=p1[0]-p0[0],dy=p1[1]-p0[1];const len=Math.hypot(dx,dy);if(len<5)continue;
       const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;
       let t=12;while(t<len-12){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
-        const[wx,wz]=W(bx+nx*5,by+ny*5);makeLamp(wx,wz);t+=20}}
+        const[wx,wz]=W(bx+nx*5,by+ny*5);makeLamp(wx,wz);t+=34}}
   });
   // ---- 路侧车辆 ----
   const carColors=[0x8899aa,0x6b7b8a,0x9aa7b2,0x5a6b7a,0x77828d];
@@ -1118,28 +1118,25 @@ function build(sched){
       const dx=p1[0]-p0[0],dy=p1[1]-p0[1];const len=Math.hypot(dx,dy);if(len<5)continue;
       const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;const ang=-Math.atan2(ny,nx);
       let t=16;while(t<len-16){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
-        if(seeded()>0.55){const[wx,wz]=W(bx+nx*8,by+ny*8);
-          makeCar(wx,wz,ang,carColors[Math.floor(seeded()*carColors.length)])}t+=14}}
+        if(seeded()>0.88){const[wx,wz]=W(bx+nx*8,by+ny*8);
+          makeCar(wx,wz,ang,carColors[Math.floor(seeded()*carColors.length)])}t+=22}}
   });
-  // ---- 积水段：淹没车道，明显蓝色 + 镜面反射 + 边缘水渍 ----
-  const waterMat=new THREE.MeshBasicMaterial({color:0x00b8ff,depthTest:false});
-  const waterEdgeMat=new THREE.MeshBasicMaterial({color:0x66d4ff,transparent:true,opacity:0.75,depthTest:false});
+  // ---- 积水段：高饱和蓝水面 + 白色描边，从灰地面强对比跳出 ----
+  const waterMat=new THREE.MeshBasicMaterial({color:0x0a8cff,depthTest:false,side:THREE.DoubleSide});
+  const strokeMat=new THREE.LineBasicMaterial({color:0xffffff,linewidth:2,depthTest:false});
   water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));
     const cen=ps.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/ps.length);
     const sh=new THREE.Shape();
     ps.forEach((p,i)=>{const[wx,wz]=W(p[0],p[1]);if(i===0)sh.moveTo(wx,-wz);else sh.lineTo(wx,-wz)});
-    // 主水面（略高于路面）
     const g=new THREE.ShapeGeometry(sh);const m=new THREE.Mesh(g,waterMat);
-    m.rotation.x=Math.PI/2;m.position.y=0.55;m.receiveShadow=true;m.renderOrder=999;scene3.add(m);
-    // 外扩水渍边缘
-    const sh2=new THREE.Shape();
-    ps.forEach((p,i)=>{const dx=p[0]-cen[0],dy=p[1]-cen[1];const L=Math.hypot(dx,dy)||1;const ex=dx/L*3,ey=dy/L*3;
-      const[wx,wz]=W(p[0]+ex,p[1]+ey);if(i===0)sh2.moveTo(wx,-wz);else sh2.lineTo(wx,-wz)});
-    const g2=new THREE.ShapeGeometry(sh2);const m2=new THREE.Mesh(g2,waterEdgeMat);
-    m2.rotation.x=Math.PI/2;m2.position.y=0.53;m2.renderOrder=998;scene3.add(m2);
-    // 积水标注（蓝色高亮）
+    m.rotation.x=Math.PI/2;m.position.y=0.55;m.renderOrder=999;scene3.add(m);
+    // 白色描边（沿积水轮廓）
+    const edges=new THREE.EdgesGeometry(g);
+    const line=new THREE.LineSegments(edges,strokeMat);
+    line.rotation.x=Math.PI/2;line.position.y=0.56;line.renderOrder=1000;scene3.add(line);
+    // 积水标注（白色衬底蓝字）
     const[wx,wz]=W(cen[0],cen[1]);
-    const lb=makeLabel((e.label||'积水')+' '+((e.detail||'').match(/\\d+[.]?\\d*\\s*cm/)||[''])[0],'#7dc4f0');lb.position.set(wx,3.0,wz);scene3.add(lb)});
+    const lb=makeLabel((e.label||'积水')+' '+((e.detail||'').match(/\\d+[.]?\\d*\\s*cm/)||[''])[0],'#ffffff');lb.position.set(wx,3.0,wz);scene3.add(lb)});
   // ---- 设施：泵站(写实小楼) + 雨水口(井盖) ----
   fac.forEach(e=>{const fpos=TWIN3D_FAC[e.id]||[Number(e.cx),Number(e.cy)];const[wx,wz]=W(fpos[0],fpos[1]);const ps=e.id.indexOf('DF-PS')===0;
     if(ps){makeBuilding(2.6,2.6,2.6,wx,wz,0);
