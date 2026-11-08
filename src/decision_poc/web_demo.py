@@ -1275,8 +1275,8 @@ function init(){
   document.body.appendChild(renderer.domElement);
   scene3=new THREE.Scene();scene3.background=new THREE.Color(0x1a2028);scene3.fog=new THREE.Fog(0x5a646e,70,200);
   camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,0.1,500);
-  camera.position.set(48,68,92);
-  controls=new THREE.OrbitControls(camera,renderer.domElement);controls.target.set(0,0.5,0);controls.maxPolarAngle=1.42;controls.minDistance=30;controls.maxDistance=200;controls.enableDamping=true;controls.dampingFactor=0.08;controls.update();
+  camera.position.set(18,34,52);   // 低空俯瞰：更近、更低，事件对象细节清晰可见
+  controls=new THREE.OrbitControls(camera,renderer.domElement);controls.target.set(0,0.5,0);controls.maxPolarAngle=1.42;controls.minDistance=12;controls.maxDistance=160;controls.enableDamping=true;controls.dampingFactor=0.08;controls.update();
   // 阴雨天空 HDR + 环境反射
   new THREE.RGBELoader().setDataType(THREE.UnsignedByteType).load('/assets/hdr/cloudy.hdr',function(hdr){
     hdr.mapping=THREE.EquirectangularReflectionMapping;
@@ -1469,9 +1469,26 @@ function build(sched){
         lamp.position.set(wx,7.6,wz);scene3.add(lamp);
         window.__pumpAlarms.push({lamp:lamp,beam:beam});
       }}
-    else{const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.12,16),new THREE.MeshStandardMaterial({color:0x5a6a7a,roughness:.5,metalness:.6}));
-      cap.position.set(wx,0.4,wz);cap.receiveShadow=true;scene3.add(cap)}});
-  // ---- 封路路障：在已封路段放置成组护栏 + 警示锥，动画阶段整体出现 ----
+    else{
+      // 雨水口（intake）：按台账状态区分呈现——clogged(堵塞)用橙色警示+反涌水花，in_service 用普通井盖
+      const clogged=/clogged|堵塞/.test(e.detail||'');
+      const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,0.14,16),
+        new THREE.MeshStandardMaterial({color:clogged?0xd9822b:0x5a6a7a,roughness:.5,metalness:.6}));
+      cap.position.set(wx,0.4,wz);cap.receiveShadow=true;
+      cap.userData={entityId:e.id,name:e.label||'雨水口',kind:'intake',detail:e.detail||''};
+      scene3.add(cap);
+      // 堵塞雨水口：橙色警示锥 + 反涌水花（小蓝水体），醒目区别于正常井盖
+      if(clogged){
+        const cone=new THREE.Mesh(new THREE.ConeGeometry(0.55,1.2,10),new THREE.MeshStandardMaterial({color:0xff8c2d,roughness:.4}));
+        cone.position.set(wx+0.8,0.95,wz);cone.castShadow=true;scene3.add(cone);
+        const gush=new THREE.Mesh(new THREE.SphereGeometry(0.8,14,12),
+          new THREE.MeshStandardMaterial({color:0x3a9be0,roughness:.1,metalness:.3,transparent:true,opacity:.85}));
+        gush.position.set(wx,0.75,wz);scene3.add(gush);
+        // 堵塞标注
+        const clogLabel=makeLabel('堵塞','#ffb066');clogLabel.position.set(wx,2.6,wz);scene3.add(clogLabel);
+      }
+    }});
+  // ---- 封路路障：台账里「已封/施工」路段是持久状态，护栏始终显示（不是跳5才封）----
   window.__roadBlocks=[];   // 供事件动画引用：封路护栏组（每组一个 Group）
   const blockMat=new THREE.MeshStandardMaterial({color:0xffc21a,roughness:.5,metalness:.2});
   const coneMat=new THREE.MeshStandardMaterial({color:0xff5a2d,roughness:.4});
@@ -1482,13 +1499,19 @@ function build(sched){
     for(let k=1;k<=3;k++){
       const f=k/(3+1);const px=ps[0][0]+(ps[1][0]-ps[0][0])*f, py=ps[0][1]+(ps[1][1]-ps[0][1])*f;
       const[wx,wz]=W(px,py);
-      const bar=new THREE.Mesh(new THREE.BoxGeometry(2.6,0.55,0.2),blockMat);
-      bar.position.set(wx,0.68,wz);bar.castShadow=true;grp.add(bar);
-      const leg1=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.6,0.18),blockMat);leg1.position.set(wx-1.15,0.3,wz);grp.add(leg1);
-      const leg2=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.6,0.18),blockMat);leg2.position.set(wx+1.15,0.3,wz);grp.add(leg2);
-      const cone=new THREE.Mesh(new THREE.ConeGeometry(0.28,0.55,10),coneMat);cone.position.set(wx+0.5,0.28,wz+0.5);grp.add(cone);
+      // 放大护栏：远景相机下也能一眼看到封路
+      const bar=new THREE.Mesh(new THREE.BoxGeometry(3.6,0.8,0.28),blockMat);
+      bar.position.set(wx,0.9,wz);bar.castShadow=true;grp.add(bar);
+      const leg1=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.9,0.22),blockMat);leg1.position.set(wx-1.6,0.45,wz);grp.add(leg1);
+      const leg2=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.9,0.22),blockMat);leg2.position.set(wx+1.6,0.45,wz);grp.add(leg2);
+      const cone=new THREE.Mesh(new THREE.ConeGeometry(0.45,0.9,10),coneMat);cone.position.set(wx+0.6,0.45,wz+0.6);grp.add(cone);
     }
-    grp.visible=false;scene3.add(grp);window.__roadBlocks.push({mesh:grp});
+    // 封路标牌
+    const sign=makeLabel('封路','#ffc21a');sign.position.set(grp.children.length?grp.children[0].position.x:W(ps[0][0],ps[0][1])[0],3.0,grp.children.length?grp.children[0].position.z:W(ps[0][0],ps[0][1])[1]);
+    grp.add(sign);
+    grp.visible=true;   // 台账「已封/施工」= 持久封路，始终显示
+    grp.userData={entityId:rd.id,name:rd.label||'封路',kind:'road',detail:rd.detail||''};
+    scene3.add(grp);window.__roadBlocks.push({mesh:grp});
   });
   // 场景摆完才建光环与锚点：此时每个实体的 mesh 已经挂在 scene 上
   buildRings();
@@ -1580,8 +1603,7 @@ function applyVisual(v){
   });
   // 告警：光柱 + 顶灯
   (window.__pumpAlarms||[]).forEach(p=>{p.on=!!v.alarm;if(p.beam)p.beam.visible=!!v.alarm;if(p.lamp)p.lamp.visible=!!v.alarm});
-  // 封路：护栏组整体显隐
-  (window.__roadBlocks||[]).forEach(b=>{b.mesh.visible=!!v.block});
+  // 封路护栏：台账「已封/施工」是持久状态，始终显示，不随跳次显隐
   // 雨势：雨丝透明度随跳次（暴雨→积水→处置转小）
   if(rain&&rain.material){rain.material.opacity=0.12+v.rain*0.55;}
 }
