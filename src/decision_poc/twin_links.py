@@ -338,6 +338,9 @@ def build_twin_links(
                 "state": state,
                 "state_label": CARD_STATE_LABEL[state],
                 "visual": CARD_VISUAL[state],
+                # 1..MAX_JUMP 每一跳的状态，前端直接按下标取。
+                # 让页面自己算状态等于把规则复制一份到 JS 里，改一处漂一处。
+                "states": [card_state(card, jump) for jump in range(1, MAX_JUMP + 1)],
                 "co_sign_required": [str(item) for item in card.get("co_sign_required") or []],
                 "entity_ids": card_entities.get(card_id, []),
                 "work_order_ids": cards_by_order.get(card_id, []),
@@ -362,6 +365,12 @@ def build_twin_links(
         # 没有卡的对象退回自身的静态状态（积水/封路等），不给它编一个执行态。
         priority = ("needs_confirm", "running", "pending", "done")
         owner_state = next((state for state in priority if state in states), "")
+        by_jump: list[str] = []
+        for jump in range(1, MAX_JUMP + 1):
+            jump_states = {
+                row["states"][jump - 1] for row in linked_cards if len(row.get("states") or []) >= jump
+            }
+            by_jump.append(next((state for state in priority if state in jump_states), ""))
         entity_rows[entity_id] = {
             "id": entity_id,
             "kind": str(entity.get("kind") or ""),
@@ -402,6 +411,7 @@ def build_twin_links(
             "card_state": owner_state,
             "card_state_label": CARD_STATE_LABEL.get(owner_state, ""),
             "visual": CARD_VISUAL.get(owner_state, ""),
+            "states": by_jump,
         }
 
     return {
@@ -412,6 +422,13 @@ def build_twin_links(
         "cards": card_rows,
         "entities": entity_rows,
         "results": build_results(payload, cards=card_rows, entities=entity_rows, orders=orders),
+        # 组织代码 → 中文名，页面显示"上报 ORG-DRAIN"没人看得懂。
+        # 原文（detail / evidence）不改写，保留可追溯性；只翻译结构化字段。
+        "organizations": {
+            str(item.get("org_id")): str(item.get("org_name"))
+            for item in departments
+            if item.get("org_id")
+        },
         "counts": {
             "jumps": len(jumps),
             "cards": len(card_rows),

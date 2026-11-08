@@ -395,10 +395,12 @@ IMPACT_STYLE = '''<style>.impact-card{--impact-ink:#173238;--impact-muted:#667a7
 .ent-item:hover,.ent-item.selected{border-color:var(--impact-teal);box-shadow:0 2px 8px rgba(15,118,110,.15)}
 .ent-item .no{flex:0 0 22px;height:22px;border-radius:50%;background:var(--impact-teal-soft);color:var(--impact-teal);font:700 12px/22px ui-monospace,monospace;text-align:center}
 .ent-item b{font-size:13.5px;color:var(--impact-ink)}
-.ent-item small{display:block;font-size:12px;color:var(--impact-muted);margin-top:2px}
-.ent-item .ent-kind{margin-left:auto;flex:0 0 auto;font-size:11px;padding:3px 8px;border-radius:999px;background:#eef2f4;color:#5a6b6d}
+.ent-item small{display:block;font-size:12px;color:var(--impact-muted);margin-top:2px}.ent-item .ent-kind{margin-left:auto;flex:0 0 auto;font-size:11px;padding:3px 8px;border-radius:999px;background:#eef2f4;color:#5a6b6d}
 .ent-item:focus-visible{outline:2px solid var(--impact-coral);outline-offset:2px}
-@media(max-width:800px){.scene-detail-grid{grid-template-columns:1fr}.impact-flow{display:flex;flex-wrap:wrap}.impact-flow span{flex:1 1 28%}.impact-flow b{flex:0 0 auto}}</style>'''
+@media(max-width:800px){.scene-detail-grid{grid-template-columns:1fr}.impact-flow{display:flex;flex-wrap:wrap}.impact-flow span{flex:1 1 28%}.impact-flow b{flex:0 0 auto}}
+.deep{color:var(--impact-teal);font-weight:600;text-decoration:none;border-bottom:1px dashed rgba(15,118,110,.45);white-space:nowrap}
+.deep:hover{border-bottom-style:solid}
+.tl .mt .deep{font-size:11.5px}</style>'''
 PAGE_STYLE = '''<style>
 :root{--page-bg:#eef2ef;--ink:#173238;--muted:#6c7e7f;--line:#d9e3e0;--surface:#fff;--accent:#0f766e;--accent-soft:#e2f1ed;--warning:#c56d45;--shadow:0 10px 28px rgba(23,50,56,.07)}
 *{box-sizing:border-box}body{font-family:"Inter","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;background:var(--page-bg);color:var(--ink);line-height:1.55}main{max-width:1360px;padding:36px 40px 72px}.page-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;padding:22px 0 30px;border-bottom:1px solid var(--line)}.page-hero .eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--accent);text-transform:uppercase}.page-hero h1{margin:7px 0 8px;color:var(--ink);font-size:clamp(28px,3vw,42px);line-height:1.12;font-weight:800}.page-hero .sub{max-width:760px;color:var(--muted);font-size:15px}.guide{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0 0;border-top:0}.guide>div{min-height:112px;padding:17px 18px;background:rgba(255,255,255,.72);border:1px solid var(--line);border-radius:14px;color:var(--muted);line-height:1.55}.guide>div:first-child{padding-left:18px;border-left:1px solid var(--line)}.guide b{color:var(--accent);font:800 11px ui-monospace,monospace;letter-spacing:.08em}.guide span{color:var(--ink);font-size:16px;margin:6px 0 5px}.toolbar{gap:10px;margin:18px 0}.toolbar button,button{min-height:42px;padding:10px 16px;border:1px solid transparent;border-radius:10px;background:var(--accent);color:#fff;font-weight:750;box-shadow:0 5px 12px rgba(15,118,110,.16);transition:background 180ms ease,transform 180ms ease,box-shadow 180ms ease}.toolbar button:hover,button:hover{background:#0b625d;transform:translateY(-1px);box-shadow:0 8px 16px rgba(15,118,110,.22)}button:focus-visible,a:focus-visible{outline:3px solid rgba(197,109,69,.45);outline-offset:3px}.navlink{color:var(--accent);font-weight:750}.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--shadow)}section.card{margin-top:20px!important}.card h2{margin:0 0 16px;color:var(--ink);font-size:19px;line-height:1.25}.card h2 span{color:var(--muted)!important;font-size:12px!important;font-weight:500!important}.sub{color:var(--muted)}#summary{padding:24px 26px;background:#183b3f;border-color:#183b3f;color:#fff;box-shadow:0 16px 32px rgba(24,59,63,.18)}#summary h2{color:#fff}#summary .sub{color:#c7dcd8}#metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.metric{display:block;margin:0;padding:14px 15px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);border-radius:12px;color:#c7dcd8}.metric b{margin-bottom:4px;color:#fff;font-size:24px;line-height:1.1}.primary-grid{grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);gap:20px;align-items:start}.primary-grid>.card{height:100%}.data-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.data-grid>.card{min-height:220px}.process-card{background:#f8fbfa}.chain{gap:2px}.lnk{grid-template-columns:32px 150px minmax(0,1fr) minmax(0,220px);padding:12px 0 12px 14px;border-left-color:#c9d9d6}.lnk.on{border-left-color:var(--accent);opacity:1}.lnk .no{color:#78908f}.lnk .who{color:#68807f}.lnk .what b{color:var(--ink)}.lnk .what div{color:var(--muted)}.lnk .tool{color:var(--accent)}.row,.ord{border-bottom-color:#e3ebe8}.row b{color:var(--accent)}.pill,.tag{background:#edf5f3;color:var(--accent);border:1px solid #d5e4e0}.warn{color:var(--warning)}.ok{color:#247a58}.trace{border-left-color:var(--accent)}.plan{gap:12px}.plan .col{background:#f8fbfa;border-color:var(--line);border-radius:12px}.plan .col h3{color:var(--ink)}.plan .col.now{border-color:#78b7a9;background:#f0f9f5}.plan .col.alt{border-color:#e2b493;background:#fff8f2}.ivbtn,.ghost,.cat{background:#edf5f3!important;color:var(--accent)!important;border:1px solid #cfe1dc!important;box-shadow:none!important}.ivbtn:hover,.ghost:hover,.cat:hover{background:#dceee9!important}.cat.sel{background:var(--accent)!important;color:#fff!important}.tl li{border-left-color:#d4e1de}.tl li.on{border-left-color:var(--accent)}.tl .ttl{color:var(--ink)}.tl .dsc{color:var(--muted)}.tl .mt{color:#78908f}.tl ul.basis{color:var(--muted)}.tech{margin-top:28px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.62)}.tech>summary{padding:17px 20px;color:var(--ink);font-size:14px}.tech>summary::before{color:var(--accent)}.tech>div{padding:0 20px 22px}.tech .card{box-shadow:none;background:#fbfdfc}.tech #panel,.tech #comparebody,.tech #llmbody{color:var(--muted)}#log{border-color:var(--line)}.impact-card{box-shadow:var(--shadow)}@media(max-width:960px){main{padding:26px 24px 56px}.page-hero{display:block}.page-hero .navlink{display:inline-block;margin-top:14px}.primary-grid,.data-grid{grid-template-columns:1fr}.primary-grid>.card{height:auto}#metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.lnk{grid-template-columns:32px minmax(0,1fr)}.lnk .who,.lnk .what,.lnk .tool{grid-column:2;text-align:left}}@media(max-width:640px){main{padding:20px 16px 44px}.page-hero{padding:12px 0 22px}.page-hero h1{font-size:30px}.guide{grid-template-columns:1fr}.guide>div{min-height:auto}.toolbar{align-items:stretch}.toolbar button{width:100%}#metrics{grid-template-columns:1fr 1fr}.metric b{font-size:20px}.card{padding:18px}.data-grid{gap:14px}}
@@ -585,8 +587,23 @@ function streamEvents(){if(!STREAM)return[];return (STREAM.events||[]).filter(e=
 function renderCats(){if(!STREAM)return;cats.innerHTML='<button class="cat'+(STREAMCAT==='all'?' sel':'')+'" onclick="filterCat(\\'all\\')">全部 '+STREAM.counts.events+'</button>'+(STREAM.categories||[]).map(c=>'<button class="cat'+(STREAMCAT===c.id?' sel':'')+'" onclick="filterCat(\\''+c.id+'\\')">'+esc(c.label)+' '+c.count+'</button>').join('')}
 function renderStream(){timeline.innerHTML='';const evs=streamEvents();evs.forEach(e=>{const li=document.createElement('li');li.classList.add('on');
   const basis=(e.basis&&e.basis.length)?'<ul class=basis>'+e.basis.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul>':'';
-  li.innerHTML='<div class=hd><span class=seq>'+String(e.seq).padStart(2,'0')+'</span><span class="ttl k-'+esc(e.kind)+'">'+esc(e.title)+'</span><span class=tag>'+esc(catLabel(e.category))+'</span><span class=tag>'+esc(zh(EVST,e.status))+'</span></div><div class=dsc>'+esc(e.detail)+'</div><div class=mt>取自推演输出 '+esc(e.source)+' · 证据 '+esc(e.ref_count)+' 条</div>'+basis;
+  li.innerHTML='<div class=hd><span class=seq>'+String(e.seq).padStart(2,'0')+'</span><span class="ttl k-'+esc(e.kind)+'">'+esc(e.title)+'</span><span class=tag>'+esc(catLabel(e.category))+'</span><span class=tag>'+esc(zh(EVST,e.status))+'</span></div><div class=dsc>'+esc(e.detail)+'</div><div class=mt>取自推演输出 '+esc(e.source)+' · 证据 '+esc(e.ref_count)+' 条'+jumpLink(e)+'</div>'+basis;
   timeline.appendChild(li)})}
+// 六跳事件直接给出沙盘深链接：跳次号由 /api/twin-links 的 jumps 给出，
+// 前端不自己按下标记数——事件流里还混着冲突明细，数错一位就跳到别的跳。
+function jumpLink(e){
+  if(!TLINKS||e.category!=='timeline'||e.kind!=='stage'||!e.phase)return '';
+  const j=(TLINKS.jumps||[]).find(x=>x.phase===e.phase);
+  if(!j)return '';
+  const ent=(j.entity_ids||[])[0]||'';
+  const href='/twin3d?jump='+j.jump+(ent?'&entity='+encodeURIComponent(ent):'');
+  return ' · <a class=deep href="'+esc(href)+'" target=_blank rel=noopener>在沙盘查看 →</a>';
+}
+function entityJump(id){
+  if(!TLINKS)return 1;
+  const hits=(TLINKS.cards||[]).filter(c=>(c.entity_ids||[]).indexOf(id)>=0).map(c=>c.jump||1);
+  return hits.length?Math.min.apply(null,hits):1;
+}
 function filterCat(c){STREAMCAT=c;renderCats();renderStream();tlstatus.textContent='显示 '+streamEvents().length+' 条 · '+catLabel(c)}
 async function loadStream(){const r=await fetch('/api/event-stream');STREAM=await r.json();renderCats();renderStream();tlstatus.textContent='已加载 '+STREAM.counts.events+' 条 · 点「回放事件流」看先后顺序';tlfoot.textContent='六类计数：'+(STREAM.categories||[]).map(c=>c.label+' '+c.count).join(' · ')+' ｜ '+STREAM.source}
 async function playTimeline(){tlstatus.textContent='读取事件流…';const r=await fetch('/api/event-stream');STREAM=await r.json();renderCats();renderStream();
@@ -612,7 +629,10 @@ async function loadCollab(){const r=await fetch('/api/collab-review');const d=aw
  const byAgent={};(d.cards||[]).forEach(x=>{(byAgent[x.agent_id]=byAgent[x.agent_id]||[]).push(x)});
  cvcards.innerHTML=Object.keys(byAgent).map(a=>'<div class=cvwho>'+esc(orgName(a))+'<span class=tag>'+byAgent[a].length+' 张动作卡</span></div>'+byAgent[a].map(x=>'<div class=cvrow><span class=tag>'+esc(zh(CSTAGE,x.stage))+'</span><span class=cvact title="'+esc(x.action)+'">'+esc(clipText(x.action,80))+'</span><b class="'+(x.status==='accepted'?'ok':'warn')+'">'+esc(zh(CSTAT,x.status))+'</b></div>').join('')).join('');
  cvhand.textContent=(d.handoffs||[]).length?'交接关系：'+d.handoffs.map(h=>orgName(h.from_agent)+' → '+orgName(h.to_agent)+'（'+h.card_ids.length+' 张）').join(' ｜ '):'本次无需角色交接；每个部门只复核自己职责范围内的动作卡'}
-let SCHED=null;
+let SCHED=null,TLINKS=null;
+// 沙盘关联层：主页面只借两样东西——六跳的跳次号与"这一跳挂了哪些对象"。
+// 跳次号必须来自后端，前端自己数会把冲突明细算成第 5、6 跳。
+async function loadTwinLinks(){try{const r=await fetch('/api/twin-links?jump=7');TLINKS=await r.json()}catch(e){TLINKS=null}return TLINKS}
 const SCENE_KIND={'water':'积水 / 事件','road':'道路','facility':'设施','district':'片区'};const SCENE_STATE={'incident':'当前事件','water':'积水影响','closed':'已封闭','under_construction':'施工中','clogged':'堵塞','fault_pending_repair':'待维修','in_service':'正常','normal':'正常','active':'处置中'};let SCENE_SELECTED_ID='';
 /* DOM 引用必须显式声明。此前靠「id 与变量同名时自动挂到 window」的浏览器遗留行为跑，
    名字对得上（orders/resboard/plans/...）就侥幸能跑，对不上（id 是 scene-summary 而代码写
@@ -643,7 +663,8 @@ function pickEntity(id){if(!SCHED)return;const e=(SCHED.scene.entities||[]).find
  const evidence=(e.links.evidence||[]).length?(e.links.evidence||[]).map(refCn).join(' · '):'暂无台账依据';
  sceneDetail.innerHTML='<div class=scene-detail-head><span class=scene-kind>'+esc(SCENE_KIND[e.kind]||e.kind)+'</span><b>'+esc(e.label)+'</b><span class=scene-state>'+esc(SCENE_STATE[e.state]||e.state||'待确认')+'</span></div>'+
   '<div class=scene-detail-grid><div><small>影响说明</small><strong>'+esc(e.detail||'暂无说明')+'</strong></div><div><small>关联工单</small><strong>'+orders+'</strong></div><div><small>所需资源</small><strong>'+resources+'</strong></div></div>'+
-  '<details class=scene-evidence><summary>查看判断依据</summary><div class=evidence>'+esc(evidence)+'</div></details>'}
+  '<details class=scene-evidence><summary>查看判断依据</summary><div class=evidence>'+esc(evidence)+'</div></details>'+
+  '<div style="margin-top:10px"><a class=deep href="/twin3d?jump='+entityJump(id)+'&entity='+encodeURIComponent(id)+'" target=_blank rel=noopener>在三维沙盘中查看该对象 →</a></div>'}
 function entKey(ev,id){const k=ev.key;if(k==='Enter'||k===' '||k==='Spacebar'||k==='Space'){ev.preventDefault();pickEntity(id)}}
 function renderDepartments(){const el=document.getElementById('departments');
  if(!SCHED||!SCHED.departments||!SCHED.departments.length){el.innerHTML='<span class=sub>部门台账加载中…</span>';return}
@@ -683,7 +704,7 @@ async function runChain(){if(!SCHED){chainstatus.textContent='加载中…';awai
  const ls=[...document.getElementById('chain').children];chainstatus.textContent='执行中 0/'+ls.length;
  for(let i=0;i<ls.length;i++){ls[i].classList.remove('on');await new Promise(done=>setTimeout(done,200));ls[i].classList.add('on');chainstatus.textContent='第 '+(i+1)+'/'+ls.length+' 环：'+(((SCHED.chain||{}).stages||[])[i]||{}).title}
  chainstatus.textContent='链路完成：'+((SCHED.chain||{}).counts||{}).stages+' 环'}
-loadPlatform();loadLog();loadStream();loadInterventions();loadCollab();run();try{if(localStorage.getItem('urban-proj')==='1'||new URLSearchParams(location.search).get('proj')==='1')toggleProjection()}catch(e){}loadScheduler().then(function(){chainAll(true)});</script></html>""".replace("</style>\n<main>", "</style>"+IMPACT_STYLE+"\n<main>").replace("</style><main>", "</style>"+IMPACT_STYLE+"<main>").replace("</div></details></main>\n<script>", "</div></details>"+PAGE_STYLE+"</main>\n<script>")
+loadPlatform();loadLog();loadInterventions();loadCollab();run();try{if(localStorage.getItem('urban-proj')==='1'||new URLSearchParams(location.search).get('proj')==='1')toggleProjection()}catch(e){}loadTwinLinks().then(loadStream);loadScheduler().then(function(){chainAll(true)});</script></html>""".replace("</style>\n<main>", "</style>"+IMPACT_STYLE+"\n<main>").replace("</style><main>", "</style>"+IMPACT_STYLE+"<main>").replace("</div></details></main>\n<script>", "</div></details>"+PAGE_STYLE+"</main>\n<script>")
 
 
 # --- 可视化端点 -----------------------------------------------------------
@@ -921,11 +942,34 @@ def build_twin3d_html() -> str:
 #legend{position:fixed;left:18px;bottom:16px;z-index:5;pointer-events:none;font-size:12px;color:#93a7bb;line-height:1.9}
 #legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 #tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}#evidence-card{position:fixed;left:18px;top:84px;width:260px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);font-size:12px;color:#a9bfd2}#evidence-card b{color:#e0f2fe;display:block;margin-bottom:6px}#entity-card{position:fixed;right:18px;top:84px;width:250px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);display:none}#entity-card b{color:#e0f2fe}#entity-card span{display:block;margin-top:6px;color:#a9bfd2;font-size:12px}#timeline{position:fixed;left:18px;right:18px;bottom:48px;z-index:6;display:flex;gap:6px;align-items:center;background:rgba(7,18,28,.84);padding:8px 10px;border-radius:10px}#timeline button{background:#1a3042;color:#d7e4f0;border:1px solid #496579;border-radius:5px;padding:4px 8px;cursor:pointer}#timeline button.active{background:#1976a8}
-canvas{display:block}</style>
-<div id=hud><b>城市内涝三维数字孪生 · 写实沙盘</b><span>兴华路片区(A-03) 与 建设大道片区(B-01) · 坐标来自 scene.json 台账实时投影</span></div>
+canvas{display:block}
+#entity-card{width:322px;max-height:calc(100vh - 190px);overflow:auto}
+#entity-card::-webkit-scrollbar{width:6px}#entity-card::-webkit-scrollbar-thumb{background:#2c4459;border-radius:3px}
+.ec-sec{margin-top:9px;padding-top:8px;border-top:1px solid rgba(122,162,198,.25)}
+.ec-sec>small{display:block;color:#7b93aa;font-size:11px;margin-bottom:4px;letter-spacing:.4px}
+.ec-row{display:flex;gap:8px;align-items:baseline;font-size:12px;color:#b6c9da;padding:2px 0}
+.ec-row b{margin-left:auto;color:#dbe9f5;font-weight:600;white-space:nowrap}
+.ec-card{font-size:11.5px;line-height:1.5;color:#a9bfd2;padding:5px 0;border-bottom:1px dashed rgba(122,162,198,.18)}
+.ec-card em{color:#7b93aa;font-style:normal}
+.badge{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:99px;border:1px solid #3d5568;color:#8fa3b5;background:rgba(60,80,100,.3);white-space:nowrap}
+.badge.b-active{color:#4fc3f7;border-color:#2b7fa8;background:rgba(20,90,130,.35)}
+.badge.b-done{color:#6ee7a8;border-color:#2f7a56;background:rgba(20,80,55,.35)}
+.badge.b-alert{color:#f5c063;border-color:#8a6a2a;background:rgba(110,80,20,.35)}
+.ec-empty{color:#64788c;font-size:11.5px}
+#results-card{position:fixed;left:18px;bottom:92px;z-index:7;width:300px;max-height:46vh;overflow:auto;padding:10px 12px;border-radius:10px;background:rgba(7,18,28,.9);border:1px solid rgba(122,162,198,.4);font-size:11.5px;color:#a9bfd2}
+#results-card>b{color:#e0f2fe;display:block;margin-bottom:6px;font-size:12px}
+#results-card summary{cursor:pointer;color:#7ed4ff;font-size:12px;margin-bottom:4px}
+.rc-row{padding:5px 0;border-bottom:1px dashed rgba(122,162,198,.18)}
+.rc-row .v{color:#dbe9f5;font-weight:600}
+.rc-row .v i{color:#6f8499;font-style:normal;font-weight:400}
+.rc-row .n{display:block;color:#6f8499;font-size:10.5px;margin-top:2px;line-height:1.4}
+#jump-buttons button.settle{background:#1d4a3a;border-color:#3f8a6a}
+#jump-buttons button.settle.active{background:#2f8a63}
+#hud small{display:block;margin-top:4px;font-size:11px;color:#6f8499}</style>
+<div id=hud><b>城市内涝三维数字孪生 · 写实沙盘</b><span>兴华路片区(A-03) 与 建设大道片区(B-01) · 坐标来自 scene.json 台账实时投影</span><small id=hud-src>关联层加载中…</small></div>
 <div id=event-bar><b>暴雨来袭 · 积水上涨</b><span>事件推演 · 阶段 1/4</span></div>
 <div id=legend><span><i style=background:#4a6fa5></i>积水段</span> &nbsp; <span><i style=background:#e0a965></i>已封路</span> &nbsp; <span><i style=background:#5a6a7a></i>泵站</span> &nbsp; <span><i style=background:#ff2d2d></i>故障告警</span></div>
-<div id=evidence-card><b>当前跳次证据</b><span id=evidence-body>等待事件数据…</span><br><a href="/" style="color:#7ed4ff">返回主页面事件台</a></div><div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><span id=jump-buttons></span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
+<div id=evidence-card><b>当前跳次证据</b><span id=evidence-body>等待事件数据…</span><br><a href="/" style="color:#7ed4ff">返回主页面事件台</a></div><div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span><div id=entity-links></div></div><div id=results-card><b>处置前后结果</b><details id=results-details open><summary id=results-summary>展开对照</summary><div id=results-body>加载中…</div><div id=results-note style='margin-top:6px;color:#64788c;font-size:10.5px'></div></details></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><button id=settle>处置后</button><span id=jump-buttons></span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
 <script src="/three.min.js"></script>
 <script src="/RGBELoader.js"></script>
 <script src="/OrbitControls.js"></script>
@@ -1033,6 +1077,7 @@ function init(){
   // 雨丝粒子
   makeRain();
   renderer.setAnimationLoop(tick);
+  bindUI();
 }
 function makeRain(){
   const N=900;const pos=new Float32Array(N*3);
@@ -1042,11 +1087,6 @@ function makeRain(){
   rain=new THREE.Points(rainGeo,m);rain.frustumCulled=false;scene3.add(rain)}
 function build(sched){
   twinState.scheduler=sched;
-  const raw=(sched.event_stream&&sched.event_stream.events)||[];
-  twinState.jumps=raw.filter(e=>e.category==='timeline').slice(0,6).map((e,i)=>({name:e.title||e.label||e.kind||(`事件 ${i+1}`),source:e}));
-  if(!twinState.jumps.length)twinState.jumps=__EVT_PHASES.map(p=>({name:p.name}));
-  renderJumpControls();
-  if(requestedJump)twinState.currentJump=requestedJump;
   const ents=(sched.scene&&sched.scene.entities)||[];
   const roads=ents.filter(e=>e.kind==='road'),water=ents.filter(e=>e.kind==='water'),fac=ents.filter(e=>e.kind==='facility'),dist=ents.filter(e=>e.kind==='district');
   // 规划路网：以两个片区中心为锚的正交网格（主干贯穿、次干连接、支路切分街区）
@@ -1191,60 +1231,284 @@ function build(sched){
     const bar=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.5,0.18),blockMat);
     bar.position.set(mx,0.62,mz);bar.castShadow=true;scene3.add(bar);window.__roadBlocks.push({mesh:bar,mat:blockMat});
   });
+  // 场景摆完才建光环与锚点：此时每个实体的 mesh 已经挂在 scene 上
+  buildRings();
+  loadTwinLinks().then(()=>setJump(twinState.currentJump));
 }
 function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(9,2.25,1);return sp}
-// ---- 事件线动画状态机：六跳推演压缩为 4 个可视阶段，循环播放 ----
-// 阶段：0 暴雨积水上涨 -> 1 泵站告警闪红 -> 2 封路 -> 3 调泵排水回落
-let __evtClock=0, __evtPhase=-1, __evtPlaying=true, __lastFrame=performance.now();
-const twinState={jumps:[],currentJump:0,selectedEntity:null,scheduler:null};
-const requestedJump=Math.max(0,Number(new URLSearchParams(location.search).get("jump")||0));
-function renderJumpControls(){const box=document.getElementById("jump-buttons");if(!box)return;box.innerHTML=twinState.jumps.map((j,i)=>`<button class="${i===twinState.currentJump?"active":""}" data-jump="${i}">${i+1}. ${esc(j.name||("事件"+(i+1)))}</button>`).join("");box.querySelectorAll("button").forEach(b=>b.onclick=()=>setJump(Number(b.dataset.jump)));document.getElementById("play").textContent=__evtPlaying?"暂停":"播放";}
-function updateEvidence(){const j=twinState.jumps[twinState.currentJump]||{};const e=j.source||{};const body=document.getElementById("evidence-body");if(body)body.innerHTML="事件："+(j.name||"未命名")+"<br>动作："+(e.detail||e.description||"状态同步")+"<br>来源：scheduler 事件流<br>状态：演示推演";}
-function setJump(i){twinState.currentJump=Math.max(0,Math.min(twinState.jumps.length-1,i));__evtClock=twinState.currentJump*3.5;renderJumpControls();updateEvidence();}
-
-const __EVT_PHASES=[
-  {name:'暴雨来袭 · 积水上涨', dur:3.5, step:null},
-  {name:'泵站告警 · 兴华路泵站故障', dur:3.0, step:null},
-  {name:'封路管控 · 兴华路/滨河路封闭', dur:3.0, step:null},
-  {name:'调度调泵 · 积水回落', dur:3.5, step:null},
+// ---- 六跳推演状态机：跳次是唯一事实来源，视觉、详情、对照都跟着跳次走 ----
+// 1..6 是推演的六跳（来自 /api/twin-links 的 jumps），7 是"处置后"——六跳全过，
+// 只用于看处置结果，不是第七个阶段。
+let __evtClock=0,__evtPhase=-1,__evtPlaying=false,__lastFrame=performance.now();
+let LINKS=null,CARD_INDEX={},RINGS={},ANCHORS={};
+const MAX_JUMP=7;
+const RING_COLOR={pending:0x5a6b7a,running:0x4fc3f7,needs_confirm:0xf5c063,done:0x34d399};
+const JUMP_VISUAL=[
+  {water:0.18,alarm:false,block:false},
+  {water:0.45,alarm:false,block:false},
+  {water:0.55,alarm:true, block:false},
+  {water:0.62,alarm:true, block:false},
+  {water:0.70,alarm:true, block:true},
+  {water:0.40,alarm:false,block:true},
+  {water:0.10,alarm:false,block:true},
 ];
-function __evtStep(dt){
-  __evtClock+=dt;
-  const total=__EVT_PHASES.reduce((a,p)=>a+p.dur,0);
-  const t=__evtClock%total;
-  // 计算当前阶段
-  let acc=0, ph=0;
-  for(let i=0;i<__EVT_PHASES.length;i++){acc+=__EVT_PHASES[i].dur;if(t<acc){ph=i;break;}}
-  if(ph!==__evtPhase){
-    __evtPhase=ph;
-    const bar=document.getElementById('event-bar');
-    if(bar)bar.innerHTML='<b>'+__EVT_PHASES[ph].name+'</b><span>事件推演 · 阶段 '+(ph+1)+'/4</span>';
+function requestedParams(){
+  const q=new URLSearchParams(location.search);
+  let jump=Math.round(Number(q.get('jump')||1));
+  if(!isFinite(jump)||jump<1)jump=1; if(jump>MAX_JUMP)jump=MAX_JUMP;
+  return {jump:jump,entity:(q.get('entity')||'').trim()};
+}
+const REQUESTED=requestedParams();
+const twinState={jumps:[],currentJump:REQUESTED.jump-1,selectedEntity:REQUESTED.entity||null,scheduler:null};
+function jumpTitle(i){
+  if(i>=6)return '处置后 · 六跳动作执行完毕';
+  const j=LINKS&&LINKS.jumps&&LINKS.jumps[i];
+  return j?j.title:'第 '+(i+1)+' 跳';
+}
+// 按钮位窄，标题只留冒号后半（"观测：事件识别" → "事件识别"），完整标题在顶栏
+function shortTitle(text){
+  const parts=String(text||'').split('：');
+  return parts.length>1?parts.slice(1).join('：'):String(text||'');
+}
+function jumpRealIndex(i){return Math.min(i,5)}
+function renderJumpControls(){
+  const box=document.getElementById('jump-buttons');if(!box)return;
+  let html='';
+  for(let i=0;i<6;i++)html+='<button class="'+(i===twinState.currentJump?'active':'')+'" data-jump="'+i+'" title="'+esc(jumpTitle(i))+'">'+(i+1)+'. '+esc(shortTitle(jumpTitle(i)))+'</button>';
+  html+='<button class="settle'+(twinState.currentJump===6?' active':'')+'" data-jump="6">处置后</button>';
+  box.innerHTML=html;
+  box.querySelectorAll('button').forEach(b=>b.onclick=()=>setJump(Number(b.dataset.jump)));
+  document.getElementById('play').textContent=__evtPlaying?'暂停':'播放';
+}
+function updateEvidence(){
+  const body=document.getElementById('evidence-body');if(!body)return;
+  if(!LINKS){body.textContent='关联层加载中…';return}
+  const j=LINKS.jumps[jumpRealIndex(twinState.currentJump)]||{};
+  const atSettle=twinState.currentJump===6;
+  body.innerHTML='<b style="color:#cfe3f7">'+(atSettle?'处置后':esc(j.title||''))+'</b><br>'
+    +(atSettle?'六跳动作全部执行完毕，按会签要求待人工确认':esc(j.detail||'—'))
+    +'<br>关联对象 '+(atSettle?(LINKS.jumps[5]||{}).entity_ids||[]:j.entity_ids||[]).length
+    +' 个 · 动作卡 '+(atSettle?LINKS.cards.length:(j.card_ids||[]).length)+' 张 · 证据 '+(atSettle?0:j.ref_count||0)+' 条';
+}
+function setJump(i){
+  twinState.currentJump=Math.max(0,Math.min(6,i));
+  const v=JUMP_VISUAL[twinState.currentJump];__evtPhase=-1;
+  applyVisual(v);
+  paintHighlights();
+  renderJumpControls();updateEvidence();renderResults();
+  if(twinState.selectedEntity)renderEntityCard(twinState.selectedEntity);
+  const bar=document.getElementById('event-bar');
+  if(bar)bar.innerHTML='<b>'+esc(jumpTitle(twinState.currentJump))+'</b><span>事件推演 · 第 '
+    +(twinState.currentJump===6?'7 步 · 处置后':(twinState.currentJump+1)+'/6 跳')+'</span>';
+}
+function applyVisual(v){
+  (window.__waterMeshes||[]).forEach(w=>{w.mesh.position.y=w.baseY+v.water*0.8;w.mat.opacity=0.85+v.water*0.2});
+  // 用 visible 闪烁而不是改 opacity：告警灯的材质没开 transparent，调 opacity 是无效的
+  (window.__pumpAlarms||[]).forEach(p=>{p.on=!!v.alarm;p.lamp.visible=p.on});
+  (window.__roadBlocks||[]).forEach(b=>{b.mesh.visible=!!v.block});
+}
+// ---- 关联对象高亮：光环颜色 = 该对象当前跳的动作卡状态 ----
+function buildRings(){
+  const box=new THREE.Box3(),center=new THREE.Vector3();
+  scene3.traverse(o=>{
+    const id=o.userData&&o.userData.entityId;if(!id||!o.isMesh)return;
+    box.setFromObject(o);box.getCenter(center);
+    if(!ANCHORS[id])ANCHORS[id]=center.clone();
+    else ANCHORS[id].lerp(center,0.5);
+  });
+  // 片区没有几何体（只是范围），按两个片区中心补锚点，否则"事件落在 A-03"这跳高亮不出来
+  const DISTRICT={'A-03':[199,161],'B-01':[591,161]};
+  Object.keys(DISTRICT).forEach(id=>{
+    if(ANCHORS[id])return;
+    const wxz=W(DISTRICT[id][0],DISTRICT[id][1]);
+    ANCHORS[id]=new THREE.Vector3(wxz[0],0.42,wxz[1]);
+  });
+  Object.keys(ANCHORS).forEach(id=>{
+    const p=ANCHORS[id];
+    const big=Object.prototype.hasOwnProperty.call(DISTRICT,id);
+    // 地面环 + 竖直光柱：只画环的话，贴着楼的环有一半被楼体挡住，远看根本发现不了
+    const ring=new THREE.Mesh(
+      new THREE.RingGeometry(big?7.6:3.4,big?8.6:4.5,44),
+      new THREE.MeshBasicMaterial({color:0x7ed4ff,transparent:true,opacity:.9,side:THREE.DoubleSide,depthWrite:false})
+    );
+    ring.rotation.x=-Math.PI/2;ring.position.set(p.x,big?0.5:0.56,p.z);ring.visible=false;
+    scene3.add(ring);
+    const beam=new THREE.Mesh(
+      new THREE.CylinderGeometry(0.5,0.5,7,14,1,true),
+      new THREE.MeshBasicMaterial({color:0x7ed4ff,transparent:true,opacity:.16,side:THREE.DoubleSide,depthWrite:false})
+    );
+    beam.position.set(p.x,3.7,p.z);beam.visible=false;
+    scene3.add(beam);
+    RINGS[id]={ring:ring,beam:beam};
+  });
+}
+function paintHighlights(){
+  if(!LINKS)return;
+  const jump=jumpRealIndex(twinState.currentJump);
+  const active=new Set(((LINKS.jumps[jump]||{}).entity_ids)||[]);
+  Object.keys(RINGS).forEach(id=>{
+    const fx=RINGS[id];const row=LINKS.entities[id];
+    if(!fx)return;
+    const state=row&&row.states?row.states[twinState.currentJump]:'';
+    if(!active.has(id)||!state){fx.ring.visible=false;fx.beam.visible=false;return}
+    const color=RING_COLOR[state]||0x7ed4ff;
+    fx.ring.material.color.setHex(color);fx.beam.material.color.setHex(color);
+    fx.ring.visible=true;fx.beam.visible=true;
+  });
+}
+// ---- 对象详情：工单状态 · 责任部门 · 动作卡 · 证据引用 ----
+const KIND_CN={water:'积水 / 事件',road:'道路',facility:'设施',district:'片区'};
+const ORDER_STATE={open:'进行中',closed:'已结案'};
+const SEV_CN={high:'高',medium:'中',low:'低'};
+const STATE_CN={pending:'待执行',running:'执行中',done:'已完成',needs_confirm:'待人工确认'};
+// 场景状态枚举来自台账（fault_pending_repair 之类），与主页面同一套说法
+const SCENE_STATE_CN={incident:'当前事件',water:'积水影响',closed:'已封闭',under_construction:'施工中',clogged:'堵塞',fault_pending_repair:'待维修',in_service:'正常',normal:'正常',active:'处置中',area:'片区'};
+function orgCn(id){
+  const map=(LINKS&&LINKS.organizations)||{};
+  return map[id]||({['EMERG-COORD']:'应急总指挥',['ORG-EMERG']:'区应急管理局'}[id])||id;
+}
+const TBL_CN={construction_plan:'施工方案',drainage_facility:'排水设施台账',duty_list:'部门职责表',emergency_plan:'应急预案',pipeline_ledger:'管线台账',procedure:'处置规程',resource_inventory:'资源台账',road_network:'路网台账',underpass:'下穿隧道台账',work_order:'工单台账'};
+function refCn(ref){
+  // 引用有两种形态：带资产前缀的 `AS-A-03-work_order-6a12#A-03/work_order/v1#row:2`
+  // 和对象自带的短形态 `A-03/work_order/v1#row:2`。取含斜杠的那一段当路径，两种都能读。
+  const parts=String(ref||'').split('#');
+  const path=parts.find(p=>p.indexOf('/')>=0)||'';
+  const segs=path.split('/').filter(Boolean);
+  const m=String(ref||'').match(/(?:row|line):([0-9]+)/);
+  let out=[segs[0]||'',TBL_CN[segs[1]]||segs[1]||''].filter(Boolean).join(' ');
+  if(segs[2])out+=' '+segs[2];
+  if(m)out+=' 第 '+m[1]+' 行';
+  return out||String(ref||'');
+}
+function badge(state,label){
+  if(!state)return '<span class="badge">无动作</span>';
+  return '<span class="badge b-'+esc(state)+'">'+esc(label)+'</span>';
+}
+function renderEntityCard(id){
+  const card=document.getElementById('entity-card'),title=document.getElementById('entity-title'),body=document.getElementById('entity-body'),box=document.getElementById('entity-links');
+  card.style.display='block';
+  const row=LINKS&&LINKS.entities[id];
+  if(!row){
+    title.textContent='对象详情';body.textContent='';
+    box.innerHTML='<div class="ec-sec"><small>未在场景台账中找到</small><div class="ec-empty">深链接里的 entity='+esc(id)+' 不在 scene.json 投影结果中。请从主页面重新选择对象。</div></div>';
+    return;
   }
-  const phT=t-(acc-__EVT_PHASES[ph].dur), phDur=__EVT_PHASES[ph].dur, k=Math.min(1,phT/phDur);
-  // 各阶段驱动
-  (window.__waterMeshes||[]).forEach(w=>{
-    if(ph===0){w.mesh.position.y=w.baseY+k*0.8;w.mat.opacity=0.85+k*0.15;}
-    else if(ph===3){w.mesh.position.y=w.baseY+(1-k)*0.8;w.mat.opacity=1.0-k*0.15;}
-  });
-  (window.__pumpAlarms||[]).forEach(p=>{
-    if(ph===1){p.lamp.visible=(Math.floor(__evtClock*6)%2===0);}
-    else{p.lamp.visible=false;}
-  });
-  (window.__roadBlocks||[]).forEach(b=>{
-    b.mesh.visible=(ph>=2);
-    if(ph===2){b.mat.color.setHex(0xffc21a);b.mesh.position.y=0.62+Math.sin(__evtClock*8)*0.04;}
+  const jump=twinState.currentJump;
+  const state=row.states?row.states[jump]:'';
+  title.textContent=row.label;
+  body.textContent='';
+  let html='<div class="ec-sec"><small>基本信息</small>'
+    +'<div class="ec-row"><span>类型</span><b>'+esc(KIND_CN[row.kind]||row.kind)+'</b></div>'
+    +'<div class="ec-row"><span>对象编号</span><b>'+esc(row.id)+'</b></div>'
+    +'<div class="ec-row"><span>当前跳次状态</span><b>'+badge(state,STATE_CN[state]||'—')+'</b></div>'
+    +'<div class="ec-row"><span>说明</span></div><div class="ec-empty">'+esc(detailCn(row.detail,row.state))+'</div></div>';
+
+  // 工单
+  const orders=row.work_orders||[];
+  html+='<div class="ec-sec"><small>关联工单（'+orders.length+'）</small>';
+  html+=orders.length?orders.map(o=>'<div class="ec-card">'+esc(o.order_id)+' · '+esc(o.order_type_label)
+    +'<br><em>状态 '+esc(ORDER_STATE[o.status]||o.status)+' · 风险 '+esc(SEV_CN[o.severity]||o.severity||'—')+' · 上报 '+esc(orgCn(o.reporter_org))+'</em></div>').join('')
+    :'<div class="ec-empty">台账未登记该对象的工单</div>';
+  html+='</div>';
+
+  // 责任部门
+  const depts=row.departments||[];
+  html+='<div class="ec-sec"><small>责任部门（'+depts.length+'）</small>'
+    +(depts.length?depts.map(d=>'<span class="badge" style="margin:2px 3px 2px 0">'+esc(d)+'</span>').join(''):'<div class="ec-empty">尚未落位到具体部门</div>')+'</div>';
+
+  // 动作卡
+  const cards=(row.card_ids||[]).map(cid=>CARD_INDEX[cid]).filter(Boolean);
+  const live=cards.filter(c=>{const s=c.states?c.states[jump]:'';return s==='running'||s==='needs_confirm'});
+  const shown=(live.length?live:cards).slice(0,4);
+  html+='<div class="ec-sec"><small>动作卡（'+cards.length+' 张）</small>';
+  html+=shown.length?shown.map(c=>{
+    const s=c.states?c.states[jump]:'';
+    const text=c.stage==='action'?c.action:(c.stage_label||c.action);
+    return '<div class="ec-card"><span class="badge b-'+esc(s)+'">'+esc(STATE_CN[s]||'')+'</span> '
+      +esc(c.org_name)+' · '+esc(clip(text,72))
+      +'<br><em>'+esc(c.card_id)+' · 证据 '+c.evidence_count+' 条</em></div>';
+  }).join('')+(cards.length>shown.length?'<div class="ec-empty">另有 '+(cards.length-shown.length)+' 张未展开</div>':'')
+    :'<div class="ec-empty">该对象暂无动作卡</div>';
+  html+='</div>';
+
+  // 证据
+  const refs=row.evidence||[];
+  html+='<div class="ec-sec"><small>证据引用（'+refs.length+' 条）</small>'
+    +(refs.length?refs.map(r=>'<div class="ec-card"><em>'+esc(refCn(r))+'</em></div>').join(''):'<div class="ec-empty">暂无台账依据</div>')+'</div>';
+  box.innerHTML=html;
+}
+function clip(s,n){s=String(s||'');return s.length>n?s.slice(0,n)+'…':s}
+// 台账原文里夹着枚举（pump_station / fault_pending_repair），只把枚举换成中文，
+// 其余原样保留——改写了就不是台账原文了。
+const TYPE_CN={pump_station:'泵站',inlet:'雨水口',manhole:'检查井',pipe:'管段'};
+function detailCn(detail,state){
+  let s=String(detail||'暂无说明');
+  Object.keys(TYPE_CN).forEach(k=>{s=s.split(k).join(TYPE_CN[k])});
+  if(state&&SCENE_STATE_CN[state])s=s.split(state).join(SCENE_STATE_CN[state]);
+  return s;
+}
+// ---- 处置前后对照：只比算得出来的项，没有实测就写没有 ----
+function renderResults(){
+  const box=document.getElementById('results-body'),note=document.getElementById('results-note');
+  if(!box)return;
+  if(!LINKS){box.textContent='加载中…';return}
+  const r=LINKS.results;
+  box.innerHTML=(r.rows||[]).map(row=>{
+    const before=row.before==null?'—':row.before;
+    const after=row.after==null?'无实测':row.after;
+    return '<div class="rc-row"><span>'+esc(row.label)+'</span> <span class="v">'+esc(before)+' → '+esc(after)+' <i>'+esc(row.unit||'')+'</i></span><span class="n">'+esc(row.note||'')+'</span></div>';
+  }).join('');
+  if(note)note.textContent=r.source+' · 当前停在第 '+(twinState.currentJump===6?'7 步（处置后）':(twinState.currentJump+1)+' 跳')+'，对照口径为六跳全部执行完';
+}
+function loadTwinLinks(){
+  return fetch('/api/twin-links?jump='+MAX_JUMP).then(r=>r.json()).then(data=>{
+    LINKS=data;
+    (data.cards||[]).forEach(c=>{CARD_INDEX[c.card_id]=c});
+    renderJumpControls();updateEvidence();renderResults();
+    const hud=document.getElementById('hud-src');
+    if(hud)hud.textContent='关联层：'+data.counts.cards+' 张动作卡 · '+data.counts.linked_entities+' 个对象已挂动作 · 状态为推演推进，非现场回传';
+    if(twinState.selectedEntity)renderEntityCard(twinState.selectedEntity);
+    return data;
+  }).catch(()=>{
+    const hud=document.getElementById('hud-src');if(hud)hud.textContent='关联层不可用（/api/twin-links 未能加载）';
+    return null;
   });
 }
 function tick(){
   const now=performance.now();const dt=Math.min(0.1,Math.max(0,now-__lastFrame)/1000);__lastFrame=now;
   if(controls)controls.update();
-  if(!__evtPlaying){renderer.render(scene3,camera);return;}
-  if(rain){const p=rainGeo.attributes.position;for(let i=0;i<p.count;i++){p.array[i*3+1]-=0.22;if(p.array[i*3+1]<-2)p.array[i*3+1]=54;p.array[i*3]+=(Math.random()-0.5)*0.04;p.array[i*3+2]+=(Math.random()-0.5)*0.04}p.needsUpdate=true}
-  if(window.__waterMeshes)__evtStep(dt);
+  if(__evtPlaying){__evtClock+=dt}
+  // 告警灯与光环的呼吸动画不依赖播放状态，暂停时也要能看出"哪里在告警"
+  if(__evtPlaying&&rain){const p=rainGeo.attributes.position;for(let i=0;i<p.count;i++){p.array[i*3+1]-=0.22;if(p.array[i*3+1]<-2)p.array[i*3+1]=54;p.array[i*3]+=(Math.random()-0.5)*0.04;p.array[i*3+2]+=(Math.random()-0.5)*0.04}p.needsUpdate=true}
+  const beat=Math.sin(now/380)*0.5+0.5;
+  (window.__pumpAlarms||[]).forEach(p=>{p.lamp.visible=!!p.on&&(Math.floor(now/320)%2===0)});
+  Object.keys(RINGS).forEach(id=>{const fx=RINGS[id];if(!fx||!fx.ring.visible)return;
+    const dim=fx.ring.material.color.getHex()===0x5a6b7a;
+    fx.ring.material.opacity=dim?0.4:(0.5+0.45*beat);
+    fx.beam.material.opacity=dim?0.07:(0.12+0.12*beat);
+    const s=1+0.04*beat;fx.ring.scale.set(s,s,1)});
   renderer.render(scene3,camera);
 }
-const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();renderer.domElement.addEventListener("click",ev=>{pointer.x=(ev.clientX/innerWidth)*2-1;pointer.y=-(ev.clientY/innerHeight)*2+1;raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(scene3.children,true);const hit=hits.find(h=>h.object.userData&&h.object.userData.entityId);if(!hit)return;const d=hit.object.userData;const card=document.getElementById("entity-card");document.getElementById("entity-title").textContent=d.name+" · "+d.entityId;document.getElementById("entity-body").textContent="类型："+d.kind+"；状态："+(d.detail||"演示状态")+"；当前跳次："+(twinState.currentJump+1);card.style.display="block";twinState.selectedEntity=d;});
-document.getElementById("prev").onclick=()=>setJump(twinState.currentJump-1);document.getElementById("next").onclick=()=>setJump(twinState.currentJump+1);document.getElementById("restart").onclick=()=>setJump(0);document.getElementById("play").onclick=()=>{__evtPlaying=!__evtPlaying;renderJumpControls();};
+const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
+// 点击与按钮绑定必须等 renderer 建好再挂：顶层直接取 renderer.domElement
+// 会在 init() 之前抛 TypeError，把后面的按钮绑定和 init() 一起带走——
+// 表现就是页面全黑且毫无提示（真浏览器 console 才看得到）。
+function bindUI(){
+  renderer.domElement.addEventListener('click',ev=>{
+    pointer.x=(ev.clientX/innerWidth)*2-1;pointer.y=-(ev.clientY/innerHeight)*2+1;
+    raycaster.setFromCamera(pointer,camera);
+    const hits=raycaster.intersectObjects(scene3.children,true);
+    const hit=hits.find(h=>h.object.userData&&h.object.userData.entityId);
+    if(!hit)return;
+    twinState.selectedEntity=hit.object.userData.entityId;
+    renderEntityCard(twinState.selectedEntity);
+  });
+  document.getElementById('prev').onclick=()=>setJump(twinState.currentJump-1);
+  document.getElementById('next').onclick=()=>setJump(twinState.currentJump+1);
+  document.getElementById('restart').onclick=()=>setJump(0);
+  document.getElementById('settle').onclick=()=>setJump(6);
+  document.getElementById('play').onclick=()=>{__evtPlaying=!__evtPlaying;renderJumpControls();};
+}
 init();
 </script></html>"""
 

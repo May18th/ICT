@@ -121,7 +121,7 @@
     },
     "test_suite": {
       "docs_declared": [
-        925
+        952
       ]
     },
     "p11_ablation": {
@@ -197,8 +197,8 @@
     }
   },
   "test_baseline": {
-    "collected": 925,
+    "collected": 952,
     "command": "python -m pytest -q",
-    "verified_at": "2026-11-07"
+    "verified_at": "2026-11-08"
   }
 }
