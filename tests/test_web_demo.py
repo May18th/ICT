@@ -186,4 +186,7 @@ def test_flood_playback_is_event_driven():
     assert "loadScheduler().then(function(){chainAll(true)})" in html
     assert "flood-story" in html and "flood-cause" in html
     assert "twin-reading-guide" in html and "对象 → 影响 → 动作" in html
-    assert "scene-step" in html and "scene-action" in html
+    # 受影响对象卡已从「第二张地图」改为对象清单（上方动画地图不再有雷同副本），
+    # scene-step 编号随旧地图删除；清单容器 ent-item + 详情面板 scene-action 必须在。
+    assert "ent-item" in html and "scene-action" in html
+    assert "id=scenemap class=entlist" in html
