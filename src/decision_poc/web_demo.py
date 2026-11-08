@@ -952,6 +952,11 @@ canvas{display:block}
 .ec-card{font-size:11.5px;line-height:1.5;color:#a9bfd2;padding:5px 0;border-bottom:1px dashed rgba(122,162,198,.18)}
 .ec-card em{color:#7b93aa;font-style:normal}
 .badge{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:99px;border:1px solid #3d5568;color:#8fa3b5;background:rgba(60,80,100,.3);white-space:nowrap}
+/* #entity-card span 是 display:block（详情正文要竖排），徽章必须压回去，
+   否则"有据""待执行"这些标签会各占一整行 */
+#entity-card .badge{display:inline-block;margin-top:0;width:auto;font-size:10.5px;color:#8fa3b5}
+#entity-card .badge.b-active{color:#4fc3f7}#entity-card .badge.b-done{color:#6ee7a8}
+#entity-card .badge.b-alert{color:#f5c063}
 .badge.b-active{color:#4fc3f7;border-color:#2b7fa8;background:rgba(20,90,130,.35)}
 .badge.b-done{color:#6ee7a8;border-color:#2f7a56;background:rgba(20,80,55,.35)}
 .badge.b-alert{color:#f5c063;border-color:#8a6a2a;background:rgba(110,80,20,.35)}
@@ -1409,6 +1414,15 @@ function renderEntityCard(id){
   html+=orders.length?orders.map(o=>'<div class="ec-card">'+esc(o.order_id)+' · '+esc(o.order_type_label)
     +'<br><em>状态 '+esc(ORDER_STATE[o.status]||o.status)+' · 风险 '+esc(SEV_CN[o.severity]||o.severity||'—')+' · 上报 '+esc(orgCn(o.reporter_org))+'</em></div>').join('')
     :'<div class="ec-empty">台账未登记该对象的工单</div>';
+  html+='</div>';
+
+  // 判断依据：这个对象为什么被判成当前状态，挂在哪条断言上
+  const claims=row.claims||[];
+  html+='<div class="ec-sec"><small>判断依据（'+claims.length+' 条断言）</small>';
+  html+=claims.length?claims.map(c=>'<div class="ec-card">'+esc(c.label)
+    +' <span class="badge'+(c.supported?' b-done':' b-alert')+'">'+(c.supported?'有据':'待核')+'</span>'
+    +'<br><em>'+esc(c.claim_id)+' · 证据 '+c.evidence_count+' 条</em></div>').join('')
+    :'<div class="ec-empty">该对象暂无断言支撑</div>';
   html+='</div>';
 
   // 责任部门

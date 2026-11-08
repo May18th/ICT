@@ -116,6 +116,54 @@ def test_departments_are_chinese_names(links: dict) -> None:
     assert "区应急管理局" in names
 
 
+# --- 断言（claim）落到对象 -------------------------------------------------
+
+
+def test_objects_carry_their_claims(links: dict) -> None:
+    """对象要有判断依据：claim 来自挂在它上面的动作卡，不是另算一遍。"""
+    assert links["claims"], "顶层断言表不能为空"
+    for entity_id, row in links["entities"].items():
+        by_id = {card["card_id"]: card for card in links["cards"]}
+        expected: list[str] = []
+        for card_id in row["card_ids"]:
+            for claim_id in by_id[card_id]["claim_ids"]:
+                if claim_id not in expected:
+                    expected.append(claim_id)
+        assert row["claim_ids"] == expected, f"{entity_id} 的 claim 与卡片对不上"
+
+        for claim in row["claims"]:
+            assert claim["claim_id"] in links["claims"]
+            assert claim["label"] and not claim["label"].startswith("CL-")
+
+
+def test_claims_are_labelled_in_chinese(links: dict) -> None:
+    """断言名要给中文：页面上不能出现 `CL-S4-conflict` 这种机器编号当标题。"""
+    for claim in links["claims"].values():
+        assert claim["label"]
+        assert claim["stage"] in STAGE_JUMPS
+        assert claim["evidence_refs"], f"{claim['claim_id']} 没有证据引用"
+        assert claim["evidence_count"] == len(claim["evidence_refs"])
+
+
+def test_claim_label_rules() -> None:
+    from decision_poc.twin_links import claim_label, claim_stage
+
+    assert claim_label("CL-S1-observed") == "发生了什么"
+    assert claim_label("CL-S6-action-07") == "处置动作第 7 条"
+    assert claim_label("CL-UNKNOWN") == "CL-UNKNOWN"  # 认不出就原样返回，不猜
+    assert claim_stage("CL-S4-conflict") == "conflict"
+    assert claim_stage("CL-UNKNOWN") == ""
+
+
+def test_event_object_has_observation_claim(links: dict) -> None:
+    """事件本体的"发生了什么"必须挂得上——这是整条链的起点。"""
+    row = links["entities"]["WO-20261029-007"]
+    assert "CL-S1-observed" in row["claim_ids"]
+    observed = next(item for item in row["claims"] if item["claim_id"] == "CL-S1-observed")
+    assert observed["supported"] is True
+    assert observed["evidence_count"] >= 1
+
+
 # --- 执行状态 -------------------------------------------------------------
 
 
