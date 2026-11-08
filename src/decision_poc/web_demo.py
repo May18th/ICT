@@ -913,12 +913,12 @@ def build_twin3d_html() -> str:
 #event-bar span{display:block;margin-top:3px;font-size:12px;color:#8fb7d6}
 #legend{position:fixed;left:18px;bottom:16px;z-index:5;pointer-events:none;font-size:12px;color:#93a7bb;line-height:1.9}
 #legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-#tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}
+#tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}#timeline{position:fixed;left:18px;right:18px;bottom:48px;z-index:6;display:flex;gap:6px;align-items:center;background:rgba(7,18,28,.84);padding:8px 10px;border-radius:10px}#timeline button{background:#1a3042;color:#d7e4f0;border:1px solid #496579;border-radius:5px;padding:4px 8px;cursor:pointer}#timeline button.active{background:#1976a8}
 canvas{display:block}</style>
 <div id=hud><b>城市内涝三维数字孪生 · 写实沙盘</b><span>兴华路片区(A-03) 与 建设大道片区(B-01) · 坐标来自 scene.json 台账实时投影</span></div>
 <div id=event-bar><b>暴雨来袭 · 积水上涨</b><span>事件推演 · 阶段 1/4</span></div>
 <div id=legend><span><i style=background:#4a6fa5></i>积水段</span> &nbsp; <span><i style=background:#e0a965></i>已封路</span> &nbsp; <span><i style=background:#5a6a7a></i>泵站</span> &nbsp; <span><i style=background:#ff2d2d></i>故障告警</span></div>
-<div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
+<div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><span id=jump-buttons></span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
 <script src="/three.min.js"></script>
 <script src="/RGBELoader.js"></script>
 <script src="/OrbitControls.js"></script>
@@ -1034,6 +1034,11 @@ function makeRain(){
   const m=new THREE.PointsMaterial({color:0xbfd4e6,size:0.12,transparent:true,opacity:0.45,depthWrite:false});
   rain=new THREE.Points(rainGeo,m);rain.frustumCulled=false;scene3.add(rain)}
 function build(sched){
+  twinState.scheduler=sched;
+  const raw=(sched.event_stream&&sched.event_stream.events)||[];
+  twinState.jumps=raw.filter(e=>e.category==='timeline').slice(0,6).map((e,i)=>({name:e.title||e.label||e.kind||(`事件 ${i+1}`),source:e}));
+  if(!twinState.jumps.length)twinState.jumps=__EVT_PHASES.map(p=>({name:p.name}));
+  renderJumpControls();
   const ents=(sched.scene&&sched.scene.entities)||[];
   const roads=ents.filter(e=>e.kind==='road'),water=ents.filter(e=>e.kind==='water'),fac=ents.filter(e=>e.kind==='facility'),dist=ents.filter(e=>e.kind==='district');
   // 规划路网：以两个片区中心为锚的正交网格（主干贯穿、次干连接、支路切分街区）
@@ -1182,7 +1187,11 @@ function build(sched){
 function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(9,2.25,1);return sp}
 // ---- 事件线动画状态机：六跳推演压缩为 4 个可视阶段，循环播放 ----
 // 阶段：0 暴雨积水上涨 -> 1 泵站告警闪红 -> 2 封路 -> 3 调泵排水回落
-let __evtClock=0, __evtPhase=-1;
+let __evtClock=0, __evtPhase=-1, __evtPlaying=true;
+const twinState={jumps:[],currentJump:0,selectedEntity:null,scheduler:null};
+function renderJumpControls(){const box=document.getElementById("jump-buttons");if(!box)return;box.innerHTML=twinState.jumps.map((j,i)=>`<button class="${i===twinState.currentJump?"active":""}" data-jump="${i}">${i+1}. ${esc(j.name||("事件"+(i+1)))}</button>`).join("");box.querySelectorAll("button").forEach(b=>b.onclick=()=>setJump(Number(b.dataset.jump)));document.getElementById("play").textContent=__evtPlaying?"暂停":"播放";}
+function setJump(i){twinState.currentJump=Math.max(0,Math.min(twinState.jumps.length-1,i));__evtClock=twinState.currentJump*3.5;renderJumpControls();}
+
 const __EVT_PHASES=[
   {name:'暴雨来袭 · 积水上涨', dur:3.5, step:null},
   {name:'泵站告警 · 兴华路泵站故障', dur:3.0, step:null},
@@ -1218,10 +1227,12 @@ function __evtStep(dt){
 }
 function tick(){
   if(controls)controls.update();
+  if(!__evtPlaying){renderer.render(scene3,camera);return;}
   if(rain){const p=rainGeo.attributes.position;for(let i=0;i<p.count;i++){p.array[i*3+1]-=0.22;if(p.array[i*3+1]<-2)p.array[i*3+1]=54;p.array[i*3]+=(Math.random()-0.5)*0.04;p.array[i*3+2]+=(Math.random()-0.5)*0.04}p.needsUpdate=true}
   if(window.__waterMeshes)__evtStep(1/60);
   renderer.render(scene3,camera);
 }
+document.getElementById("prev").onclick=()=>setJump(twinState.currentJump-1);document.getElementById("next").onclick=()=>setJump(twinState.currentJump+1);document.getElementById("restart").onclick=()=>setJump(0);document.getElementById("play").onclick=()=>{__evtPlaying=!__evtPlaying;renderJumpControls();};
 init();
 </script></html>"""
 
