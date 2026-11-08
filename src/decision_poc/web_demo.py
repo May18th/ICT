@@ -889,6 +889,116 @@ def _error(message: str, status: int = 404) -> tuple[int, str, bytes]:
     return _json({"status": "error", "error": message}, status)
 
 
+def _assets_dir():
+    """静态资产目录（three.js 内嵌分发，断网可用）。"""
+    return Path(__file__).resolve().parents[2] / "assets"
+
+
+def build_twin3d_html() -> str:
+    """三维数字孪生白模预览页（独立路由 /twin3d，主页面不动）。
+
+    方向确认用：楼栋/道路/水面全部由代码程序化生成，不依赖任何建模资产；
+    场景坐标来自 /api/scheduler 的 scene.entities 投影。
+    """
+    return """<!doctype html><html lang=zh-CN><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>
+<title>三维数字孪生 · 白模预览</title>
+<style>html,body{margin:0;height:100%;background:#0d1420;overflow:hidden;font:14px system-ui;color:#cfe3f7}
+#hud{position:fixed;left:16px;top:14px;z-index:5;pointer-events:none}
+#hud b{display:block;font-size:17px;color:#bae6fd}
+#hud span{display:block;margin-top:4px;font-size:12.5px;color:#8fa4bd}
+#tip{position:fixed;right:16px;bottom:12px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}
+canvas{display:block}</style>
+<div id=hud><b>城市内涝三维数字孪生 · 白模预览 v1</b><span>楼栋/道路/水面均为代码程序化生成 · 实体坐标来自 scene.json 台账投影</span></div>
+<div id=tip>拖动旋转 · 滚轮缩放</div>
+<script src="/three.min.js"></script>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let renderer,scene3,camera,earth;
+let az=0.9,polar=1.05,radius=52,drag=null,autoSpin=true;
+const K=0.10,CX=350,CY=165;
+function W(x,y){return[(x-CX)*K,(y-CY)*K]}
+function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(6,12,20,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#bfe0ff';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(7,1.75,1);return sp}
+function segDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay;const L=dx*dx+dy*dy;let t=L?((px-ax)*dx+(py-ay)*dy)/L:0;t=Math.max(0,Math.min(1,t));const qx=ax+t*dx,qy=ay+t*dy;return Math.hypot(px-qx,py-qy)}
+function init(){
+ renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(renderer.domElement);
+ scene3=new THREE.Scene();scene3.background=new THREE.Color(0x0d1420);scene3.fog=new THREE.Fog(0x0d1420,70,170);
+ camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,0.1,400);
+ scene3.add(new THREE.HemisphereLight(0x8fb3d9,0x0c1420,0.85));
+ const sun=new THREE.DirectionalLight(0xfff2df,1.0);sun.position.set(28,46,18);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+ const sc=sun.shadow.camera;sc.left=-45;sc.right=45;sc.top=45;sc.bottom=-45;sc.far=140;scene3.add(sun);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(360,360),new THREE.MeshStandardMaterial({color:0x0f1928,roughness:1}));
+ ground.rotation.x=-Math.PI/2;ground.position.y=-0.02;ground.receiveShadow=true;scene3.add(ground);
+ const grid=new THREE.GridHelper(240,80,0x1b2b42,0x132133);grid.position.y=0.005;scene3.add(grid);
+ fetch('/api/scheduler').then(r=>r.json()).then(build);
+ addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+ const el=renderer.domElement;
+ el.addEventListener('pointerdown',ev=>{drag={x:ev.clientX,y:ev.clientY,az:az,po:polar};autoSpin=false;el.setPointerCapture(ev.pointerId)});
+ el.addEventListener('pointermove',ev=>{if(!drag)return;az=drag.az+(ev.clientX-drag.x)*0.005;polar=Math.max(0.35,Math.min(1.35,drag.po+(ev.clientY-drag.y)*0.004))});
+ el.addEventListener('pointerup',()=>{drag=null;setTimeout(()=>autoSpin=true,2600)});
+ el.addEventListener('wheel',ev=>{radius=Math.max(16,Math.min(120,radius+ev.deltaY*0.03));ev.preventDefault()},{passive:false});
+ renderer.setAnimationLoop(tick);
+}
+function build(sched){
+ const ents=(sched.scene&&sched.scene.entities)||[];
+ const roads=ents.filter(e=>e.kind==='road'),water=ents.filter(e=>e.kind==='water'),fac=ents.filter(e=>e.kind==='facility'),dist=ents.filter(e=>e.kind==='district');
+ // 片区展台
+ dist.forEach(e=>{const r=Math.min(e.r,96)*K*1.05;const[wx,wz]=W(e.cx,e.cy);
+  const d=new THREE.Mesh(new THREE.CylinderGeometry(r,r,0.34,56),new THREE.MeshStandardMaterial({color:0x17293f,roughness:.95}));
+  d.position.set(wx,0.17,wz);d.receiveShadow=true;scene3.add(d);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(r,0.045,10,72),new THREE.MeshStandardMaterial({color:0x35577d,roughness:.6}));
+  rim.rotation.x=Math.PI/2;rim.position.set(wx,0.36,wz);scene3.add(rim);
+  const lb=makeLabel(e.label+' 片区','#9fc3e8');lb.position.set(wx,7.5,wz-r-1.2);scene3.add(lb)});
+ // 道路条带
+ roads.forEach(e=>{const ps=String(e.points||'').split(' ').map(p=>p.split(',').map(Number));const closed=/已封/.test(e.label||'');
+  const mat=new THREE.MeshStandardMaterial({color:closed?0xb08034:0x2b3d55,roughness:.9});
+  for(let i=0;i<ps.length-1;i++){const[ax,ay]=W(ps[i][0],ps[i][1]),[bx,by]=W(ps[i+1][0],ps[i+1][1]);
+   const len=Math.hypot(bx-ax,by-ay);if(len<0.05)continue;
+   const m=new THREE.Mesh(new THREE.BoxGeometry(len+1.0,0.12,1.05),mat);
+   m.position.set((ax+bx)/2,0.12,(ay+by)/2);m.rotation.y=-Math.atan2(by-ay,bx-ax);m.receiveShadow=true;scene3.add(m)}
+  const mid=ps[Math.floor(ps.length/2)];const[mx,mz]=W(mid[0],mid[1]);
+  const lb=makeLabel(String(e.label||'').split('（')[0],closed?'#e0a965':'#7f95ad');lb.scale.set(5,1.25,1);lb.position.set(mx,2.6,mz);scene3.add(lb)});
+ // 积水面
+ water.forEach(e=>{const ps=String(e.points||'').split(' ').map(p=>p.split(',').map(Number));const sh=new THREE.Shape();
+  ps.forEach((p,i)=>{const[wx,wz]=W(p[0],p[1]);if(i===0)sh.moveTo(wx,-wz);else sh.lineTo(wx,-wz)});
+  const g=new THREE.ShapeGeometry(sh);const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0x2f8fd6,transparent:true,opacity:0.8,roughness:.25,metalness:.1,side:THREE.DoubleSide}));
+  m.rotation.x=Math.PI/2;m.position.y=0.46;scene3.add(m)});
+ // 设施：泵站塔 / 雨水口柱 + 名牌
+ fac.forEach(e=>{const[wx,wz]=W(Number(e.cx),Number(e.cy));const ps=e.id.indexOf('DF-PS')===0;
+  if(ps){const t=new THREE.Mesh(new THREE.BoxGeometry(2.0,3.0,2.0),new THREE.MeshStandardMaterial({color:0x3d87b8,roughness:.55}));
+   t.position.set(wx,1.72,wz);t.castShadow=true;scene3.add(t);
+   const roof=new THREE.Mesh(new THREE.BoxGeometry(2.4,0.28,2.4),new THREE.MeshStandardMaterial({color:0x77b6de,roughness:.4}));
+   roof.position.set(wx,3.35,wz);roof.castShadow=true;scene3.add(roof);
+   const lb=makeLabel(String(e.label||e.id).replace('雨水泵站','泵站'),'#bfe0ff');lb.scale.set(6,1.5,1);lb.position.set(wx,5.1,wz);scene3.add(lb)}
+  else{const c=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.58,1.15,18),new THREE.MeshStandardMaterial({color:0xb98a35,roughness:.6}));
+   c.position.set(wx,0.75,wz);c.castShadow=true;scene3.add(c)}});
+ // 程序化楼栋白模：片区圆盘内铺格子，避开道路/设施/水面
+ const seeded=(function(){let s=20260801;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296}})();
+ dist.forEach(e=>{const r=Math.min(e.r,96);const step=30;
+  for(let gx=-r;gx<=r;gx+=step){for(let gy=-r;gy<=r;gy+=step){
+   const px=e.cx+gx+(seeded()-0.5)*8,py=e.cy+gy+(seeded()-0.5)*8;
+   if(Math.hypot(px-e.cx,py-e.cy)>r*0.88)continue;
+   let ok=true;
+   roads.forEach(rd=>{if(!ok)return;const ps=String(rd.points||'').split(' ').map(p=>p.split(',').map(Number));
+    for(let i=0;i<ps.length-1;i++){if(segDist(px,py,ps[i][0],ps[i][1],ps[i+1][0],ps[i+1][1])<13){ok=false;break}}});
+   if(ok)fac.forEach(f=>{if(Math.hypot(px-Number(f.cx),py-Number(f.cy))<16)ok=false});
+   if(ok)water.forEach(wt=>{const p0=String(wt.points||'').split(' ')[0].split(',').map(Number);if(Math.hypot(px-p0[0],py-p0[1])<22)ok=false});
+   if(!ok)continue;
+   const fw=(13+seeded()*11)*K,fd=(13+seeded()*11)*K;const hh=1.1+seeded()*seeded()*5.6;
+   const[wx,wz]=W(px,py);
+   const gcol=new THREE.Color().setHSL(0.58,0.08,0.68+seeded()*0.18);
+   const bd=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:gcol,roughness:.85}));
+   bd.scale.set(fw,hh,fd);bd.position.set(wx,hh/2+0.3,wz);bd.castShadow=true;bd.receiveShadow=true;scene3.add(bd);
+  }}});
+}
+function tick(){
+ if(autoSpin&&!drag)az+=0.0022;
+ camera.position.set(radius*Math.sin(polar)*Math.sin(az),radius*Math.cos(polar),radius*Math.sin(polar)*Math.cos(az));
+ camera.lookAt(0,0.5,0);
+ renderer.render(scene3,camera);
+}
+init();
+</script></html>"""
+
 def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[int, str, bytes]:
     """把一次 HTTP 请求映射成 (status, content_type, body)。
 
@@ -900,6 +1010,13 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
 
     if parsed.path in {"", "/"}:
         return 200, "text/html; charset=utf-8", build_html().encode("utf-8")
+    if parsed.path == "/twin3d":
+        return 200, "text/html; charset=utf-8", build_twin3d_html().encode("utf-8")
+    if parsed.path == "/three.min.js":
+        three = _assets_dir() / "three.min.js"
+        if not three.exists():
+            return _error("three.min.js missing (assets/three.min.js)", 404)
+        return 200, "application/javascript; charset=utf-8", three.read_bytes()
     if parsed.path == "/evolution":
         return 200, "text/html; charset=utf-8", build_evolution_html().encode("utf-8")
     if segments[:3] == ["api", "evolution", "gate"]:
