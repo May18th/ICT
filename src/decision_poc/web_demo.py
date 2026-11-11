@@ -3708,6 +3708,32 @@ def platform_versions_payload() -> dict[str, Any]:
     return {"available": True, **snapshot, "path": str(_PLATFORM_SNAPSHOT)}
 
 
+_LEDGER_SYNC = Path(__file__).resolve().parents[2] / "artifacts" / "ledger" / "ledger_sync.json"
+
+
+def ledger_sync_payload() -> dict[str, Any]:
+    """台账同步状态（只读）。
+
+    状态文件由 `deploy/nexent/check_ledger_sync.py` 生成——查它要登录平台并调索引接口，
+    页面进程不干这件事，只读文件。缺文件时给生成命令，前端显示提示而不是报错。
+    """
+    if not _LEDGER_SYNC.is_file():
+        return {
+            "available": False,
+            "hint": "尚未查询同步状态：python deploy/nexent/check_ledger_sync.py",
+            "path": str(_LEDGER_SYNC),
+        }
+    try:
+        data = json.loads(_LEDGER_SYNC.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return {
+            "available": False,
+            "hint": f"状态文件读取失败：{type(exc).__name__}",
+            "path": str(_LEDGER_SYNC),
+        }
+    return {"available": True, **data, "path": str(_LEDGER_SYNC)}
+
+
 def _feedback_submit(body: bytes | None) -> tuple[int, str, bytes]:
     """POST /feedback：校验 → 判定 → 建议动作 →（必要时）跑一轮演化 → 记一条流水。"""
     from datetime import datetime, timezone
@@ -3840,6 +3866,8 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return 200, "text/html; charset=utf-8", build_evolution_html().encode("utf-8")
     if segments[:3] == ["api", "platform", "versions"]:
         return _json(platform_versions_payload())
+    if segments[:3] == ["api", "ledger", "sync"]:
+        return _json(ledger_sync_payload())
     if segments[:3] == ["api", "evolution", "gate"]:
         limit = int((query.get("limit") or ["10"])[0])
         return _json(evolution_gate_history(limit))

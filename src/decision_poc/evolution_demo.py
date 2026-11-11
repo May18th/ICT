@@ -226,6 +226,7 @@ def build_evolution_html() -> str:
 </section>
 <section class="card evolution-card history-panel"><h2>策略版本：可审计、可回滚</h2><table id=releases></table></section>
 <section class="card evolution-card platform-card"><h2>平台运行版本：这套策略落在哪个 Agent 上</h2><div id=platformVersions></div></section>
+<section class="card evolution-card ledger-card"><h2>知识库台账：平台侧是否已同步</h2><div id=ledgerSync></div></section>
 <div class="bound evolution-footer" id=boundaries></div></div></details>
 </div>
 </main>
@@ -346,8 +347,28 @@ async function loadPlatform(){
     box.innerHTML=h+'</table>';
   }catch(e){box.innerHTML='<span class=warn>平台版本加载失败：'+esc(e)+'</span>';}
 }
+async function loadLedgerSync(){
+  const box=document.getElementById('ledgerSync');
+  try{
+    const d=await (await fetch('/api/ledger/sync')).json();
+    if(!d.available){box.innerHTML='<p class=dim>'+esc(d.hint||'暂无同步状态')+'</p>';return;}
+    let h='<p class=dim>索引 '+esc(d.index_name||'—')+'（'+esc(d.index_id||'—')+'），文档 '+
+      esc(d.document_count==null?0:d.document_count)+' 篇；状态查询于 '+esc(d.generated_at||'')+'</p>'+
+      '<table><tr><th>文档</th><th>状态</th><th>分块</th><th>平台入库时间</th></tr>';
+    for(const doc of (d.documents||[])){
+      const done=doc.status==='COMPLETED';
+      h+='<tr><td>'+esc(doc.file||'—')+'<br><span class=dim>'+esc(doc.path_or_url||'')+'</span></td>'+
+        '<td>'+(done?'<span class=ok>已完成</span>':'<span class=warn>'+esc(doc.status||'—')+'</span>')+'</td>'+
+        '<td>'+esc(doc.chunk_count==null?'—':doc.chunk_count)+'</td>'+
+        '<td>'+esc(doc.platform_created_at||'—')+'</td></tr>';
+    }
+    h+='</table><p class="'+(d.stale?'warn':'dim')+'">'+esc(d.hint||'')+'</p>';
+    box.innerHTML=h;
+  }catch(e){box.innerHTML='<span class=warn>台账同步状态加载失败：'+esc(e)+'</span>';}
+}
 main().catch(e=>{metrics.innerHTML='<div class=metric><span class=warn>加载失败：'+esc(e)+'</span></div>'});
 loadPlatform();
+loadLedgerSync();
 </script></html>"""
 
 
