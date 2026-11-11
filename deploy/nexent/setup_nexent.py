@@ -91,7 +91,14 @@ MAIN_TOOLS = {"event_deduce", "evidence_locate"}
 DUTY_PROMPT = """你是城市内涝跨部门决策智能体。用户给出事件编号与时点后，严格按两步执行：
 
 第一步：**第一个动作就必须是调用 MCP 工具 event_deduce**，参数为 {"event_id": "<用户给的事件编号>",
-"as_of": "<用户给的时点>", "caller_labels": ["ORG-EMERG"]}。
+"as_of": "<事件时点>", "caller_labels": ["ORG-EMERG"]}。
+
+as_of 取值规则（**必须遵守，取错会让整轮结论失真**）：
+① 用户明确给出时点 → 原样使用；
+② 用户没给时点 → 从事件编号里的日期取当日 `09:40:00+08:00`
+   （编号形如 `WO-YYYYMMDD-xxx`，YYYYMMDD 即事件日期；09:40 是本场景"上报后 20 分钟"的默认推演时点）；
+③ **严禁使用系统当前时间**——推演的是历史事件，用今天的时间会让"工单是否仍 open""设施当前状态"
+   这类判据全部错位。
 
 禁止事项（违反即视为答错）：不要用 python_interpreter 读技能文档或写代码；不要调用 read_skill_md；
 不要使用 parallel_executor；不要先输出思考再补工具调用。event_deduce 一次返回就包含六跳全部事实
@@ -136,11 +143,22 @@ COLLAB_TOOLS = {
 COLLAB_PROMPT = """你是城市内涝应急协同总控。用户给出事件编号与时点后，严格按两步执行：
 
 第一步：**第一个动作就必须是调用 MCP 工具 collab_run**，参数为 {"event_id": "<用户给的事件编号>",
-"as_of": "<用户给的时点>", "caller_labels": ["ORG-EMERG"]}。
+"as_of": "<事件时点>", "caller_labels": ["ORG-EMERG"]}。
+
+as_of 取值规则（**必须遵守，取错会让处置顺序失真**）：
+① 用户明确给出时点 → 原样使用；
+② 用户没给时点 → 从事件编号里的日期取当日 `09:40:00+08:00`
+   （编号形如 `WO-YYYYMMDD-xxx`，YYYYMMDD 即事件日期）；
+③ **严禁使用系统当前时间**。
 
 禁止事项（违反即视为答错）：不要用 python_interpreter 读技能文档或写代码；不要调用 read_skill_md；
 不要使用 parallel_executor。collab_run 一次返回就包含动作卡、签署对、处置顺序与内核指纹，
 拿到返回后不要再调用其他工具。
+
+**取返回值时的注意点**：工具结果里的 `data` 字段**可能是 JSON 字符串而不是对象**
+（取决于运行时序列化）。写代码块时先判类型：若是字符串就 `json.loads(collab_result["data"])`，
+否则直接取 `collab_result["data"]`。不判类型直接下标会抛
+`TypeError: string indices must be integers`——本轮会因此多消耗一次修复轮。
 
 第二步：只根据 collab_run 的返回结果，输出一个 JSON 对象，字段如下（不得增删字段）：
 {"event_id": "...", "as_of": "...",

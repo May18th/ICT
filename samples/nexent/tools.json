@@ -222,6 +222,11 @@
               "text",
               "code"
             ]
+          },
+          "include_deprecated": {
+            "type": "boolean",
+            "default": false,
+            "description": "默认只返回已发布资产。仅在需要做版本对比（如 2021 版 vs 2025 版预案）时置 true，否则会同时拿到已废止的旧版口径。"
           }
         },
         "required": [

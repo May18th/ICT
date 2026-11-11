@@ -1,0 +1,22 @@
+# 离线镜像清单（14 个，合计 0.0 MB）
+
+# tar 文件名 → 镜像 tag 对应关系：把文件名里第一个 '_' 后的 '/' 还原即可，
+# 保险起见以 `docker images` 实际 tag 为准。
+
+
+## 角色说明
+
+- `nexent/nexent:v2.7.0` — 后端主服务（config/runtime/northbound 共用此镜像）
+- `nexent/nexent-web:v2.7.0` — 前端
+- `nexent/nexent-web:v2.7.0-ict` — 前端（ICT 定制版，可选）
+- `nexent/nexent-data-process:v2.7.0` — 文档处理 / 知识库切分
+- `nexent/nexent-sandbox:v2.7.0` — 代码沙箱（本项目提示词已禁用，仍保留）
+- `urban-twin-mcp:dev` — 本项目的 MCP 服务（15 个工具的实现）
+- `docker.elastic.co/elasticsearch/elasticsearch:8.17.4` — 全文检索 / 技能与知识库
+- `postgres:15-alpine` — MCP 侧数据库
+- `supabase/postgres:15.8.1.060` — 平台主库
+- `supabase/gotrue:v2.170.0` — 认证（登录/密钥）
+- `kong:2.8.1` — 网关
+- `redis:alpine` — 缓存
+- `quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z` — 对象存储
+- `otel/opentelemetry-collector-contrib:0.151.0` — 链路追踪（可停）
