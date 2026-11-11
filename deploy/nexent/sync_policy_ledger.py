@@ -126,24 +126,31 @@ def platform_doc() -> dict | None:
         "# 平台运行版本快照",
         "",
         f"- 快照时间：{snapshot.get('generated_at') or '—'}（UTC）",
+        f"- 取数来源：{snapshot.get('source') or '—'}（{snapshot.get('source_detail') or '—'}）",
         f"- 本地生产策略：{policy.get('production_label') or '—'}",
         f"- 反馈流水：{policy.get('feedback_runs', 0)} 条，"
         f"其中触发演化 {policy.get('triggered_runs', 0)} 条",
         f"- 最近演化结果：{policy.get('latest_triggered_label') or '—'}",
         "",
-        "| Agent | 当前版本 | 版本条数 | 更新时间 | 状态 |",
+        "| Agent | 当前版本 | 版本名 | 模型 | 状态 |",
         "| --- | --- | --- | --- | --- |",
     ]
     for agent in snapshot.get("platform_agents") or []:
+        current = agent.get("current_version")
+        available = agent.get("available")
+        if available is None:
+            available = agent.get("enabled")
         lines.append(
-            f"| {agent.get('name')} | v{agent.get('current_version')} | "
-            f"{agent.get('version_rows')} | {agent.get('updated') or '—'} | "
-            f"{'启用' if agent.get('enabled') else '停用'} |"
+            f"| {agent.get('name') or '—'} | "
+            f"{('v' + str(current)) if current is not None else '—'} | "
+            f"{agent.get('version_name') or '—'} | {agent.get('model') or '—'} | "
+            f"{'可用' if available else '不可用'} |"
         )
     lines += [
         "",
-        "说明：版本号取自平台库的 Agent 表（只读）。本地策略版本与平台 Agent 版本是两套编号——"
-        "前者是决策参数的版本，后者是平台装配的版本，这张表用于把两者放在一起对照。",
+        "说明：版本号优先取自平台北向接口（对外契约），北向不可用时回退平台库的 Agent 表（只读）。"
+        "本地策略版本与平台 Agent 版本是两套编号——前者是决策参数的版本，后者是平台装配的版本，"
+        "这张表用于把两者放在一起对照。",
     ]
     return {
         "title": "平台运行版本快照",

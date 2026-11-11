@@ -334,12 +334,14 @@ async function loadPlatform(){
     const lp=d.local_policy||{};
     let h='<p class=dim>本地生产策略 <b>'+esc(lp.production_label||'—')+'</b>；反馈流水 '+
       esc(lp.feedback_runs==null?0:lp.feedback_runs)+' 条，其中触发演化 '+
-      esc(lp.triggered_runs==null?0:lp.triggered_runs)+' 条；快照时间 '+esc(d.generated_at||'')+'</p>'+
-      '<table><tr><th>Agent</th><th>平台当前版本</th><th>版本条数</th><th>更新时间</th><th>状态</th></tr>';
+      esc(lp.triggered_runs==null?0:lp.triggered_runs)+' 条；取数 '+esc(d.source||'—')+
+      '；快照时间 '+esc(d.generated_at||'')+'</p>'+
+      '<table><tr><th>Agent</th><th>当前版本</th><th>版本名</th><th>模型</th><th>状态</th></tr>';
     for(const a of (d.platform_agents||[])){
-      h+='<tr><td>'+esc(a.name)+'</td><td>v'+esc(a.current_version==null?'—':a.current_version)+'</td>'+
-        '<td>'+esc(a.version_rows)+'</td><td>'+esc(a.updated||'—')+'</td>'+
-        '<td>'+(a.enabled?'<span class=ok>启用</span>':'<span class=warn>停用</span>')+'</td></tr>';
+      const avail=(a.available==null?a.enabled:a.available);
+      h+='<tr><td>'+esc(a.name)+'</td><td>'+(a.current_version==null?'—':'v'+esc(a.current_version))+'</td>'+
+        '<td>'+esc(a.version_name||'—')+'</td><td>'+esc(a.model||'—')+'</td>'+
+        '<td>'+(avail?'<span class=ok>可用</span>':'<span class=warn>不可用</span>')+'</td></tr>';
     }
     box.innerHTML=h+'</table>';
   }catch(e){box.innerHTML='<span class=warn>平台版本加载失败：'+esc(e)+'</span>';}
