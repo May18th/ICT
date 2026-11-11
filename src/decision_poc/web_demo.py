@@ -3496,6 +3496,7 @@ a{color:#5eead4}
 <div id="hist" style="color:#7d95ab;font-size:12.5px">加载中…</div>
 </main><script>
 const f=document.getElementById('f'),out=document.getElementById('out'),hist=document.getElementById('hist');
+const NL=String.fromCharCode(10);
 const esc=s=>String(s==null?'':s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
 function cell(v,cls){return '<td'+(cls?' class="'+cls+'"':'')+'>'+esc(v)+'</td>';}
 async function loadHist(){
@@ -3543,7 +3544,11 @@ f.addEventListener('submit',async ev=>{
   try{
     const r=await fetch('/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
     const d=await r.json();
-    out.textContent=JSON.stringify(d,null,2);
+    let tip='';
+    if(d.ledger&&d.ledger.state==='stale'){tip=NL+NL+'[台账待同步] '+d.ledger.hint;}
+    else if(d.ledger&&d.ledger.state==='fresh'){tip=NL+NL+'[台账已同步] '+d.ledger.hint;}
+    else if(d.ledger&&d.ledger.hint){tip=NL+NL+'[台账状态未知] '+d.ledger.hint;}
+    out.textContent=JSON.stringify(d,null,2)+tip;
     loadHist();
   }catch(err){out.textContent='请求失败：'+err;}
 });
@@ -3734,6 +3739,68 @@ def ledger_sync_payload() -> dict[str, Any]:
     return {"available": True, **data, "path": str(_LEDGER_SYNC)}
 
 
+def _ledger_freshness() -> dict[str, Any]:
+    """本地最新反馈有没有已经进到平台台账里。
+
+    只读两个本地文件，不碰平台：`history.jsonl`（本地事实源）与 `ledger_sync.json`
+    （平台状态快照，由 `check_ledger_sync.py` 生成）。判定为"落后"只提示，不自动同步——
+    同步要登录平台，页面进程不该持有平台口令。
+    """
+    from datetime import datetime
+
+    sync = ledger_sync_payload()
+    if not sync.get("available"):
+        return {"state": "unknown", "hint": sync.get("hint") or "尚未查询台账同步状态"}
+
+    def parse(value: object):
+        if not isinstance(value, str) or not value:
+            return None
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+
+    latest_feedback = None
+    history = Path(__file__).resolve().parents[2] / "artifacts" / "feedback" / "history.jsonl"
+    if history.is_file():
+        for line in history.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                latest_feedback = json.loads(line).get("ts") or latest_feedback
+            except json.JSONDecodeError:
+                continue
+
+    policy_doc = next(
+        (
+            doc
+            for doc in sync.get("documents") or []
+            if str(doc.get("path_or_url", "")).startswith("policy-ledger://")
+        ),
+        None,
+    )
+    if not policy_doc:
+        return {
+            "state": "stale",
+            "hint": "平台上还没有策略台账文档：python deploy/nexent/sync_policy_ledger.py --apply",
+        }
+
+    fed_at = parse(latest_feedback)
+    doc_at = parse(policy_doc.get("platform_created_at"))
+    if fed_at and doc_at and fed_at > doc_at:
+        return {
+            "state": "stale",
+            "hint": "这条反馈只在本地，平台台账仍是旧的：python deploy/nexent/sync_policy_ledger.py --apply",
+        }
+    return {
+        "state": "fresh",
+        "hint": "平台台账已覆盖本地最新反馈",
+        "latest_feedback_at": latest_feedback,
+        "platform_document_at": policy_doc.get("platform_created_at"),
+    }
+
+
 def _feedback_submit(body: bytes | None) -> tuple[int, str, bytes]:
     """POST /feedback：校验 → 判定 → 建议动作 →（必要时）跑一轮演化 → 记一条流水。"""
     from datetime import datetime, timezone
@@ -3779,6 +3846,8 @@ def _feedback_submit(body: bytes | None) -> tuple[int, str, bytes]:
             "plan": suggestion,
             "evolution": evolution,
             "record": run,
+            # 这条反馈进没进平台台账——只给判定与提示，同步动作仍要人工执行
+            "ledger": _ledger_freshness(),
         }
         return 200, "application/json; charset=utf-8", json.dumps(
             result, ensure_ascii=False
