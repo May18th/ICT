@@ -4,6 +4,7 @@ import pytest
 
 from decision_poc import visualize
 from decision_poc.scene_export import build_scene_payload
+from decision_poc.evolution_demo import build_evolution_html
 from decision_poc.web_demo import (
     build_demo_payload,
     build_html,
@@ -167,6 +168,7 @@ def test_page_script_parses(tmp_path):
         ("index", build_html),
         ("twin3d", build_twin3d_html),
         ("review", build_review_html),
+        ("evolution", build_evolution_html),
     ):
         blocks = re.findall(r"<script[^>]*>(.*?)</script>", builder(), re.S)
         assert blocks, f"{name} 页面必须有脚本块"

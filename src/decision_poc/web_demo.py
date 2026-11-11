@@ -3681,6 +3681,33 @@ def build_review_html() -> str:
     )
 
 
+_PLATFORM_SNAPSHOT = Path(__file__).resolve().parents[2] / "artifacts" / "ledger" / "platform_versions.json"
+
+
+def platform_versions_payload() -> dict[str, Any]:
+    """平台 Agent 版本快照（只读）。
+
+    快照由 `deploy/nexent/snapshot_platform_versions.py` 生成——那一步要调平台库，
+    页面进程不该为了渲染一张表去依赖平台容器是否在跑，所以这里只读文件。
+    快照缺失时返回 `available=False` 加生成命令，前端显示提示而不是抛错。
+    """
+    if not _PLATFORM_SNAPSHOT.is_file():
+        return {
+            "available": False,
+            "hint": "尚未生成快照：python deploy/nexent/snapshot_platform_versions.py",
+            "path": str(_PLATFORM_SNAPSHOT),
+        }
+    try:
+        snapshot = json.loads(_PLATFORM_SNAPSHOT.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return {
+            "available": False,
+            "hint": f"快照读取失败：{type(exc).__name__}",
+            "path": str(_PLATFORM_SNAPSHOT),
+        }
+    return {"available": True, **snapshot, "path": str(_PLATFORM_SNAPSHOT)}
+
+
 def _feedback_submit(body: bytes | None) -> tuple[int, str, bytes]:
     """POST /feedback：校验 → 判定 → 建议动作 →（必要时）跑一轮演化 → 记一条流水。"""
     from datetime import datetime, timezone
@@ -3811,6 +3838,8 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return 200, "application/octet-stream", f.read_bytes()
     if parsed.path == "/evolution":
         return 200, "text/html; charset=utf-8", build_evolution_html().encode("utf-8")
+    if segments[:3] == ["api", "platform", "versions"]:
+        return _json(platform_versions_payload())
     if segments[:3] == ["api", "evolution", "gate"]:
         limit = int((query.get("limit") or ["10"])[0])
         return _json(evolution_gate_history(limit))

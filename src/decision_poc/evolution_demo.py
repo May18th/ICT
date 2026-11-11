@@ -225,6 +225,7 @@ def build_evolution_html() -> str:
 <p class=dim>口径：评分只做汇总（样本/均分/前后差值），<b>不参与门禁</b>；只有给出"建议分配"的提交才会转成评审用例，成为候选策略的硬约束。真实用户评分是个人意见，非部门批复。</p>
 </section>
 <section class="card evolution-card history-panel"><h2>策略版本：可审计、可回滚</h2><table id=releases></table></section>
+<section class="card evolution-card platform-card"><h2>平台运行版本：这套策略落在哪个 Agent 上</h2><div id=platformVersions></div></section>
 <div class="bound evolution-footer" id=boundaries></div></div></details>
 </div>
 </main>
@@ -325,7 +326,26 @@ rvForm.addEventListener('submit',async e=>{
     rvComment.value='';rvSuggest.value='';loadReviews();loadGate();
   }catch(err){rvMsg.innerHTML='<span class=warn>提交失败：'+esc(err.message||err)+'</span>';}
 });
+async function loadPlatform(){
+  const box=document.getElementById('platformVersions');
+  try{
+    const d=await (await fetch('/api/platform/versions')).json();
+    if(!d.available){box.innerHTML='<p class=dim>'+esc(d.hint||'暂无平台版本快照')+'</p>';return;}
+    const lp=d.local_policy||{};
+    let h='<p class=dim>本地生产策略 <b>'+esc(lp.production_label||'—')+'</b>；反馈流水 '+
+      esc(lp.feedback_runs==null?0:lp.feedback_runs)+' 条，其中触发演化 '+
+      esc(lp.triggered_runs==null?0:lp.triggered_runs)+' 条；快照时间 '+esc(d.generated_at||'')+'</p>'+
+      '<table><tr><th>Agent</th><th>平台当前版本</th><th>版本条数</th><th>更新时间</th><th>状态</th></tr>';
+    for(const a of (d.platform_agents||[])){
+      h+='<tr><td>'+esc(a.name)+'</td><td>v'+esc(a.current_version==null?'—':a.current_version)+'</td>'+
+        '<td>'+esc(a.version_rows)+'</td><td>'+esc(a.updated||'—')+'</td>'+
+        '<td>'+(a.enabled?'<span class=ok>启用</span>':'<span class=warn>停用</span>')+'</td></tr>';
+    }
+    box.innerHTML=h+'</table>';
+  }catch(e){box.innerHTML='<span class=warn>平台版本加载失败：'+esc(e)+'</span>';}
+}
 main().catch(e=>{metrics.innerHTML='<div class=metric><span class=warn>加载失败：'+esc(e)+'</span></div>'});
+loadPlatform();
 </script></html>"""
 
 
