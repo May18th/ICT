@@ -120,6 +120,31 @@ ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
     ("tools", "README.md", 2): (1, "「Agent 只挂 2 个工具」是绑定数，不是工具总数"),
     (
         "tools",
+        "docs/competition/OFFLINE.md",
+        2,
+    ): (1, "「主 Agent 只挂 2 个工具」是绑定数，不是工具总数"),
+    (
+        "tools",
+        "docs/competition/skills-mcp-design.md",
+        2,
+    ): (1, "章节号「2.2 工具分区」被正则当成工具数，不是总数"),
+    (
+        "tools",
+        "docs/competition/skills-mcp-design.md",
+        5,
+    ): (1, "章节号「2.5 工具契约」被正则当成工具数，不是总数"),
+    (
+        "tools",
+        "docs/赛道3-组件边界与推进路径-v0.1.md",
+        48,
+    ): (1, "「Nexent 工具表共 48 个工具」指平台全量工具库（含 local 类），不是本 MCP 服务的工具数"),
+    (
+        "tools",
+        "docs/赛道3-组件边界与推进路径-v0.1.md",
+        2,
+    ): (1, "「主 Agent 只启用 2 个工具」是 MAIN_TOOLS 的挂载数，不是工具总数"),
+    (
+        "tools",
         "docs/competition/winning-gap-audit.md",
         2,
     ): (1, "「2 工具主 Agent」是主 Agent 的挂载数，不是工具总数"),

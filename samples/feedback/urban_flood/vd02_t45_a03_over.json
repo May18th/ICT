@@ -1,0 +1,12 @@
+{
+  "scenario_id": "vd02",
+  "t_min": 45,
+  "district": "A-03",
+  "water_depth_cm": 34.0,
+  "flooded_road_ids": ["RD-A03-02", "RD-A03-05"],
+  "pump_state": "running",
+  "source": "synthetic",
+  "seed": 20261111,
+  "expected_depth_cm": 28.0,
+  "note": "封路后仍超临界，泵站单台运行"
+}

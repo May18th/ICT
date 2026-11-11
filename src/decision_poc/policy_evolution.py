@@ -76,6 +76,13 @@ DIMENSION_PRIORITY: tuple[str, ...] = tuple(DEVIATION_WEIGHTS)
 
 LABEL_PREFIX = "flood-response"
 BASELINE_LABEL = f"{LABEL_PREFIX}-v1.0"
+#: **全系统唯一的生产策略标签**。凡"当前用哪一版"的问题只认这一个常量。
+#:
+#: 为什么需要它：策略参数散落在 `samples/eval/decision_memory.json`（冻结记忆）、
+#: `artifacts/memory/`（运行期记忆）、平台台账三处，没有单点声明时，
+#: "现在到底用哪版"会出现多个答案。`scripts/policy_sensitivity.py` 产出的
+#: `v1.3` 是口径敏感性实验的副产品，**不在生产之列**（第二口径没有业务依据）。
+PRODUCTION_LABEL = f"{LABEL_PREFIX}-v1.2"
 
 REAL_EVENT_ID = "WO-20261029-007"
 REAL_EVENT_AS_OF = "2026-10-29T09:40:00+08:00"
@@ -91,6 +98,22 @@ def policy_from_version(version: PolicyVersion) -> AllocationPolicy:
 
 def release_label(minor: int) -> str:
     return f"{LABEL_PREFIX}-v1.{minor}"
+
+
+def label_minor(label: str) -> int:
+    """从标签里取出次版本号（`flood-response-v1.3` → 3）。
+
+    用于 warm start 时把发版序号接上：记忆里已到 v1.2，这一轮若还能改进，
+    新标签必须是 v1.3，否则会从 v1.2 退回 v1.1——版本号倒退比不改更糟，
+    因为评审会认为"策略被改坏了"。前缀不匹配一律按 0 处理（等同于基线）。
+    """
+    prefix = f"{LABEL_PREFIX}-v1."
+    if not label.startswith(prefix):
+        return 0
+    try:
+        return max(0, int(label[len(prefix) :]))
+    except ValueError:
+        return 0
 
 
 def candidate_patches(dimension: str, policy: AllocationPolicy) -> list[dict[str, Any]]:
@@ -388,9 +411,10 @@ def evolve(
     review_before = active_review.deviation if active_review is not None else 0.0
     rounds: list[EvolutionRound] = []
     releases: list[PolicyRelease] = []
-    minor = 0
-    # warm start 时继承记忆里的标签：第二次运行若无需再调整，最终标签不能退回 v1.0
+    # warm start 时继承记忆里的标签：第二次运行若无需再调整，最终标签不能退回 v1.0；
+    # 若还需再调整，发版序号必须接着记忆里的号往下排，否则会从 v1.2 发成 v1.1。
     base_label = warm.entry.label if warm is not None else BASELINE_LABEL
+    minor = label_minor(base_label)
     parent_label = base_label
 
     for index in range(1, max_rounds + 1):
@@ -1085,6 +1109,7 @@ def main(argv: list[str] | None = None) -> int:
 
 __all__ = [
     "BASELINE_LABEL",
+    "PRODUCTION_LABEL",
     "EvolutionReport",
     "EvolutionRound",
     "HOLDOUT_TOLERANCE",

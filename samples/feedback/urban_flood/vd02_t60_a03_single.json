@@ -1,0 +1,12 @@
+{
+  "scenario_id": "vd02",
+  "t_min": 60,
+  "district": "A-03",
+  "water_depth_cm": 32.0,
+  "flooded_road_ids": ["RD-A03-05"],
+  "pump_state": "running",
+  "source": "synthetic",
+  "seed": 20261111,
+  "expected_depth_cm": 30.0,
+  "note": "单点复涨，疑调拨门槛过紧"
+}

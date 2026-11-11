@@ -1,8 +1,17 @@
 import json
 
+import pytest
+
 from decision_poc import visualize
 from decision_poc.scene_export import build_scene_payload
-from decision_poc.web_demo import build_demo_payload, build_html, render_snapshot, route
+from decision_poc.web_demo import (
+    build_demo_payload,
+    build_html,
+    build_review_html,
+    build_twin3d_html,
+    render_snapshot,
+    route,
+)
 
 
 def test_demo_payload_contains_event_and_trace():
@@ -140,6 +149,10 @@ def test_page_script_parses(tmp_path):
 
     这条是为一个真实踩过的坑加的：build_html() 是普通 Python 字符串，JS 里写 "\\n"
     会被解释成真实换行，把字符串字面量截断——整个 <script> 解析失败，页面按钮全哑。
+
+    twin3d 曾经漏在覆盖之外：3D 沙盘的脚本在 build_twin3d_html() 里，被同一个坑
+    打中时整页静默黑屏，而 test 只跑 build_html() 一直是绿的，等于没有保护。
+    两个页面都在这个用例里检查，不另开用例（测试总数是冻结基线，不能随便加）。
     node 不在的环境跳过（不引入新依赖）。
     """
     import re
@@ -148,18 +161,21 @@ def test_page_script_parses(tmp_path):
 
     node = shutil.which("node")
     if not node:
-        import pytest
-
         pytest.skip("node 未安装，跳过 JS 语法检查")
 
-    blocks = re.findall(r"<script>(.*?)</script>", build_html(), re.S)
-    assert blocks, "页面必须有脚本块"
-    target = tmp_path / "page.js"
-    target.write_text("\n".join(blocks), encoding="utf-8")
-    completed = subprocess.run(
-        [node, "--check", str(target)], capture_output=True, text=True, timeout=60
-    )
-    assert completed.returncode == 0, completed.stderr
+    for name, builder in (
+        ("index", build_html),
+        ("twin3d", build_twin3d_html),
+        ("review", build_review_html),
+    ):
+        blocks = re.findall(r"<script[^>]*>(.*?)</script>", builder(), re.S)
+        assert blocks, f"{name} 页面必须有脚本块"
+        target = tmp_path / f"{name}.js"
+        target.write_text("\n".join(blocks), encoding="utf-8")
+        completed = subprocess.run(
+            [node, "--check", str(target)], capture_output=True, text=True, timeout=60
+        )
+        assert completed.returncode == 0, f"{name}: {completed.stderr}"
 
 
 def test_flood_playback_is_event_driven():

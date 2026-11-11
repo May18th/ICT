@@ -27,6 +27,7 @@ from .collab import orchestrate
 from .counterfactual import Intervention, InterventionKind, rerun_with_interventions
 from .deduction import DeductionEngine, DistrictSignal
 from .evolution_demo import build_evolution_html, build_evolution_payload
+from .flood_feedback import FloodFeedback, plan as feedback_plan, run_evolution, to_feedback_record
 from .road_graph import RoadGraph, RoadGraphUnavailable
 from .skills import SkillPipeline, SkillRuntime
 from .semantic import build_urban_semantic_store
@@ -497,7 +498,7 @@ html.projection .scene-detail-grid strong{font-size:15.5px}
 def build_html() -> str:
     return """<!doctype html><html lang=zh-CN><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Urban Twin</title>
 <style>body{font:15px system-ui;margin:0;background:#0b1220;color:#e8eef7}main{max-width:1180px;margin:auto;padding:28px}h1{color:#7dd3fc;margin-bottom:4px}.sub{color:#9fb1c8}.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:22px 0}button{background:#38bdf8;border:0;border-radius:6px;padding:10px 18px;font-weight:700;cursor:pointer;white-space:nowrap;flex:0 0 auto}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.card{background:#152238;border:1px solid #263a55;border-radius:10px;padding:16px}.card h2{font-size:17px;margin:0 0 12px;color:#bae6fd}.metric{display:inline-block;background:#20344d;border-radius:7px;padding:10px;margin:0 8px 8px 0}.metric b{display:block;font-size:22px;color:#7dd3fc}.pill{display:inline-block;background:#334155;padding:3px 8px;border-radius:99px;margin:3px;font-size:12px}.warn{color:#fbbf24}.ok{color:#86efac}.trace{border-left:2px solid #38bdf8;padding-left:12px;margin:8px 0}.evidence{font-size:12px;color:#b8c7d9;word-break:break-all}svg{width:100%;height:330px;background:#0e1a2c;border-radius:8px}.road{stroke:#64748b;stroke-width:8}.flood{fill:#38bdf8;opacity:.35}.zone{fill:#1d3252;fill-opacity:.25;stroke:#2f4a6b;stroke-width:1.5;stroke-dasharray:6 6}.node{fill:#fbbf24;stroke:#fff;stroke-width:2}.navlink{color:#7dd3fc;text-decoration:none;margin-left:auto;font-weight:600}.guide{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:20px 0 0;border-top:1px solid #263a55}.guide>div{padding:14px 20px 0;border-left:1px solid #263a55;font-size:13px;color:#b8c7d9;line-height:1.65}.guide>div:first-child{border-left:0;padding-left:0}.guide b{display:block;font:700 12px ui-monospace,monospace;color:#38bdf8;letter-spacing:.1em}.guide span{display:block;font-size:16px;font-weight:700;color:#e8eef7;margin:2px 0 5px}.lgd{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 0;font-size:12px;color:#8fa4bd}.lgd i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}.cap{font-size:12px;color:#8fa4bd;margin:10px 0 4px}.cvwho{margin:12px 0 4px;color:#7dd3fc;font-weight:700;font-size:14px}.cvwho .tag{margin-left:8px;font-weight:400}.cvrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:start;padding:5px 0;border-bottom:1px dashed #1e3250;font-size:13px}.cvact{color:#cfe3f7;line-height:1.5;overflow-wrap:anywhere}.dp{font-size:11px;color:#7f93ab;line-height:1.5;margin:-2px 0 7px}.row.inv{color:#e8eef7}.tech{margin-top:18px;border:1px solid #263a55;border-radius:10px;background:#111d30}.tech>summary{cursor:pointer;padding:13px 16px;color:#8fa4bd;font-size:13px;font-weight:600;list-style:none}.tech>summary::-webkit-details-marker{display:none}.tech>summary::before{content:"▸ ";color:#38bdf8}.tech[open]>summary::before{content:"▾ "}.tech>div{padding:0 16px 16px}@media(max-width:800px){.grid{grid-template-columns:1fr}.guide{grid-template-columns:1fr}.guide>div{border-left:0;padding:9px 0;font-size:12px}.guide b{display:inline;margin-right:6px}.guide span{display:inline;font-size:14px;margin:0 6px 0 0}}</style>
-<style>#flood-scene{position:relative;border:1px solid #263a55;border-radius:12px;background:#0d1a2a;overflow:hidden;min-height:300px}#flood-map{display:block;width:100%;height:100%;min-height:300px;background:#0d1a2a}#flood-rain{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .5s;background-image:repeating-linear-gradient(115deg,rgba(125,211,252,.32) 0 1px,transparent 1px 30px);animation:fmRain .45s linear infinite}#flood-rain.on{opacity:1}@keyframes fmRain{to{background-position:30px 52px}}.fm-zone{fill:rgba(47,74,107,.20);stroke:#3f5a75;stroke-dasharray:6 5;stroke-width:1.5}.fm-road{stroke:#54708a;stroke-width:5;stroke-linecap:round;fill:none;transition:stroke .3s}.fm-road-closed{stroke:#8a6534}.fm-node{stroke:#f4f8fb;stroke-width:1.5;transition:fill .2s}.fm-node-in{fill:#d9a53a}.fm-node-ps{fill:#38bdf8}.fm-water{fill:#38bdf8;fill-opacity:.32;stroke:#7dd3fc;stroke-width:1.2;transition:fill-opacity .5s}.fm-lbl{fill:#c3d3e2;font-size:10.5px;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3px;stroke-linejoin:round}.fm-evlbl{fill:#e0f2fe;font-size:11.5px;font-weight:700;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3.5px;stroke-linejoin:round}.fx-event{animation:fmPulse 1.1s ease-in-out infinite}.fx-affected{stroke:#7dd3fc;stroke-width:2.5;filter:drop-shadow(0 0 5px rgba(125,211,252,.9))}.fx-owner{stroke:#34d399;stroke-width:3;filter:drop-shadow(0 0 4px rgba(52,211,153,.8))}.fx-conflict{stroke:#fbbf24;stroke-width:3;animation:fmPulse .85s ease-in-out infinite}.fx-fault{fill:#ef4444;stroke:#fecaca;animation:fmFault .65s steps(2,end) infinite}.fx-closed{stroke:#fb923c;stroke-width:7;stroke-dasharray:14 8;animation:fmPulse 1.2s ease-in-out infinite}@keyframes fmPulse{50%{opacity:.4}}@keyframes fmFault{50%{opacity:.25}}.flood-caption{position:absolute;left:12px;top:12px;z-index:3;max-width:76%;padding:9px 13px;border-radius:9px;background:rgba(7,18,28,.68);pointer-events:none}.flood-caption b{display:block;font-size:15px;color:#e0f2fe;line-height:1.35}.flood-caption span{display:block;margin-top:3px;font-size:12.5px;line-height:1.5;color:#b9cbd9}.flood-readout{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:#b8c7d9}.flood-readout b{color:#7dd3fc;font-size:18px}.flood-story{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 0}.flood-cause{padding:9px 10px;border:1px solid #29425d;border-radius:8px;background:#101d30;color:#b8c7d9;font-size:12px;line-height:1.45}.flood-cause b{display:block;color:#bae6fd;font-size:13px}.flood-cause.on{border-color:#38bdf8;background:#14334a;box-shadow:inset 3px 0 #38bdf8}@media(max-width:700px){.flood-story{grid-template-columns:1fr}}</style><main><header class=page-hero><div><div class=eyebrow>URBAN TWIN · 成都内涝推演</div><h1>城市内涝跨部门事件推演</h1><div class=sub>从一张积水工单，到一套可执行的跨部门调度方案。</div></div><a class=navlink href='/evolution'>查看决策进化对比 →</a></header>
+<style>#flood-scene{position:relative;border:1px solid #263a55;border-radius:12px;background:#0d1a2a;overflow:hidden;min-height:300px}#flood-map{display:block;width:100%;height:100%;min-height:300px;background:#0d1a2a}#flood-rain{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .5s;background-image:repeating-linear-gradient(115deg,rgba(125,211,252,.32) 0 1px,transparent 1px 30px);animation:fmRain .45s linear infinite}#flood-rain.on{opacity:1}@keyframes fmRain{to{background-position:30px 52px}}.fm-zone{fill:rgba(47,74,107,.20);stroke:#3f5a75;stroke-dasharray:6 5;stroke-width:1.5}.fm-road{stroke:#54708a;stroke-width:5;stroke-linecap:round;fill:none;transition:stroke .3s}.fm-road-closed{stroke:#8a6534}.fm-node{stroke:#f4f8fb;stroke-width:1.5;transition:fill .2s}.fm-node-in{fill:#d9a53a}.fm-node-ps{fill:#38bdf8}.fm-water{fill:#38bdf8;fill-opacity:.32;stroke:#7dd3fc;stroke-width:1.2;transition:fill-opacity .5s}.fm-lbl{fill:#c3d3e2;font-size:10.5px;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3px;stroke-linejoin:round}.fm-evlbl{fill:#e0f2fe;font-size:11.5px;font-weight:700;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3.5px;stroke-linejoin:round}.fx-event{animation:fmPulse 1.1s ease-in-out infinite}.fx-affected{stroke:#7dd3fc;stroke-width:2.5;filter:drop-shadow(0 0 5px rgba(125,211,252,.9))}.fx-owner{stroke:#34d399;stroke-width:3;filter:drop-shadow(0 0 4px rgba(52,211,153,.8))}.fx-conflict{stroke:#fbbf24;stroke-width:3;animation:fmPulse .85s ease-in-out infinite}.fx-fault{fill:#ef4444;stroke:#fecaca;animation:fmFault .65s steps(2,end) infinite}.fx-closed{stroke:#fb923c;stroke-width:7;stroke-dasharray:14 8;animation:fmPulse 1.2s ease-in-out infinite}@keyframes fmPulse{50%{opacity:.4}}@keyframes fmFault{50%{opacity:.25}}.flood-caption{position:absolute;left:12px;top:12px;z-index:3;max-width:76%;padding:9px 13px;border-radius:9px;background:rgba(7,18,28,.68);pointer-events:none}.flood-caption b{display:block;font-size:15px;color:#e0f2fe;line-height:1.35}.flood-caption span{display:block;margin-top:3px;font-size:12.5px;line-height:1.5;color:#b9cbd9}.flood-readout{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:#b8c7d9}.flood-readout b{color:#7dd3fc;font-size:18px}.flood-story{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 0}.flood-cause{padding:9px 10px;border:1px solid #29425d;border-radius:8px;background:#101d30;color:#b8c7d9;font-size:12px;line-height:1.45}.flood-cause b{display:block;color:#bae6fd;font-size:13px}.flood-cause.on{border-color:#38bdf8;background:#14334a;box-shadow:inset 3px 0 #38bdf8}@media(max-width:700px){.flood-story{grid-template-columns:1fr}}</style><main><header class=page-hero><div><div class=eyebrow>URBAN TWIN · 成都内涝推演</div><h1>城市内涝跨部门事件推演</h1><div class=sub>从一张积水工单，到一套可执行的跨部门调度方案。</div></div><a class=navlink href='/evolution'>查看决策进化对比 →</a><a class=navlink href='/feedback'>提交内涝反馈 →</a><a class=navlink href='/review'>参与方案评审 →</a></header>
 <section class=guide><div><b>01</b><span>先看结论</span>出什么事、要几台泵、实际有几台、怎么分 —— 见“事件概览 / 工单 / 资源 / 方案”</div><div><b>02</b><span>再看依据</span>这结论是谁算的、引用了台账哪一行 —— 见“演示链路 / 决策事件流”</div><div><b>03</b><span>最后改条件</span>少一台泵或封一条路，看结论怎么重算 —— 见“人工干预”</div></section>
 <div class=toolbar><button onclick="run()">运行演示</button><button class=ghost id=btn-proj onclick="toggleProjection()">投屏模式</button><span id=status>等待运行</span></div><section id=summary class='card outcome-card'><div class=summary-head><h2>事件结论</h2><span id=data-source class=src-chip>合成情景 · 合成气象</span></div><div id=metrics>点击“运行演示”加载推演结果</div></section>
 <section class='card process-card'><h2>推演主线 <span>事件输入 → 证据核验 → 协同复核 → 方案复算</span></h2><div class=toolbar style='margin:0 0 8px'><button onclick="runChain()">跑一遍链路</button><span id=chainstatus class=sub>未加载</span></div><div id=chain class=chain></div><div id=chainfoot class=sub style='margin-top:8px'></div></section>
@@ -1134,7 +1135,8 @@ def build_twin3d_html() -> str:
 #event-bar span{display:block;margin-top:3px;font-size:12px;color:#8fb7d6}
 #legend{position:fixed;left:18px;bottom:16px;z-index:5;pointer-events:none;font-size:12px;color:#93a7bb;line-height:1.9}
 #legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-#tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}#evidence-card{position:fixed;left:18px;top:84px;width:236px;z-index:7;padding:11px;border-radius:10px;background:rgba(7,18,28,.78);backdrop-filter:blur(8px);border:1px solid rgba(122,162,198,.4);font-size:11.5px;color:#a9bfd2}#evidence-card b{color:#e0f2fe;display:block;margin-bottom:6px}#entity-card{position:fixed;right:18px;top:84px;width:250px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.82);backdrop-filter:blur(8px);border:1px solid rgba(122,162,198,.4);display:none}#entity-card b{color:#e0f2fe}#entity-card span{display:block;margin-top:6px;color:#a9bfd2;font-size:12px}#timeline{position:fixed;left:18px;right:18px;bottom:48px;z-index:6;display:flex;gap:6px;align-items:center;background:rgba(7,18,28,.84);padding:8px 10px;border-radius:10px;flex-wrap:wrap}#timeline button{background:#1a3042;color:#d7e4f0;border:1px solid #496579;border-radius:5px;padding:4px 8px;cursor:pointer}#timeline button.active{background:#1976a8}#timeline #jump-buttons{display:flex;gap:4px;flex-wrap:wrap}#progress{flex:1;min-width:140px;accent-color:#4fc3f7;height:20px;cursor:pointer}#progress-time{font-size:11px;color:#8fb7d6;font-family:ui-monospace,monospace;min-width:44px;text-align:center}
+#legend i.ring{background:transparent;border:1px solid #7ed4ff;border-radius:50%}
+#tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}#evidence-card{position:fixed;left:18px;top:84px;width:236px;z-index:7;padding:11px;border-radius:10px;background:rgba(7,18,28,.78);backdrop-filter:blur(8px);border:1px solid rgba(122,162,198,.4);font-size:11.5px;color:#a9bfd2}#evidence-card b{color:#e0f2fe;display:block;margin-bottom:6px}#entity-card{position:fixed;right:18px;top:84px;width:250px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.82);backdrop-filter:blur(8px);border:1px solid rgba(122,162,198,.4);display:none}#entity-card b{color:#e0f2fe}#entity-card span{display:block;margin-top:6px;color:#a9bfd2;font-size:12px}#timeline{position:fixed;left:18px;right:18px;bottom:48px;z-index:6;display:flex;gap:6px;align-items:center;background:rgba(7,18,28,.84);padding:8px 10px;border-radius:10px;flex-wrap:wrap}#timeline button{background:#1a3042;color:#d7e4f0;border:1px solid #496579;border-radius:5px;padding:4px 8px;cursor:pointer}#timeline button.active{background:#1976a8}#timeline button.layer{background:#0f3a4a;color:#9fd8e8;border-color:#2b7f9f}#timeline button.layer.off{background:#1a3042;color:#5a7088;border-color:#3a4a58;text-decoration:line-through}#timeline #jump-buttons{display:flex;gap:4px;flex-wrap:wrap}#progress{flex:1;min-width:140px;accent-color:#4fc3f7;height:20px;cursor:pointer}#progress-time{font-size:11px;color:#8fb7d6;font-family:ui-monospace,monospace;min-width:44px;text-align:center}
 canvas{display:block}
 #entity-card{width:322px;max-height:calc(100vh - 190px);overflow:auto}
 #entity-card::-webkit-scrollbar{width:6px}#entity-card::-webkit-scrollbar-thumb{background:#2c4459;border-radius:3px}
@@ -1175,8 +1177,8 @@ canvas{display:block}
 #hud small{display:block;margin-top:4px;font-size:11px;color:#6f8499}</style>
 <div id=hud><b>城市内涝三维数字孪生 · 写实沙盘</b><span>兴华路片区(A-03) 与 建设大道片区(B-01) · 坐标来自 scene.json 台账实时投影</span><small id=hud-src>正在加载关联层（动作卡 / 对象 / 证据）…</small></div>
 <div id=event-bar><b>观测：事件识别</b><span>事件推演 · 第 1/6 跳</span></div>
-<div id=legend><span><i style=background:#4a6fa5></i>积水段</span> &nbsp; <span><i style=background:#e0a965></i>已封路</span> &nbsp; <span><i style=background:#5a6a7a></i>泵站</span> &nbsp; <span><i style=background:#ff2d2d></i>故障告警</span></div>
-<div id=evidence-card><b>当前跳次证据</b><span id=evidence-body>正在读取六跳证据…</span><br><a href="/" style="color:#7ed4ff">返回主页面事件台</a></div><div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span><div id=entity-links></div></div><div id=exec-card><b>执行账本（计划 vs 实际）</b><span id=exec-body>正在读取执行账本…</span></div><div id=results-card><b>处置前后结果</b><details id=results-details><summary id=results-summary>展开对照</summary><div id=results-body>正在读取…</div><div id=results-note style='margin-top:6px;color:#64788c;font-size:10.5px'></div></details></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><span id=jump-buttons></span><span class=tl-sep></span><button id=settle class=final>最终状态</button><input id=progress type=range min=0 max=1000 value=0 title="拖动到事件线任意时刻"><span id=progress-time>00:00</span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
+<div id=legend><span><i style=background:#4a6fa5></i>积水段</span> &nbsp; <span><i style=background:#e0a965></i>已封路</span> &nbsp; <span><i style=background:#5a6a7a></i>泵站</span> &nbsp; <span><i style=background:#3a8fb0></i>排水管</span> &nbsp; <span><i style=background:#8bd8ff></i>地表汇流</span> &nbsp; <span><i style=background:#e0a33a></i>土壤下渗</span> &nbsp; <span><i style=background:#ff5a1f></i>瓶颈管段</span> &nbsp; <span><i style=background:#ff2d2d></i>故障告警</span> &nbsp; <span><i class=ring></i>本步落点</span></div>
+<div id=evidence-card><b>当前跳次证据</b><span id=evidence-body>正在读取六跳证据…</span><br><a href="/" style="color:#7ed4ff">返回主页面事件台</a></div><div id=entity-card><b id=entity-title>对象详情</b><span id=entity-body>点击积水或泵站查看</span><div id=entity-links></div></div><div id=exec-card><b>执行账本（计划 vs 实际）</b><span id=exec-body>正在读取执行账本…</span></div><div id=results-card><b>处置前后结果</b><details id=results-details><summary id=results-summary>展开对照</summary><div id=results-body>正在读取…</div><div id=results-note style='margin-top:6px;color:#64788c;font-size:10.5px'></div></details></div><div id=timeline><button id=prev>‹</button><button id=play>暂停</button><button id=next>›</button><button id=restart>重播</button><button id=pipe-toggle class="layer off">管网：关</button><span id=jump-buttons></span><span class=tl-sep></span><button id=settle class=final>最终状态</button><input id=progress type=range min=0 max=1000 value=0 title="拖动到事件线任意时刻"><span id=progress-time>00:00</span></div><div id=tip>拖动旋转 · 滚轮缩放 · 右键平移</div>
 <script src="/three.min.js"></script>
 <script src="/RGBELoader.js"></script>
 <script src="/OrbitControls.js"></script>
@@ -1184,8 +1186,8 @@ canvas{display:block}
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let renderer,scene3,camera,controls,envTex=null;
-let rain=null,rainGeo=null;
-const K=0.16,CX=350,CY=165;   // 投影缩放：放大间距，元素之间更疏朗
+let rain=null,rainGeo=null,rainSpeed=null;
+const K=0.16,CX=350,CY=165;   // 投影缩放：1 场景单位(米) → 0.16 世界单位，即 1 世界单位 = 6.25 m
 function W(x,y){return[(x-CX)*K,(y-CY)*K]}
 // ---- 材质加载：一次加载、repeat 平铺、缓存复用 ----
 const texCache={};
@@ -1193,6 +1195,19 @@ function loadTex(name){if(texCache[name])return texCache[name];
   const t=new THREE.TextureLoader().load('/assets/tex/'+name+'.jpg');
   t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;return texCache[name]=t}
 function stdMat(name,extra){const m=new THREE.MeshStandardMaterial(Object.assign({map:loadTex(name+'_diffuse'),roughnessMap:loadTex(name+'_rough'),normalMap:loadTex(name+'_normal'),roughness:.95,metalness:.02},extra||{}));return m}
+// BoxGeometry 的每个面都把 UV 归一化到 0..1：一段 100 世界单位长的路面只有一次贴图，
+// 纹理被沿路方向拉成一条条平行丝——远景看不出来，相机一拉近就是"地毯拉丝"。
+// 这里只改顶面/底面的 UV，让贴图按世界尺寸平铺；tile 是一个纹理周期的世界长度。
+// r128 的 BoxGeometry 顶点顺序固定为 px,nx,py,ny,pz,nz，每面 4 个顶点，py/ny 是 8..15。
+function tileBoxTop(geo,su,sv){
+  const uv=geo.attributes.uv;
+  for(let i=8;i<16;i++){uv.setXY(i,uv.getX(i)*su,uv.getY(i)*sv);}
+  uv.needsUpdate=true;
+  return geo;
+}
+// three r128 没有颜色管理：color 的十六进制被当作线性值直接进光照，输出时再编码一次 sRGB，
+// 等效把颜色整体提亮近一倍（131 的中灰会渲成 224 的白）。所有纯色材质都应经这里转线性。
+function srgbHex(h){return new THREE.Color(h).convertSRGBToLinear()}
 // 写实楼栋：混凝土立面，UV 按楼面大小平铺让窗户肌理自然
 // 程序化楼栋立面：Canvas 画窗户格子，生成一张可平铺的立面贴图
 let __facadeTex=null;
@@ -1216,7 +1231,10 @@ function makeBuilding(w,h,d,x,z,rotY){
   const grp=new THREE.Group();
   // 主体
   const ft=facadeTex().clone();ft.needsUpdate=true;
-  const mat=new THREE.MeshStandardMaterial({color:0xd8dde0,map:ft,roughness:.82,metalness:.06});
+  // 统一现代城市立面材质，但用确定性的冷灰色阶区分楼栋，避免整片楼体像复制的积木
+  const facadeColors=[0xd8dde0,0xc8d0d4,0xb9c3c8,0xe0e1dc];
+  const facadeColor=facadeColors[Math.abs(Math.round(x*0.07+z*0.11))%facadeColors.length];
+  const mat=new THREE.MeshStandardMaterial({color:facadeColor,map:ft,roughness:.82,metalness:.06});
   const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);b.castShadow=true;b.receiveShadow=true;
   b.position.y=h/2;grp.add(b);
   ft.repeat.set(Math.max(1,Math.round(w/1.6)),Math.max(1,Math.round(h/1.5)));
@@ -1279,25 +1297,53 @@ function init(){
   renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.82;
   document.body.appendChild(renderer.domElement);
-  scene3=new THREE.Scene();scene3.background=new THREE.Color(0x1a2028);scene3.fog=new THREE.Fog(0x5a646e,70,200);
-  camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,0.1,500);
-  camera.position.set(18,34,52);   // 低空俯瞰：更近、更低，事件对象细节清晰可见
-  controls=new THREE.OrbitControls(camera,renderer.domElement);controls.target.set(0,0.5,0);controls.maxPolarAngle=1.42;controls.minDistance=12;controls.maxDistance=160;controls.enableDamping=true;controls.dampingFactor=0.08;controls.update();
+  scene3=new THREE.Scene();window.__scene3=scene3;   // 挂全局，便于在控制台/自动化里核查场景对象
+  scene3.background=new THREE.Color(0x1a2028);
+  // 雾只做极轻的空气感，不吞掉街区；起止距离拉到场景尺寸之外，远景保持通透可读。
+  scene3.fog=new THREE.Fog(0x6a7684,150,430);
+  camera=new THREE.PerspectiveCamera(46,innerWidth/innerHeight,0.1,500);
+  // 镜头聚焦主事件区（A-03 兴华路积水 + 故障泵站 + 封路点），让一次事件的所有对象集中在同一画面内
+  // 镜头对准 A-03 主事件区（积水最深处 + 故障泵站），而不是只对着泵站：
+  // 原来 target 在场景 x≈294（泵站位置），积水面在 x≈200，水被挤到画面左下角，
+  // 读起来像「事故在别处」。现在取两者之间（x≈235），并拉近到 28 世界单位，
+  // 从东南上空看西北，避开西南街区的高楼遮挡。
+  camera.position.set(-6,15.6,20.6);
+  // minDistance 必须小于特写距离：OrbitControls 的 update() 会把相机距离夹在
+  // [minDistance,maxDistance] 里，写 12 时任何 12 以内的特写都被顶回 12 世界单位——
+  // 表现就是"特写参数怎么改画面都不变"。特写降到 1.75 后这里必须同步放到 1.0，
+  // 否则上面改多少都会被夹回 3.0。
+  controls=new THREE.OrbitControls(camera,renderer.domElement);controls.target.set(-18,0.6,0.6);controls.maxPolarAngle=1.42;controls.minDistance=1.0;controls.maxDistance=160;controls.enableDamping=true;controls.dampingFactor=0.08;
+  // 调试/核查用俯视视角：地址加 #top 直接看平面投影（检查水面范围、楼栋退线是否压路）
+  if(location.hash==='#top')camera.position.set(controls.target.x,46,controls.target.z+1);
+  controls.update();
   // 阴雨天空 HDR + 环境反射
   new THREE.RGBELoader().setDataType(THREE.UnsignedByteType).load('/assets/hdr/cloudy.hdr',function(hdr){
     hdr.mapping=THREE.EquirectangularReflectionMapping;
     const pmrem=new THREE.PMREMGenerator(renderer);envTex=pmrem.fromEquirectangular(hdr).texture;
-    scene3.environment=envTex;scene3.background=envTex;scene3.backgroundIntensity=0.6;hdr.dispose();pmrem.dispose()});
+    scene3.environment=envTex;scene3.background=envTex;scene3.backgroundIntensity=0.6;pmrem.dispose();
+    // 天空原图留着不 dispose：水面 shader 要拿它做 equirect 反射采样。
+    // 之前只有 fresnel 混一个常数天空色，不管怎么调都像"地上摊了一层灰雾"——
+    // 水面之所以像水，靠的是把天光/楼影按视角反射出来，不是刷个蓝灰色。
+    window.__skyTex=hdr;
+    (window.__waterMeshes||[]).forEach(function(w){
+      const u=w.surface&&w.surface.material&&w.surface.material.uniforms;
+      if(u&&u.uSky){u.uSky.value=hdr;u.uHasSky.value=1;w.surface.material.needsUpdate=true;}
+    });
+  });
   // 阴天柔和光照：半球光 + 弱方向光
   scene3.add(new THREE.HemisphereLight(0x8fa4b8,0x2a3322,0.55));
-  const sun=new THREE.DirectionalLight(0xcfd8e0,0.38);sun.position.set(40,60,25);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+  const sun=new THREE.DirectionalLight(0xcfd8e0,0.42);sun.position.set(40,60,25);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-0.00035;sun.shadow.normalBias=0.025;
   const sc=sun.shadow.camera;sc.left=-70;sc.right=70;sc.top=70;sc.bottom=-70;sc.far=200;scene3.add(sun);
-  // 城市基底：自然地面(草/土)大平面
-  const baseMat=new THREE.MeshStandardMaterial({color:0x858b90,map:loadTex('ground_diffuse'),roughnessMap:loadTex('ground_rough'),normalMap:loadTex('ground_normal'),roughness:.96,metalness:.02});
+  // 城市基底：铺装大平面。纯色一律经 srgbHex() 转线性，见该函数上方说明。
+  const baseMat=new THREE.MeshStandardMaterial({color:srgbHex(0x8e9294),map:loadTex('paving_diffuse'),roughnessMap:loadTex('paving_rough'),normalMap:loadTex('paving_normal'),roughness:.94,metalness:.02,envMapIntensity:.35});
   const base=new THREE.Mesh(new THREE.PlaneGeometry(500,500),baseMat);
   base.rotation.x=-Math.PI/2;base.position.y=-0.02;base.receiveShadow=true;
-  // 地面贴图大范围平铺
-  ['ground_diffuse','ground_rough','ground_normal'].forEach(n=>{const t=loadTex(n);t.repeat.set(60,60)});
+  // 地面贴图按世界尺寸平铺（一块纹理 ≈2 世界单位 ≈12.5m）。
+  // 原来靠 texture.repeat 设 60，而 texture 是和人行道共用的——一改就把人行道的 UV 也带偏，
+  // 所以这里改几何 UV；贴图 repeat 留给各处自己算，不再全局写。
+  (function(){const uv=base.geometry.attributes.uv;
+    for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*250,uv.getY(i)*250);
+    uv.needsUpdate=true;})();
   scene3.add(base);
   fetch('/api/scheduler').then(r=>r.json()).then(build);
   fetch('/api/execution').then(r=>r.json()).then(renderExec).catch(()=>{const el=document.getElementById('exec-body');if(el)el.textContent='执行账本不可用（/api/execution 未能加载）';});
@@ -1306,6 +1352,83 @@ function init(){
   makeRain();
   renderer.setAnimationLoop(tick);
   bindUI();
+  // ---- 场景自检入口：地址加 #audit 或 ?audit=1，每 1.5 秒刷新一次 ----
+  // 输出水面 blob / 水面平面 / 道路实际宽度，排查几何问题时看数，不靠截图目测。
+  if(location.hash==='#audit'||/[?&]audit=1/.test(location.search)){
+    const pre=document.createElement('pre');pre.id='audit';
+    pre.style.cssText='position:fixed;left:0;top:0;z-index:9999;background:#fff;color:#000;font:11px/1.4 monospace;max-height:100%;overflow:auto';
+    document.body.appendChild(pre);
+    const collect=function(){
+      const L=[];
+      (window.__waterMeshes||[]).forEach(function(w){
+        const s=w.surface,g=s.geometry.parameters,u=s.material.uniforms;
+        L.push('WATER|'+w.label+'|plane='+g.width.toFixed(2)+'x'+g.height.toFixed(2)
+          +'|pos='+s.position.x.toFixed(2)+','+s.position.z.toFixed(2)+'|y='+s.position.y.toFixed(2));
+        for(let i=0;i<8;i++){const v=u['uB'+i].value;
+          if(v.z>0.01)L.push('BLOB|'+w.label+'|x='+v.x.toFixed(2)+' z='+v.y.toFixed(2)+' rx='+v.z.toFixed(2)+' rz='+v.w.toFixed(2));}
+      });
+      if(window.__scene3)window.__scene3.traverse(function(o){
+        if(o.userData&&o.userData.kind==='road'&&o.geometry&&o.geometry.parameters)
+          L.push('ROAD|'+o.userData.entityId+'|len='+o.geometry.parameters.width.toFixed(2)+'|wide='+o.geometry.parameters.depth.toFixed(2)+'|y='+o.position.y.toFixed(2));
+        // 泵站/设施的实际占地：用来核对它有没有压到车行道（比看图可靠）
+        if(o.userData&&o.userData.kind==='pump'&&o.children.length){
+          const bb=new THREE.Box3().setFromObject(o);
+          L.push('PUMP|'+o.userData.entityId
+            +'|pos='+o.position.x.toFixed(2)+','+o.position.z.toFixed(2)
+            +'|bboxX='+bb.min.x.toFixed(2)+'..'+bb.max.x.toFixed(2)
+            +'|bboxZ='+bb.min.z.toFixed(2)+'..'+bb.max.z.toFixed(2));
+        }
+      });
+      // 光环：正常情况下同时只该有 1~2 个（本步落点 + 选中对象），多了就是又满屏淡圈了
+      // 同时输出投影后的屏幕像素坐标，用来在截图上定点核对"这个环到底画在哪儿、画没画出来"
+      Object.keys(RINGS||{}).forEach(function(id){
+        const fx=RINGS[id];if(!fx||!fx.ring.visible)return;
+        const pv=fx.ring.position.clone().project(camera);
+        const sx=Math.round((pv.x*0.5+0.5)*window.innerWidth),sy=Math.round((-pv.y*0.5+0.5)*window.innerHeight);
+        L.push('RING|'+id+'|pos='+fx.ring.position.x.toFixed(2)+','+fx.ring.position.z.toFixed(2)
+          +'|r='+fx.ring.geometry.parameters.outerRadius.toFixed(2)
+          +'|op='+fx.ring.material.opacity.toFixed(2)
+          +'|screen='+sx+','+sy+'|order='+fx.ring.renderOrder);
+      });
+      // 时序状态：堵塞标记/封路/车道线/水位，都是"该不该在场"的问题，用数值核对最快
+      (function(){
+        const cm=window.__clogMarks||[],ld=window.__laneDashes||[],rl=window.__roadLabels||[];
+        L.push('SEQ|clogShown='+cm.filter(m=>m.group.visible).length+'/'+cm.length
+          +'|lanesHidden='+ld.filter(g=>!g.visible).length+'/'+ld.length
+          +'|labelBlocked='+rl.filter(r=>r.sprite.material.map===r.blocked).length+'/'+rl.length);
+        // 现场处置到哪一步：车是否到场、人是否下车、锥桶摆了几个、泵是否接上
+        const cw=window.__roadCrew;
+        if(cw)L.push('CREW|truck='+((cw.truck&&cw.truck.visible)?1:0)
+          +'|crew='+(cw.group.visible?1:0)
+          +'|cones='+(cw.cones||[]).filter(g=>g.visible).length+'/4'
+          +'|pump='+((cw.pump&&cw.pump.visible)?1:0)
+          +'|pos='+cw.group.position.x.toFixed(2)+','+cw.group.position.z.toFixed(2));
+        (window.__waterMeshes||[]).forEach(function(w){
+          const u=w.surface&&w.surface.material&&w.surface.material.uniforms;
+          if(u&&u.uLevel)L.push('LEVEL|'+w.label+'|lvl='+u.uLevel.value.toFixed(2)
+            +'|grow='+(0.42+0.58*u.uLevel.value).toFixed(2)+'|vis='+w.surface.visible);
+        });
+      })();
+      // 命中测试：给屏幕相对坐标，返回命中的对象，用来定位「屏幕上那块斑到底是什么」
+      // 用法：?audit=1&probe=0.40,0.28 （相对视口宽高的比例，可多组用 ; 分隔）
+      (function(){
+        const q=new URLSearchParams(location.search);
+        const spec=q.get('probe');if(!spec)return;
+        spec.split(';').forEach(function(pair){
+          const uv=pair.split(',').map(Number);if(uv.length<2)return;
+          const rc=new THREE.Raycaster();
+          rc.setFromCamera(new THREE.Vector2(uv[0]*2-1,-uv[1]*2+1),camera);
+          const hits=rc.intersectObjects(scene3.children,true).slice(0,4);
+          L.push('PROBE|'+uv[0]+','+uv[1]+'|'+hits.map(function(x){
+            const u=x.object.userData||{};
+            return (u.kind||u.name||x.object.type)+':'+(x.object.geometry?x.object.geometry.type:'')+'@'+x.distance.toFixed(1);
+          }).join(' , '));
+        });
+      })();
+      return L.join(String.fromCharCode(10));
+    };
+    setInterval(function(){pre.textContent=collect()},1500);
+  }
 }
 // 执行账本摘要：计划（推演派生）vs 实际（账本），补到沙盘左下角，不再只存在于主页面
 function renderExec(d){
@@ -1319,11 +1442,24 @@ function renderExec(d){
     +'<div style="margin-top:3px;color:#64788c;font-size:10px">账本只记动作卡执行，不改冻结的 work_orders.csv</div>';
 }
 function makeRain(){
-  const N=900;const pos=new Float32Array(N*3);
-  for(let i=0;i<N;i++){pos[i*3]=(Math.random()-0.5)*140;pos[i*3+1]=Math.random()*55;pos[i*3+2]=(Math.random()-0.5)*140}
-  rainGeo=new THREE.BufferGeometry();rainGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  const m=new THREE.PointsMaterial({color:0xbfd4e6,size:0.12,transparent:true,opacity:0.45,depthWrite:false});
-  rain=new THREE.Points(rainGeo,m);rain.frustumCulled=false;scene3.add(rain)}
+  // 雨丝画成斜线段（LineSegments），不用 Points：Points 是"一颗颗圆点"，
+  // 在这个机位下只是一层灰噪点，读不出在下雨。
+  // 雨滴长度 0.20~0.54 世界单位（≈1.3~3.4m 的运动模糊），下落带轻微西斜。
+  const N=3000;
+  const pos=new Float32Array(N*6);
+  const speed=new Float32Array(N);
+  for(let i=0;i<N;i++){
+    const x=(Math.random()-0.5)*150, y=Math.random()*48-2, z=(Math.random()-0.5)*150;
+    const L=0.20+Math.random()*0.34;
+    pos[i*6]  =x;          pos[i*6+1]=y;    pos[i*6+2]=z;
+    pos[i*6+3]=x+0.05*L;   pos[i*6+4]=y-L;  pos[i*6+5]=z;
+    speed[i]=14+Math.random()*8;      // 世界单位/秒（≈0.34s 穿过 1 层楼高，比真实雨滴快，属视觉惯例）
+  }
+  rainGeo=new THREE.BufferGeometry();
+  rainGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  rainSpeed=speed;
+  const m=new THREE.LineBasicMaterial({color:0xdcebf7,transparent:true,opacity:0.55,depthWrite:false});
+  rain=new THREE.LineSegments(rainGeo,m);rain.frustumCulled=false;scene3.add(rain)}
 function build(sched){
   twinState.scheduler=sched;
   const ents=(sched.scene&&sched.scene.entities)||[];
@@ -1341,39 +1477,78 @@ function build(sched){
     'R-201':[[590,40],[590,280]], // 滨河路(次干,已封)
     'R-105':[[360,160],[360,250]],// 兴华支路(支路)
   };
-  const TWIN3D_FAC={'DF-PS-01':[285,174],'DF-PS-02':[228,231],'DF-IN-101':[258,78],'DF-IN-103':[120,146],'DF-IN-201':[633,146],'DF-IN-202':[526,176],'DF-PS-03':[560,105]};
-  const TWIN3D_WATER={'WO-20261029-007':[[250,156],[330,156],[330,164],[250,164]],'WO-20261029-011':[[584,100],[596,100],[596,220],[584,220]]};
+  const TWIN3D_FAC={'DF-PS-01':[285,174],'DF-PS-02':[228,231],'DF-IN-101':[272,155],'DF-IN-103':[120,146],'DF-IN-201':[633,146],'DF-IN-202':[526,176],'DF-PS-03':[560,105]};
+  // DF-IN-101 位置说明：台账只给了"兴华路雨水口组"没有实测坐标，原来取的 (258,78) 落在环城北路，
+  // 离 A-03 积水点近 90 个场景单位——"堵了雨水口导致这个路口积水"在画面上根本对不上。
+  // 按就近原则摆到兴华路南侧路缘 (272,155)，与积水点、封路点在同一处。
+  // 积水范围：沿道路方向加宽，让远景下是「一片积水」而非「一条细线」。
+  // 深度 cm 是台账真实值（标注数字不改），面积/边界是示意范围（台账无精确多边形）。
+  const TWIN3D_WATER={'WO-20261029-007':[[240,150],[340,150],[340,172],[240,172]],'WO-20261029-011':[[580,96],[610,96],[610,226],[580,226]]};
+  // ---- 地下排水管网：台账真实字段（pipeline_ledger.csv），几何沿道路中线「示意」布设 ----
+  // 台账只登记 road_id + 埋深 + 管径，无实测管线坐标 → 空间位置按绑定道路中线派生，非测绘。
+  // pts 为场景坐标折线（沿道路中线），端点尽量贴到该路对应雨水口/泵站节点，形成「雨水口→管段→泵站」汇流路径。
+  const TWIN3D_PIPES=[
+    {id:'PL-DRN-101',road:'R-101',label:'兴华路排水管',depth_m:2.8,diameter_mm:600,material:'concrete',install_year:2009,status:'in_service',note:'按现行标准重现期不足，管径偏小',pts:[[120,160],[285,160],[525,160]]},
+    {id:'PL-DRN-102',road:'R-102',label:'建设大道排水干管',depth_m:3.0,diameter_mm:1000,material:'concrete',install_year:2015,status:'in_service',note:'主干管',pts:[[200,160],[228,231]]},
+    {id:'PL-DRN-201',road:'R-201',label:'滨河路排水管',depth_m:2.6,diameter_mm:800,material:'concrete',install_year:2018,status:'in_service',note:'重现期达标',pts:[[590,160],[590,40]]},
+  ];
+  window.TWIN3D_PIPES=TWIN3D_PIPES;   // 供全局 renderPipeCard 读取（管段不在 twin-links 投影里）
+  window.PIPE_MAT_CN={concrete:'混凝土',steel:'钢管',pvc:'PVC',pe:'PE'};
+  const PIPE_MAT_CN=window.PIPE_MAT_CN;
   const netRoads=roads.map(function(e){return{id:e.id,label:e.label,detail:e.detail||'',pts:(TWIN3D_ROADS[e.id]||String(e.points||'').split(' ').map(function(p){return p.split(',').map(Number)}))}});
   const seeded=(function(){let s=20260801;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296}})();
   // ---- 道路：沥青 PBR + 车道标线 + 路缘 + 斑马线 ----
   const roadMat=stdMat('asphalt',{roughness:.88});roadMat.color.set(0x6a7076);
   const laneMat=new THREE.MeshBasicMaterial({color:0xe8e4d8});
-  const curbMat=new THREE.MeshStandardMaterial({color:0x8a9299,roughness:.7});
+  // 封路是第 5 跳才发生的事件，不是场景固有状态：车道线一律先画，封路时再隐藏；
+  // 路名标注同样平时用常态色，封路后才换成橙色（换成橙色 = 图例里的「已封路」）。
+  window.__laneDashes=[];window.__roadLabels=[];
+  const curbMat=new THREE.MeshStandardMaterial({color:srgbHex(0x6f767c),roughness:.7,envMapIntensity:.35});
+  // 人行道同按 srgbHex 转换（原 0xb7b9b6 不转会渲成白条，把街区切成网格线）
+  const sidewalkMat=stdMat('paving',{roughness:.9,envMapIntensity:.35});sidewalkMat.color.copy(srgbHex(0xa6aaac));
+  // 每条路的车道宽度（世界单位）单独记一份：设施退线、楼栋退线都要按真实路宽算，
+  // 不能再用「最大路宽」一刀切。
+  const ROAD_W={};
   netRoads.forEach(e=>{const ps=e.pts;const closed=/已封/.test(e.label||'');
-    const wid=/主干路/.test(e.detail)?1.6:(/次干路/.test(e.detail)?1.3:1.05);
+    const wid=/主干路/.test(e.detail)?3.4:(/次干路/.test(e.detail)?2.8:2.2);
+    ROAD_W[e.id]=wid;
     for(let i=0;i<ps.length-1;i++){const[ax,ay]=W(ps[i][0],ps[i][1]),[bx,by]=W(ps[i+1][0],ps[i+1][1]);
       const len=Math.hypot(bx-ax,by-ay);if(len<0.05)continue;const ang=-Math.atan2(by-ay,bx-ax);
-      const road=new THREE.Mesh(new THREE.BoxGeometry(len+wid,0.05,wid),roadMat);
+      // 沥青纹理按 0.5 世界单位（≈3.1m）一个周期平铺：近景看得到骨料颗粒，远景自动 mip 成平均色。
+      const roadGeo=tileBoxTop(new THREE.BoxGeometry(len+wid,0.05,wid),(len+wid)/0.5,wid/0.5);
+      const road=new THREE.Mesh(roadGeo,roadMat);
       road.position.set((ax+bx)/2,0.36,(ay+by)/2);road.rotation.y=ang;road.userData={entityId:e.id,name:e.label||e.id,kind:"road",detail:e.detail||""};road.receiveShadow=true;scene3.add(road);
-      // 路缘石
+      // 连续人行道：把道路从“黑色条带”提升为城市街道断面
       const nx=Math.sin(ang),nz=Math.cos(ang);
+      [-1,1].forEach(function(side){const swLen=len+wid+0.18,swWid=0.42;
+        const sw=new THREE.Mesh(tileBoxTop(new THREE.BoxGeometry(swLen,0.035,swWid),swLen/0.35,swWid/0.35),sidewalkMat);
+        sw.position.set((ax+bx)/2+nx*side*(wid/2+0.31),0.34,(ay+by)/2+nz*side*(wid/2+0.31));sw.rotation.y=ang;sw.receiveShadow=true;scene3.add(sw)});
+      // 路缘石
       [-1,1].forEach(function(side){const eg=new THREE.Mesh(new THREE.BoxGeometry(len+wid,0.12,0.16),curbMat);
         eg.position.set((ax+bx)/2+nx*side*(wid/2+0.08),0.36,(ay+by)/2+nz*side*(wid/2+0.08));eg.rotation.y=ang;eg.receiveShadow=true;scene3.add(eg)});
-      // 中央车道线（已封路画实线黄）
-      if(!closed){let t=2.4;while(t<len-2.4){const d=new THREE.Mesh(new THREE.BoxGeometry(1.1,0.015,0.11),laneMat);
-        d.position.set(ax+(bx-ax)*t/len,0.395,ay+(by-ay)*t/len);d.rotation.y=ang;scene3.add(d);t+=2.6}}
+      // 中央车道线（已封路段在封路后隐藏，见 applyTimeline）
+      const laneGrp=new THREE.Group();scene3.add(laneGrp);
+      if(closed)window.__laneDashes.push(laneGrp);
+      let t=2.4;while(t<len-2.4){const d=new THREE.Mesh(new THREE.BoxGeometry(1.1,0.015,0.11),laneMat);
+        d.position.set(ax+(bx-ax)*t/len,0.395,ay+(by-ay)*t/len);d.rotation.y=ang;laneGrp.add(d);t+=2.6}
     }
     // 路名标签
     const mid=ps[Math.floor(ps.length/2)];const[mx,mz]=W(mid[0],mid[1]);
-    const lb=makeLabel(String(e.label||'').split('（')[0],closed?'#e0a965':'#cfe0ef');lb.position.set(mx,3.2,mz);scene3.add(lb)});
+    const baseName=String(e.label||'').split('（')[0];
+    const lb=makeLabel(baseName,'#cfe0ef');lb.position.set(mx,3.2,mz);scene3.add(lb);
+    if(closed){
+      // 预先做好橙色版本，封路时只换纹理，不用每帧重绘 canvas
+      const alt=makeLabel(baseName,'#e0a965');
+      window.__roadLabels.push({sprite:lb,normal:lb.material.map,blocked:alt.material.map});
+    }});
   // 路口斑马线
   const zebraMat=new THREE.MeshBasicMaterial({color:0xd5dce2});
   [[200,70],[200,160],[200,250],[360,160],[590,70],[590,160],[590,250]].forEach(function(j){const[jx,jz]=W(j[0],j[1]);
     for(let k=-2;k<=2;k++){const a=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.015,0.2),zebraMat);a.position.set(jx+k*0.32,0.4,jz);scene3.add(a);
       const b=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.015,1.5),zebraMat);b.position.set(jx,0.4,jz+k*0.32);scene3.add(b)}});
   // ---- 楼栋：严格贴街区网格，固定退线、固定朝向、绝不随机穿插 ----
-  // 由路网围成的规则街区（场景坐标），每街区放 1 栋，位置 = 街区中心（确定性，无随机偏移）
-  // 街区定义：[x0,x1,y0,y1]，中心即楼栋锚点；退线固定，楼体方正对齐路网
+  // 由路网围成的规则街区（场景坐标），每街区放多栋，位置 = 街区内的固定锚点（确定性，无随机偏移）
+  // 街区定义：[x0,x1,z0,z1]，锚点按街区尺寸比例分布
   const blocks=[
     [ 70,200, 70,160],   // A-03 西北
     [200,360, 70,160],   // A-03 北中
@@ -1384,51 +1559,159 @@ function build(sched){
     [590,720, 70,160],   // B-01 北
     [590,720,160,250],   // B-01 南
   ];
-  // 每个街区用不同的 KayKit 建筑模型（building_A~H），scale 放大到真实街区尺度
-  const KAYKIT_BLD=['building_A','building_B','building_C','building_D','building_E','building_F','building_G','building_H'];
   const gltfLoader=new THREE.GLTFLoader();
+  // 街区内的固定锚点（相对可建范围中心的比例偏移）：每街区 2 栋
+  const SUB_POS=[[-0.24,0.18],[0.24,-0.18]];
+  // 建筑退线（场景单位）：街区边界＝道路中线，内缩「最大道路半宽(主干1.7世界) + 人行道退线」
+  // 1 世界单位 = 1/0.16 = 6.25 场景单位 → 约 4.8 世界单位 ≈ 30 场景单位（含人行道）
+  const INSET=30;
+  // 设施占位：楼栋生成时避开泵站/雨水口周边空地，否则排水设施会被楼群夹在中间、分不清是设施还是楼
+  const FAC_GUARD=Object.keys(TWIN3D_FAC).map(k=>TWIN3D_FAC[k]);
+  const nearFac=(px,pz)=>FAC_GUARD.some(p=>Math.hypot(px-p[0],pz-p[1])<40);
   blocks.forEach((b,i)=>{
     const bx=(b[0]+b[1])/2, bz=(b[2]+b[3])/2;   // 街区中心（场景坐标）
-    const[wx,wz]=W(bx,bz);
-    const name=KAYKIT_BLD[i%8];
-    gltfLoader.load('/assets/kaykit/'+name+'.gltf',function(gltf){
+    const bw=b[1]-b[0], bd=b[3]-b[2];           // 街区宽、深
+    // 高度梯度：x 越大（东侧）离相机越远 → 楼越矮，制造「近高远低」纵深序列
+    const heightK=1.30-(bx/720)*0.55;            // 近(135)≈1.20、远(655)≈0.80
+    // 强制退线：街区边界就是道路中线，按「最大道路半宽 + 人行道退线」内缩出可建范围，
+    // 楼中心再夹到可建范围内，任何参数下都不会压到道路。
+    const x0=b[0]+INSET, x1=b[1]-INSET, z0=b[2]+INSET, z1=b[3]-INSET;
+    if(x1-x0<34||z1-z0<30)return;               // 可建范围太小，该街区不放楼
+    for(let si=0; si<2; si++){
+      const sp=SUB_POS[si];
+      // 楼体尺寸：「路要大、建筑不必大」——底面积按可建范围取比例并封顶
+      const fw=Math.min((x1-x0)*0.13, 4.2), fd=Math.min((z1-z0)*0.22, 3.6);
+      const halfMax=(Math.max(fw,fd)*1.06)*3.125;   // 世界→场景半边长，含 6% 基座外扩
+      let px=(x0+x1)/2 + sp[0]*(x1-x0);
+      let pz=(z0+z1)/2 + sp[1]*(z1-z0);
+      px=Math.min(Math.max(px,x0+halfMax),x1-halfMax);   // 夹到可建范围，楼体不越界
+      pz=Math.min(Math.max(pz,z0+halfMax),z1-halfMax);
+      if(nearFac(px,pz))continue;               // 该位置让给排水设施
+      const[wx,wz]=W(px,pz);
+      const fh=(4.6+((i*7+si*5)%4)*0.9)*heightK;   // 高度 4.6~7.3 × 纵深系数
+      makeBuilding(fw,fh,fd,wx,wz,(i+si)%2?0:Math.PI/2);
+    }
+  });
+  // 地标建筑（KayKit 模型）：A-03 北中 + B-01 北，做视觉锚点，其余用程序化楼栋
+  // 第四项是对应街区索引。地标同样要退线——用真实包围盒夹回街区可建范围，
+  // 否则尺度一放大就贴到路缘，视觉上就是"楼压路"。
+  [[285,115,'building_A',1],[655,115,'building_E',6]].forEach(function(lm){
+    const[wx,wz]=W(lm[0],lm[1]);
+    const blk=blocks[lm[3]];
+    const[wx0,wz0]=W(blk[0]+14,blk[2]+14),[wx1,wz1]=W(blk[1]-14,blk[3]-14);
+    const bx0=Math.min(wx0,wx1),bx1=Math.max(wx0,wx1),bz0=Math.min(wz0,wz1),bz1=Math.max(wz0,wz1);
+    gltfLoader.load('/assets/kaykit/'+lm[2]+'.gltf',function(gltf){
       const model=gltf.scene;
-      // KayKit 模型约 2×2 米底面，放大到街区尺度（约 7~9 世界单位 = 3.5~4.5 倍）
-      const scale=4.2;
-      model.scale.set(scale,scale,scale);
+      model.scale.set(2.4,2.4,2.4);   // 3.2 时占地约 60m×60m，整块街区被吃掉、糊在路缘
       model.position.set(wx,0.37,wz);
-      model.rotation.y=(i%2===0?0:Math.PI/2);   // 交错朝向，打破千篇一律
-      // 建筑是背景，不挂 entityId（不参与点击详情/光环），只开阴影
+      model.updateMatrixWorld(true);
+      const bb=new THREE.Box3().setFromObject(model);
+      const hw=(bb.max.x-bb.min.x)/2+0.3, hd=(bb.max.z-bb.min.z)/2+0.3;   // 世界单位，含余量
+      const cx=(bx1-bx0)>hw*2?Math.min(Math.max(wx,bx0+hw),bx1-hw):(bx0+bx1)/2;
+      const cz=(bz1-bz0)>hd*2?Math.min(Math.max(wz,bz0+hd),bz1-hd):(bz0+bz1)/2;
+      model.position.set(cx,0.37,cz);
       model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
       scene3.add(model);
-      (window.__buildings=window.__buildings||[]).push({model:model,index:i,name:name});
-    },undefined,function(err){console.warn('建筑模型加载失败',name,err);});
+      (window.__buildings=window.__buildings||[]).push({model:model,index:lm[2],name:lm[2]});
+    },undefined,function(err){console.warn('地标建筑加载失败',lm[2],err);});
   });
+  // ---- 天际线远景楼：场景东侧 + 南北两侧边缘，低矮楼群剪影填补地平线，强化纵深与围合感 ----
+  // 不挂台账、纯背景，复用 makeBuilding（自带窗户贴图/裙楼/腰线），与近景楼风格统一
+  (function buildSkyline(){
+    // 东侧边缘（x≈748，最远处）一排稀疏楼群剪影，沿 z 疏朗排布，高度起伏形成天际线
+    for(let k=0;k<10;k++){
+      const[wx,wz]=W(748, 45+k*24);
+      makeBuilding(5.5, 3.2+(k%5)*1.1, 4.8, wx, wz, 0);
+    }
+    // 北侧边缘（z≈28）一列
+    for(let k=0;k<8;k++){
+      const[wx,wz]=W(50+k*90, 28);
+      makeBuilding(5.5, 2.6+(k%3)*0.9, 4.2, wx, wz, 0);
+    }
+    // 南侧边缘（z≈305）一列
+    for(let k=0;k<8;k++){
+      const[wx,wz]=W(50+k*90, 305);
+      makeBuilding(5.5, 2.6+((k+1)%3)*0.9, 4.2, wx, wz, 0);
+    }
+  })();
+  // ---- 街区地块色块：每个街区铺一块铺装色块，分散地面大片纯色，形成地块纹理层次 ----
+  // 城市街区以铺装/混凝土为主，只保留少量冷灰绿变化，避免整片地块读成村落草地
+  // three r128 没有颜色管理：十六进制被当作线性值直接进光照，输出时又编码一次 sRGB，
+  // 等效把整片地面提亮近一倍（131 的中灰会渲成 224 的白）。转换见上方 srgbHex()。
+  // envMapIntensity 压到 0.35：阴天 HDR 的漫反射 IBL 很强，不做衰减时地面会比材质本色亮一倍
+  // 色差控制在 5% 以内：四种铺装色只是让街区不完全雷同，不能读成「深一块浅一块」的补丁
+  const lotMats=[0x878c8e,0x8c9092,0x83888a,0x898d8a].map(c=>new THREE.MeshStandardMaterial({color:srgbHex(c),roughness:.94,metalness:.02,envMapIntensity:.35}));
+  blocks.forEach((b,i)=>{
+    const[wx0,wz0]=W(b[0],b[2]),[wx1,wz1]=W(b[1],b[3]);
+    const cw=Math.abs(wx1-wx0), cd=Math.abs(wz1-wz0);
+    const lot=new THREE.Mesh(new THREE.PlaneGeometry(cw,cd),lotMats[i%4]);
+    lot.rotation.x=-Math.PI/2;
+    // 地块抬到 0.35，与人行道齐平（路面 0.385）。
+    // 原来贴在 0.02 的基底上，等于比车行道低 2 米多，斜视时会看到一道深沟，
+    // 漫出路面的积水也会变成悬在半空的板。
+    lot.position.set((wx0+wx1)/2,0.35,(wz0+wz1)/2);
+    lot.receiveShadow=true;
+    scene3.add(lot);
+  });
+  // B-01 东侧空地 + 南北外围大地块（绿地/空地），填补远景纯色地面
+  const extraLots=[[745,120,60,120],[745,220,60,90],[120,35,560,60],[360,255,360,45]];
+  extraLots.forEach((r,i)=>{
+    const[wx0,wz0]=W(r[0],r[1]),[wx1,wz1]=W(r[0]+r[2],r[1]+r[3]);
+    const lot=new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(wx1-wx0),Math.abs(wz1-wz0)),lotMats[(i+2)%4]);
+    lot.rotation.x=-Math.PI/2;
+    lot.position.set((wx0+wx1)/2,0.35,(wz0+wz1)/2);
+    lot.receiveShadow=true;
+    scene3.add(lot);
+  });
+  // 东南角低层建筑群：填补画面右下方空地（相机视角右前方），低层厂房/商业楼，不高不抢主体
+  (function buildSELowRise(){
+    // 民生街在 y=250（红线即道路中线），这几栋必须退到 y≥272，否则楼体压到民生街
+    const rows=[[500,278],[590,282],[680,276]];
+    rows.forEach((r,ri)=>{
+      const[wx,wz]=W(r[0],r[1]);
+      makeBuilding(5+(ri%2), 3.0+(ri%3)*0.8, 4.5, wx, wz, ri%2?0:Math.PI/2);
+    });
+  })();
   // ---- 行道树（沿主干路两侧）+ 片区内部点缀 ----
+  // 路口 45 场景内不种树：路口是积水核心，行道树种进去必然泡在水里，
+  // 视觉上就是「树长在水中间」。真实路口转角本来也不种乔木。
+  const TREE_KEEP_OUT=[[200,160],[590,160],[200,70],[200,250],[360,160],[590,70],[590,250]];
   netRoads.forEach(rd=>{if(rd.pts.length<2)return;
     const main=/主干路|次干路/.test(rd.detail);
+    // 偏移按实际路宽算：路半宽 + 人行道 + 树穴退让 1.15 世界单位（约 7m）。
+    // 原来写死 8 场景（≈1.3 世界），比主干路半宽 1.7 世界还小 → 树直接种在车行道里；
+    // 只退到 3.7m 时树冠又会被漫溢的积水泡住。
+    const off=(ROAD_W[rd.id]/2+1.15)/K;
     for(let i=0;i<rd.pts.length-1;i++){const p0=rd.pts[i],p1=rd.pts[i+1];
       const dx=p1[0]-p0[0],dy=p1[1]-p0[1];const len=Math.hypot(dx,dy);if(len<5)continue;
       const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;
       let t=8;while(t<len-8){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
-        if(main){[-1,1].forEach(function(side){const px=bx+nx*side*8,py=by+ny*side*8;
+        if(main){[-1,1].forEach(function(side){const px=bx+nx*side*off,py=by+ny*side*off;
+          if(TREE_KEEP_OUT.some(function(c){return Math.hypot(px-c[0],py-c[1])<45}))return;
           if(seeded()>0.82){const[wx,wz]=W(px,py);makeTree(wx,wz,0.7+seeded()*0.5)}})}
         t+=20+seeded()*8}}
   });
   // ---- 路灯（主干路两侧）：KayKit streetlight 模型 ----
   netRoads.forEach(rd=>{if(rd.pts.length<2)return;
     if(!/主干路/.test(rd.detail))return;
+    // 偏移原来写死 5 场景（≈0.8 世界），比主干路半宽 1.7 世界还小 → 路灯直接立在车行道中间。
+    // 按路宽算到路缘外 0.45 世界（约 2.8m），并且两侧都装。
+    const lampOff=(ROAD_W[rd.id]/2+0.45)/K;
     for(let i=0;i<rd.pts.length-1;i++){const p0=rd.pts[i],p1=rd.pts[i+1];
       const dx=p1[0]-p0[0],dy=p1[1]-p0[1];const len=Math.hypot(dx,dy);if(len<5)continue;
       const ux=dx/len,uy=dy/len;const nx=-uy,ny=ux;
       let t=12;while(t<len-12){const bx=p0[0]+ux*t,by=p0[1]+uy*t;
-        const[wx,wz]=W(bx+nx*5,by+ny*5);
-        gltfLoader.load('/assets/kaykit/streetlight.gltf',function(g){
-          const m=g.scene;const s=5.0;m.scale.set(s,s,s);   // KayKit 路灯模型高 0.96 米，放大到 ~5 米
-          m.position.set(wx,0.37,wz);m.traverse(o=>{if(o.isMesh)o.castShadow=true;});
-          scene3.add(m);
+        [-1,1].forEach(function(side){
+          const[wx,wz]=W(bx+nx*side*lampOff,by+ny*side*lampOff);
+          gltfLoader.load('/assets/kaykit/streetlight.gltf',function(g){
+            const m=g.scene;const s=9.0*K/0.96;m.scale.set(s,s,s);   // 路灯高 9m：9*K/0.96 ≈ 1.5
+            m.position.set(wx,0.37,wz);m.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+            scene3.add(m);
+          });
         });
-        t+=34}}
+        t+=34
+      }
+    }
   });
   // ---- 路侧车辆：KayKit 车辆模型（轿车/出租车/掀背随机） ----
   const KAYKIT_CARS=['car_sedan','car_taxi','car_hatchback','car_stationwagon'];
@@ -1440,7 +1723,9 @@ function build(sched){
         if(seeded()>0.90){const[wx,wz]=W(bx+nx*10,by+ny*10);   // 偏移加大，车在车道内
           const carName=KAYKIT_CARS[Math.floor(seeded()*KAYKIT_CARS.length)];
           gltfLoader.load('/assets/kaykit/'+carName+'.gltf',function(g){
-            const m=g.scene;const s=4.3;m.scale.set(s,s,s);   // KayKit 车辆长 0.94 米，放大到 ~4 米
+            // KayKit 车模长 0.94（模型单位），按真实车长 4.5m 换算：4.5*K/0.94 ≈ 0.77。
+            // 原来写 4.3（把世界单位当成米了），车长 4.03 世界单位 ≈ 25m，比整条车行道还长。
+            const m=g.scene;const s=4.5*K/0.94;m.scale.set(s,s,s);
             m.position.set(wx,0.37,wz);m.rotation.y=ang;
             m.traverse(o=>{if(o.isMesh)o.castShadow=true;});
             scene3.add(m);
@@ -1450,33 +1735,236 @@ function build(sched){
   });
   // ---- 积水段：贴地 shader 水面（薄薄一层，随水位轻微抬升 + 面积扩散 + 颜色加深）----
   // 真实内涝积水 = 路面上一薄层水。不用 ExtrudeGeometry 立体柱（会像悬浮蓝板），
-  // 改为贴地 PlaneGeometry + shader 波纹，水位变化体现为水面 y 轻微升高 + 面积扩大 + 颜色加深。
+  // 也不用多个矩形水面拼接（会出现"一段一段"）；整片水面用「多个水洼场融合」的 shader
+  // 生成连续水体 + 不规则水岸线 + 边缘羽化，水位越高水洼越外扩、越连片。
   window.__waterMeshes=[];   // 供事件动画引用：{surface, label, depthMax, baseW, baseD, cx, cz}
-  water.forEach(e=>{const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));
+  // 水洼场定义（场景坐标 + 半径世界单位）：沿低洼路网排布并按距离重叠，
+  // 相邻水洼重叠才能融合成一条连续水体，否则会被羽化切断成"一段一段"。
+  // 台账只有 2 处实测积水（A-03 30cm / B-01 18cm），这里不新增测点，
+  // 只是把同一场积水在低洼路网上的漫流范围画出来，与主水面融合为一片。
+  // 半径按「满水位时的有效半宽」给出：先按目标水面半宽反推，再让 grow 只做小幅收缩。
+  // 兴华路(次干)半宽 1.4 世界单位、建设大道(主干)半宽 1.7 → blob 有效半宽要略大于路半宽，
+  // 否则水面只占路面 60%，读起来像「路边一条水沟」而不是整条路积水。
+  const WATER_BLOBS={
+    // A-03：以路口为水体核心向四周摊开，不是沿路排一串长条。
+    // 半径给得比「路半宽」大一圈（路口 4.6 世界单位≈29m 半宽），水才会漫过路缘、
+    // 盖住路口四角和人行道，读成一片内涝；半径刚好等于路宽时只会读成一条沿街水沟。
+    // 垂直路方向的半宽按「路半宽 + 约 5m 漫溢」给（兴华路半宽 1.4 世界，取 2.2）：
+    // 给到 2.9 时水会漫到行道树的位置，树看起来像泡在水里；行道树在距中线 2.55 世界处。
+    'WO-20261029-007':[
+      [200,160,3.5,3.2],    // 建设大道 × 兴华路 路口主水体（最深，路口不种树）
+      [250,161,8.0,2.6],    // 兴华路东段：拉长成一条 100m 级水带，不是一滩水（南缘贴到路缘石）
+      [300,161,5.0,2.0],    // 兴华路东延（尾端收窄）
+      [200,128,2.2,4.6],    // 建设大道北段
+      [200,194,2.1,4.2],    // 建设大道南段
+    ],
+    // B-01：18cm 较浅，范围相应小一圈
+    'WO-20261029-011':[
+      [590,160,3.2,2.9],
+      [590,126,2.0,4.2],
+      [590,196,1.9,3.8],
+      [638,160,5.0,2.2],
+    ],
+  };
+  water.forEach(e=>{
+    const ps=(TWIN3D_WATER[e.id]||String(e.points||'').split(' ').map(p=>p.split(',').map(Number)));
     const cen=ps.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/ps.length);
     const pts=ps.map(p=>{const[wx,wz]=W(p[0],p[1]);return[wx,wz]});
     const[cx,cz]=W(cen[0],cen[1]);
-    // 积水矩形世界尺寸（积水基准面积）
     const xs=pts.map(p=>p[0]),zs=pts.map(p=>p[1]);
-    const ww=Math.max(...xs)-Math.min(...xs), wd=Math.max(...zs)-Math.min(...zs);
-    // shader 波纹水面：贴地，水位变化 = y 轻微升高
-    const surf=makeWaterSurface(ww,wd);
-    surf.position.set(cx,0.44,cz);   // 底面贴路面（道路顶面约 0.41）
-    surf.userData={entityId:e.id,name:e.label||"积水段",kind:"water",detail:e.detail||"",isWaterSurface:true};
+    const ww=Math.max(...xs)-Math.min(...xs), wd=Math.max(...zs)-Math.min(...zs);   // 主积水基准尺寸（世界单位）
+    // 水洼场：优先用按低洼路网配置的 blob 序列（沿路相邻重叠 → 融合成连续水体）；
+    // 未配置的积水退回「以台账范围生成单个水洼」
+    let blobs=[];
+    (WATER_BLOBS[e.id]||[]).forEach(s=>{
+      const[bx,bz]=W(s[0],s[1]);
+      blobs.push([bx,bz,s[2],s[3]]);
+    });
+    if(!blobs.length)blobs=[[cx,cz,Math.max(ww*0.5,5.0),Math.max(wd*0.5,2.6)]];
+    // 水面平面铺满所有水洼外包范围 + 余量，保证连续水体不被平面边界切断
+    let minX=cx,maxX=cx,minZ=cz,maxZ=cz;
+    blobs.forEach(b=>{
+      minX=Math.min(minX,b[0]-b[2]);maxX=Math.max(maxX,b[0]+b[2]);
+      minZ=Math.min(minZ,b[1]-b[3]);maxZ=Math.max(maxZ,b[1]+b[3]);
+    });
+    const pad=3.5;   // 余量给足：水岸噪声会把水面推出 blob 半径，pad 太小会被平面边界切成直边
+    const planeW=(maxX-minX)+pad*2, planeD=(maxZ-minZ)+pad*2;
+    const pcx=(minX+maxX)/2, pcz=(minZ+maxZ)/2;
+    const localBlobs=blobs.map(b=>[b[0]-pcx,b[1]-pcz,b[2],b[3]]);
+    // 蔓延顺序：按离「积水核心」（第一个水洼：路口/低洼点）的距离给到达阈值。
+    // 核心最早（水位 0.06 就开始积水），远端最晚（到 0.56 才开始），
+    // 于是水面是顺着低洼路网一段段漫出去的。
+    const bd=blobs.map(b=>Math.hypot(b[0]-blobs[0][0],b[1]-blobs[0][1]));
+    const bmax=Math.max.apply(null,bd.concat([1e-6]));
+    const blobA=bd.map(d=>0.06+0.50*(d/bmax));
+    const surf=makeWaterSurface(planeW,planeD,localBlobs);
+    // 水面高度：道路顶面 0.385，水面 0.45 → 约 0.065 世界单位≈40cm 水层，
+    // 高于路缘石顶面 0.42，积水才不会被路缘从两边"切"成一条窄带。
+    surf.position.set(pcx,0.45,pcz);
+    surf.userData={entityId:e.id,name:e.label||"积水段",kind:"water",
+      detail:(e.detail||'')+'（水面含漫流水洼，属同一场积水的低洼漫流，非独立测点）',isWaterSurface:true};
     surf.receiveShadow=true;
     scene3.add(surf);
     // depthMax：峰值水位（世界单位，真实积水深度，A-03 约 30cm→0.30，B-01 约 18cm→0.20）
     const depthMax=/A-03/.test(e.label||'')?0.30:0.20;
-    window.__waterMeshes.push({surface:surf,label:(e.label||'积水'),depthMax:depthMax,cx:cx,cz:cz,baseW:ww,baseD:wd});
-    // 积水标注：只留深度数字，紧贴水面（不飘在高空）
-    const lb=makeLabel('','#eaf6ff');lb.position.set(cx,0.9,cz);lb.userData={waterLabel:true};
+    window.__waterMeshes.push({surface:surf,label:(e.label||'积水'),depthMax:depthMax,cx:cx,cz:cz,baseW:ww,baseD:wd,blobA:blobA});
+    // 积水标注：只留深度数字，紧贴水面（不飘在高空）。
+    // 位置取主水洼中心，不是台账范围的外接矩形中心——台账范围跨整条路，
+    // 矩形中心常落在没有水的路段上，标注就会飘在离水面几十米外。
+    const uB0s=surf.material.uniforms.uB0.value;
+    const lbx=pcx+uB0s.x, lbz=pcz+uB0s.y;
+    const lb=makeLabel('','#eaf6ff');lb.position.set(lbx,0.9,lbz);lb.userData={waterLabel:true};
     surf.userData.waterLabel=lb;scene3.add(lb);window.__waterMeshes[window.__waterMeshes.length-1].labelSprite=lb;
   });
-  // ---- 设施：泵站(写实小楼) + 雨水口(井盖) ----
+  // ---- 土壤下渗：积水区正下方一层土黄色晕染，表达「部分积水下渗进入浅层土壤」 ----
+  // 数据没有土壤渗透系数/地质层，因此下渗分流用可配置占位参数 INFIL_RATE 表达，
+  // 只做「地表径流 → 土壤下渗」的分流示意，不伪装成真实物理计算结果。
+  // 晕染层贴路面（正常深度测试，不被遮挡、不投影错位），随水深变深、扩散，暖土黄区别于积水蓝。
+  window.__infilMarkers=[];
+  window.INFIL_RATE=0.18;   // 下渗分流比例（占位，可调；真实值需土壤渗透系数数据）
+  // 晕染用径向渐变贴图，不是纯色平面：纯色平面是一块硬边矩形，
+  // 铺在路面上像刷了一块土黄色油漆；径向渐变才是"从水底往外渗"的软边。
+  const glowCv=document.createElement('canvas');glowCv.width=glowCv.height=128;
+  const gctx=glowCv.getContext('2d');
+  const grad=gctx.createRadialGradient(64,64,0,64,64,64);
+  grad.addColorStop(0,'rgba(222,164,66,0.85)');
+  grad.addColorStop(0.5,'rgba(214,156,70,0.38)');
+  grad.addColorStop(1,'rgba(210,150,70,0)');
+  gctx.fillStyle=grad;gctx.fillRect(0,0,128,128);
+  const infilMat=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(glowCv),transparent:true,opacity:0,depthWrite:false});
+  (window.__waterMeshes||[]).forEach(w=>{
+    // 下渗晕染：叠在积水水面之上（y 略高 + renderOrder 更高），橙黄色罩层表达「水正在往下渗」，
+    // 随水深变深、变明显，一眼能区分于蓝色水面与灰黄地面。
+    // 位置取主水洼（uB0）中心，不是台账范围的外接矩形中心：矩形中心常落在没有水的空地上，
+    // 晕染就会像一块"沙地"贴在干路面上，和水面错开。
+    const u0=w.surface&&w.surface.material&&w.surface.material.uniforms&&w.surface.material.uniforms.uB0;
+    const gx=(w.surface&&u0&&u0.value.z>0.01)?w.surface.position.x+u0.value.x:w.cx;
+    const gz=(w.surface&&u0&&u0.value.z>0.01)?w.surface.position.z+u0.value.y:w.cz;
+    // 尺寸按主水洼的实际半径给（直径 ≈ 2×半径 + 一点余量），不用台账外接矩形：
+    // 台账范围跨整条路（30+ 世界单位），按它做罩层就像在干路上铺了两块黄土。
+    const gr=(u0&&u0.value.z>0.01)?u0.value.z:3.0;    // 主水洼 rx
+    const gr2=(u0&&u0.value.w>0.01)?u0.value.w:3.0;   // 主水洼 rz
+    const glow=new THREE.Mesh(new THREE.PlaneGeometry(gr*2.1,gr2*2.1),infilMat.clone());
+    glow.rotation.x=-Math.PI/2;
+    glow.position.set(gx,0.47,gz);
+    glow.renderOrder=110;   // 高于积水水面(100)，确保不被水面盖住
+    glow.visible=false;
+    scene3.add(glow);
+    window.__infilMarkers.push({mesh:glow,cx:gx,cz:gz,blobA:(w.blobA?w.blobA[0]:null)});
+  });
+  // 取设施最近道路的方向角，让雨水篦子顺路铺设（不靠人工猜朝向）
+  function nearestRoadAngle(px,py){
+    let bd=1e9,ang=0;
+    for(const k in TWIN3D_ROADS){
+      const pts=TWIN3D_ROADS[k];
+      for(let i=0;i<pts.length-1;i++){
+        const a=pts[i],b=pts[i+1],dx=b[0]-a[0],dy=b[1]-a[1];
+        const len2=dx*dx+dy*dy||1;
+        let t=((px-a[0])*dx+(py-a[1])*dy)/len2;t=Math.max(0,Math.min(1,t));
+        const d=Math.hypot(px-(a[0]+t*dx),py-(a[1]+t*dy));
+        if(d<bd){bd=d;ang=-Math.atan2(dy,dx);}
+      }
+    }
+    return ang;
+  }
+  // 设施退线：把泵站中心沿「离开最近道路」的方向推到路缘之外。
+  // 台账只给设施点位、不给占地，直接按点位摆泵站，泵房+围栏会压到车行道上
+  // （DF-PS-01 在 (285,174)，兴华路中线 z=160、半宽 8.75 场景，泵站北缘到 159.6 —— 压进去 9 米）。
+  // halfX/halfZ 是设施包围盒半宽、半深（世界单位）。
+  // 用矩形的支撑函数算它在道路法向上的投影半径，比外接圆松弛，不会把设施推得离路太远。
+  function pushStationOffRoads(px,py,halfX,halfZ){
+    let cx=px, cy=py;
+    for(let it=0; it<4; it++){          // 迭代几次：路口附近可能同时贴着两条路
+      let moved=false;
+      for(const k in TWIN3D_ROADS){
+        const halfW=((ROAD_W[k]||2.2)/2)/K;   // 场景单位
+        const pts=TWIN3D_ROADS[k];
+        for(let i=0;i<pts.length-1;i++){
+          const a=pts[i],b=pts[i+1],dx=b[0]-a[0],dy=b[1]-a[1];
+          const len2=dx*dx+dy*dy||1;
+          let t=((cx-a[0])*dx+(cy-a[1])*dy)/len2; t=Math.max(0,Math.min(1,t));
+          const qx=a[0]+t*dx, qy=a[1]+t*dy;
+          let ddx=cx-qx, ddy=cy-qy;
+          let d=Math.hypot(ddx,ddy);
+          if(d<0.001){ddx=0;ddy=1;d=1}
+          const nx=ddx/d, ny=ddy/d;
+          const support=(halfX*Math.abs(nx)+halfZ*Math.abs(ny))/K;
+          const need=halfW+support+0.8/K;    // 留 0.8 世界单位（约 5m）余量：矩形近似有偏差，宁可多留
+          if(d<need){const push=(need-d)/d; cx+=ddx*push; cy+=ddy*push; moved=true;}
+        }
+      }
+      if(!moved)break;
+    }
+    return [cx,cy];
+  }
+  // ---- 设施：泵站(写实小楼) + 雨水口(路面雨水篦子) ----
   window.__pumpAlarms=[];   // 供事件动画引用：故障泵站的告警灯 mesh
-  fac.forEach(e=>{const fpos=TWIN3D_FAC[e.id]||[Number(e.cx),Number(e.cy)];const[wx,wz]=W(fpos[0],fpos[1]);const ps=e.id.indexOf('DF-PS')===0;
-    if(ps){const b=makeBuilding(2.6,2.6,2.6,wx,wz,0);b.userData={entityId:e.id,name:e.label||"泵站",kind:"pump",detail:e.detail||""};
-      const sign=makeLabel(String(e.label||e.id).replace('雨水泵站','泵站'),'#cfe0ef');sign.position.set(wx,4.6,wz);scene3.add(sign);
+  window.__clogMarks=[];    // 堵塞标记：现场核查后才出现，处置完成后消失（不该从第一帧就在）
+  fac.forEach(e=>{
+    let fpos=TWIN3D_FAC[e.id]||[Number(e.cx),Number(e.cy)];
+    const ps=e.id.indexOf('DF-PS')===0;
+    // 泵站先退线到路缘外，再落几何。雨水口本来就该在路上（篦子嵌在路面），不推。
+    // 半宽/半深按缩放 0.68 后的实测包围盒给（含围栏与进水井）。
+    if(ps)fpos=pushStationOffRoads(fpos[0],fpos[1],2.01,1.81);
+    const[wx,wz]=W(fpos[0],fpos[1]);
+    if(ps){
+      // 排水泵站：低矮平顶泵房 + 格栅进水井 + 立式出水管 + 电控柜 + 围栏。
+      // 刻意区别于住宅楼——泵房宽而矮、平顶无窗、灰水泥色，工业设施形态一眼可辨。
+      const grp=new THREE.Group();grp.position.set(wx,0.37,wz);
+      // 整体缩到 0.68：原尺寸泵房 4.4×3.2 世界单位（约 27m×20m）对街边泵站偏大，
+      // 加围栏后占地近 40m，视觉上就是「一栋楼杵在路口」。缩放同时把子件间距一起收，比例不变。
+      grp.scale.setScalar(0.68);
+      grp.rotation.y=nearestRoadAngle(fpos[0],fpos[1]);
+      const wallMat=new THREE.MeshStandardMaterial({color:0x828b92,roughness:.9,metalness:.04});
+      const darkMat=new THREE.MeshStandardMaterial({color:0x454f59,roughness:.72,metalness:.22});
+      const steelMat=new THREE.MeshStandardMaterial({color:0x5d6873,roughness:.42,metalness:.72});
+      // 泵房主体：宽 4.4 × 高 1.9 × 深 3.2（低矮单层工业体量，不是多层住宅）
+      const house=new THREE.Mesh(new THREE.BoxGeometry(4.4,1.9,3.2),wallMat);
+      house.position.y=0.95;house.castShadow=true;house.receiveShadow=true;grp.add(house);
+      // 平顶压顶檐口（略外挑，工业厂房感）
+      const eave=new THREE.Mesh(new THREE.BoxGeometry(4.7,0.16,3.5),darkMat);
+      eave.position.y=1.96;eave.castShadow=true;grp.add(eave);
+      // 泵房正面卷帘门（深色，区别于住宅的窗）
+      const door=new THREE.Mesh(new THREE.BoxGeometry(1.5,1.3,0.06),darkMat);
+      door.position.set(-1.1,0.66,1.62);grp.add(door);
+      // 市政排水识别色带：环泵房一圈的蓝色带，让设施脱离「普通小楼」的观感
+      const band=new THREE.Mesh(new THREE.BoxGeometry(4.44,0.22,3.24),
+        new THREE.MeshStandardMaterial({color:0x2f7d9e,roughness:.58,metalness:.12}));
+      band.position.y=1.62;grp.add(band);
+      // 格栅进水井：泵房侧前方的沉井 + 格栅条，水从这里进泵
+      const well=new THREE.Mesh(new THREE.BoxGeometry(2.4,0.5,1.7),
+        new THREE.MeshStandardMaterial({color:0x161d25,roughness:.86,metalness:.12}));
+      well.position.set(1.1,0.25,2.0);well.receiveShadow=true;grp.add(well);
+      for(let k=0;k<6;k++){
+        const bar=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.5,0.08),steelMat);
+        bar.position.set(0.12+k*0.38,0.3,2.0);grp.add(bar);
+      }
+      const wellRim=new THREE.Mesh(new THREE.BoxGeometry(2.6,0.1,1.9),wallMat);
+      wellRim.position.set(1.1,0.5,2.0);grp.add(wellRim);
+      // 立式出水管：泵房后侧露出的竖管 + 顶部弯头，泵站最直观的识别特征
+      const riser=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.17,2.9,14),
+        new THREE.MeshStandardMaterial({color:0x6d8fa5,roughness:.4,metalness:.6}));
+      riser.position.set(-1.9,1.45,-1.5);riser.castShadow=true;grp.add(riser);
+      const flange=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.14,14),steelMat);
+      flange.position.set(-1.9,0.07,-1.5);grp.add(flange);
+      const elbow=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.17,1.1,14),riser.material);
+      elbow.rotation.z=Math.PI/2;elbow.position.set(-1.35,2.9,-1.5);grp.add(elbow);
+      // 电控柜
+      const cab=new THREE.Mesh(new THREE.BoxGeometry(0.75,1.15,0.5),darkMat);
+      cab.position.set(1.9,0.58,1.0);cab.castShadow=true;grp.add(cab);
+      // 泵站围栏：四角立杆 + 一道横杆
+      for(let k=0;k<4;k++){
+        const px2=(k%2?1:-1)*2.9, pz2=(k<2?-1:1)*2.3;
+        const post=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.85,8),steelMat);
+        post.position.set(px2,0.42,pz2);grp.add(post);
+      }
+      const rail=new THREE.Mesh(new THREE.BoxGeometry(5.8,0.05,0.05),steelMat);
+      rail.position.set(0,0.8,-2.3);grp.add(rail);
+      const rail2=new THREE.Mesh(new THREE.BoxGeometry(5.8,0.05,0.05),steelMat);
+      rail2.position.set(0,0.8,2.3);grp.add(rail2);
+      grp.userData={entityId:e.id,name:e.label||"泵站",kind:"pump",detail:e.detail||""};
+      scene3.add(grp);
+      const sign=makeLabel(String(e.label||e.id).replace('雨水泵站','泵站')+' · 排水设施','#cfe0ef');sign.position.set(wx,2.15,wz);scene3.add(sign);
       // 故障泵站(DF-PS-01)挂红色警示光柱（向上投射的半透明红光柱 + 顶部闪烁灯），比小球醒目
       if(/fault|待修|故障/.test(e.detail||'')){
         const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.85,6.5,16,1,true),
@@ -1487,42 +1975,143 @@ function build(sched){
         window.__pumpAlarms.push({lamp:lamp,beam:beam});
       }}
     else{
-      // 雨水口（intake）：按台账状态区分呈现——clogged(堵塞)用橙色警示+反涌水花，in_service 用普通井盖
+      // 雨水口（inlet）：路面雨水篦子形态——混凝土框 + 深色井口 + 铸铁格栅条 + 路缘侧向进水口
+      // 真实雨水篦子约 0.7×0.4 m。这里建成 1.2×0.72 m（真实的 1.7 倍）：
+      // 再按真实尺寸做在这个相机距离下只有 3 px，且它是"堵了才积水"的因果对象，需要能辨认。
+      // 堵塞是「现场核查后才确认」的状态，不是场景固有属性：篦子一律按正常态建出来，
+      // 橙色篦子/警示锥/反涌/标注由 applyTimeline 按时间轴开合（第 2 跳出现、处置完成后消失）。
       const clogged=/clogged|堵塞/.test(e.detail||'');
-      const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,0.14,16),
-        new THREE.MeshStandardMaterial({color:clogged?0xd9822b:0x5a6a7a,roughness:.5,metalness:.6}));
-      cap.position.set(wx,0.4,wz);cap.receiveShadow=true;
-      cap.userData={entityId:e.id,name:e.label||'雨水口',kind:'intake',detail:e.detail||''};
-      scene3.add(cap);
-      // 堵塞雨水口：橙色警示锥 + 反涌水花（小蓝水体），醒目区别于正常井盖
+      const grp=new THREE.Group();
+      grp.position.set(wx,0.39,wz);
+      grp.rotation.y=nearestRoadAngle(fpos[0],fpos[1]);   // 长边顺路
+      grp.scale.setScalar(0.10);                          // 内部按 12m 级建模，缩到 1.2m 级
+      const frame=new THREE.Mesh(new THREE.BoxGeometry(1.95,0.13,1.18),
+        new THREE.MeshStandardMaterial({color:0x6c747a,roughness:.94,metalness:.02}));
+      frame.receiveShadow=true;grp.add(frame);
+      const pit=new THREE.Mesh(new THREE.BoxGeometry(1.64,0.10,0.9),
+        new THREE.MeshStandardMaterial({color:0x0b0f13,roughness:.9,metalness:.12}));
+      pit.position.y=0.06;grp.add(pit);
+      // 铸铁篦条：深色高金属度，靠明暗对比在浅灰路面上显出「一排格栅」
+      const grateMat=new THREE.MeshStandardMaterial({color:0x242a30,roughness:.36,metalness:.85});
+      const nBar=7;
+      for(let k=0;k<nBar;k++){
+        const bar=new THREE.Mesh(new THREE.BoxGeometry(0.115,0.09,0.88),grateMat);
+        bar.position.set(-0.78+k*(1.56/(nBar-1)),0.13,0);
+        bar.castShadow=true;grp.add(bar);
+      }
+      // 路缘侧向进水口：靠路面一侧的竖直开口（真实雨水口的侧向汇入口）
+      const curb=new THREE.Mesh(new THREE.BoxGeometry(1.7,0.28,0.14),
+        new THREE.MeshStandardMaterial({color:0x0b0f13,roughness:.85,metalness:.1}));
+      curb.position.set(0,0.22,-0.55);grp.add(curb);
+      grp.userData={entityId:e.id,name:e.label||'雨水口',kind:'intake',detail:e.detail||''};
+      scene3.add(grp);
+      // 堵塞标记整体收进一个 Group（位置随雨水口），显隐由时间轴控制
       if(clogged){
-        const cone=new THREE.Mesh(new THREE.ConeGeometry(0.55,1.2,10),new THREE.MeshStandardMaterial({color:0xff8c2d,roughness:.4}));
-        cone.position.set(wx+0.8,0.95,wz);cone.castShadow=true;scene3.add(cone);
-        const gush=new THREE.Mesh(new THREE.SphereGeometry(0.8,14,12),
+        const cg=new THREE.Group();cg.position.set(wx,0,wz);cg.visible=false;
+        // 警示锥 0.7m、反涌水球 0.35m 半径、标注贴地 0.6m——原来分别是 1.2 世界单位(7.5m)、
+        // 0.8 半径(10m 大球)和 2.6m 高，整组比泵房还大。
+        const cone=new THREE.Mesh(new THREE.ConeGeometry(0.18*K,0.70*K,10),new THREE.MeshStandardMaterial({color:0xff8c2d,roughness:.4}));
+        cone.position.set(0.18,0.40,0);cone.castShadow=true;cg.add(cone);
+        const gush=new THREE.Mesh(new THREE.SphereGeometry(0.35*K,14,12),
           new THREE.MeshStandardMaterial({color:0x3a9be0,roughness:.1,metalness:.3,transparent:true,opacity:.85}));
-        gush.position.set(wx,0.75,wz);scene3.add(gush);
-        // 堵塞标注
-        const clogLabel=makeLabel('堵塞','#ffb066');clogLabel.position.set(wx,2.6,wz);scene3.add(clogLabel);
+        gush.position.set(0,0.42,0);cg.add(gush);
+        const clogLabel=makeLabel('堵塞','#ffb066');clogLabel.position.set(0,1.0,0);cg.add(clogLabel);
+        scene3.add(cg);
+        window.__clogMarks.push({group:cg,frameMat:frame.material,grateMat:grateMat});
       }
     }});
+  // ---- 地下排水管网：半透明管段 + 接口节点（可点击查台账，图层可开关）----
+  // 埋深换算：depth_m 米 → 场景 y 下沉（道路顶面约 0.41，管心埋到地下对应深度）
+  // 管段保持地下标高；演示模式用轻微 X 光透视让地下层可读，建筑本体仍处于更高的地面层。
+  // 管径换算：diameter_mm → 场景半径（放大 0.0016 倍，600mm≈0.96、1000mm≈1.6，粗细差异可辨）
+  window.__pipeSegments=[];   // 供事件动画引用：{mesh, id, node, isBottleneck}
+  const pipeMatBase=new THREE.MeshStandardMaterial({color:0x3a8fb0,roughness:.35,metalness:.4,transparent:true,opacity:.55,depthTest:false,depthWrite:false});
+  // 瓶颈管段（PL-DRN-101）：初始同普通管段蓝色，水位过半时 applyTimeline 切成高饱和橙红 + 自发光，一眼锁定
+  const pipeBottleneckMat=new THREE.MeshStandardMaterial({color:0x3a8fb0,roughness:.3,metalness:.15,transparent:true,opacity:.55,emissive:0x000000,emissiveIntensity:0,depthTest:false,depthWrite:false});
+  const nodeMat=new THREE.MeshStandardMaterial({color:0x7fb4c8,roughness:.3,metalness:.6,transparent:true,opacity:.9,depthWrite:false});
+  TWIN3D_PIPES.forEach(p=>{
+    const seg=new THREE.Group();seg.name='pipe-'+p.id;
+    const isBottleneck=/管径偏小|重现期不足/.test(p.note||'');
+    // 埋深下沉：路面顶约 0.41，管心按埋深下探；埋深越深，透明度越低（远处「隐约」）
+    const depthY=0.41-Math.max(0.5,p.depth_m*0.42);
+    const baseOpacity=Math.max(0.22,0.55-p.depth_m*0.08);
+    for(let i=0;i<p.pts.length-1;i++){
+      const[ax,az]=W(p.pts[i][0],p.pts[i][1]),[bx,bz]=W(p.pts[i+1][0],p.pts[i+1][1]);
+      const len=Math.hypot(bx-ax,bz-az);if(len<0.05)continue;
+      const ang=-Math.atan2(bz-az,bx-ax);
+      // 管径→半径：按 1 世界单位≈6 m 折算后再放大 4 倍保证远景可辨（600mm≈0.24、1000mm≈0.40），
+      // 不做等比真实尺寸——真实 0.6 m 直径在此场景只有 0.1 单位，肉眼不可见。
+      const radius=Math.max(0.2,p.diameter_mm*0.0004);
+      // 圆柱 24 分段 + 两端封盖：立体圆管，不是扁平片
+      const cyl=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,len,24,1,false),
+        isBottleneck?pipeBottleneckMat:pipeMatBase);
+      cyl.position.set((ax+bx)/2,depthY,(az+bz)/2);cyl.rotation.z=Math.PI/2;cyl.rotation.y=ang;
+      cyl.castShadow=false;cyl.receiveShadow=false;
+      cyl.userData={entityId:p.id,name:p.label,kind:'pipe',detail:'',pipeData:p};
+      seg.add(cyl);
+    }
+    // 接口节点（检查井/接管点）：节点与管段保持同一地下标高；地面只保留短竖向连接桩，避免节点漂在建筑层。
+    const riserMat=new THREE.MeshStandardMaterial({color:0x9bc7d5,roughness:.45,metalness:.35,transparent:true,opacity:.72,depthTest:false,depthWrite:false});
+    p.pts.forEach((pt,idx)=>{
+      const[wx,wz]=W(pt[0],pt[1]);
+      const node=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.42,0.22,14),nodeMat);
+      node.position.set(wx,depthY,wz);
+      node.userData={entityId:p.id,name:p.label,kind:'pipe',detail:'',pipeData:p,isPipeNode:true};
+      seg.add(node);
+      const riser=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.09,Math.max(0.35,0.44-depthY),10),riserMat);
+      riser.position.set(wx,(0.44+depthY)/2,wz);
+      riser.userData={entityId:p.id,name:p.label,kind:'pipe',detail:'',pipeData:p,isPipeRiser:true};
+      seg.add(riser);
+    });
+    seg.userData={entityId:p.id,name:p.label,kind:'pipe',detail:'',pipeData:p};
+    seg.visible=false;   // 默认隐藏，点「管网」开关再显示
+    scene3.add(seg);
+    window.__pipeSegments.push({mesh:seg,id:p.id,isBottleneck:isBottleneck,mat:isBottleneck?pipeBottleneckMat:pipeMatBase,baseOpacity:baseOpacity});
+  });
+  // 地表汇流方向：用低矮箭头把“路面积水 → 雨水口/管网 → 泵站”画出来。
+  // 箭头只表达台账已有管段的方向示意，不把它当成测绘流速。
+  window.__flowMarkers=[];
+  const flowMat=new THREE.MeshBasicMaterial({color:0x8bd8ff,transparent:true,opacity:.72,depthWrite:false});
+  TWIN3D_PIPES.forEach(p=>{for(let i=0;i<p.pts.length-1;i++){
+    const a=W(p.pts[i][0],p.pts[i][1]),b=W(p.pts[i+1][0],p.pts[i+1][1]);
+    const dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz);if(len<2)continue;
+    const arrow=new THREE.Mesh(new THREE.ConeGeometry(.22,.9,8),flowMat.clone());
+    arrow.rotation.z=Math.PI/2;arrow.rotation.y=-Math.atan2(dz,dx);
+    arrow.position.set((a[0]+b[0])/2,.58,(a[1]+b[1])/2);scene3.add(arrow);
+    window.__flowMarkers.push({mesh:arrow,pipeId:p.id});
+  }});
   // ---- 封路路障：台账里「已封/施工」路段是持久状态，护栏始终显示（不是跳5才封）----
   window.__roadBlocks=[];   // 供事件动画引用：封路护栏组（每组一个 Group）
   const blockMat=new THREE.MeshStandardMaterial({color:0xffc21a,roughness:.5,metalness:.2});
   const coneMat=new THREE.MeshStandardMaterial({color:0xff5a2d,roughness:.4});
   netRoads.forEach(rd=>{if(!/已封|under_construction|closed/.test(rd.label||'')&&!/已封|closed/.test(rd.detail||''))return;
     const ps=rd.pts;if(!ps||ps.length<2)return;
-    // 沿路段取 3 个点，每个点放一组护栏 + 2 个警示锥
+    const wid=ROAD_W[rd.id]||2.8;
+    // 路段方向角（世界 = 场景方向，W 是等比例缩放）
+    const ang=-Math.atan2(ps[1][1]-ps[0][1],ps[1][0]-ps[0][0]);
     const grp=new THREE.Group();
-    for(let k=1;k<=3;k++){
-      const f=k/(3+1);const px=ps[0][0]+(ps[1][0]-ps[0][0])*f, py=ps[0][1]+(ps[1][1]-ps[0][1])*f;
+    // 封路是「路段两头封死」，不是沿路均匀摆三道：
+    // 摆在 1/4、1/2、3/4 处既挡不住从两端驶入的车，视觉上也像一排装饰栏杆。
+    [0.07,0.93].forEach(function(f){
+      const px=ps[0][0]+(ps[1][0]-ps[0][0])*f, py=ps[0][1]+(ps[1][1]-ps[0][1])*f;
       const[wx,wz]=W(px,py);
-      // 放大护栏：远景相机下也能一眼看到封路
-      const bar=new THREE.Mesh(new THREE.BoxGeometry(3.6,0.8,0.28),blockMat);
-      bar.position.set(wx,0.9,wz);bar.castShadow=true;grp.add(bar);
-      const leg1=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.9,0.22),blockMat);leg1.position.set(wx-1.6,0.45,wz);grp.add(leg1);
-      const leg2=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.9,0.22),blockMat);leg2.position.set(wx+1.6,0.45,wz);grp.add(leg2);
-      const cone=new THREE.Mesh(new THREE.ConeGeometry(0.45,0.9,10),coneMat);cone.position.set(wx+0.6,0.45,wz+0.6);grp.add(cone);
-    }
+      // 每组护栏要横跨车行道：子 Group 绕 Y 轴转到「垂直于路」，宽度按实际路宽给。
+      // 原来护栏固定沿世界 X 轴、长度写死 3.6，路一旦不是东西向就变成顺着路摆一块板，
+      // 视觉上就是「只堵了一边」。
+      const seg=new THREE.Group();
+      seg.position.set(wx,0,wz);
+      seg.rotation.y=ang+Math.PI/2;
+      const barW=wid+1.0;
+      const bar=new THREE.Mesh(new THREE.BoxGeometry(barW,0.8,0.26),blockMat);
+      bar.position.y=0.9;bar.castShadow=true;seg.add(bar);
+      const leg1=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.9,0.22),blockMat);
+      leg1.position.set(-barW/2+0.25,0.45,0);seg.add(leg1);
+      const leg2=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.9,0.22),blockMat);
+      leg2.position.set(barW/2-0.25,0.45,0);seg.add(leg2);
+      const cone=new THREE.Mesh(new THREE.ConeGeometry(0.45,0.9,10),coneMat);
+      cone.position.set(barW*0.3,0.45,0.95);seg.add(cone);
+      grp.add(seg);
+    });
     // 封路标牌
     const sign=makeLabel('封路','#ffc21a');sign.position.set(grp.children.length?grp.children[0].position.x:W(ps[0][0],ps[0][1])[0],3.0,grp.children.length?grp.children[0].position.z:W(ps[0][0],ps[0][1])[1]);
     grp.add(sign);
@@ -1530,23 +2119,192 @@ function build(sched){
     grp.userData={entityId:rd.id,name:rd.label||'封路',kind:'road',detail:rd.detail||''};
     scene3.add(grp);window.__roadBlocks.push({mesh:grp});
   });
-  // ---- 施工队：封路动作的执行者（低多边形小人，到场后走到路口放下栏杆）----
-  // 选 R-101 兴华路（主积水点旁）作封路点，施工队从路侧出发走到路中
+  // ---- 抢险班组：工程车驶入 → 人员下车 → 走到作业点 → 布设警示/接移动泵 ----
+  // 全过程都在兴华路中线上（场景 z=160）：车从东侧驶入，停在积水东缘外侧，
+  // 人员步行进入作业点。之所以不让人"凭空出现在路口"，是因为现场处置本身是有到达过程的。
   (function buildCrew(){
-    const from=W(262,148), to=W(292,160);   // 场景坐标：从路口一侧走到封路点
+    const drive=W(470,160);   // 驶入起点（东侧远处）
+    const park =W(334,159);   // 停车点：积水东缘之外，靠路南侧
+    const work =W(272,155);   // 作业点：堵塞的雨水口（DF-IN-101）所在的路缘
+
+    // 排水抢险车：驾驶室 + 车厢 + 反光条 + 顶部黄色警灯 + 四轮。
+    // 尺寸按真实小型抢险车：车长 4.5m、宽 1.9m、高 1.85m（旧版 1.3 倍缩放后长 6.8m、高 4m）。
+    const truck=new THREE.Group();
+    const bodyMat=new THREE.MeshStandardMaterial({color:0xe9ecee,roughness:.55,metalness:.15});
+    const trimMat=new THREE.MeshStandardMaterial({color:0xd2601a,roughness:.62});
+    const cab=new THREE.Mesh(new THREE.BoxGeometry(1.8*K,1.2*K,1.9*K),bodyMat);cab.position.set(1.6*K,0.95*K,0);
+    const bed=new THREE.Mesh(new THREE.BoxGeometry(2.6*K,1.5*K,1.9*K),bodyMat);bed.position.set(-0.7*K,1.10*K,0);
+    const stripe=new THREE.Mesh(new THREE.BoxGeometry(4.4*K,0.26*K,1.94*K),trimMat);stripe.position.set(0.2*K,0.55*K,0);
+    const lamp=new THREE.Mesh(new THREE.BoxGeometry(0.5*K,0.16*K,0.66*K),new THREE.MeshBasicMaterial({color:0xffb020}));
+    lamp.position.set(1.6*K,1.63*K,0);
+    truck.add(cab);truck.add(bed);truck.add(stripe);truck.add(lamp);
+    [[1.6,0.92],[1.6,-0.92],[-1.5,0.92],[-1.5,-0.92]].forEach(function(w){
+      const wh=new THREE.Mesh(new THREE.CylinderGeometry(0.38*K,0.38*K,0.24*K,12),
+        new THREE.MeshStandardMaterial({color:0x1b2127,roughness:.85}));
+      wh.rotation.x=Math.PI/2;wh.position.set(w[0]*K,0.38*K,w[1]*K);truck.add(wh);
+    });
+    truck.rotation.y=Math.PI;                 // 车头朝西（行驶方向）
+    truck.position.set(drive[0],0.39,drive[1]);
+    truck.visible=false;scene3.add(truck);
+
+    // 班组 3 人（排水工程师 ×2 + 道路养护 ×1）
+    // 每人放在一个 slot Group 里：这样不管是几何小人还是外部 glb，都能按阶段挪到自己的工位，
+    // 让"人走到井口、蹲下开篦子、在泵边接管"这些动作能被看见，而不是三个人站在一个点上不动。
     const grp=new THREE.Group();
-    const m1=makeCrewMember();m1.position.set(0,0.37,0);grp.add(m1);
-    const m2=makeCrewMember();m2.position.set(1.0,0.37,0.25);grp.add(m2);
-    const m3=makeCrewMember();m3.position.set(0.5,0.37,-0.3);grp.add(m3);
-    grp.scale.set(1.6,1.6,1.6);              // 整体放大，远景也清晰可辨
-    grp.position.set(from[0],0,from[1]);grp.visible=false;
+    const slots=[];
+    for(let i=0;i<3;i++){
+      const s=new THREE.Group();grp.add(s);slots.push(s);
+      // 几何小人兜底（worker.glb 缺失时才用到）：缩到真实身高 1.75m，脚底贴路面
+      const m=makeCrewMember();m.scale.setScalar(1.75*K/1.9);m.position.set(0,0,0);s.add(m);
+    }
+    grp.position.set(park[0],0,park[1]);grp.visible=false;
     scene3.add(grp);
-    // 施工队到场时加橙色光柱标记（像泵站告警光柱），远景也能一眼锁定"施工队在这里"
-    const marker=new THREE.Mesh(new THREE.CylinderGeometry(0.8,1.4,7,14,1,true),
+
+    // 人物模型：assets/models/worker.glb（用户提供的 Tripo 模型，离线转成 glb）。
+    // 三点处理：
+    // 1) 归一化到 H=0.45 世界单位——与警示锥(0.30)、泵机(0.34)、抢险车(0.65)同一量级。
+    //    原来按 1.95 归一化再乘组缩放 1.6，人高 3 世界单位（≈18m），比抢险车高 4 倍。
+    // 2) 模型没有贴图（baseColor 是纯灰 0.8），不染色在深色路面上就是一团灰疙瘩。
+    //    按归一化身高分带刷顶点色：工装裤 / 反光背心 + 反光条 / 面部 / 安全帽。
+    // 3) 只加载一次，其余两只 clone，避免 3 × 700KB 重复解析。
+    gltfLoader.load('/assets/models/worker.glb',function(g){
+      const src=g.scene;
+      const box0=new THREE.Box3().setFromObject(src);
+      const h=Math.max(1e-6,box0.max.y-box0.min.y);
+      const tmp=new THREE.Vector3(),col=new THREE.Color();
+      src.traverse(function(o){
+        if(!o.isMesh)return;
+        o.castShadow=true;
+        o.updateWorldMatrix(true,false);
+        const pos=o.geometry.attributes.position;
+        const arr=new Float32Array(pos.count*3);
+        for(let i=0;i<pos.count;i++){
+          tmp.fromBufferAttribute(pos,i).applyMatrix4(o.matrixWorld);
+          const y=(tmp.y-box0.min.y)/h;        // 0=脚底，1=头顶
+          const hex=y<0.46?0x303c4a               // 工装裤
+            :(y<0.60?0xd8601d                     // 反光背心
+            :(y<0.66?0xdfe8f0                     // 反光条
+            :(y<0.87?0xd8601d                     // 背心（胸以上）
+            :(y<0.93?0xd9a57c:0xe8b32c))));       // 面部 / 安全帽
+          col.setHex(hex).convertSRGBToLinear();
+          arr[i*3]=col.r;arr[i*3+1]=col.g;arr[i*3+2]=col.b;
+        }
+        o.geometry.setAttribute('color',new THREE.BufferAttribute(arr,3));
+        o.material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.82,metalness:.04});
+      });
+      const s=1.75*K/h;                       // 真实身高 1.75m → 0.28 世界单位
+      src.scale.setScalar(s);
+      src.position.y=-box0.min.y*s;           // 脚底贴地
+      slots.forEach(function(slot,i){
+        const inst=(i===0)?src:src.clone(true);
+        while(slot.children.length)slot.remove(slot.children[0]);   // 换掉几何小人
+        slot.add(inst);
+      });
+    },undefined,function(){/* 没有模型文件：保留几何小人 */});
+
+    // 警示锥：到场后沿路北侧逐个摆放（4 个），圈出作业区
+    const cones=[];
+    const coneMat=new THREE.MeshStandardMaterial({color:0xff8c2d,roughness:.5});
+    const baseMat2=new THREE.MeshStandardMaterial({color:0x2a2f35,roughness:.7});
+    for(let i=0;i<4;i++){
+      const g=new THREE.Group();
+      // 真实警示锥：底宽 0.36m、高 0.7m；旧版 0.30 世界单位＝1.9m 高，比人还高
+      const cb=new THREE.Mesh(new THREE.ConeGeometry(0.18*K,0.70*K,10),coneMat);cb.position.y=0.37*K;
+      const bs=new THREE.Mesh(new THREE.BoxGeometry(0.40*K,0.03,0.40*K),baseMat2);bs.position.y=0.015;
+      g.add(cb);g.add(bs);
+      // 从泵东侧沿路一字排开（间距 1.6m），把作业区上游圈出来；
+      // 起点让开泵体，锥桶不压在机器和人身上
+      g.position.set(work[0]+0.60+i*0.26,0.40,work[1]-0.22);
+      g.visible=false;scene3.add(g);cones.push(g);
+    }
+
+    // 移动泵机组：到场后从车上卸下，摆在**井口东侧**，不是压在井口上。
+    // 上一版泵的坐标是 work+(0.05,-0.13)，几乎和雨水篦子重合：特写镜头里井口被这台蓝机器
+    // 完全盖住，画面只剩"三个人围着一个箱子"，看不出在疏通什么。
+    // 尺寸按真实移动泵：机身 1.2×0.9×0.8m。
+    const pump=new THREE.Group();
+    const pbody=new THREE.Mesh(new THREE.BoxGeometry(1.2*K,0.9*K,0.8*K),
+      new THREE.MeshStandardMaterial({color:0x2f6d8c,roughness:.5,metalness:.35}));
+    pbody.position.y=0.47*K;
+    const pframe=new THREE.Mesh(new THREE.BoxGeometry(1.32*K,0.08*K,0.92*K),
+      new THREE.MeshStandardMaterial({color:0x8a9098,roughness:.6,metalness:.5}));
+    pframe.position.y=0.04*K;
+    const pcap=new THREE.Mesh(new THREE.BoxGeometry(0.5*K,0.10*K,0.5*K),
+      new THREE.MeshStandardMaterial({color:0xd9a13a,roughness:.45,metalness:.4}));
+    pcap.position.set(-0.2*K,0.97*K,0);       // 顶部油箱盖/机头，避免整台机器读成一个蓝方块
+    pump.add(pbody);pump.add(pframe);pump.add(pcap);
+    pump.position.set(work[0]+0.38,0.40,work[1]-0.05);
+    pump.visible=false;scene3.add(pump);
+
+    // 进水管：从泵体西侧接到掀开的雨水口，贴地走，中间压扁一段。
+    // "泵在抽水"这件事必须有物理连接才成立——上一版软管是泵身上一根朝西伸出去的短圆柱，
+    // 端头离井口还有 2m，看着像一根没插上的棍子。
+    const hoseGrp=new THREE.Group();hoseGrp.position.set(work[0],0.40,work[1]);
+    const hoseCurve=new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.30,0.09,-0.05),
+      new THREE.Vector3(0.22,0.020,-0.02),
+      new THREE.Vector3(0.13,0.014,0.01),
+      new THREE.Vector3(0.05,0.026,0.03)
+    ]);
+    const hoseMesh=new THREE.Mesh(new THREE.TubeGeometry(hoseCurve,26,0.013,8,false),
+      new THREE.MeshStandardMaterial({color:0x1a1e22,roughness:.85,metalness:.05}));
+    hoseMesh.castShadow=true;hoseGrp.add(hoseMesh);
+    hoseGrp.visible=false;scene3.add(hoseGrp);
+
+    // 被掀开的铸铁篦子：斜靠在井口东侧地面上。井盖掀开 = "人在动井口"的直接证据。
+    const lidGrp=new THREE.Group();lidGrp.position.set(work[0]-0.01,0.40,work[1]-0.11);
+    const lid=new THREE.Mesh(new THREE.BoxGeometry(0.20,0.016,0.12),
+      new THREE.MeshStandardMaterial({color:0x2b3238,roughness:.42,metalness:.8}));
+    lid.position.set(0,0.045,0);lid.rotation.z=-1.15;lid.castShadow=true;lidGrp.add(lid);
+    lidGrp.visible=false;scene3.add(lidGrp);
+
+    // 掏出/冲出的淤泥：井口南侧一小片深色湿泥，别做成整齐的土堆
+    const mudGrp=new THREE.Group();mudGrp.position.set(work[0]-0.02,0.40,work[1]-0.12);
+    const mudMat=new THREE.MeshStandardMaterial({color:0x3b332a,roughness:.98,metalness:0});
+    [[0,0,0,0.055],[0.06,0,0.02,0.038],[-0.05,0,0.03,0.032]].forEach(function(m){
+      const b=new THREE.Mesh(new THREE.SphereGeometry(m[3],10,7),mudMat);
+      b.scale.y=0.34;b.position.set(m[0],0.008,m[2]);mudGrp.add(b);
+    });
+    mudGrp.visible=false;scene3.add(mudGrp);
+
+    // 撬棍：插在井口盖缝里的细钢杆，跟着 0 号工人的弯腰节奏轻晃
+    const pryGrp=new THREE.Group();pryGrp.position.set(work[0]-0.06,0.40,work[1]+0.02);
+    const pry=new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.010,0.16,8),
+      new THREE.MeshStandardMaterial({color:0x8d949c,roughness:.35,metalness:.9}));
+    pry.rotation.z=0.95;pry.position.y=0.07;pry.castShadow=true;pryGrp.add(pry);
+    pryGrp.visible=false;scene3.add(pryGrp);
+
+    // 抽水出水口：泵启动后朝路侧喷一股水，落点有溅起的水花。
+    // 这是"工作过程"最关键的可见证据——水位之所以开始下降，是因为泵在抽水。
+    const jet=new THREE.Group();
+    const jetMat=new THREE.MeshBasicMaterial({color:0xcfeaf7,transparent:true,opacity:.55,depthWrite:false});
+    const spout=new THREE.Mesh(new THREE.CylinderGeometry(0.05*K,0.07*K,0.9*K,10),jetMat);
+    spout.rotation.z=-Math.PI/3;spout.position.set(0.06,0.18,0);jet.add(spout);
+    const splash=new THREE.Mesh(new THREE.RingGeometry(0.10*K,0.26*K,18),jetMat.clone());
+    splash.rotation.x=-Math.PI/2;splash.position.set(0.36,0.005,0);jet.add(splash);
+    jet.position.set(work[0]+0.52,0.40,work[1]-0.05);   // 泵体东侧出水管口
+    jet.visible=false;scene3.add(jet);
+
+    // 现场状态文字：只保留一条，随阶段换文案（"他们此刻在干什么"）。
+    // 原来这里是 1 个角色标签 + 3 个动作标签 + 1 个状态，五条贴在同一个点上，
+    // 远景直接糊成一坨——一条滚动文案反而读得清。
+    const status=makeLabel('','#ffe0a6');
+    status.scale.set(LABEL_W*0.5,LABEL_H*0.62,1);   // 小一号：现场文案不能压住人和车
+    status.position.set(work[0]-0.06,0.92,work[1]+0.34);status.visible=false;scene3.add(status);
+
+    // 到场标记光柱：只做远景指示，特写里那根半透明圆柱会挡住整片作业面，所以不挂到场景上。
+    const marker=new THREE.Mesh(new THREE.CylinderGeometry(0.8,1.4,2.2,14,1,true),
       new THREE.MeshBasicMaterial({color:0xff8c2d,transparent:true,opacity:.32,side:THREE.DoubleSide,depthWrite:false}));
-    marker.position.set(to[0],4.2,to[1]);marker.visible=false;
-    scene3.add(marker);
-    window.__roadCrew={group:grp,marker:marker,from:{x:from[0],z:from[1]},to:{x:to[0],z:to[1]}};
+    marker.position.set(work[0],1.5,work[1]);marker.visible=false;
+    window.__roadCrew={group:grp,truck:truck,pump:pump,jet:jet,cones:cones,status:status,
+      hose:hoseGrp,lid:lidGrp,mud:mudGrp,pry:pryGrp,
+      slots:slots,marker:marker,label:null,actions:[],
+      drive:{x:drive[0],z:drive[1]},park:{x:park[0],z:park[1]},
+      from:{x:park[0],z:park[1]},to:{x:work[0],z:work[1]},
+      // 特写机位对准"人 + 井口 + 泵"这一小片，并往水侧（兴华路北半幅）偏 0.55 世界单位：
+      // 对着 to（路缘上的雨水口）时，画面下缘正好压在南侧路缘石上，整片积水被切在画面外，
+      // 读起来像"一群人在干燥路面上围着箱子"，看不出是在排内涝。
+      focus:{x:work[0]+0.12,z:work[1]+0.16}};
   })();
   // ---- 派单气泡：部门落位→派活（跨部门协作的可视化）----
   (function buildDispatch(){
@@ -1554,61 +2312,201 @@ function build(sched){
     const bub=makeLabel('派单·排水→养护','#ffd36b');
     bub.position.set(pos[0],5.5,pos[1]);bub.visible=false;
     scene3.add(bub);
+    const flow=[
+      ['应急调度中心·接警',pos[0]-5,pos[1]+2.2],
+      ['排水部门·接收工单',pos[0]+2,pos[1]+2.2],
+      ['道路养护·确认封路',pos[0]+8,pos[1]+2.2]
+    ].map((x,i)=>{const lab=makeLabel(x[0],i===2?'#ffe0a6':'#bde8ff');lab.position.set(x[1],4.6,x[2]);lab.visible=false;scene3.add(lab);return lab;});
     window.__dispatchBubble=bub;
+    window.__dispatchFlow=flow;
   })();
   // 场景摆完才建光环与锚点：此时每个实体的 mesh 已经挂在 scene 上
   buildRings();
-  loadTwinLinks().then(()=>setJump(twinState.currentJump));
+  loadTwinLinks().then(()=>{
+    // 默认从「降雨开始」（t=0）起：先下雨、再积水、再处置。
+    // 只有深链接带了 jump/entity 参数时才直接定位到指定跳次。
+    const q=new URLSearchParams(location.search);
+    // ?t=0.73 直接定位到时间轴任意时刻（0~1），用于核对"某一刻现场到底有什么"
+    const qt=q.get('t');
+    if(qt!==null&&isFinite(Number(qt))){
+      __evtClock=Math.max(0,Math.min(1,Number(qt)))*EVT_DURATION;
+      applyTimeline(__evtClock/EVT_DURATION);paintHighlights();renderJumpControls();updateEvidence();renderResults();
+      syncJumpFromClock();driveCamera(__evtClock/EVT_DURATION);return;
+    }
+    if(q.get('jump')||REQUESTED.entity){setJump(twinState.currentJump);return}
+    twinState.currentJump=0;__evtClock=0;__evtPlaying=false;
+    applyTimeline(0);paintHighlights();renderJumpControls();updateEvidence();renderResults();
+    renderEventBar(0);syncProgress();
+  });
 }
-function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=512;cv.height=96;const g=cv.getContext('2d');g.font='bold 26px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=5;g.strokeStyle='rgba(10,16,22,.88)';g.strokeText(text,256,48);g.fillStyle=color||'#d5e4f0';g.fillText(text,256,48);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:true,depthWrite:false});const sp=new THREE.Sprite(mat);sp.scale.set(6.4,1.2,1);return sp}
+// 标签用「屏幕恒定尺寸」：sizeAttenuation=false，缩放按 1 单位距离下的世界尺寸给。
+// 原来 scale 是 7.2×1.35 世界单位（≈45m 宽的广告牌），远景刚好，一旦相机拉近
+// 到现场特写就变成铺满半个屏幕的大字。恒定尺寸下远近一样大，这才是标注该有的行为。
+const LABEL_W=0.27, LABEL_H=0.0505;   // ≈ 默认机位下 7.2×1.35 世界单位的观感
+function makeLabel(text,color){const cv=document.createElement('canvas');cv.width=512;cv.height=96;const g=cv.getContext('2d');g.font='bold 26px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=5;g.strokeStyle='rgba(10,16,22,.88)';g.strokeText(text,256,48);g.fillStyle=color||'#d5e4f0';g.fillText(text,256,48);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:true,depthWrite:false,sizeAttenuation:false});const sp=new THREE.Sprite(mat);sp.scale.set(LABEL_W,LABEL_H,1);return sp}
 // 只生成 CanvasTexture（供积水深度标注动态刷新文字用），不包 Sprite
 function makeLabelTex(text,color){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');g.font='bold 30px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(10,16,22,.9)';g.strokeText(text,128,32);g.fillStyle=color||'#d5e4f0';g.fillText(text,128,32);const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;return tex}
-// ---- 水面 shader：真实波纹 + Fresnel 反射 + 深度浑浊 ----
-// 顶点波浪 + 片元程序化波纹纹理（俯视也可见明暗涟漪）+ 边缘 Fresnel 亮边
-function makeWaterSurface(w,d){
-  const geo=new THREE.PlaneGeometry(w,d,64,64);geo.rotateX(-Math.PI/2);
+// ---- 水面 shader：连续水体（多水洼场融合）+ 真实波纹 + Fresnel + 边缘羽化 ----
+// 关键：不是若干个矩形水面拼接（会"一段一段"），而是一整片水面，用若干个椭圆水洼场叠加出连续形状，
+// 片元里按场值裁出水面、边界再叠加噪声与羽化，得到不规则、自然的水岸线。
+// blobs = [[局部x, 局部z, 半径x, 半径z], ...]，局部坐标相对水面平面中心。
+function makeWaterSurface(w,d,blobs){
+  // 8 个水洼用 8 个独立 vec4 uniform（x, z, 半径x, 半径z）传入。
+  // 不用 uniform 数组 + 循环索引：WebGL1 对动态数组索引支持不一致，会直接编译失败。
+  const mk=(b)=>new THREE.Vector4(b?b[0]:99999,b?b[1]:99999,b?Math.max(0.05,b[2]):0.001,b?Math.max(0.05,b[3]):0.001);
+  const uB={};
+  for(let i=0;i<8;i++)uB['uB'+i]={value:mk((blobs||[])[i])};
+  // 每个水洼的「到场程度」0~1：按离积水核心的距离排队，近的先长、远的后漫。
+  // 分开传是为了让积水按顺序蔓延，而不是整片同时放大（那一版看着像水面在缩放的动画）。
+  const uG={
+    uG0:{value:new THREE.Vector4(0,0,0,0)},
+    uG1:{value:new THREE.Vector4(0,0,0,0)},
+  };
+  const geo=new THREE.PlaneGeometry(w,d,96,96);geo.rotateX(-Math.PI/2);
   const mat=new THREE.ShaderMaterial({
-    uniforms:{
+    uniforms:Object.assign({
       uTime:{value:0},
-      uWaterColor:{value:new THREE.Color(0x3a8fd0)},
-      uDeepColor:{value:new THREE.Color(0x0e3f60)},
-      uSkyColor:{value:new THREE.Color(0xa8b8c8)},
-      uWaveAmp:{value:0.22},
-    },
+      uLevel:{value:0.5},                                  // 水位系数：越高水洼越外扩、越连片
+      uOpacity:{value:0.86},
+      // 这三个颜色**不要** convertSRGBToLinear()：ShaderMaterial 不像内置材质那样
+      // 在片元末尾插 encodings_fragment，它把值直接写进 sRGB 画布。
+      // 转了线性等于把颜色压暗一次再原样输出：uDeepColor 转完是 (0.7,9,22)，
+      // 深水区直接变成近黑的"黑洞"，这也是之前水面怎么调都发黑的原因。
+      // 注意：uWaterColor 与 uOpacity 这两个初值每帧会被 applyTimeline 覆盖
+      // （颜色来自 WATER_COLORS、透明度按水位算），改这里的数没有用。
+      // 真正生效的是 WATER_COLORS 和 applyTimeline 里那两行；这里只保证首帧不为空。
+      uWaterColor:{value:new THREE.Color(0x566051)},
+      uDeepColor:{value:new THREE.Color(0x3e4740)},     // 深水区更深，但仍是浊色不是藏蓝
+      uSkyColor:{value:new THREE.Color(0x8fa0b0)},
+      uWaveAmp:{value:0.022},   // 波幅压到 2cm 级：原来 0.04 的波谷会沉到路缘石以下，水面被切成两半
+      // 天空原图（equirect）+ 是否已加载。加载前保持 0，shader 走常数天空色兜底，
+      // 避免 sampler 绑到 null 纹理导致整片水面不渲染。
+      uSky:{value:window.__skyTex||new THREE.Texture()},
+      uHasSky:{value:window.__skyTex?1:0},
+    },uB,uG),
     vertexShader:[
-      'varying vec2 vUv;varying vec3 vPos;varying vec3 vNormal;',
+      'uniform float uTime;',
+      'uniform float uWaveAmp;',
+      'varying vec2 vUv;varying vec2 vLocal;varying vec3 vPos;varying vec3 vNormal;',
+      'varying vec3 vWorld;varying vec3 vNormalW;',
       'void main(){',
       '  vUv=uv;',
-      '  vec4 mv=modelViewMatrix*vec4(position,1.0);',
+      '  vec3 p=position;',
+      '  vLocal=p.xz;',
+      // 顶点真实波浪位移：让水面有几何起伏，不是纯平面贴片
+      '  float w1=sin(p.x*0.9+uTime*1.6)*0.55;',
+      '  float w2=cos(p.z*0.8+uTime*1.2)*0.45;',
+      '  float w3=sin((p.x+p.z)*0.6+uTime*2.0)*0.3;',
+      '  p.y+=(w1+w2+w3)*uWaveAmp;',
+      '  vec4 mv=modelViewMatrix*vec4(p,1.0);',
       '  vPos=mv.xyz;',
       '  vNormal=normalize(normalMatrix*vec3(0.0,1.0,0.0));',
+      // 世界空间的片元位置与法线：反射采样要用世界方向查天空图，
+      // view 空间算出来的反射方向查 equirect 会整体偏转（水面倒影和楼的位置对不上）。
+      '  vWorld=(modelMatrix*vec4(p,1.0)).xyz;',
+      '  vNormalW=normalize(mat3(modelMatrix)*vec3(0.0,1.0,0.0));',
       '  gl_Position=projectionMatrix*mv;',
       '}',
     ].join(' '),
     fragmentShader:[
       'uniform float uTime;',
+      'uniform float uLevel;',
+      'uniform float uOpacity;',
       'uniform vec3 uWaterColor;uniform vec3 uDeepColor;uniform vec3 uSkyColor;',
-      'varying vec2 vUv;varying vec3 vPos;varying vec3 vNormal;',
+      'uniform vec4 uB0;uniform vec4 uB1;uniform vec4 uB2;uniform vec4 uB3;',
+      'uniform vec4 uB4;uniform vec4 uB5;uniform vec4 uB6;uniform vec4 uB7;',
+      // uG0/uG1：每个水洼的到场程度 0~1（近的先长、远的后漫）。
+      // 注意：shader 的每一行是拼成一整行再编译的，字符串里不能出现 // 行注释，
+      // 否则会把后面所有代码一起注释掉（报错是 "Missing main()"）。
+      'uniform vec4 uG0;uniform vec4 uG1;',
+      'uniform sampler2D uSky;uniform float uHasSky;',
+      'varying vec2 vUv;varying vec2 vLocal;varying vec3 vPos;varying vec3 vNormal;',
+      'varying vec3 vWorld;varying vec3 vNormalW;',
+      // 单个水洼场：椭圆高斯，中心 1.0 向外衰减。g 是该水洼自己的生长系数：
+      // g=0 完全不出现，g=1 长到满幅，中间按 0.32 起步的半径 + 幅度淡入，
+      // 所以积水是「从低洼点一段段淌出去」，不是整片同时缩放。
+      'float blob(vec4 b,vec2 p,float g){',
+      '  if(g<=0.002)return 0.0;',
+      '  vec2 rad=b.zw*(0.32+0.68*g);',
+      '  vec2 dv=(p-b.xy)/max(rad,vec2(0.001));',
+      '  return exp(-dot(dv,dv)*1.55)*smoothstep(0.0,0.30,g);',
+      '}',
       'void main(){',
-      '  vec3 N=normalize(vNormal);',
-      '  vec3 V=normalize(-vPos);',
-      '  float fres=pow(1.0-max(dot(N,V),0.0),2.5);',
-      '  vec3 H=normalize(V+vec3(0.0,1.0,0.0));',
-      '  float spec=pow(max(dot(N,H),0.0),90.0);',
-      // 中频波纹条纹（俯视可见），多方向叠加
-      '  float a=sin(vUv.x*22.0+uTime*3.0);',
-      '  float b=sin(vUv.y*22.0-uTime*2.6);',
-      '  float c=sin((vUv.x+vUv.y)*16.0+uTime*2.0);',
-      '  float ripple=a*0.35+b*0.35+c*0.3;',
-      '  float light=0.78+0.44*ripple;',
-      '  vec3 col=uWaterColor*light;',
-      '  col=mix(col,uSkyColor,clamp(fres*0.85,0.0,0.9));',
-      '  col+=spec*vec3(0.8,0.9,1.0)*1.0;',
-      '  gl_FragColor=vec4(col,1.0);',
+      // 水面形状不再由统一 grow 缩放，而是每个水洼有自己的生长曲线（CPU 每帧按水位算）。
+      // 原来所有水洼共用一个 grow，结果是「整片水一起放大/缩小」，看不到漫延过程。
+      '  float field=blob(uB0,vLocal,uG0.x)+blob(uB1,vLocal,uG0.y)+blob(uB2,vLocal,uG0.z)+blob(uB3,vLocal,uG0.w)',
+      '             +blob(uB4,vLocal,uG1.x)+blob(uB5,vLocal,uG1.y)+blob(uB6,vLocal,uG1.z)+blob(uB7,vLocal,uG1.w);',
+      // 场值裁到 1.0 再用于着色：多个水洼重叠处场值会累加到 2~3，
+      // 直接拿去算深度会在水里留下几块「黑斑」；裁顶后整片水同深度、只在岸边变浅。
+      '  float f=clamp(field,0.0,1.0);',
+      // 水岸线噪声：只保留中低频起伏（波长 2.5~4 世界单位≈15~25m），
+      // 原来叠了一项频率 5.3/4.1 且不带时间项的高频正弦，边界会长出一圈静态尖刺，
+      // 远看像锯齿而不是水岸。
+      '  float n=sin(vLocal.x*1.6+uTime*0.30)*0.055',
+      '         +sin(vLocal.y*2.2-uTime*0.24)*0.045',
+      '         +sin((vLocal.x+vLocal.y)*0.9+uTime*0.10)*0.035',
+      '         +sin(vLocal.x*3.1-vLocal.y*2.6)*0.012;',
+      // 水岸线过渡带收窄到 0.30~0.36：远景宽过渡带能藏住"纸片边"，
+      // 但特写镜头下这十几米宽的羽化会读成一片雾，看不出水到哪儿为止。
+      '  float body=smoothstep(0.30+n,0.36+n,f);',
+      // 湿痕外缘：水退过/正在漫的低洼处是"湿沥青"，不是水。
+      // 加上这一圈的意义有两层——特写里水边不再是一条羽化的软边，而是"水→湿→干"的过渡；
+      // 远景俯视时水面本来就不反光（45° 入射反射率仅 2%），全靠"这一片被浸湿变暗"才读得出积过水。
+      '  float damp=smoothstep(0.22+n,0.30+n,f);',
+      '  if(damp<0.01) discard;',
+      // 中频波纹：波长按**世界单位**算（≈0.25~0.4 世界单位 = 1.5~2.5m 的风纹），不是按 uv。
+      // 原来用 vUv*26：水面平面有几十世界单位宽，26 次重复摊下来波长 7m 级别，
+      // 远景看不出问题，特写镜头一推近就是一整块死平的塑料板。
+      '  float a=sin(vLocal.x*22.0+uTime*3.4);',
+      '  float b=sin(vLocal.y*26.0-uTime*2.9);',
+      '  float c=sin((vLocal.x+vLocal.y)*16.0+uTime*2.2);',
+      '  float d=sin((vLocal.x-vLocal.y*1.3)*36.0-uTime*3.8);',
+      '  float ripple=a*0.28+b*0.28+c*0.24+d*0.20;',
+      '  float light=0.90+0.22*ripple;',
+      // 法线扰动：把波纹的解析梯度当法线斜率用。
+      // 这是"水面有没有质感"的关键一步——之前法线恒为 (0,1,0)，反射和镜面高光是一整片
+      // 均匀的色块，特写里就是"铺了一层带噪点的塑料膜"。让法线随波起伏，
+      // 高光才会碎成一条条闪动的水光。
+      '  float ca=cos(vLocal.x*22.0+uTime*3.4);',
+      '  float cb=cos(vLocal.y*26.0-uTime*2.9);',
+      '  float cc=cos((vLocal.x+vLocal.y)*16.0+uTime*2.2);',
+      '  float cd=cos((vLocal.x-vLocal.y*1.3)*36.0-uTime*3.8);',
+      '  float gx=0.28*22.0*ca+0.24*16.0*cc+0.20*36.0*cd;',
+      '  float gz=0.28*26.0*cb-0.24*16.0*cc-0.20*1.3*36.0*cd;',
+      '  vec3 N=normalize(vec3(-gx*0.0022,1.0,-gz*0.0022));',
+      '  vec3 Vw=normalize(cameraPosition-vWorld);',
+      '  float fres=pow(1.0-max(dot(N,Vw),0.0),3.0);',
+      '  vec3 H=normalize(Vw+vec3(0.0,1.0,0.0));',
+      '  float spec=pow(max(dot(N,H),0.0),60.0);',
+      // 颜色深浅由水位（uLevel）统一决定，不再用场值 f 做映射：
+      // 用 f 会让每个水洼中心都比岸边深，几个水洼连起来就成了「一条条深沟」，
+      // 而真实路面积水是薄薄一层、颜色基本均匀，只有边缘因水浅而变淡。
+      '  float deep=0.35+0.65*uLevel;',
+      '  vec3 col=mix(uWaterColor,uDeepColor,deep*0.45)*light;',
+      // 天空反射限幅：低视角掠射角下 fresnel 接近 1，不限幅水面会被刷成灰白一片。
+      // 远景收到 0.12 是对的，但特写镜头（11m 看 30cm 积水）里这点反射完全不够，
+      // 水面读成"没有水"——所以给到 0.26 上限，近处能看到天光，远处仍不会爆白。
+      '  col=mix(col,uSkyColor,clamp(fres*0.18,0.0,0.26));',
+      // 天空反射：用世界空间反射方向查 equirect HDR 天空图。
+      // 这一步是"像不像水"的分水岭——只混一个常数天空色时，整片水就是一块
+      // 均匀的灰绿渐变，特写里读成地面积了层雾。采到天的明暗和楼影才会读成水面。
+      '  if(uHasSky>0.5){',
+      '    vec3 R=reflect(-Vw,N);',
+      '    float su=atan(R.z,R.x)*0.15915494+0.5;',
+      '    float sv=asin(clamp(R.y,-1.0,1.0))*0.31830989+0.5;',
+      '    vec3 sky=min(texture2D(uSky,vec2(su,sv)).rgb,vec3(1.0));',
+      '    col=mix(col,sky,clamp(fres*0.62,0.0,0.48));',
+      '  }',
+      '  col+=spec*vec3(0.82,0.90,1.0)*0.60;',
+      // 边缘 alpha 羽化：水面不是硬边贴片，是逐渐变薄的水。
+      // body=1 是水，body=0 是湿痕：湿痕用压暗的浊水色（≈湿沥青），透明度也降到 0.34，
+      // 两层之间按 body 混合，于是"水—湿—干"是一条连续过渡而不是一道软边。
+      '  vec3 dampCol=mix(uWaterColor,uDeepColor,0.75)*0.52;',
+      '  vec3 outc=mix(dampCol,col,body);',
+      '  gl_FragColor=vec4(outc,mix(0.34,uOpacity,body)*damp);',
       '}',
     ].join(' '),
     transparent:true,
-    opacity:0.86,
     side:THREE.DoubleSide,
     depthWrite:false,
   });
@@ -1620,21 +2518,38 @@ function makeWaterSurface(w,d){
 // 跳次按钮/进度条只是把 t 定位到某个值，所有视觉量（水位/雨势/告警/封路/施工队/派单气泡）都由 t 连续驱动。
 let __evtClock=0,__evtPlaying=false,__lastFrame=performance.now();
 const EVT_DURATION=26;         // 整条事件线总时长（秒），播放/拖动都映射到这个区间
+// 时间轴结构：EVT_JUMPS[0] 之前是「降雨前奏」——只有雨，地面还没有积水；
+// 第 1 跳「事件识别」时水才刚在低洼处积起来。事件链是
+// 降雨 → 积水上涨 → 事件识别 → 影响扩散 → 部门落位 → 冲突暴露 → 资源缺口 → 动作/疏通 → 处置后回落。
+// 一上来就把整滩水摆好，等于把结果当起点，不符合客观过程。
 const EVT_JUMPS=[              // 7 个节点在时间轴上的位置（0~1）：跳次→时间刻度
-  0.00, 0.14, 0.28, 0.44, 0.60, 0.78, 1.00,
+  0.16, 0.28, 0.40, 0.52, 0.64, 0.82, 1.00,
 ];
-// 每个"跳"的视觉目标值（water 水位系数 0~1、rain 雨势、alarm 告警、block 封路、crew 施工队到场、dispatch 派单气泡）
+// 前奏：雨由小转大，地面积水仍为 0
+const PRELUDE={water:0, rain:0.20, alarm:false, block:false, crew:false, dispatch:false, clog:false};
+// 每个"跳"的视觉目标值（water 水位系数 0~1、rain 雨势、alarm 告警、block 封路、crew 施工队到场、
+// dispatch 派单气泡、clog 雨水口堵塞标记）。
+// water=1.0 对应台账峰值深度（A-03 30cm / B-01 18cm），所以事件识别那跳只到 0.18（约 5cm），
+// 水是随雨一直涨上来的，到第 5 跳才到 30cm。
+// clog 不是"场景自带的属性"：刚识别时只知道路口有水，还不知道是雨水口堵了；
+// 现场核查（第 2 跳 影响）才确认堵塞，施工队到场疏通后（封路那跳）标记消失。
 const JUMP_VISUAL=[
-  {water:0.12, rain:0.30, alarm:false, block:false, crew:false, dispatch:false},
-  {water:0.38, rain:0.60, alarm:false, block:false, crew:false, dispatch:false},
-  {water:0.55, rain:0.72, alarm:false, block:false, crew:false, dispatch:true },  // 部门落位→派单
-  {water:0.70, rain:0.80, alarm:true,  block:false, crew:false, dispatch:true },  // 资源缺口→告警
-  {water:0.88, rain:0.88, alarm:true,  block:false, crew:true,  dispatch:true },  // 施工队到场
-  {water:0.60, rain:0.55, alarm:false, block:true,  crew:true,  dispatch:true },  // 封路完成
-  {water:0.10, rain:0.15, alarm:false, block:true,  crew:true,  dispatch:false},  // 处置后：排水回落
+  {water:0.18, rain:0.55, alarm:false, block:false, crew:false, dispatch:false, clog:false},
+  {water:0.42, rain:0.72, alarm:false, block:false, crew:false, dispatch:false, clog:true },
+  {water:0.60, rain:0.82, alarm:false, block:false, crew:false, dispatch:true , clog:true },  // 部门落位→派单
+  {water:0.76, rain:0.90, alarm:true,  block:false, crew:false, dispatch:true , clog:true },  // 资源缺口→告警
+  {water:1.00, rain:0.95, alarm:true,  block:false, crew:true,  dispatch:true , clog:true },  // 峰值：施工队到场
+  {water:0.62, rain:0.60, alarm:false, block:true,  crew:true,  dispatch:true , clog:false},  // 疏通完成→封路→水开始退
+  {water:0.08, rain:0.12, alarm:false, block:true,  crew:true,  dispatch:false, clog:false},  // 处置后：排水回落
 ];
 const RING_COLOR={pending:0x5a6b7a,running:0x4fc3f7,needs_confirm:0xf5c063,done:0x34d399};
-const WATER_COLORS=[0x3aa0e0,0x3195d5,0x2a86c4,0x2377b3,0x1b6896,0x2a82b8,0x3a90c8];  // 随深度：浅清→深浊→回落
+// 随深度：浅浑浊 → 深浊 → 回落。内涝水是裹着泥沙的浑水，不能给清亮的天蓝。
+// 这组值在 applyTimeline 里 setHex 后还会再转一次线性（见那处注释）。
+// 水体主色：内涝是浑水（灰褐带绿），不是游泳池的湖蓝，也不是池塘的墨绿。
+// 随水位：浅时略清 → 涨水后发浊发暗 → 回落再变浅。
+// 色值取舍：既要特写里读得出"水"，又要远景（俯角 45°、反射几乎为零）里
+// 和沥青路面拉开差距。纯墨绿在近景像油污，纯浅灰在远景看不出来，取中间。
+const WATER_COLORS=[0x6b756e,0x647067,0x5d6a62,0x556259,0x4d5a52,0x556259,0x67736a];
 let LINKS=null,CARD_INDEX={},RINGS={},ANCHORS={};
 const MAX_JUMP=7;
 function requestedParams(){
@@ -1670,12 +2585,32 @@ function renderJumpControls(){
 function updateEvidence(){
   const body=document.getElementById('evidence-body');if(!body)return;
   if(!LINKS){body.textContent='正在读取六跳证据…';return}
+  // 降雨前奏阶段还没有事件，硬把第 1 跳的证据挂上来等于"证据先于事件"
+  if((__evtClock/EVT_DURATION)<EVT_JUMPS[0]){
+    body.innerHTML='<b style="color:#cfe3f7">降雨：雨势增强</b><br>'
+      +'路面积水尚未形成，事件链从第 1 跳「事件识别」开始。<br>'
+      +'<span style="color:#7f9bb3">本阶段只有降雨过程，没有可采信的事件证据。</span>';
+    return;
+  }
   const j=LINKS.jumps[jumpRealIndex(twinState.currentJump)]||{};
   const atSettle=twinState.currentJump===6;
   body.innerHTML='<b style="color:#cfe3f7">'+(atSettle?'最终状态':esc(j.title||''))+'</b><br>'
     +(atSettle?'六跳动作全部执行完毕，按会签要求待人工确认':esc(j.detail||'—'))
     +'<br>关联对象 '+(atSettle?(LINKS.jumps[5]||{}).entity_ids||[]:j.entity_ids||[]).length
-    +' 个 · 动作卡 '+(atSettle?LINKS.cards.length:(j.card_ids||[]).length)+' 张 · 证据 '+(atSettle?0:j.ref_count||0)+' 条';
+    +' 个 · 动作卡 '+(atSettle?LINKS.cards.length:(j.card_ids||[]).length)+' 张 · 证据 '+(atSettle?0:j.ref_count||0)+' 条'
+    +(atSettle?'':'<br><span style="color:#7f9bb3">事件序号 '+(j.seq||'-')+' · 来源 '+esc(j.source||'event-stream')+'</span>'
+      +'<br><span style="color:#9dc3d8">规则 '+esc((j.rules||[]).slice(0,3).join(' · ')||'—')+'</span>'
+      +'<br><span style="color:#7897ad">依据 '+esc((j.refs||[]).slice(0,2).map(refCn).join(' · ')||'—')+(j.ref_count>2?' 等 '+j.ref_count+' 条':'')+'</span>');
+}
+function renderEventBar(idx){
+  const bar=document.getElementById('event-bar');if(!bar)return;
+  const pre=(__evtClock/EVT_DURATION)<EVT_JUMPS[0];   // 降雨前奏：只有雨，还没形成积水
+  const j=LINKS&&LINKS.jumps&&LINKS.jumps[Math.min(idx,5)];
+  const title=pre?'降雨：雨势增强':(idx===6?'最终状态':(j&&j.title)||jumpTitle(idx));
+  const seq=idx===6?'—':(j&&j.seq)||idx+1;
+  const s=Math.round(__evtClock),mm=String(Math.floor(s/60)).padStart(2,'0'),ss=String(s%60).padStart(2,'0');
+  bar.innerHTML='<b>'+esc(title)+'</b><span>模拟事件时钟 T+'+mm+':'+ss+' · '
+    +(pre?'路面积水尚未形成 · 第 1 跳之前':'stage 序号 '+seq+' · '+(idx===6?'处置后状态':('第 '+(idx+1)+'/6 跳')))+'</span>';
 }
 function setJump(i){
   twinState.currentJump=Math.max(0,Math.min(6,i));
@@ -1685,17 +2620,22 @@ function setJump(i){
   paintHighlights();
   renderJumpControls();updateEvidence();renderResults();
   if(twinState.selectedEntity)renderEntityCard(twinState.selectedEntity);
-  const bar=document.getElementById('event-bar');
-  if(bar)bar.innerHTML='<b>'+esc(jumpTitle(twinState.currentJump))+'</b><span>事件推演 · 第 '
-    +(twinState.currentJump===6?'最终状态':(twinState.currentJump+1)+'/6 跳')+'</span>';
+  renderEventBar(twinState.currentJump);
   syncProgress();
-  // 手动跳到封路相关跳次时，相机也切近给现场镜头（否则看不到施工队动作）
-  if(twinState.currentJump>=4&&window.__roadCrew){driveCamera(twinState.currentJump===6?1.0:0.72);}
+  // 相机按跳次自己的时刻取景：全景跳 → 全景机位，封路/作业跳 → 推到作业点特写。
+  // 这样静止在某一跳时看到的画面，和播放到该时刻一致（原来只有播放时才运镜，
+  // 手动跳到第 5 跳是全景，人在画面里只有几个像素）。
+  driveCamera(__evtClock/EVT_DURATION);
 }
 // 在两个相邻跳次之间做连续线性插值：让水位/雨势/颜色平滑过渡，而不是瞬间跳变
 function lerpJump(t){
   const n=EVT_JUMPS.length;
-  if(t<=EVT_JUMPS[0])return {v:JUMP_VISUAL[0],i:0,frac:0};
+  // 降雨前奏：第一个跳次之前只有雨，地面积水从 0 涨到第 1 跳的水位（约 5cm）
+  if(t<EVT_JUMPS[0]){
+    const f=Math.max(0,t)/EVT_JUMPS[0],a=PRELUDE,b=JUMP_VISUAL[0];
+    return {v:{water:a.water+(b.water-a.water)*f, rain:a.rain+(b.rain-a.rain)*f,
+      alarm:false,block:false,crew:false,dispatch:false,clog:false},i:0,frac:f,pre:true};
+  }
   if(t>=EVT_JUMPS[n-1])return {v:JUMP_VISUAL[n-1],i:n-1,frac:0};
   let i=0;while(i<n-1&&EVT_JUMPS[i+1]<t)i++;
   const a=EVT_JUMPS[i],b=EVT_JUMPS[i+1],frac=(t-a)/(b-a);
@@ -1703,10 +2643,13 @@ function lerpJump(t){
   return {v:{
     water:va.water+(vb.water-va.water)*frac,
     rain:va.rain+(vb.rain-va.rain)*frac,
-    alarm:frac<0.5?va.alarm:vb.alarm,      // 告警/封路/派单/施工队是离散事件，用阈值切换
-    block:frac<0.5?va.block:vb.block,
+    alarm:frac<0.5?va.alarm:vb.alarm,      // 告警/派单/施工队是离散事件，用阈值切换
+    // 封路排在布锥之后（布锥 f≈0.62~0.78），疏通排在接泵之后（f≈0.82），
+    // 所以这两个阈值不能都取 0.5：否则"封路"和"疏通完成"会在同一瞬间发生，工序就乱了。
+    block:frac<0.78?va.block:vb.block,
     crew:frac<0.5?va.crew:vb.crew,
     dispatch:frac<0.5?va.dispatch:vb.dispatch,
+    clog:frac<0.90?va.clog:vb.clog,
   },i:i,frac:frac};
 }
 // 连续时间轴驱动所有视觉量：t∈[0,1]
@@ -1714,6 +2657,9 @@ function applyTimeline(t){
   t=Math.max(0,Math.min(1,t));
   const L=lerpJump(t);
   const v=L.v;
+  // 把这一帧的离散事件状态挂出去：封路护栏的淡入要跟车道线/路名用同一根开关，不能各写各的
+  const _fl=window.__flags||(window.__flags={});
+  _fl.block=!!v.block;_fl.clog=!!v.clog;
   // 水体主色：随水位连续插值（浅清→深浊→回落）
   const colorIdx=Math.min(WATER_COLORS.length-1,L.i);
   const colorA=WATER_COLORS[colorIdx],colorB=WATER_COLORS[Math.min(WATER_COLORS.length-1,colorIdx+1)];
@@ -1722,46 +2668,129 @@ function applyTimeline(t){
   (window.__waterMeshes||[]).forEach(w=>{
     const depth=v.water*w.depthMax;                 // 当前水深（真实比例，几厘米到几十厘米）
     if(w.surface){
-      w.surface.position.y=0.44+Math.max(0.01,depth*0.35);   // 水面轻微抬升，始终贴地
+      // 这三个值每帧都会被这里重写，改 makeWaterSurface 里的初值没用——
+      // 水面高度、透明度、波形振幅、水色都必须在 applyTimeline 里改。
+      // 0.46 起：高于路缘石顶面 0.42，波谷也不会沉到路缘以下被切成窄带。
+      // 街区里的漫流水洼底下是地块(0.35)，标高给 0.395：波谷 0.363 仍在 0.35 之上，
+      // 给 0.372 时波谷会穿到地块下面，被地块切出一块块黑斑。
+      w.surface.position.y=(w.pond?0.395:0.46)+v.water*0.012;
       w.surface.visible=v.water>0.05;
-      const spread=0.6+0.4*v.water;                 // 积水随水位向四周扩散
-      w.surface.scale.set(spread,1,spread);
       const um=w.surface.material.uniforms;
       if(um){
+        um.uLevel.value=v.water;                              // 水位越高，水洼越外扩、越连片
+        // 逐水洼生长：每个水洼有自己的到达阈值（离核心越远越晚），
+        // 水位过阈值后才开始从小半径淡入 → 积水顺着低洼路网一段段蔓延。
+        // 阈值来自 blobA（构建时按距离算好），不是每帧现推。
+        const ba=w.blobA||[];
+        for(let i=0;i<8;i++){
+          const a=(ba[i]==null)?1:ba[i];
+          const g=clamp01((v.water-a)/Math.max(0.001,1-a));
+          const comp=['x','y','z','w'][i<4?i:i-4];
+          if(i<4)um.uG0.value[comp]=g;else um.uG1.value[comp]=g;
+        }
+        // 0.84 左右：再高（试过 0.95）就完全盖住路面，远景俯视读成一块纯色贴片；
+        // 再低又透出沥青颗粒，读成"湿地"而不是"积水"。这个区间两头都成立。
+        um.uOpacity.value=0.80+0.06*v.water;                  // 水面更实，减少边缘"雾感"
+        // 这里不能 convertSRGBToLinear：水面是自定义 ShaderMaterial，r128 只给内置材质
+        // 插入 sRGB 输出编码（encodings_fragment），ShaderMaterial 没有这段。
+        // 之前做了 sRGB→线性转换，等于把颜色压暗一档后直接写进 sRGB 画布，
+        // 0x2f7f9e 的浑水被渲成 (20,41,58) 的近黑——小水洼看着像地上的黑洞。
         um.uWaterColor.value.setHex(waterColor);
-        um.uWaveAmp.value=0.04+v.water*0.10;         // 微起伏，不翘起
+        um.uWaveAmp.value=0.012+v.water*0.02;                 // 波幅封顶 3cm，不翘起
       }
     }
     if(w.labelSprite){
       const baseCm=/A-03/.test(w.label)?30:18;
       const cm=Math.max(1,Math.round(v.water*baseCm));
+      // 还没积水时不显示「积水 X cm」：降雨前奏阶段路面是干的，挂个"积水 0cm"反而自相矛盾
+      w.labelSprite.visible=v.water>0.06;
       w.labelSprite.material.map=makeLabelTex('积水 '+cm+' cm','#eaf6ff');
       w.labelSprite.material.needsUpdate=true;
       w.labelSprite.position.y=0.9;   // 标注紧贴水面，不飘高空
     }
   });
+  // 地表汇流示意：箭头沿已有雨水管线方向流向下游节点，随积水深度显隐/增强。
+  // 当前数据没有土壤渗透系数，因此不把这段动画解释成可计算的“内渗”过程。
+  (window.__flowMarkers||[]).forEach((f,idx)=>{
+    const active=v.water>0.08;
+    f.mesh.visible=active;
+    f.mesh.material.opacity=active ? 0.18+0.62*v.water : 0;
+    f.mesh.position.y=0.52+0.025*Math.sin(__evtClock*4+idx*0.9);
+    f.mesh.scale.setScalar(0.8+0.35*v.water);
+  });
+  // 土壤下渗：积水越深，土黄色下渗晕染越明显、越向外扩散（示意下渗量随水深增大）。
+  // 无土壤渗透系数实测数据，INFIL_RATE 为分流比例占位，不伪装成物理计算结果。
+  (window.__infilMarkers||[]).forEach((f)=>{
+    const active=v.water>0.12;
+    f.mesh.visible=active;
+    // 尺寸按主水洼半径建（最大值），这里跟着主水洼自己的生长曲线一起缩放，
+    // 否则积水只有路口一小片时，晕染还是满幅，像在干路上铺了块黄土。
+    // 平面已 rotation.x=-90°，局部 x/y 才对应地面 x/z。
+    const a0=(f.blobA!=null)?f.blobA:0.06;
+    const g0=clamp01((v.water-a0)/Math.max(0.001,1-a0));
+    const g=0.32+0.68*g0;
+    f.mesh.material.opacity=active ? 0.08+0.22*v.water : 0;
+    f.mesh.scale.set(g,g,1);
+  });
   // 告警：光柱 + 顶灯（顶灯在 tick 里闪烁）
   (window.__pumpAlarms||[]).forEach(p=>{p.on=!!v.alarm;if(p.beam)p.beam.visible=!!v.alarm;});
+  // 雨水口堵塞：橙色篦子 + 警示锥 + 反涌水花 + 「堵塞」标注，只在核查确认之后出现、疏通后消失。
+  // 直接按 clogged 静态建出来的话，事件第一帧就挂着"堵塞"，等于把结论画到了起因之前。
+  (window.__clogMarks||[]).forEach(m=>{
+    const on=!!v.clog;
+    m.group.visible=on;
+    m.frameMat.color.setHex(on?0xa8702f:0x6c747a);
+    m.grateMat.color.setHex(on?0xd9822b:0x242a30);
+  });
+  // 封路同理：封路前车道线正常、路名是常态色；封路后才隐藏车道线、把路名转橙（图例「已封路」）
+  (window.__laneDashes||[]).forEach(g=>{g.visible=!v.block;});
+  (window.__roadLabels||[]).forEach(r=>{
+    const want=v.block?r.blocked:r.normal;
+    if(r.sprite.material.map!==want){r.sprite.material.map=want;r.sprite.material.needsUpdate=true;}
+  });
+  // 瓶颈管段（PL-DRN-101 管径偏小）：积水上涨时橙色高亮 + 自发光，水位回落时恢复——把「管径偏小」这条台账因果画出来
+  (window.__pipeSegments||[]).forEach(s=>{
+    if(!s.isBottleneck)return;
+    const hot=v.water>0.5;   // 水位过半视为「重现期不足」开始显现
+    s.mat.color.setHex(hot?0xff5a1f:0x3a8fb0);
+    s.mat.opacity=hot?0.92:0.5;
+    s.mat.emissive.setHex(hot?0x7a2600:0x000000);
+    s.mat.emissiveIntensity=hot?0.85:0;
+  });
   // 封路护栏/派单气泡/施工队 = 离散事件，显隐+淡入由 fadeInOut() 统一处理（tick 每帧驱动）
-  // 雨势：雨丝透明度连续变化
-  if(rain&&rain.material){rain.material.opacity=0.12+v.rain*0.55;}
-  // 氛围：暴雨时雾变浓、视野收窄、天空变暗（沉浸式"暴雨来临"）
+  // 雨势：不只用透明度表达，雨丝的"条数"也跟着变——小雨稀、暴雨密，
+  // 这才是量感差异。透明度只做辅助（0.30→0.90，避免暴雨把整个画面糊成白纱）。
+  if(rain&&rain.material){
+    rain.material.opacity=0.30+v.rain*0.60;
+    if(rainGeo&&rainGeo.attributes.position){
+      const total=rainGeo.attributes.position.count;      // 顶点数 = 雨滴数 × 2
+      rainGeo.setDrawRange(0,Math.max(4,Math.floor(total*(0.20+0.80*v.rain))));
+    }
+  }
+  // 氛围：暴雨时天空与地面光照变暗，但雾只轻微加深，不糊掉远处街区
   if(scene3.fog){
-    scene3.fog.near=70-v.rain*28;scene3.fog.far=200-v.rain*70;
-    scene3.fog.color.setHex(lerpColor(0x6a7680,0x3a444e,v.rain));
+    scene3.fog.near=140-v.rain*45;scene3.fog.far=420-v.rain*110;
+    scene3.fog.color.setHex(lerpColor(0x6a7680,0x54606c,v.rain));
   }
   if(scene3.background&&scene3.background.isTexture){scene3.backgroundIntensity=0.6-v.rain*0.3;}
+  // 光环要跟着时间轴实时走：syncJumpFromClock 只在"跳次变化"时刷新，
+  // 播放时从降雨前奏进入第 1 跳（idx 一直是 0）就不会触发，环会一直不出现。
+  paintHighlights();
 }
 function lerpColor(a,b,f){const ar=(a>>16)&255,ag=(a>>8)&255,ab=a&255;const br=(b>>16)&255,bg=(b>>8)&255,bb=b&255;
   return (Math.round(ar+(br-ar)*f)<<16)|(Math.round(ag+(bg-ag)*f)<<8)|Math.round(ab+(bb-ab)*f);}
 // ---- 关联对象高亮：光环颜色 = 该对象当前跳的动作卡状态 ----
 function buildRings(){
-  const box=new THREE.Box3(),center=new THREE.Vector3();
+  const box=new THREE.Box3(),center=new THREE.Vector3(),size=new THREE.Vector3();
+  const HALF={};   // 每个对象自身的水平半对角线：环要套在物体外面，不能被墙体吃掉一半
   scene3.traverse(o=>{
     const id=o.userData&&o.userData.entityId;if(!id)return;
     // 楼体现在是 Group（含主体/裙楼/腰线/屋顶），锚点按整个 Group 的包围盒中心算
     if(!(o.isMesh||o.isGroup))return;
-    box.setFromObject(o);box.getCenter(center);
+    box.setFromObject(o);box.getCenter(center);box.getSize(size);
+    // 水面平面是「铺满所有水洼的外包矩形」，尺寸不代表实体，跳过
+    if(!o.userData.isWaterSurface)
+      HALF[id]=Math.max(HALF[id]||0,Math.hypot(size.x,size.z)/2);
     if(!ANCHORS[id])ANCHORS[id]=center.clone();
     else ANCHORS[id].lerp(center,0.5);
   });
@@ -1772,34 +2801,83 @@ function buildRings(){
     const wxz=W(DISTRICT[id][0],DISTRICT[id][1]);
     ANCHORS[id]=new THREE.Vector3(wxz[0],0.42,wxz[1]);
   });
+  // 水面锚点：水面平面是「铺满所有水洼的外包矩形」，几何中心往往落在积水之外的空地/地块上。
+  // 直接用包围盒中心，光环就会挂在一块根本没水的路面上——看着就是个莫名其妙的圆。
+  // 改用第一块水洼（路口主水体）的中心：那里才是这场积水真正的位置。
+  (window.__waterMeshes||[]).forEach(function(w){
+    const s=w.surface,um=s&&s.material&&s.material.uniforms;
+    if(!s||!um||!um.uB0)return;
+    const b=um.uB0.value;
+    if(!(b.z>0.01))return;   // 没配 blob（退回单水洼）就不动，保留包围盒中心
+    ANCHORS[s.userData.entityId]=new THREE.Vector3(s.position.x+b.x,0.5,s.position.z+b.y);
+  });
   Object.keys(ANCHORS).forEach(id=>{
     const p=ANCHORS[id];
     const big=Object.prototype.hasOwnProperty.call(DISTRICT,id);
     // 地面环 + 竖直光柱：只画环的话，贴着楼的环有一半被楼体挡住，远看根本发现不了
+    // 半径收窄：片区环原来 8.6（直径约 100m），在俯瞰视角下横跨半个屏幕，比积水本身更抢眼
+    // 再收一档到 3.4~4.0：光环只标「事件落点」，不是「影响范围」，画得比积水还大就本末倒置了。
+    // 设施（泵房/进水井）按自身半对角线撑开，否则环会埋在墙体里只露出几段弧。
+    const half=Math.min(HALF[id]||0,3.4);
+    const rIn=Math.max(big?3.55:2.28,half+0.30),rOut=rIn+0.28;
     const ring=new THREE.Mesh(
-      new THREE.RingGeometry(big?7.6:3.4,big?8.6:4.5,44),
+      new THREE.RingGeometry(rIn,rOut,56),
       new THREE.MeshBasicMaterial({color:0x7ed4ff,transparent:true,opacity:.9,side:THREE.DoubleSide,depthWrite:false})
     );
     ring.rotation.x=-Math.PI/2;ring.position.set(p.x,big?0.5:0.56,p.z);ring.visible=false;
+    // 光环正好压在积水上，而水面是 transparent + depthWrite:false 的半透明材质：
+    // 两者都关闭了深度写入，谁后画谁在上，靠的是 renderOrder。
+    // 水面自己设了 renderOrder=100、下渗晕染 110，所以这里必须排在它们之后，否则：
+    // 光环被水面整个盖掉，只露出落在积水外的那半圈——这就是之前那个"没有意义的缺口圆"。
+    ring.renderOrder=120;
     scene3.add(ring);
     const beam=new THREE.Mesh(
       new THREE.CylinderGeometry(0.4,0.4,2.6,14,1,true),
       new THREE.MeshBasicMaterial({color:0x7ed4ff,transparent:true,opacity:.12,side:THREE.DoubleSide,depthWrite:false})
     );
-    beam.position.set(p.x,1.4,p.z);beam.visible=false;
+    beam.position.set(p.x,1.4,p.z);beam.visible=false;beam.renderOrder=121;
     scene3.add(beam);
     RINGS[id]={ring:ring,beam:beam};
   });
 }
+// 光环只标「本步落点」这一个对象。
+// 原来给本步涉及的每个对象都套一个环，问题很明显：
+//   ① 路段的锚点是整条折线的包围盒中心，落在路中间的空地上，环下面什么都没有，看着就是一个圆；
+//   ② 第 2 跳涉及 13 个对象，一口气亮 13 个淡色圆盘，比场景本身还乱；
+//   ③ 泵站/雨水口本来就有标签、告警光柱、台账卡片在表达状态，再套环是重复信息。
+// 现在：本步按「片区 → 积水 → 设施」取一个主落点套环，另外当前选中的对象套一个（选中即"你在这儿"）。
+// 路段不套环——道路是线不是点，环放哪儿都不对，封路状态交给护栏和标签表达。
+// 片区在台账里没有逐跳状态（states 全是空串），所以「优先片区」这条实际不会命中，
+// 落点会落到片区内的积水点上，正好也是我们要的"一个具体的点"。
+function primaryOf(active,jumpIdx){
+  const ents=(LINKS&&LINKS.entities)||{};
+  const rank=id=>{const k=(ents[id]||{}).kind;return k==='district'?0:(k==='water'?1:(k==='facility'?2:9))};
+  let best=null,bestR=9;
+  active.forEach(id=>{
+    const row=ents[id]||{};
+    const st=row.states?row.states[jumpIdx]:'';
+    if(!st)return;                 // 这一跳没有状态的对象不参与，否则会出现"亮着但没颜色依据"的环
+    const r=rank(id);
+    if(r<bestR){bestR=r;best=id}
+  });
+  return bestR<9?best:null;
+}
 function paintHighlights(){
   if(!LINKS)return;
+  // 降雨前奏还没有事件，不该有任何"当前处置对象"的光环
+  const pre=(__evtClock/EVT_DURATION)<EVT_JUMPS[0];
+  if(pre){Object.keys(RINGS).forEach(id=>{const fx=RINGS[id];if(!fx)return;fx.ring.visible=false;fx.beam.visible=false;});return;}
   const jump=jumpRealIndex(twinState.currentJump);
   const active=new Set(((LINKS.jumps[jump]||{}).entity_ids)||[]);
+  const primary=primaryOf(active,twinState.currentJump);
+  const sel=twinState.selectedEntity;
   Object.keys(RINGS).forEach(id=>{
     const fx=RINGS[id];const row=LINKS.entities[id];
     if(!fx)return;
+    const kind=(row||{}).kind;
+    const show=id===primary||(id===sel&&kind!=='road');
     const state=row&&row.states?row.states[twinState.currentJump]:'';
-    if(!active.has(id)||!state){fx.ring.visible=false;fx.beam.visible=false;return}
+    if(!show||!state){fx.ring.visible=false;fx.beam.visible=false;return}
     const color=RING_COLOR[state]||0x7ed4ff;
     fx.ring.material.color.setHex(color);fx.beam.material.color.setHex(color);
     fx.ring.visible=true;fx.beam.visible=true;
@@ -1895,6 +2973,37 @@ function renderEntityCard(id){
     +(refs.length?refs.map(r=>'<div class="ec-card"><em>'+esc(refCn(r))+'</em></div>').join(''):'<div class="ec-empty">暂无台账依据</div>')+'</div>';
   box.innerHTML=html;
 }
+// 管段台账详情：管线台账（pipeline_ledger.csv）真实字段，点击半透明地下管段时展示。
+// 管段不在 /api/twin-links 的实体投影里（投影只保留 road/facility/water/district），
+// 所以这里直接读 TWIN3D_PIPES 内嵌台账，不走 renderEntityCard 的 LINKS 路径。
+function renderPipeCard(id){
+  const card=document.getElementById('entity-card'),title=document.getElementById('entity-title'),body=document.getElementById('entity-body'),box=document.getElementById('entity-links');
+  const p=(window.TWIN3D_PIPES||[]).find(x=>x.id===id);
+  card.style.display='block';
+  if(!p){
+    title.textContent='管段详情';body.textContent='';
+    box.innerHTML='<div class="ec-sec"><small>未在管线台账中找到</small><div class="ec-empty">管段 '+esc(id)+' 不在内嵌管线台账中。</div></div>';
+    return;
+  }
+  title.textContent=p.label+'（'+p.id+'）';
+  body.textContent='';
+  const isBottleneck=/管径偏小|重现期不足/.test(p.note||'');
+  const roadLabel='沿道路 '+p.road;
+  let html='<div class="ec-sec"><small>管线台账</small>'
+    +'<div class="ec-row"><span>管径</span><b>'+esc(p.diameter_mm)+' mm</b></div>'
+    +'<div class="ec-row"><span>埋深</span><b>'+esc(p.depth_m)+' m</b></div>'
+    +'<div class="ec-row"><span>材质</span><b>'+esc((window.PIPE_MAT_CN||{})[p.material]||p.material)+'</b></div>'
+    +'<div class="ec-row"><span>敷设年份</span><b>'+esc(p.install_year)+'</b></div>'
+    +'<div class="ec-row"><span>状态</span><b>'+esc(p.status==='in_service'?'在役':p.status)+'</b></div>'
+    +'<div class="ec-row"><span>所在道路</span><b>'+esc(roadLabel)+'</b></div>'
+    +'<div class="ec-empty">'+esc(p.note||'')+'</div></div>';
+  if(isBottleneck){
+    html+='<div class="ec-sec"><small>事件关联</small><div class="ec-empty" style="color:#f5c063">'
+      +esc(p.note||'')+'——该管段是本次积水主因之一（重现期不足，管径偏小），推演中已高亮。</div></div>';
+  }
+  html+='<div class="ec-sec"><small>空间说明</small><div class="ec-empty">台账无实测管线坐标，几何沿'+esc(roadLabel)+'中线示意布设，非测绘定位。</div></div>';
+  box.innerHTML=html;
+}
 function clip(s,n){s=String(s||'');return s.length>n?s.slice(0,n)+'…':s}
 // 台账原文里夹着枚举（pump_station / fault_pending_repair），只把枚举换成中文，
 // 其余原样保留——改写了就不是台账原文了。
@@ -1945,6 +3054,8 @@ function tick(){
   const now=performance.now();const dt=Math.min(0.1,Math.max(0,now-__lastFrame)/1000);__lastFrame=now;
   if(controls)controls.update();
   if(__evtPlaying){__evtClock+=dt;if(__evtClock>=EVT_DURATION){__evtClock=EVT_DURATION;__evtPlaying=false;renderJumpControls();}}
+  // 人物的骨骼动画（如果用了 worker.glb）：整体跟着画面推进，暂停时也保持播放
+  (window.__crewMixers||[]).forEach(function(mx){mx.update(dt);});
   // 播放中：时间轴连续驱动画面；暂停/手动跳步后：applyTimeline 已把状态定住，这里只做呼吸/闪烁
   const t=__evtClock/EVT_DURATION;
   if(__evtPlaying)applyTimeline(t);
@@ -1952,13 +3063,33 @@ function tick(){
   if(__evtPlaying){syncJumpFromClock();}
   // 关键动作相机运镜：封路阶段（施工队到场→放下栏杆）自动拉近到封路点，给"现场镜头"
   if(__evtPlaying&&camera&&window.__roadCrew){driveCamera(t);}
-  // 雨丝动画只在播放时动
-  if(__evtPlaying&&rain){const p=rainGeo.attributes.position;for(let i=0;i<p.count;i++){p.array[i*3+1]-=0.22;if(p.array[i*3+1]<-2)p.array[i*3+1]=54;p.array[i*3]+=(Math.random()-0.5)*0.04;p.array[i*3+2]+=(Math.random()-0.5)*0.04}p.needsUpdate=true}
+  // 雨丝：每滴是 line 的两个端点，一起下移；落到地面以下就回到顶部重新落。
+  // 不用"暂停就冻住"——雨是环境，不是被推演驱动的对象，停下来反而像画面卡住。
+  if(rain&&rain.material&&rain.material.opacity>0.03){
+    const p=rainGeo.attributes.position,a=p.array;
+    for(let i=0;i<p.count;i+=2){
+      const v=(rainSpeed?rainSpeed[i/2]:16)*dt;
+      a[i*3+1]-=v; a[i*3+4]-=v;
+      a[i*3]+=v*0.05; a[i*3+3]+=v*0.05;
+      if(a[i*3+1]<-2){
+        const L=Math.max(0.12,a[i*3+1]-a[i*3+4]);
+        const ny=46+Math.random()*6;
+        a[i*3+1]=ny; a[i*3+4]=ny-L;
+      }
+    }
+    p.needsUpdate=true;
+  }
   const beat=Math.sin(now/380)*0.5+0.5;
   (window.__pumpAlarms||[]).forEach(p=>{
     // 光柱常亮（告警时），顶灯闪烁
     if(p.beam)p.beam.visible=!!p.on;
     if(p.lamp)p.lamp.visible=!!p.on&&(Math.floor(now/320)%2===0);
+  });
+  // 瓶颈管段：水位高时橙色脉动（自发光强度随 beat 起伏），让「管径偏小」在播放中一眼可见
+  (window.__pipeSegments||[]).forEach(s=>{
+    if(!s.isBottleneck||!s.mat)return;
+    const hot=s.mat.emissiveIntensity>0;
+    if(hot){s.mat.emissiveIntensity=0.6+0.45*beat;}
   });
   // 施工队到场后：从路边走到路口（连续移动插值，不是瞬移）
   moveCrew();
@@ -1970,9 +3101,11 @@ function tick(){
   });
   Object.keys(RINGS).forEach(id=>{const fx=RINGS[id];if(!fx||!fx.ring.visible)return;
     const dim=fx.ring.material.color.getHex()===0x5a6b7a;
-    fx.ring.material.opacity=dim?0.4:(0.5+0.45*beat);
-    fx.beam.material.opacity=dim?0.07:(0.12+0.12*beat);
-    const s=1+0.04*beat;fx.ring.scale.set(s,s,1)});
+    // 只剩 1~2 个环之后可以画实一点：0.16 是为了压住「满屏淡圈」，现在没有满屏了。
+    // 环带宽 0.28 世界（≈1.7m）已经收细，透明度再收到 0.30~0.40，避免读成一块盘子。
+    fx.ring.material.opacity=dim?0.24:(0.30+0.10*beat);
+    fx.beam.material.opacity=dim?0.06:(0.08+0.05*beat);
+    const s=1+0.05*beat;fx.ring.scale.set(s,s,1)});
   renderer.render(scene3,camera);
 }
 // 根据时间轴时钟反推当前跳次，让证据面板/按钮高亮/事件栏跟随播放
@@ -1983,9 +3116,7 @@ function syncJumpFromClock(){
     twinState.currentJump=idx;
     paintHighlights();renderJumpControls();updateEvidence();renderResults();
     if(twinState.selectedEntity)renderEntityCard(twinState.selectedEntity);
-    const bar=document.getElementById('event-bar');
-    if(bar)bar.innerHTML='<b>'+esc(jumpTitle(idx))+'</b><span>事件推演 · 第 '
-      +(idx===6?'最终状态':(idx+1)+'/6 跳')+'</span>';
+    renderEventBar(idx);
   }
   syncProgress();
 }
@@ -1993,23 +3124,97 @@ function syncJumpFromClock(){
 function syncProgress(){
   const bar=document.getElementById('progress'),timeEl=document.getElementById('progress-time');
   if(bar){bar.value=Math.round(__evtClock/EVT_DURATION*1000);}
-  if(timeEl){const s=Math.round(__evtClock);const mm=String(Math.floor(s/60)).padStart(2,'0'),ss=String(s%60).padStart(2,'0');timeEl.textContent=mm+':'+ss;}
+  if(timeEl){const s=Math.round(__evtClock);const mm=String(Math.floor(s/60)).padStart(2,'0'),ss=String(s%60).padStart(2,'0');timeEl.textContent='T+'+mm+':'+ss;}
+  if(LINKS)renderEventBar(twinState.currentJump);
 }
 // 施工队：到场阶段，从路口一侧走到封路点（连续移动，不是瞬移）
+// 现场处置的到达过程：工程车驶入 → 人员下车 → 步行到作业点 → 布锥桶 → 接移动泵
+// 全部挂在同一条时间轴上（第 5 跳 施工队到场 → 第 6 跳 封路完成），不让人凭空出现在路口
+const CREW_STATUS=[
+  [0.00,'工程车驶入'],
+  [0.42,'班组下车'],
+  [0.62,'布设警示锥'],
+  [0.82,'接泵疏通']
+];
 function moveCrew(){
-  if(!window.__roadCrew)return;
-  const c=window.__roadCrew;
+  const c=window.__roadCrew;if(!c)return;
   const t=__evtClock/EVT_DURATION;
-  // crew 在 EVT_JUMPS[4]=0.60 出现，到 EVT_JUMPS[5]=0.78 前完成"走到位"
-  const a=EVT_JUMPS[4],b=EVT_JUMPS[5];
-  if(t<a){c.group.visible=false;return;}
-  c.group.visible=true;
-  const f=Math.min(1,(t-a)/(b-a));      // 0→1 从起点走到终点
-  const e=f*f*(3-2*f);                    // smoothstep 缓动
-  c.group.position.x=c.from.x+(c.to.x-c.from.x)*e;
-  c.group.position.z=c.from.z+(c.to.z-c.from.z)*e;
-}
-// 事件淡入淡出：派单气泡、封路护栏、施工队在"该出现"的时间点附近做透明度过渡，避免瞬间冒出
+  const t0=EVT_JUMPS[4],t1=EVT_JUMPS[5];
+  const on=t>=t0;
+  if(c.truck)c.truck.visible=on;
+  if(!on){
+    c.group.visible=false;(c.cones||[]).forEach(g=>g.visible=false);
+    ['pump','jet','hose','lid','mud','pry','status','marker'].forEach(k=>{if(c[k])c[k].visible=false;});
+    return;
+  }
+  const f=clamp01((t-t0)/(t1-t0));
+  const sm=x=>x*x*(3-2*x);
+  // 1) 工程车驶入并停在积水东缘之外
+  const drv=sm(clamp01(f/0.42));
+  if(c.truck)c.truck.position.x=c.drive.x+(c.park.x-c.drive.x)*drv;
+  // 2) 人员下车，沿路走到作业点
+  const out=f>=0.42;
+  c.group.visible=out;
+  const walk=sm(clamp01((f-0.42)/0.22));
+  c.group.position.x=c.park.x+(c.to.x-c.park.x)*walk;
+  c.group.position.z=c.park.z+(c.to.z-c.park.z)*walk;
+  if(c.label)c.label.visible=out;
+  if(c.marker)c.marker.visible=out;
+  // 2b) 各就各位：0 号蹲在井口西侧撬篦子、1 号守在泵边扶管、2 号沿路摆锥（来回搬）
+  //     站位是相对作业点的世界单位偏移（0.5 世界单位≈3m），人到位后带轻微起伏，
+  //     避免三个人像柱子一样杵着不动。基准高度 0.40 = 车行道顶面，脚不能陷进路面。
+  const ST=[[-0.17,0.03],[0.37,-0.21],[-0.42,0.16]];
+  const go=sm(clamp01((f-0.44)/0.16));
+  // 干活的节奏：0 号一下一下往下压撬棍（掏篦子），周期 ≈2.4s。
+  // 这个周期不是随便给的——比"呼吸"慢、比"走路"快，读起来像在用力。
+  const pull=Math.sin(__evtClock*2.6);
+  (c.slots||[]).forEach(function(s,i){
+    let x=ST[i][0]*go,z=ST[i][1]*go;
+    if(i===2&&f>=0.60&&f<0.80)x+=Math.sin((f-0.60)*46)*0.16*go;   // 来回搬运锥桶
+    // 0 号跟着撬棍一起沉肩起肩（脚不离地，只压 1cm），1 号扶管时小幅前后挪，2 号搬锥带步态起伏
+    let lift=0;
+    if(f>0.62){lift=Math.sin(__evtClock*5+i*2)*0.008;}
+    if(i===0&&f>=0.68){lift-=0.004+0.004*pull;}
+    if(i===2&&f>=0.60&&f<0.80){lift+=Math.abs(Math.sin((f-0.60)*46))*0.010;}
+    s.position.set(x,0.40+lift,z);
+    // 弯腰：0 号对着井口前倾（撬盖/掏篦子），1 号俯身扶软管。
+    // 人的模型没有骨骼，只能整个 slot 前倾——但"有一个人在弯腰对着井口动"这件事，
+    // 比三个人笔直立正更能说明现场在干什么。仰角必须用 YXZ 顺序，否则世界轴上的
+    // 前倾会跟着 yaw 一起转，人会朝侧面歪。
+    const bend=i===0?(f>=0.62?0.20+0.09*pull:go*0.08)
+             :(i===1?(f>=0.80?0.12+0.02*Math.sin(__evtClock*1.7):0):0);
+    s.rotation.set(bend,(i===0?Math.PI*0.55:(i===1?-Math.PI*0.45:0)),0,'YXZ');
+  });
+  // 撬棍跟着手腕一起压：绕底端摆，幅度小但频率和人一致——"道具在动"比"人整体在晃"更可信
+  if(c.pry){
+    c.pry.rotation.z=Math.sin(__evtClock*2.6)*0.17;
+  }
+  // 3) 警示锥逐个摆出，圈出作业区
+  (c.cones||[]).forEach((g,i)=>{g.visible=f>=0.62+i*0.045;});
+  // 4) 撬棍 → 掀盖 → 卸泵接管 → 泵启动出水，按因果顺序一个个出现
+  if(c.pry)c.pry.visible=f>=0.68;
+  if(c.lid)c.lid.visible=f>=0.74;
+  if(c.mud)c.mud.visible=f>=0.80;
+  if(c.hose)c.hose.visible=f>=0.84;
+  if(c.pump)c.pump.visible=f>=0.80;
+  if(c.jet){
+    c.jet.visible=f>=0.88;
+    if(c.jet.visible){const p=1+0.10*Math.sin(__evtClock*9);c.jet.children[1].scale.set(p,p,1);}
+  }
+  // 5) 现场状态文字：说明"此刻在干什么"
+  if(c.status){
+    let txt=CREW_STATUS[0][1];
+    CREW_STATUS.forEach(s=>{if(f>=s[0])txt=s[1];});
+    c.status.visible=out;
+    if(!c.status.userData.cache||c.status.userData.cache!==txt){
+      c.status.material.map=makeLabelTex(txt,'#ffe0a6');
+      c.status.material.needsUpdate=true;
+      c.status.userData.cache=txt;
+    }
+  }
+  // 三段动作提示与阶段对齐，不早于对应动作出现
+  (c.actions||[]).forEach((lab,i)=>{lab.visible=f>=[0.46,0.84,0.64][i];});
+}// 事件淡入淡出：派单气泡、封路护栏、施工队在"该出现"的时间点附近做透明度过渡，避免瞬间冒出
 function fadeInOut(){
   const t=__evtClock/EVT_DURATION;
   const FADE=0.04;   // 淡入窗口（占时间轴比例）
@@ -2021,18 +3226,23 @@ function fadeInOut(){
     window.__dispatchBubble.visible=on;
     if(on)window.__dispatchBubble.material.opacity=f;
   }
-  // 施工队：crew 从 EVT_JUMPS[4] 出现，走到位后停留；marker 光柱同步
-  if(window.__roadCrew){
-    const a4=EVT_JUMPS[4];
-    const on=t>=a4;
-    window.__roadCrew.group.visible=on;
-    if(window.__roadCrew.marker)window.__roadCrew.marker.visible=on;
-  }
-  // 封路护栏：block 从 EVT_JUMPS[5] 开始，组内子元素依次淡入 = "一根根放下"
-  const a5=EVT_JUMPS[5];
-  const f5=clamp01((t-a5)/FADE);
+  // 部门信息流按事件过程逐步传递：接警 → 排水接单 → 养护确认。
+  (window.__dispatchFlow||[]).forEach((lab,i)=>{
+    const at=[EVT_JUMPS[1],EVT_JUMPS[2],EVT_JUMPS[3]][i];
+    lab.visible=t>=at;
+    if(lab.visible)lab.material.opacity=Math.min(1,Math.max(0,(t-at)/FADE));
+  });
+  // 施工队（工程车/人员/锥桶/移动泵）的显隐与位移全由 moveCrew() 按时间轴驱动，
+  // 这里不再插手，否则两处开关会互相覆盖（fadeInOut 在 tick 里后执行，会把 moveCrew 的结果盖掉）
+  // 封路护栏：跟 v.block 同一根开关（而不是另写一个 t>=EVT_JUMPS[5]）。
+  // 两处各写各的会出现"车道线已经没了、护栏还没摆上"的空档。
+  const flags=window.__flags||(window.__flags={});
+  const blkAt=(flags.blockAt===undefined)?-1:flags.blockAt;
+  if(flags.block&&blkAt<0)flags.blockAt=t;
+  if(!flags.block)flags.blockAt=-1;
+  const f5=clamp01((t-Math.max(0,flags.blockAt))/FADE);
   (window.__roadBlocks||[]).forEach(b=>{
-    const on=t>=a5;
+    const on=!!flags.block;
     b.mesh.visible=on;
     if(on){
       b.mesh.children.forEach((child,idx)=>{
@@ -2042,23 +3252,73 @@ function fadeInOut(){
   });
 }
 function clamp01(x){return Math.max(0,Math.min(1,x));}
-const CAM_HOME={x:18,y:34,z:52}, CAM_CLOSE={x:22,y:14,z:20};
+// 相机：全景机位必须和初始视角一致（原来 CAM_HOME 写的是另一个坐标，
+// 一到封路阶段相机就整个跳到别处，像换了个场景）。
+// 特写只做一件事：沿同一条视线方向推近到 CAM_CLOSE_R，不做大幅转向。
+const CAM_HOME={x:-6,y:15.6,z:20.6}, CAM_HOME_T={x:-18,y:0.6,z:0.6};   // 必须与 init 里的初始视角一致
+// 特写距离 2.2 世界单位 ≈ 14m。这个数是被"人到底占多大"定下来的，不是随手给的：
+// 相机 fov 46°，距离 d 处的画面高度 = 2·d·tan23° ≈ 0.85d；
+// 2.2 → 画面高约 11.7m，1.75m 的人占画面高度约 15%，三人 + 泵 + 井口 + 一段水面刚好铺满画面。
+// 早期写 11（≈69m，人只占画面 3%）——远景像"到此一游"，看不出他们在掏井口还是站着；
+// 试过 1.75（人占 19%）又太挤：泵和锥桶被挤出画面，只剩三个人围着井口。
+const CAM_CLOSE_R=1.85;
+// 特写机位的方位（单位向量，指向相机相对目标点的方向）：从西南上方看作业点。
+// 不能沿用全景机位方向——那里正对着雨淋泵站，泵房和出水管会挡在镜头和工人之间。
+// 仰角压到 0.52：相机落到约 9m 高、俯角 40°，既能看清作业面，又不至于变成俯视平面图。
+const CAM_CLOSE_DIR={x:-0.46,y:0.52,z:0.44};
+// 第三机位「封路中景」：作业特写里看不到护栏，而封路恰恰是"推演结论落到现场"的证据，
+// 必须给一个能同时装下护栏与退水路面的机位。7 世界单位 ≈ 44m，画面高约 37m，
+// 一段横向护栏（宽 2~3 世界）占画面 6~8%，路面与两端的车道线一起留白，读得出"封了"。
+// 不写死坐标：护栏实际落点由 pushStationOffRoads / ROAD_W 算出来，硬编码会在改路宽时错位。
+const CAM_BLOCK_R=7.0;
+const CAM_BLOCK_DIR={x:-0.55,y:0.60,z:0.58};
+function blockAnchor(){
+  const arr=window.__roadBlocks||[];
+  if(!arr.length)return null;
+  const m=arr[0]&&arr[0].mesh;
+  if(!m)return null;
+  return {x:m.position.x,y:0.5,z:m.position.z};
+}
 function driveCamera(t){
-  const a=EVT_JUMPS[4]-0.04, b=EVT_JUMPS[5];   // 封路阶段窗口
-  const hold=b+0.03;                             // 拉近后停留
+  if(!camera||!controls)return;
+  if(location.hash==='#top')return;   // 俯视调试视角优先
+  const a=EVT_JUMPS[4]-0.04, b=EVT_JUMPS[5];
+  const hold=b+0.04;
+  const bm=hold+0.07;          // 作业特写 → 封路中景 的过渡终点
   const release=EVT_JUMPS[6];
-  let k=0;   // 0=全景，1=特写
-  if(t>=a&&t<=b)k=(t-a)/(b-a);
-  else if(t>b&&t<hold)k=1;
-  else if(t>=hold&&t<release)k=1-(t-hold)/(release-hold);
-  k=Math.max(0,Math.min(1,k));
-  const e=k*k*(3-2*k);
-  camera.position.x=CAM_HOME.x+(CAM_CLOSE.x-CAM_HOME.x)*e;
-  camera.position.y=CAM_HOME.y+(CAM_CLOSE.y-CAM_HOME.y)*e;
-  camera.position.z=CAM_HOME.z+(CAM_CLOSE.z-CAM_HOME.z)*e;
-  const tx=window.__roadCrew?window.__roadCrew.to.x:0, tz=window.__roadCrew?window.__roadCrew.to.z:0;
-  controls.target.x=(0+(tx-0)*e);controls.target.z=(0+(tz-0)*e);
-  controls.target.y=0.5;
+  // 三机位权重：w1=作业特写，w2=封路中景，剩下的都是全景。
+  // 划分只改 0.86 之后（原来是特写直接拉回全景），0.86 之前与调好的观感逐字一致。
+  let w1=0,w2=0;
+  if(t>=a&&t<=b)w1=(t-a)/(b-a);
+  else if(t>b&&t<hold)w1=1;
+  else if(t>=hold&&t<bm){w1=1-(t-hold)/(bm-hold);w2=(t-hold)/(bm-hold);}
+  else if(t>=bm&&t<release)w2=1-(t-bm)/(release-bm);
+  w1=clamp01(w1);w2=clamp01(w2);
+  if(w1+w2>1){const s=w1+w2;w1/=s;w2/=s;}
+  const w0=clamp01(1-w1-w2);
+  const e1=w1*w1*(3-2*w1);      // 平滑只在各自权重上做
+  const e2=w2*w2*(3-2*w2);
+  // 对准的是 focus（人+井口+泵，并往水侧偏一点），不是 to（人群走过的终点）：
+  // 两者差 0.3 世界单位，但对着 to 时画面下缘正好是路缘，整片积水被切在画面外。
+  const to=(window.__roadCrew&&(window.__roadCrew.focus||window.__roadCrew.to))||{x:CAM_HOME_T.x,z:CAM_HOME_T.z};
+  const blk=blockAnchor();
+  // 封路点拿不到时（护栏还没摆上）退化成作业特写，绝不让镜头跳一下
+  const bx=blk?blk.x:to.x, bz=blk?blk.z:to.z, by=blk?blk.y:0.26;
+  const tx=CAM_HOME_T.x*w0+to.x*e1+bx*e2;
+  const tz=CAM_HOME_T.z*w0+to.z*e1+bz*e2;
+  const ty=CAM_HOME_T.y*w0+0.26*e1+by*e2;   // 看人的胸口/井口高度（0.26≈1.6m），不是看楼顶、也不是看路面
+  const ox=CAM_HOME.x-CAM_HOME_T.x, oy=CAM_HOME.y-CAM_HOME_T.y, oz=CAM_HOME.z-CAM_HOME_T.z;
+  const len=Math.hypot(ox,oy,oz)||1;
+  const d=len*w0+CAM_CLOSE_R*e1+CAM_BLOCK_R*e2;
+  // 方位也插值：全景看向作业点，特写换到西南上方（避开泵房遮挡），中景从东南上方俯看封路段
+  const cdLen=Math.hypot(CAM_CLOSE_DIR.x,CAM_CLOSE_DIR.y,CAM_CLOSE_DIR.z)||1;
+  const bdLen=Math.hypot(CAM_BLOCK_DIR.x,CAM_BLOCK_DIR.y,CAM_BLOCK_DIR.z)||1;
+  const dx=ox/len*w0+CAM_CLOSE_DIR.x/cdLen*e1+CAM_BLOCK_DIR.x/bdLen*e2;
+  const dy=oy/len*w0+CAM_CLOSE_DIR.y/cdLen*e1+CAM_BLOCK_DIR.y/bdLen*e2;
+  const dz=oz/len*w0+CAM_CLOSE_DIR.z/cdLen*e1+CAM_BLOCK_DIR.z/bdLen*e2;
+  const dl=Math.hypot(dx,dy,dz)||1;
+  camera.position.set(tx+dx/dl*d,ty+dy/dl*d,tz+dz/dl*d);
+  controls.target.set(tx,ty,tz);
   controls.update();
 }
 // 低多边形施工队员：橙色反光背心 + 头盔，用几何体拼（KayKit 无人物模型）
@@ -2099,15 +3359,34 @@ function bindUI(){
     const hits=raycaster.intersectObjects(scene3.children,true);
     // 命中的可能是楼体 Group 内的子 mesh（主体/裙楼/腰线），entityId 挂在 Group 上，
     // 需要沿 parent 链向上找带 entityId 的对象
-    let hit=null,id=null;
-    for(const h of hits){let o=h.object;while(o){if(o.userData&&o.userData.entityId){hit=h;id=o.userData.entityId;break;}o=o.parent;}if(id)break;}
+    let hit=null,id=null,kind=null;
+    for(const h of hits){let o=h.object;while(o){if(o.userData&&o.userData.entityId){hit=h;id=o.userData.entityId;kind=o.userData.kind;break;}o=o.parent;}if(id)break;}
     if(!id)return;
     twinState.selectedEntity=id;
-    renderEntityCard(twinState.selectedEntity);
+    paintHighlights();   // 选中就把光环挪到该对象上（只保留一个"你在这儿"的环）
+    // 管段是内嵌台账对象（不在 twin-links 实体投影里），走独立详情；其余走统一实体卡
+    if(kind==='pipe'){renderPipeCard(id);}else{renderEntityCard(twinState.selectedEntity);}
   });
   document.getElementById('prev').onclick=()=>setJump(twinState.currentJump-1);
   document.getElementById('next').onclick=()=>setJump(twinState.currentJump+1);
-  document.getElementById('restart').onclick=()=>{__evtClock=0;__evtPlaying=false;setJump(0);};
+  // 重播 = 从降雨前奏（t=0）开始播，而不是直接跳到第 1 跳：
+  // 用户要看到的是"先下雨、再积水"，重播如果不给前奏就等于又跳过了起因。
+  document.getElementById('restart').onclick=()=>{
+    twinState.currentJump=0;__evtClock=0;__evtPlaying=true;
+    applyTimeline(0);paintHighlights();renderJumpControls();updateEvidence();renderResults();
+    if(twinState.selectedEntity)renderEntityCard(twinState.selectedEntity);
+    renderEventBar(0);syncProgress();
+  };
+  // 管网图层开关：切换地下排水管段显隐
+  document.getElementById('pipe-toggle').onclick=()=>{
+    const on=!window.__pipesVisible;
+    window.__pipesVisible=on;
+    (window.__pipeSegments||[]).forEach(s=>{s.mesh.visible=on;});
+    const btn=document.getElementById('pipe-toggle');
+    btn.textContent='管网：'+(on?'开':'关');
+    btn.classList.toggle('off',!on);
+  };
+  window.__pipesVisible=false;   // 管网默认关闭：地下管段是 X 光透视层，常开会穿透建筑、显得满屏管线
   document.getElementById('settle').onclick=()=>setJump(6);
   document.getElementById('play').onclick=()=>{
     if(__evtClock>=EVT_DURATION)__evtClock=0;   // 播到末尾再点播放 = 从头重播
@@ -2125,6 +3404,338 @@ function bindUI(){
 init();
 </script></html>"""
 
+def _feedback_history_path(create: bool = False) -> Path:
+    """反馈流水落盘位置。放 artifacts/ 下：属运行时产物，已被 .gitignore 排除。
+
+    `create=False` 时不建目录——`route()` 被当作纯函数用，读操作不该有副作用。
+    """
+    directory = Path(__file__).resolve().parents[2] / "artifacts" / "feedback"
+    if create:
+        directory.mkdir(parents=True, exist_ok=True)
+    return directory / "history.jsonl"
+
+
+def _append_feedback_run(record: dict) -> None:
+    """追加一条流水。用单行 JSONL：便于 tail、便于按行 diff，不受半截写入破坏。"""
+    path = _feedback_history_path(create=True)
+    line = json.dumps(record, ensure_ascii=False, sort_keys=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(line + "\n")
+
+
+def read_feedback_runs(limit: int = 20) -> list[dict]:
+    """读最近 limit 条流水（新→旧）。文件不存在返回空表，不报错。"""
+    path = _feedback_history_path()
+    if not path.is_file():
+        return []
+    rows: list[dict] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue          # 半截行直接跳过，不让一条坏记录拖垮整页
+    return list(reversed(rows[-limit:]))
+
+
+def build_feedback_html() -> str:
+    """反馈注入页：人工把现场/仿真结果填进来，后端跑一遍闭环。
+
+    为什么不给 Agent 一个 MCP 工具让它自己提交：那等于让模型自己注入反馈、自己触发策略调整，
+    与"反馈必须手动注入"的约束直接冲突。人填写、机器算、门禁判，三层各就各位。
+    """
+    return """<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>反馈注入 · 城市内涝决策进化</title>
+<style>
+body{margin:0;background:#0b1622;color:#dce8f2;font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+main{max-width:860px;margin:0 auto;padding:28px 20px 60px}
+h1{font-size:22px;margin:0 0 6px}h1 span{color:#5eead4}
+.sub{color:#89a2b8;margin-bottom:22px}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;
+     border:1px solid #1e3348;border-radius:12px;padding:18px;background:#0f1e2e}
+label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:#9db4c8}
+input,select{background:#0a1622;border:1px solid #24384e;border-radius:7px;color:#e6f1fa;padding:7px 9px;font:inherit}
+.full{grid-column:1/-1}
+button{grid-column:1/-1;justify-self:start;background:#1d7f6f;border:0;color:#eafff9;padding:9px 20px;
+       border-radius:8px;font:inherit;cursor:pointer}button:hover{background:#229584}
+#out{margin-top:20px;white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;
+     background:#08131d;border:1px solid #1e3348;border-radius:10px;padding:14px;min-height:40px;color:#b7cadb}
+.k{color:#7dd3fc}.ok{color:#34d399}.warn{color:#fbbf24}
+a{color:#5eead4}
+</style></head><body><main>
+<h1>反馈注入 · <span>决策进化闭环</span></h1>
+<div class="sub">填一次内涝结果 → 判定处置是否有效 → 若有效性问题成立，跑一轮经 12 例门禁的策略演化。
+12 例评测集只读不动；演进结果写入运行期记忆（<code>artifacts/memory/</code>），与冻结的 <code>samples/eval/decision_memory.json</code> 无关。
+专家评审取 <code>samples/eval/decision_reviews.json</code> 的 REV-001（角色扮演，非真实部门批复）——评审偏差 &gt; 0 会把整轮候选全部拒掉。<a href="/">← 回推演页</a> · <a href="/evolution">进化对比 →</a></div>
+<form id="f">
+  <label>场景 <input name="scenario_id" value="vd02"></label>
+  <label>分钟 <input name="t_min" type="number" value="45" min="0"></label>
+  <label>片区 <input name="district" value="A-03"></label>
+  <label>实测水深 cm <input name="water_depth_cm" type="number" step="0.1" value="34"></label>
+  <label>受淹道路（逗号分隔）<input name="flooded_road_ids" value="RD-A03-02,RD-A03-05"></label>
+  <label>泵站状态
+    <select name="pump_state">
+      <option value="running">running</option><option value="idle">idle</option>
+      <option value="fault">fault</option><option value="unknown">unknown</option>
+    </select></label>
+  <label>来源
+    <select name="source">
+      <option value="synthetic">synthetic（仿真）</option><option value="assumption">assumption（假设）</option>
+      <option value="derived">derived（推算）</option><option value="real">real（实测）</option>
+    </select></label>
+  <label>预期水深 cm（可空）<input name="expected_depth_cm" type="number" step="0.1"></label>
+  <label class="full">备注 <input name="note" placeholder="例如：封路后仍超临界，泵站单台运行"></label>
+  <button type="submit">提交反馈并跑闭环</button>
+</form>
+<div id="out">等待提交…</div>
+<h2 style="font-size:16px;margin:26px 0 8px">反馈流水 <span style="color:#7d95ab;font-weight:400;font-size:12.5px">（最近 30 条，倒序）</span></h2>
+<div id="hist" style="color:#7d95ab;font-size:12.5px">加载中…</div>
+</main><script>
+const f=document.getElementById('f'),out=document.getElementById('out'),hist=document.getElementById('hist');
+const esc=s=>String(s==null?'':s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+function cell(v,cls){return '<td'+(cls?' class="'+cls+'"':'')+'>'+esc(v)+'</td>';}
+async function loadHist(){
+  try{
+    const r=await fetch('/feedback/history');
+    const d=await r.json();
+    const rows=(d.runs||[]);
+    if(!rows.length){hist.textContent='还没有反馈记录。提交一次就会出现。';return;}
+    let html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr>'
+      +['时间','片区·水深','判定','维度','触发','最终标签','降幅 训练·留出','记忆','条目','评审偏差']
+        .map(h=>'<th style="text-align:left;padding:6px 8px;border-bottom:1px solid #24384e;color:#9db4c8;font-weight:500;white-space:nowrap">'+h+'</th>').join('')
+      +'</tr></thead><tbody>';
+    for(const x of rows){
+      const rv=(x.review_before==null&&x.review_after==null)?'—'
+        :(Number(x.review_before||0).toFixed(4)+' → '+Number(x.review_after||0).toFixed(4));
+      const drop=(x.train_drop==null)?'—'
+        :(Number(x.train_drop).toFixed(4)+' · '+Number(x.holdout_drop||0).toFixed(4));
+      html+='<tr style="white-space:nowrap">'
+        +cell(x.ts?new Date(x.ts).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):'')
+        +cell(x.district+' · '+x.depth_cm+'cm')+cell(x.outcome)
+        +cell(x.dimension||'—')
+        +cell(x.triggered?'是':'否',x.triggered?'ok':'')
+        +cell(x.final_label||'—')
+        +cell(drop)
+        +cell(x.triggered?(x.memory_hit?('命中 '+(x.memory_label||'')):'从 v1.0 起步'):'—',x.memory_hit?'ok':'')
+        +cell(x.memory_entries==null?'—':x.memory_entries)
+        +cell(rv)
+        +'</tr>';
+    }
+    hist.innerHTML=html+'</tbody></table></div>';
+  }catch(err){hist.textContent='流水加载失败：'+err;}
+}
+loadHist();
+f.addEventListener('submit',async ev=>{
+  ev.preventDefault();
+  const fd=new FormData(f),p={};
+  for(const [k,v] of fd.entries()){
+    if(v===''){continue;}
+    if(k==='t_min'||k==='seed'){p[k]=parseInt(v,10);}
+    else if(k==='water_depth_cm'||k==='expected_depth_cm'){p[k]=parseFloat(v);}
+    else if(k==='flooded_road_ids'){p[k]=String(v).split(',').map(s=>s.trim()).filter(Boolean);}
+    else {p[k]=v;}
+  }
+  out.textContent='计算中（演化会跑一遍 12 例门禁，约 1-2 秒）…';
+  try{
+    const r=await fetch('/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+    const d=await r.json();
+    out.textContent=JSON.stringify(d,null,2);
+    loadHist();
+  }catch(err){out.textContent='请求失败：'+err;}
+});
+</script></body></html>"""
+
+
+_REVIEW_PAGE = """<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>方案评审 · 城市内涝决策进化</title>
+<style>
+body{margin:0;background:#0b1622;color:#dce8f2;font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+h1{font-size:22px;margin:0 0 6px}h1 span{color:#5eead4}
+h2{font-size:16px;margin:26px 0 8px}
+.sub{color:#89a2b8;margin-bottom:20px}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.stat{border:1px solid #1e3348;border-radius:10px;padding:10px 14px;background:#0f1e2e;min-width:112px}
+.stat small{display:block;color:#8aa3b8;font-size:11.5px}
+.stat b{font-size:19px;color:#e6f1fa;font-weight:600}
+.stat.ok b{color:#34d399}.stat.warn b{color:#fbbf24}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;
+     border:1px solid #1e3348;border-radius:12px;padding:18px;background:#0f1e2e}
+label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:#9db4c8}
+input,select,textarea{background:#0a1622;border:1px solid #24384e;border-radius:7px;color:#e6f1fa;padding:7px 9px;font:inherit}
+.full{grid-column:1/-1}
+button{grid-column:1/-1;justify-self:start;background:#1d7f6f;border:0;color:#eafff9;padding:9px 20px;
+       border-radius:8px;font:inherit;cursor:pointer}button:hover{background:#229584}
+#out{margin-top:18px;white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;
+     background:#08131d;border:1px solid #1e3348;border-radius:10px;padding:14px;min-height:40px;color:#b7cadb}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;padding:6px 8px;border-bottom:1px solid #24384e;color:#9db4c8;font-weight:500;white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid #16273a;vertical-align:top}
+.muted{color:#7d95ab;font-size:12.5px}
+a{color:#5eead4}
+</style></head><body><main>
+<h1>方案评审 · <span>人工评分与修正建议</span></h1>
+<div class="sub">四维评分只做样本记录，不进决策门禁；只有填了「建议调拨」的提交才会转成评审用例，
+和 12 例一起送进候选评估。评分口径：__NOTE__。
+<a href="/">← 回推演页</a> · <a href="/feedback">反馈注入 →</a> · <a href="/evolution">进化对比 →</a></div>
+<div class="stats">__STATS__</div>
+<form id="f">
+  <label>评审人 <input name="reviewer_id" placeholder="如 zhang.water" required></label>
+  <label>角色 <input name="reviewer_role" placeholder="如 水务调度负责人（角色扮演）"></label>
+  <label>阶段
+    <select name="phase">
+      <option value="before">before（看方案前）</option>
+      <option value="after">after（看方案后）</option>
+    </select></label>
+  <label>建议调拨 <input name="suggested_allocation" placeholder="A-03=5,B-01=1（留空则不提候选）"></label>
+  <label>结论准确性 1-5 <input name="accuracy" type="number" min="1" max="5" step="1" value="4"></label>
+  <label>时效性 1-5 <input name="timeliness" type="number" min="1" max="5" step="1" value="4"></label>
+  <label>安全性/风险提示 1-5 <input name="safety" type="number" min="1" max="5" step="1" value="4"></label>
+  <label>可解释性/可溯源 1-5 <input name="explainability" type="number" min="1" max="5" step="1" value="4"></label>
+  <label class="full">备注 <textarea name="comment" rows="3" placeholder="写清为什么这样评；要提修正意见就填上面的建议调拨"></textarea></label>
+  <button type="submit">提交评审</button>
+</form>
+<div id="out">等待提交…</div>
+<h2>最近提交 <span class="muted">（最新 8 条）</span></h2>
+__RECENT__
+</main><script>
+const f=document.getElementById('f'),out=document.getElementById('out');
+const DIMS=['accuracy','timeliness','safety','explainability'];
+f.addEventListener('submit',async ev=>{
+  ev.preventDefault();
+  const fd=new FormData(f),p={scores:{}};
+  for(const [k,v] of fd.entries()){
+    if(v===''){continue;}
+    if(DIMS.indexOf(k)>=0){p.scores[k]=parseInt(v,10);}
+    else{p[k]=v;}
+  }
+  out.textContent='提交中…';
+  try{
+    const r=await fetch('/api/reviews',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+    const d=await r.json();
+    out.textContent=JSON.stringify(d,null,2);
+    setTimeout(()=>location.reload(),1800);
+  }catch(err){out.textContent='请求失败：'+err;}
+});
+</script></body></html>"""
+
+
+def build_review_html() -> str:
+    """评审页：人工四维评分 + 可选的修正调拨。
+
+    边界和 `review_collect.summarize()` 保持一致——评分本身只回答"样本多少、前后差多少"，
+    **不进决策门禁**；只有带 `suggested_allocation` 的提交才被 `to_review_records()`
+    转成评审用例，和 12 例一起参与候选评估。页面不重复解释口径，只在提交区提示一句。
+    """
+    from html import escape as _esc
+
+    submissions = reviews.load_submissions()
+    summary = reviews.summarize(submissions)
+
+    def card(label: str, value: str, cls: str = "") -> str:
+        return f'<div class="stat {cls}"><small>{_esc(label)}</small><b>{_esc(value)}</b></div>'
+
+    before = summary["phases"]["before"]["overall"]
+    after = summary["phases"]["after"]["overall"]
+    delta = summary["delta"]
+    reviewers = summary["reviewer_count"]
+    stats = [
+        card("样本数", str(summary["total"])),
+        card("评审人", f"{reviewers}/{reviews.MIN_REVIEWERS}", "ok" if reviewers >= reviews.MIN_REVIEWERS else "warn"),
+        card("before 均分", "—" if before is None else f"{before:.2f}"),
+        card("after 均分", "—" if after is None else f"{after:.2f}"),
+        card("前后差", "—" if delta is None else f"{delta:+.2f}"),
+        card("门禁候选", str(summary["gate_candidates"])),
+    ]
+
+    rows: list[str] = []
+    for item in list(submissions)[-8:][::-1]:
+        allot = "，".join(f"{k}={v}" for k, v in item.suggested_allocation.items()) or "—"
+        rows.append(
+            "<tr>"
+            f"<td>{_esc(item.created_at[:16].replace('T', ' '))}</td>"
+            f'<td>{_esc(item.reviewer_id)}<br><span class="muted">{_esc(item.reviewer_role)}</span></td>'
+            f"<td>{_esc(item.phase)}</td>"
+            f"<td>{item.overall:.2f}</td>"
+            f"<td>{item.scores.accuracy}/{item.scores.timeliness}/{item.scores.safety}/{item.scores.explainability}</td>"
+            f"<td>{_esc(allot)}</td>"
+            f"<td>{_esc(item.comment or '—')}</td>"
+            "</tr>"
+        )
+    head = "".join(
+        f"<th>{h}</th>" for h in ("时间", "评审人", "阶段", "总分", "准/时/安/释", "建议调拨", "备注")
+    )
+    body = "".join(rows) if rows else '<tr><td colspan="7" class="muted">还没有提交记录。</td></tr>'
+    recent = f"<table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
+
+    return (
+        _REVIEW_PAGE.replace("__STATS__", "".join(stats))
+        .replace("__RECENT__", recent)
+        .replace("__NOTE__", _esc(summary["note"]))
+    )
+
+
+def _feedback_submit(body: bytes | None) -> tuple[int, str, bytes]:
+    """POST /feedback：校验 → 判定 → 建议动作 →（必要时）跑一轮演化 → 记一条流水。"""
+    from datetime import datetime, timezone
+
+    try:
+        payload = json.loads((body or b"{}").decode("utf-8"))
+        feedback = FloodFeedback.model_validate(payload)
+        record = to_feedback_record(feedback)
+        suggestion = feedback_plan(feedback)
+        evolution = run_evolution(feedback)
+        memory = evolution.get("memory") or {}
+        review_block = evolution.get("reviews") or {}
+        review_items = review_block.get("items") or []
+        first_review = review_items[0] if review_items else {}
+        run = {
+            "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "feedback_id": record.request_id,
+            "scenario_id": feedback.scenario_id,
+            "district": feedback.district,
+            "depth_cm": feedback.water_depth_cm,
+            "source": str(feedback.source),
+            "outcome": str(record.outcome),
+            "dimension": suggestion["dimension"],
+            "triggered": bool(evolution.get("triggered")),
+            "final_label": evolution.get("final_label"),
+            "train_drop": (evolution.get("train") or {}).get("drop"),
+            "holdout_drop": (evolution.get("holdout") or {}).get("drop"),
+            "promoted_rounds": evolution.get("promoted_rounds"),
+            # 记忆命中：这一轮是从"上次学到的策略"起步，还是从 v1.0 重跑
+            "memory_hit": bool(memory.get("hit")),
+            "memory_label": memory.get("hit_label"),
+            "memory_entries": memory.get("entries_after"),
+            # 专家评审（第二进化信号）：v1.0 时违反专家判断的程度 → 最终策略与专家的一致程度
+            "review_cases": review_block.get("gate_cases"),
+            "review_before": first_review.get("deviation_before"),
+            "review_after": first_review.get("deviation_after"),
+        }
+        _append_feedback_run(run)
+        result = {
+            "feedback_id": record.request_id,
+            "outcome": str(record.outcome),
+            "note": record.note,
+            "plan": suggestion,
+            "evolution": evolution,
+            "record": run,
+        }
+        return 200, "application/json; charset=utf-8", json.dumps(
+            result, ensure_ascii=False
+        ).encode("utf-8")
+    except Exception as exc:  # 校验失败也返回 JSON，前端只负责显示
+        return 400, "application/json; charset=utf-8", json.dumps(
+            {"error": f"{type(exc).__name__}: {exc}"[:500]}, ensure_ascii=False
+        ).encode("utf-8")
+
+
 def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[int, str, bytes]:
     """把一次 HTTP 请求映射成 (status, content_type, body)。
 
@@ -2138,6 +3749,16 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return 200, "text/html; charset=utf-8", build_html().encode("utf-8")
     if parsed.path == "/twin3d":
         return 200, "text/html; charset=utf-8", build_twin3d_html().encode("utf-8")
+    if parsed.path == "/feedback":
+        if method == "POST":
+            return _feedback_submit(body)
+        return 200, "text/html; charset=utf-8", build_feedback_html().encode("utf-8")
+    if parsed.path == "/review":
+        return 200, "text/html; charset=utf-8", build_review_html().encode("utf-8")
+    if parsed.path == "/feedback/history":
+        return 200, "application/json; charset=utf-8", json.dumps(
+            {"runs": read_feedback_runs(limit=30)}, ensure_ascii=False
+        ).encode("utf-8")
     if parsed.path == "/three.min.js":
         three = _assets_dir() / "three.min.js"
         if not three.exists():
@@ -2149,6 +3770,22 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         if not f.exists():
             return _error(f"{parsed.path} missing", 404)
         return 200, "application/javascript; charset=utf-8", f.read_bytes()
+    if parsed.path.startswith("/assets/models/"):
+        # 外部导入的模型（如 Tripo 导出的作业人员 worker.glb）。文件不存在就 404，
+        # 前端 GLTFLoader 的 error 回调会保留几何小人兜底，功能不受影响。
+        name = parsed.path.rsplit("/", 1)[1]
+        f = _assets_dir() / "models" / name
+        if not f.exists():
+            return _error("model asset missing", 404)
+        if name.endswith(".glb"):
+            return 200, "model/gltf-binary", f.read_bytes()
+        if name.endswith(".gltf"):
+            return 200, "model/gltf+json; charset=utf-8", f.read_bytes()
+        if name.endswith(".bin"):
+            return 200, "application/octet-stream", f.read_bytes()
+        if name.endswith(".png"):
+            return 200, "image/png", f.read_bytes()
+        return 200, "application/octet-stream", f.read_bytes()
     if parsed.path.startswith("/assets/kaykit/"):
         # KayKit 城市资产：gltf(JSON) / bin(几何) / png(纹理图集)，CC0，本地分发
         name = parsed.path.rsplit("/", 1)[1]

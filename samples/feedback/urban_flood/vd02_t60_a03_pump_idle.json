@@ -1,0 +1,12 @@
+{
+  "scenario_id": "vd02",
+  "t_min": 60,
+  "district": "A-03",
+  "water_depth_cm": 36.0,
+  "flooded_road_ids": ["RD-A03-02", "RD-A03-05"],
+  "pump_state": "fault",
+  "source": "synthetic",
+  "seed": 20261111,
+  "expected_depth_cm": 29.0,
+  "note": "移动泵故障，水位反涨"
+}

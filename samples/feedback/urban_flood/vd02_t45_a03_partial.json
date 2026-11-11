@@ -1,0 +1,12 @@
+{
+  "scenario_id": "vd02",
+  "t_min": 45,
+  "district": "A-03",
+  "water_depth_cm": 20.0,
+  "flooded_road_ids": ["RD-A03-02"],
+  "pump_state": "idle",
+  "source": "assumption",
+  "seed": null,
+  "expected_depth_cm": null,
+  "note": "缺少实测，按量级假设；泵站待确认是否开机"
+}
