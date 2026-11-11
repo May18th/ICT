@@ -498,7 +498,7 @@ html.projection .scene-detail-grid strong{font-size:15.5px}
 def build_html() -> str:
     return """<!doctype html><html lang=zh-CN><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Urban Twin</title>
 <style>body{font:15px system-ui;margin:0;background:#0b1220;color:#e8eef7}main{max-width:1180px;margin:auto;padding:28px}h1{color:#7dd3fc;margin-bottom:4px}.sub{color:#9fb1c8}.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:22px 0}button{background:#38bdf8;border:0;border-radius:6px;padding:10px 18px;font-weight:700;cursor:pointer;white-space:nowrap;flex:0 0 auto}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.card{background:#152238;border:1px solid #263a55;border-radius:10px;padding:16px}.card h2{font-size:17px;margin:0 0 12px;color:#bae6fd}.metric{display:inline-block;background:#20344d;border-radius:7px;padding:10px;margin:0 8px 8px 0}.metric b{display:block;font-size:22px;color:#7dd3fc}.pill{display:inline-block;background:#334155;padding:3px 8px;border-radius:99px;margin:3px;font-size:12px}.warn{color:#fbbf24}.ok{color:#86efac}.trace{border-left:2px solid #38bdf8;padding-left:12px;margin:8px 0}.evidence{font-size:12px;color:#b8c7d9;word-break:break-all}svg{width:100%;height:330px;background:#0e1a2c;border-radius:8px}.road{stroke:#64748b;stroke-width:8}.flood{fill:#38bdf8;opacity:.35}.zone{fill:#1d3252;fill-opacity:.25;stroke:#2f4a6b;stroke-width:1.5;stroke-dasharray:6 6}.node{fill:#fbbf24;stroke:#fff;stroke-width:2}.navlink{color:#7dd3fc;text-decoration:none;margin-left:auto;font-weight:600}.guide{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:20px 0 0;border-top:1px solid #263a55}.guide>div{padding:14px 20px 0;border-left:1px solid #263a55;font-size:13px;color:#b8c7d9;line-height:1.65}.guide>div:first-child{border-left:0;padding-left:0}.guide b{display:block;font:700 12px ui-monospace,monospace;color:#38bdf8;letter-spacing:.1em}.guide span{display:block;font-size:16px;font-weight:700;color:#e8eef7;margin:2px 0 5px}.lgd{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 0;font-size:12px;color:#8fa4bd}.lgd i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}.cap{font-size:12px;color:#8fa4bd;margin:10px 0 4px}.cvwho{margin:12px 0 4px;color:#7dd3fc;font-weight:700;font-size:14px}.cvwho .tag{margin-left:8px;font-weight:400}.cvrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:start;padding:5px 0;border-bottom:1px dashed #1e3250;font-size:13px}.cvact{color:#cfe3f7;line-height:1.5;overflow-wrap:anywhere}.dp{font-size:11px;color:#7f93ab;line-height:1.5;margin:-2px 0 7px}.row.inv{color:#e8eef7}.tech{margin-top:18px;border:1px solid #263a55;border-radius:10px;background:#111d30}.tech>summary{cursor:pointer;padding:13px 16px;color:#8fa4bd;font-size:13px;font-weight:600;list-style:none}.tech>summary::-webkit-details-marker{display:none}.tech>summary::before{content:"▸ ";color:#38bdf8}.tech[open]>summary::before{content:"▾ "}.tech>div{padding:0 16px 16px}@media(max-width:800px){.grid{grid-template-columns:1fr}.guide{grid-template-columns:1fr}.guide>div{border-left:0;padding:9px 0;font-size:12px}.guide b{display:inline;margin-right:6px}.guide span{display:inline;font-size:14px;margin:0 6px 0 0}}</style>
-<style>#flood-scene{position:relative;border:1px solid #263a55;border-radius:12px;background:#0d1a2a;overflow:hidden;min-height:300px}#flood-map{display:block;width:100%;height:100%;min-height:300px;background:#0d1a2a}#flood-rain{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .5s;background-image:repeating-linear-gradient(115deg,rgba(125,211,252,.32) 0 1px,transparent 1px 30px);animation:fmRain .45s linear infinite}#flood-rain.on{opacity:1}@keyframes fmRain{to{background-position:30px 52px}}.fm-zone{fill:rgba(47,74,107,.20);stroke:#3f5a75;stroke-dasharray:6 5;stroke-width:1.5}.fm-road{stroke:#54708a;stroke-width:5;stroke-linecap:round;fill:none;transition:stroke .3s}.fm-road-closed{stroke:#8a6534}.fm-node{stroke:#f4f8fb;stroke-width:1.5;transition:fill .2s}.fm-node-in{fill:#d9a53a}.fm-node-ps{fill:#38bdf8}.fm-water{fill:#38bdf8;fill-opacity:.32;stroke:#7dd3fc;stroke-width:1.2;transition:fill-opacity .5s}.fm-lbl{fill:#c3d3e2;font-size:10.5px;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3px;stroke-linejoin:round}.fm-evlbl{fill:#e0f2fe;font-size:11.5px;font-weight:700;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3.5px;stroke-linejoin:round}.fx-event{animation:fmPulse 1.1s ease-in-out infinite}.fx-affected{stroke:#7dd3fc;stroke-width:2.5;filter:drop-shadow(0 0 5px rgba(125,211,252,.9))}.fx-owner{stroke:#34d399;stroke-width:3;filter:drop-shadow(0 0 4px rgba(52,211,153,.8))}.fx-conflict{stroke:#fbbf24;stroke-width:3;animation:fmPulse .85s ease-in-out infinite}.fx-fault{fill:#ef4444;stroke:#fecaca;animation:fmFault .65s steps(2,end) infinite}.fx-closed{stroke:#fb923c;stroke-width:7;stroke-dasharray:14 8;animation:fmPulse 1.2s ease-in-out infinite}@keyframes fmPulse{50%{opacity:.4}}@keyframes fmFault{50%{opacity:.25}}.flood-caption{position:absolute;left:12px;top:12px;z-index:3;max-width:76%;padding:9px 13px;border-radius:9px;background:rgba(7,18,28,.68);pointer-events:none}.flood-caption b{display:block;font-size:15px;color:#e0f2fe;line-height:1.35}.flood-caption span{display:block;margin-top:3px;font-size:12.5px;line-height:1.5;color:#b9cbd9}.flood-readout{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:#b8c7d9}.flood-readout b{color:#7dd3fc;font-size:18px}.flood-story{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 0}.flood-cause{padding:9px 10px;border:1px solid #29425d;border-radius:8px;background:#101d30;color:#b8c7d9;font-size:12px;line-height:1.45}.flood-cause b{display:block;color:#bae6fd;font-size:13px}.flood-cause.on{border-color:#38bdf8;background:#14334a;box-shadow:inset 3px 0 #38bdf8}@media(max-width:700px){.flood-story{grid-template-columns:1fr}}</style><main><header class=page-hero><div><div class=eyebrow>URBAN TWIN · 成都内涝推演</div><h1>城市内涝跨部门事件推演</h1><div class=sub>从一张积水工单，到一套可执行的跨部门调度方案。</div></div><a class=navlink href='/evolution'>查看决策进化对比 →</a><a class=navlink href='/feedback'>提交内涝反馈 →</a><a class=navlink href='/review'>参与方案评审 →</a></header>
+<style>#flood-scene{position:relative;border:1px solid #263a55;border-radius:12px;background:#0d1a2a;overflow:hidden;min-height:300px}#flood-map{display:block;width:100%;height:100%;min-height:300px;background:#0d1a2a}#flood-rain{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .5s;background-image:repeating-linear-gradient(115deg,rgba(125,211,252,.32) 0 1px,transparent 1px 30px);animation:fmRain .45s linear infinite}#flood-rain.on{opacity:1}@keyframes fmRain{to{background-position:30px 52px}}.fm-zone{fill:rgba(47,74,107,.20);stroke:#3f5a75;stroke-dasharray:6 5;stroke-width:1.5}.fm-road{stroke:#54708a;stroke-width:5;stroke-linecap:round;fill:none;transition:stroke .3s}.fm-road-closed{stroke:#8a6534}.fm-node{stroke:#f4f8fb;stroke-width:1.5;transition:fill .2s}.fm-node-in{fill:#d9a53a}.fm-node-ps{fill:#38bdf8}.fm-water{fill:#38bdf8;fill-opacity:.32;stroke:#7dd3fc;stroke-width:1.2;transition:fill-opacity .5s}.fm-lbl{fill:#c3d3e2;font-size:10.5px;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3px;stroke-linejoin:round}.fm-evlbl{fill:#e0f2fe;font-size:11.5px;font-weight:700;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3.5px;stroke-linejoin:round}.fx-event{animation:fmPulse 1.1s ease-in-out infinite}.fx-affected{stroke:#7dd3fc;stroke-width:2.5;filter:drop-shadow(0 0 5px rgba(125,211,252,.9))}.fx-owner{stroke:#34d399;stroke-width:3;filter:drop-shadow(0 0 4px rgba(52,211,153,.8))}.fx-conflict{stroke:#fbbf24;stroke-width:3;animation:fmPulse .85s ease-in-out infinite}.fx-fault{fill:#ef4444;stroke:#fecaca;animation:fmFault .65s steps(2,end) infinite}.fx-closed{stroke:#fb923c;stroke-width:7;stroke-dasharray:14 8;animation:fmPulse 1.2s ease-in-out infinite}@keyframes fmPulse{50%{opacity:.4}}@keyframes fmFault{50%{opacity:.25}}.flood-caption{position:absolute;left:12px;top:12px;z-index:3;max-width:76%;padding:9px 13px;border-radius:9px;background:rgba(7,18,28,.68);pointer-events:none}.flood-caption b{display:block;font-size:15px;color:#e0f2fe;line-height:1.35}.flood-caption span{display:block;margin-top:3px;font-size:12.5px;line-height:1.5;color:#b9cbd9}.flood-readout{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:#b8c7d9}.flood-readout b{color:#7dd3fc;font-size:18px}.flood-story{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 0}.flood-cause{padding:9px 10px;border:1px solid #29425d;border-radius:8px;background:#101d30;color:#b8c7d9;font-size:12px;line-height:1.45}.flood-cause b{display:block;color:#bae6fd;font-size:13px}.flood-cause.on{border-color:#38bdf8;background:#14334a;box-shadow:inset 3px 0 #38bdf8}@media(max-width:700px){.flood-story{grid-template-columns:1fr}}</style><main><header class=page-hero><div><div class=eyebrow>URBAN TWIN · 成都内涝推演</div><h1>城市内涝跨部门事件推演</h1><div class=sub>从一张积水工单，到一套可执行的跨部门调度方案。</div></div><a class=navlink href='/evolution'>查看决策进化对比 →</a><a class=navlink href='/feedback'>提交内涝反馈 →</a><a class=navlink href='/review'>参与方案评审 →</a><a class=navlink href='/status'>系统自检 →</a></header>
 <section class=guide><div><b>01</b><span>先看结论</span>出什么事、要几台泵、实际有几台、怎么分 —— 见“事件概览 / 工单 / 资源 / 方案”</div><div><b>02</b><span>再看依据</span>这结论是谁算的、引用了台账哪一行 —— 见“演示链路 / 决策事件流”</div><div><b>03</b><span>最后改条件</span>少一台泵或封一条路，看结论怎么重算 —— 见“人工干预”</div></section>
 <div class=toolbar><button onclick="run()">运行演示</button><button class=ghost id=btn-proj onclick="toggleProjection()">投屏模式</button><span id=status>等待运行</span></div><section id=summary class='card outcome-card'><div class=summary-head><h2>事件结论</h2><span id=data-source class=src-chip>合成情景 · 合成气象</span></div><div id=metrics>点击“运行演示”加载推演结果</div></section>
 <section class='card process-card'><h2>推演主线 <span>事件输入 → 证据核验 → 协同复核 → 方案复算</span></h2><div class=toolbar style='margin:0 0 8px'><button onclick="runChain()">跑一遍链路</button><span id=chainstatus class=sub>未加载</span></div><div id=chain class=chain></div><div id=chainfoot class=sub style='margin-top:8px'></div></section>
@@ -3801,6 +3801,179 @@ def _ledger_freshness() -> dict[str, Any]:
     }
 
 
+_STATUS_PAGE = """<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>系统自检 · 城市内涝决策进化</title>
+<style>
+body{margin:0;background:#0b1622;color:#dce8f2;font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+main{max-width:880px;margin:0 auto;padding:28px 20px 60px}
+h1{font-size:22px;margin:0 0 6px}h1 span{color:#5eead4}
+h2{font-size:16px;margin:26px 0 8px}
+.sub{color:#89a2b8;margin-bottom:18px}
+.verdict{border:1px solid #1e3348;border-radius:10px;padding:12px 16px;background:#0f1e2e;margin-bottom:18px;font-size:14px}
+.verdict b{font-size:17px;margin-right:8px}
+.ok{color:#34d399}.warn{color:#fbbf24}.bad{color:#f87171}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:7px 9px;border-bottom:1px solid #24384e;color:#9db4c8;font-weight:500;white-space:nowrap}
+td{padding:7px 9px;border-bottom:1px solid #16273a;vertical-align:top}
+td.name{white-space:nowrap;color:#cfe0ee}
+td.detail{color:#9db4c8}
+.pill{display:inline-block;padding:1px 8px;border-radius:9px;font-size:11.5px;border:1px solid currentColor}
+code{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#7dd3fc}
+a{color:#5eead4}
+.hint{margin-top:20px;color:#7d95ab;font-size:12.5px;line-height:1.9}
+</style></head><body><main>
+<h1>系统自检 · <span>谁在跑、跑的是哪版、对不对得上</span></h1>
+<div class="sub">每项都是只读检查，不写任何状态。参数逐项比对与全量测试在命令行完成
+（<code>scripts/policy_sensitivity.py</code>、<code>pytest</code>），这页只回答"当前这四类事实是否自洽"。
+<a href="/">← 回推演页</a> · <a href="/feedback">反馈注入 →</a> · <a href="/review">方案评审 →</a> · <a href="/evolution">进化对比 →</a></div>
+<div class="verdict">__VERDICT__</div>
+<table><thead><tr><th>检查项</th><th>状态</th><th>详情</th></tr></thead><tbody>__ROWS__</tbody></table>
+<div class="hint">检查时间：__WHEN__<br>
+发现告警时的处理入口：台账落后 → <code>deploy/nexent/sync_policy_ledger.py --apply</code>；
+平台快照缺失 → <code>deploy/nexent/snapshot_platform_versions.py</code>；
+同步状态未知 → <code>deploy/nexent/check_ledger_sync.py</code>。</div>
+</main></body></html>"""
+
+
+def _read_json_file(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def status_checks() -> list[dict[str, Any]]:
+    """四类事实的自洽检查：策略唯一性 / 冻结集 / 反馈闭环 / 台账与平台。只读。
+
+    这里**不复制**参数逐项比对逻辑——那是 `scripts/policy_sensitivity.py`
+    `assert_production_singleton()` 的职责，重复实现两份迟早会漂移。
+    """
+    from .policy_evolution import PRODUCTION_LABEL as label
+
+    root = Path(__file__).resolve().parents[2]
+    eval_dir = root / "samples" / "eval"
+    checks: list[dict[str, Any]] = []
+
+    checks.append(
+        {
+            "name": "生产策略唯一",
+            "state": "ok" if label == "flood-response-v1.2" else "bad",
+            "detail": f"PRODUCTION_LABEL = {label}",
+        }
+    )
+
+    memory = _read_json_file(eval_dir / "decision_memory.json")
+    entries = (
+        [item for item in (memory.get("entries") or []) if item.get("label") == label]
+        if memory
+        else []
+    )
+    checks.append(
+        {
+            "name": "参数有冻结依据",
+            "state": "ok" if entries else "warn",
+            "detail": (
+                f"decision_memory.json 命中 {len(entries)} 条（{label}）"
+                if memory
+                else "decision_memory.json 缺失或不可读"
+            ),
+        }
+    )
+
+    cases = _read_json_file(eval_dir / "allocation_cases.json")
+    case_count = len(cases.get("cases") or []) if cases else 0
+    checks.append(
+        {
+            "name": "冻结评测集完整",
+            "state": "ok" if case_count == 12 else "bad",
+            "detail": f"allocation_cases.json 共 {case_count} 例（期望 12，冻结基线不可增删）",
+        }
+    )
+
+    review_doc = _read_json_file(eval_dir / "decision_reviews.json")
+    review_count = len(review_doc.get("reviews") or []) if review_doc else 0
+    checks.append(
+        {
+            "name": "专家评审样例可用",
+            "state": "ok" if review_count else "warn",
+            "detail": f"decision_reviews.json 共 {review_count} 条（角色扮演，非真实部门批复）",
+        }
+    )
+
+    runs = read_feedback_runs(limit=1000)
+    checks.append(
+        {
+            "name": "反馈闭环有记录",
+            "state": "ok" if runs else "warn",
+            "detail": f"history.jsonl 共 {len(runs)} 条",
+        }
+    )
+
+    fresh = _ledger_freshness()
+    checks.append(
+        {
+            "name": "平台台账已同步",
+            "state": {"fresh": "ok", "stale": "warn", "unknown": "warn"}.get(
+                str(fresh.get("state")), "warn"
+            ),
+            "detail": fresh.get("hint") or "—",
+        }
+    )
+
+    platform = platform_versions_payload()
+    agents = platform.get("platform_agents") or []
+    checks.append(
+        {
+            "name": "平台 Agent 可读",
+            "state": "ok" if platform.get("available") and agents else "warn",
+            "detail": (
+                f"{len(agents)} 个 Agent（取数来源 {platform.get('source') or '—'}）"
+                if platform.get("available")
+                else (platform.get("hint") or "快照缺失")
+            ),
+        }
+    )
+    return checks
+
+
+def build_status_html() -> str:
+    from html import escape as _esc
+
+    checks = status_checks()
+    mood = {"ok": "ok", "warn": "warn", "bad": "bad"}
+    labels = {"ok": "通过", "warn": "待注意", "bad": "不通过"}
+    ok_count = sum(1 for item in checks if item["state"] == "ok")
+    problem = [item for item in checks if item["state"] != "ok"]
+    if problem:
+        verdict = (
+            f'<b class="{"bad" if any(i["state"] == "bad" for i in problem) else "warn"}">'
+            f'{len(problem)} 项需注意</b>'
+            f"共 {len(checks)} 项检查，{ok_count} 项通过；下面标黄/红的条目就是该处理的。"
+        )
+    else:
+        verdict = f'<b class="ok">全部通过</b>共 {len(checks)} 项检查，四类事实自洽。'
+
+    rows = "".join(
+        f'<tr><td class="name">{_esc(item["name"])}</td>'
+        f'<td><span class="pill {mood[item["state"]]}">{labels[item["state"]]}</span></td>'
+        f'<td class="detail">{_esc(item["detail"])}</td></tr>'
+        for item in checks
+    )
+    from datetime import datetime, timezone
+
+    when = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return (
+        _STATUS_PAGE.replace("__VERDICT__", verdict)
+        .replace("__ROWS__", rows)
+        .replace("__WHEN__", _esc(when))
+    )
+
+
 def _feedback_submit(body: bytes | None) -> tuple[int, str, bytes]:
     """POST /feedback：校验 → 判定 → 建议动作 →（必要时）跑一轮演化 → 记一条流水。"""
     from datetime import datetime, timezone
@@ -3877,6 +4050,8 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return 200, "text/html; charset=utf-8", build_feedback_html().encode("utf-8")
     if parsed.path == "/review":
         return 200, "text/html; charset=utf-8", build_review_html().encode("utf-8")
+    if parsed.path == "/status":
+        return 200, "text/html; charset=utf-8", build_status_html().encode("utf-8")
     if parsed.path == "/feedback/history":
         return 200, "application/json; charset=utf-8", json.dumps(
             {"runs": read_feedback_runs(limit=30)}, ensure_ascii=False
