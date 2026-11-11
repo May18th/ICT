@@ -494,6 +494,14 @@ def main(argv: list[str] | None = None) -> int:
         f"对外数字自检：{report.passed_count}/{report.total} 项一致"
         f"（期望指纹 {report.expectations_digest[:16]}）"
     )
+    # 系统自洽摘要：与 /status 页共用 selfcheck 判据。刻意不并入 report.items——
+    # 项数与指纹由期望文件定义，动它会把冻结基线带偏。
+    try:
+        from .selfcheck import summary_line
+
+        print(summary_line())
+    except Exception as exc:  # noqa: BLE001 - 摘要失败不能影响主检查结论
+        print(f"系统自洽：检查未完成（{type(exc).__name__}: {exc}）")
     if args.json_path:
         Path(args.json_path).parent.mkdir(parents=True, exist_ok=True)
         Path(args.json_path).write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")

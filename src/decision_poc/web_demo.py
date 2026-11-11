@@ -21,6 +21,7 @@ from urllib.parse import parse_qs, urlparse
 from . import baseline_compare
 from . import chain as scheduler
 from . import review_collect as reviews
+from . import selfcheck
 from . import visualize
 from . import web_llm
 from .collab import orchestrate
@@ -3686,119 +3687,19 @@ def build_review_html() -> str:
     )
 
 
-_PLATFORM_SNAPSHOT = Path(__file__).resolve().parents[2] / "artifacts" / "ledger" / "platform_versions.json"
-
-
 def platform_versions_payload() -> dict[str, Any]:
-    """平台 Agent 版本快照（只读）。
-
-    快照由 `deploy/nexent/snapshot_platform_versions.py` 生成——那一步要调平台库，
-    页面进程不该为了渲染一张表去依赖平台容器是否在跑，所以这里只读文件。
-    快照缺失时返回 `available=False` 加生成命令，前端显示提示而不是抛错。
-    """
-    if not _PLATFORM_SNAPSHOT.is_file():
-        return {
-            "available": False,
-            "hint": "尚未生成快照：python deploy/nexent/snapshot_platform_versions.py",
-            "path": str(_PLATFORM_SNAPSHOT),
-        }
-    try:
-        snapshot = json.loads(_PLATFORM_SNAPSHOT.read_text(encoding="utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        return {
-            "available": False,
-            "hint": f"快照读取失败：{type(exc).__name__}",
-            "path": str(_PLATFORM_SNAPSHOT),
-        }
-    return {"available": True, **snapshot, "path": str(_PLATFORM_SNAPSHOT)}
-
-
-_LEDGER_SYNC = Path(__file__).resolve().parents[2] / "artifacts" / "ledger" / "ledger_sync.json"
+    """平台 Agent 版本快照（只读）。判据与命令行共用 `selfcheck`。"""
+    return selfcheck.platform_versions_payload()
 
 
 def ledger_sync_payload() -> dict[str, Any]:
-    """台账同步状态（只读）。
-
-    状态文件由 `deploy/nexent/check_ledger_sync.py` 生成——查它要登录平台并调索引接口，
-    页面进程不干这件事，只读文件。缺文件时给生成命令，前端显示提示而不是报错。
-    """
-    if not _LEDGER_SYNC.is_file():
-        return {
-            "available": False,
-            "hint": "尚未查询同步状态：python deploy/nexent/check_ledger_sync.py",
-            "path": str(_LEDGER_SYNC),
-        }
-    try:
-        data = json.loads(_LEDGER_SYNC.read_text(encoding="utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        return {
-            "available": False,
-            "hint": f"状态文件读取失败：{type(exc).__name__}",
-            "path": str(_LEDGER_SYNC),
-        }
-    return {"available": True, **data, "path": str(_LEDGER_SYNC)}
+    """知识库台账同步状态（只读）。判据与命令行共用 `selfcheck`。"""
+    return selfcheck.ledger_sync_payload()
 
 
 def _ledger_freshness() -> dict[str, Any]:
-    """本地最新反馈有没有已经进到平台台账里。
-
-    只读两个本地文件，不碰平台：`history.jsonl`（本地事实源）与 `ledger_sync.json`
-    （平台状态快照，由 `check_ledger_sync.py` 生成）。判定为"落后"只提示，不自动同步——
-    同步要登录平台，页面进程不该持有平台口令。
-    """
-    from datetime import datetime
-
-    sync = ledger_sync_payload()
-    if not sync.get("available"):
-        return {"state": "unknown", "hint": sync.get("hint") or "尚未查询台账同步状态"}
-
-    def parse(value: object):
-        if not isinstance(value, str) or not value:
-            return None
-        try:
-            return datetime.fromisoformat(value.replace("Z", "+00:00"))
-        except ValueError:
-            return None
-
-    latest_feedback = None
-    history = Path(__file__).resolve().parents[2] / "artifacts" / "feedback" / "history.jsonl"
-    if history.is_file():
-        for line in history.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                latest_feedback = json.loads(line).get("ts") or latest_feedback
-            except json.JSONDecodeError:
-                continue
-
-    policy_doc = next(
-        (
-            doc
-            for doc in sync.get("documents") or []
-            if str(doc.get("path_or_url", "")).startswith("policy-ledger://")
-        ),
-        None,
-    )
-    if not policy_doc:
-        return {
-            "state": "stale",
-            "hint": "平台上还没有策略台账文档：python deploy/nexent/sync_policy_ledger.py --apply",
-        }
-
-    fed_at = parse(latest_feedback)
-    doc_at = parse(policy_doc.get("platform_created_at"))
-    if fed_at and doc_at and fed_at > doc_at:
-        return {
-            "state": "stale",
-            "hint": "这条反馈只在本地，平台台账仍是旧的：python deploy/nexent/sync_policy_ledger.py --apply",
-        }
-    return {
-        "state": "fresh",
-        "hint": "平台台账已覆盖本地最新反馈",
-        "latest_feedback_at": latest_feedback,
-        "platform_document_at": policy_doc.get("platform_created_at"),
-    }
+    """本地最新反馈是否已进平台台账（只读，判据见 `selfcheck`）。"""
+    return selfcheck.ledger_freshness()
 
 
 _STATUS_PAGE = """<!DOCTYPE html>
@@ -3837,108 +3738,10 @@ a{color:#5eead4}
 </main></body></html>"""
 
 
-def _read_json_file(path: Path) -> dict[str, Any] | None:
-    if not path.is_file():
-        return None
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError):
-        return None
-    return payload if isinstance(payload, dict) else None
-
 
 def status_checks() -> list[dict[str, Any]]:
-    """四类事实的自洽检查：策略唯一性 / 冻结集 / 反馈闭环 / 台账与平台。只读。
-
-    这里**不复制**参数逐项比对逻辑——那是 `scripts/policy_sensitivity.py`
-    `assert_production_singleton()` 的职责，重复实现两份迟早会漂移。
-    """
-    from .policy_evolution import PRODUCTION_LABEL as label
-
-    root = Path(__file__).resolve().parents[2]
-    eval_dir = root / "samples" / "eval"
-    checks: list[dict[str, Any]] = []
-
-    checks.append(
-        {
-            "name": "生产策略唯一",
-            "state": "ok" if label == "flood-response-v1.2" else "bad",
-            "detail": f"PRODUCTION_LABEL = {label}",
-        }
-    )
-
-    memory = _read_json_file(eval_dir / "decision_memory.json")
-    entries = (
-        [item for item in (memory.get("entries") or []) if item.get("label") == label]
-        if memory
-        else []
-    )
-    checks.append(
-        {
-            "name": "参数有冻结依据",
-            "state": "ok" if entries else "warn",
-            "detail": (
-                f"decision_memory.json 命中 {len(entries)} 条（{label}）"
-                if memory
-                else "decision_memory.json 缺失或不可读"
-            ),
-        }
-    )
-
-    cases = _read_json_file(eval_dir / "allocation_cases.json")
-    case_count = len(cases.get("cases") or []) if cases else 0
-    checks.append(
-        {
-            "name": "冻结评测集完整",
-            "state": "ok" if case_count == 12 else "bad",
-            "detail": f"allocation_cases.json 共 {case_count} 例（期望 12，冻结基线不可增删）",
-        }
-    )
-
-    review_doc = _read_json_file(eval_dir / "decision_reviews.json")
-    review_count = len(review_doc.get("reviews") or []) if review_doc else 0
-    checks.append(
-        {
-            "name": "专家评审样例可用",
-            "state": "ok" if review_count else "warn",
-            "detail": f"decision_reviews.json 共 {review_count} 条（角色扮演，非真实部门批复）",
-        }
-    )
-
-    runs = read_feedback_runs(limit=1000)
-    checks.append(
-        {
-            "name": "反馈闭环有记录",
-            "state": "ok" if runs else "warn",
-            "detail": f"history.jsonl 共 {len(runs)} 条",
-        }
-    )
-
-    fresh = _ledger_freshness()
-    checks.append(
-        {
-            "name": "平台台账已同步",
-            "state": {"fresh": "ok", "stale": "warn", "unknown": "warn"}.get(
-                str(fresh.get("state")), "warn"
-            ),
-            "detail": fresh.get("hint") or "—",
-        }
-    )
-
-    platform = platform_versions_payload()
-    agents = platform.get("platform_agents") or []
-    checks.append(
-        {
-            "name": "平台 Agent 可读",
-            "state": "ok" if platform.get("available") and agents else "warn",
-            "detail": (
-                f"{len(agents)} 个 Agent（取数来源 {platform.get('source') or '—'}）"
-                if platform.get("available")
-                else (platform.get("hint") or "快照缺失")
-            ),
-        }
-    )
-    return checks
+    """系统自洽检查。判据在 `selfcheck`，页面与命令行共用同一份。"""
+    return selfcheck.status_checks()
 
 
 def build_status_html() -> str:
