@@ -7382,6 +7382,7 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
 <footer>
   <span>决策推理面板 <a href="/demo">/demo</a></span>
   <span>自检明细 <a href="/status">/status</a></span>
+  <span>数据来源与口径 <a href="/data">/data</a></span>
   <span>期望文件与台账：<span class=mono>samples/eval/</span></span>
   <span style="margin-left:auto">示意图布局，非测绘坐标；路名与设施编号为示意</span>
 </footer>
@@ -7552,6 +7553,320 @@ fetch('/api/twin-links').then(function(r){ return r.json(); }).then(renderJumps)
 """
 
 
+#: OSM 产物：(文件名, 中文说明, 取条数的键, 生成脚本)。页面上要能看出
+#: 「这份数据是怎么来的、能不能自己重跑」，所以脚本名一起写出来。
+_OSM_ARTIFACTS: tuple[tuple[str, str, str, str], ...] = (
+    ("chengdu_bbox_raw.json", "按业务范围切出的原始要素", "elements", "scripts/osm_pbf_extract.py"),
+    ("base_roads.json", "真实路网骨架（主干 + 次干）", "roads", "scripts/build_osm_basemap.py"),
+    ("base_buildings_full.json", "真实建筑轮廓（覆盖全业务范围）", "buildings", "scripts/build_osm_buildings.py"),
+    ("base_areas.json", "地块 / 水系 / 轨道", "areas", "scripts/build_osm_areas.py"),
+)
+
+#: 业务台账。行数现读不写死——写死了数据一改，页面就开始说谎。
+_LEDGER_FILES: tuple[tuple[str, str], ...] = (
+    ("work_orders.csv", "工单"),
+    ("department_duties.csv", "部门职责"),
+    ("resource_inventory.csv", "物资库存"),
+    ("drainage_facilities.csv", "排水设施"),
+    ("underpasses.csv", "下穿隧道"),
+    ("road_network.csv", "路网"),
+    ("pipeline_ledger.csv", "地下管线"),
+    ("construction_plans.csv", "施工计划"),
+    ("weather_alerts.csv", "气象预警"),
+    ("pump_forebay_curves.csv", "泵站进水池曲线"),
+)
+
+
+def data_payload() -> dict[str, Any]:
+    """GET /api/data：数据来源与口径页要的事实。
+
+    只读文件（字节数、条数、修改时间），不重算任何业务结论——这一页的用途是
+    说清「哪部分是真的、哪部分是设定的、哪部分是算出来的」，不是再跑一遍推演。
+
+    产物缺失不报错：返回 missing 标记与该跑的脚本，页面照实说「还没生成」。
+    假装成 0 条比留白更糟——0 条看着像「这片本来就没数据」。
+    """
+    root = Path(__file__).resolve().parents[2]
+    osm_dir = root / "out" / "osm"
+
+    osm_items: list[dict[str, Any]] = []
+    lines_count = 0
+    for file_name, label, key, script in _OSM_ARTIFACTS:
+        path = osm_dir / file_name
+        item: dict[str, Any] = {
+            "file": file_name, "label": label, "script": script,
+            "missing": not path.is_file(), "count": None, "kb": None, "mtime": None,
+        }
+        if path.is_file():
+            stat = path.stat()
+            item["kb"] = round(stat.st_size / 1024)
+            item["mtime"] = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M")
+            try:
+                parsed = json.loads(path.read_text(encoding="utf-8"))
+                item["count"] = len(parsed.get(key) or [])
+                if file_name == "base_areas.json":
+                    lines_count = len(parsed.get("lines") or [])
+            except (OSError, ValueError):
+                item["count"] = None
+        osm_items.append(item)
+
+    # 示意路对照：路名是编的、底图是真的，这张表就是两者之间的桥。
+    road_alias: list[dict[str, Any]] = []
+    alias_path = osm_dir / "road_alias.json"
+    if alias_path.is_file():
+        try:
+            rows = json.loads(alias_path.read_text(encoding="utf-8")).get("roads") or []
+            road_alias = [
+                {
+                    "name": row.get("name"),
+                    "real_name": row.get("real_name"),
+                    "median_m": row.get("median_m"),
+                    "p90_m": row.get("p90_m"),
+                }
+                for row in rows
+            ]
+        except (OSError, ValueError):
+            road_alias = []
+
+    ledgers = [
+        {"file": file_name, "label": label, "rows": len(_ledger_rows(file_name))}
+        for file_name, label in _LEDGER_FILES
+    ]
+
+    return {
+        "osm": {
+            "available": any(not item["missing"] for item in osm_items),
+            "license": "ODbL 1.0",
+            "attribution": "© OpenStreetMap contributors",
+            "origin": "download.openstreetmap.fr 省级摘录（四川省 113 MB）→ 本地按业务范围切开",
+            "items": osm_items,
+            "lines": lines_count,
+            "aliasRows": len(road_alias),
+        },
+        "ledgers": ledgers,
+        "roadAlias": road_alias,
+        "settings": [
+            {"what": "平面布局", "how": "示意坐标，非测绘。距离以台账里的米数为准"},
+            {"what": "路名与设施编号", "how": "为示意编号，不是真实路名；与真实道路的对应关系见下表"},
+            {"what": "积水深度", "how": "场景设定值，非实测；本场景取 30 cm 峰值"},
+        ],
+        "computed": [
+            {"what": "六跳推演", "how": "雨情定级 → 影响对象 → 责任部门 → 跨部门冲突 → 资源缺口 → 处置动作，"
+                                        "全部由本地规则引擎按台账算出，不经过大模型"},
+            {"what": "调拨方案与优先级", "how": "冻结评测案例的标准答案，逐字段对齐；换一次输入跑出的结果要逐位一致"},
+            {"what": "八项判据复跑", "how": "每次真机跑一遍主智能体，与离线基线逐项比对，差异逐项列出"},
+        ],
+    }
+
+
+#: 数据来源与口径页。访客（评委）看完门户会问的第一个问题是「你这数据哪来的」，
+#: 这一页把它们分成三类摆清楚：真实数据 / 场景设定 / 算出来的结果。
+#: 注意：整段是普通 Python 字符串，JS 里别写裸反斜杠转义。
+_DATA_PAGE = """<!DOCTYPE html>
+<html lang=zh-CN><meta charset=utf-8>
+<meta name=viewport content='width=device-width,initial-scale=1'>
+<title>数据来源与口径 · 城市内涝跨部门决策</title>
+<style>
+*{box-sizing:border-box}
+:root{--ink:#1f2937;--sub:#4b5563;--dim:#8a93a1;--line:#e6eaef;--line2:#d5dbe3;
+  --bg:#f6f8fa;--panel:#fff;--blue:#2b6cb0;--teal:#2c7a7b;--amber:#b7791f}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+header{padding:26px 40px 16px;display:flex;align-items:flex-start;gap:20px}
+header .grow{flex:1;min-width:0}
+h1{margin:0;font-size:21px;letter-spacing:.2px}
+.lead{margin:6px 0 0;color:var(--sub);font-size:13px;max-width:820px}
+.back{font-size:12.5px;color:var(--dim);white-space:nowrap;padding-top:4px}
+main{padding:6px 40px 34px;display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:1480px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+section.wide{grid-column:1/-1}
+h2{margin:0 0 4px;font-size:14.5px;display:flex;align-items:center;gap:8px}
+h2 .tag{font-size:10.5px;font-weight:400;color:var(--dim);border:1px solid var(--line2);
+  border-radius:4px;padding:1px 6px}
+h2 .tag.real{color:#2f6f4f;border-color:#c9e0d2;background:#f2f9f4}
+h2 .tag.mock{color:var(--amber);border-color:#ecdcbc;background:#fdf8ec}
+.note{margin:6px 0 12px;color:var(--sub);font-size:12.5px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;color:var(--dim);font-weight:500;font-size:11.5px;
+  border-bottom:1px solid var(--line);padding:5px 8px 5px 0}
+td{padding:5px 8px 5px 0;border-bottom:1px dashed #f0f2f5;vertical-align:top}
+tr:last-child td{border-bottom:0}
+.num{font-family:ui-monospace,Consolas,monospace;text-align:right;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--dim)}
+.miss{color:#b45309}
+.lic{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);
+  font-size:11.5px;color:var(--dim);line-height:1.7}
+.ledgers{display:grid;grid-template-columns:1fr 1fr;gap:2px 34px;font-size:12.5px}
+.ledgers div{display:flex;justify-content:space-between;border-bottom:1px dashed #f0f2f5;padding:4px 0}
+.ledgers .n{font-family:ui-monospace,Consolas,monospace;color:var(--sub)}
+ul.set{margin:0;padding-left:0;list-style:none}
+ul.set li{padding:6px 0;border-bottom:1px dashed #f0f2f5;font-size:12.5px}
+ul.set li:last-child{border-bottom:0}
+ul.set b{font-weight:600}
+ul.set .why{color:var(--sub);display:block;margin-top:1px}
+footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px;flex-wrap:wrap}
+@media(max-width:1100px){main{grid-template-columns:1fr}.ledgers{grid-template-columns:1fr}}
+</style>
+<body>
+<header>
+  <div class=grow>
+    <h1>数据来源与口径</h1>
+    <p class=lead>这一页只做一件事：把「哪部分是真的、哪部分是设定的、哪部分是算出来的」分开摆清楚。
+      真实数据都给来源与许可，场景设定都标为示意，算出来的结果都能复跑。</p>
+  </div>
+  <div class=back><a href="/">← 回到首页</a></div>
+</header>
+<main>
+  <section class=wide>
+    <h2>真实数据 · 开放地图<span class="tag real">可核对</span></h2>
+    <p class=note id=osm-origin>读取中…</p>
+    <table>
+      <tr><th>产物</th><th>内容</th><th class=num>条数</th><th class=num>大小</th><th>生成时间</th><th>可重跑</th></tr>
+      <tbody id=osm-rows></tbody>
+    </table>
+    <div class=lic id=osm-lic></div>
+  </section>
+
+  <section>
+    <h2>业务台账<span class="tag">结构真实 · 内容为评测场景</span></h2>
+    <p class=note>表结构与字段取自真实业务口径，行内容为本场景编写。行数现读，不是写死的。</p>
+    <div class=ledgers id=ledgers></div>
+  </section>
+
+  <section>
+    <h2>场景设定<span class="tag mock">明确标为示意</span></h2>
+    <ul class=set id=settings></ul>
+  </section>
+
+  <section class=wide>
+    <h2>示意路名 → 真实道路对照<span class="tag">沿路取点比对</span></h2>
+    <p class=note id=alias-note>路名是示意编号、底图是真实成都路网。这张表给出每条示意路最贴近的真实道路，
+      以及沿路取点算出的距离中位数——用来判断「示意的路是不是按真实走向画的」。</p>
+    <table>
+      <tr><th>示意路</th><th>贴近的真实道路</th><th class=num>中位偏差</th><th class=num>九成落在</th></tr>
+      <tbody id=alias-rows></tbody>
+    </table>
+  </section>
+
+  <section class=wide>
+    <h2>算出来的，不是数据<span class="tag">可复跑</span></h2>
+    <ul class=set id=computed></ul>
+  </section>
+</main>
+<footer>
+  <span>数据来源页 <span class=mono>/data</span></span>
+  <span><a href="/">门户首页</a></span>
+  <span><a href="/workbench#selfcheck">自检明细</a></span>
+  <span style="margin-left:auto">真实数据均标来源与许可；场景设定均标为示意</span>
+</footer>
+<script>
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
+function el(tag, cls, text){
+  var e = document.createElement(tag);
+  if(cls){ e.className = cls; }
+  if(text!=null){ e.textContent = text; }
+  return e;
+}
+fetch('/api/data').then(function(r){ return r.json(); }).then(function(d){
+  var osm = d.osm || {};
+  document.getElementById('osm-origin').textContent =
+    (osm.available ? '获取方式：' + (osm.origin || '—') : '本地还没有 OSM 产物：先跑 scripts/osm_pbf_extract.py，再跑三个 build_osm_* 脚本。');
+
+  var tb = document.getElementById('osm-rows');
+  tb.innerHTML = '';
+  (osm.items || []).forEach(function(x){
+    var tr = el('tr');
+    tr.appendChild(el('td', 'mono', x.file));
+    tr.appendChild(el('td', null, x.label));
+    tr.appendChild(el('td', 'num' + (x.missing ? ' miss' : ''),
+      x.missing ? '未生成' : (x.count==null ? '—' : String(x.count))));
+    tr.appendChild(el('td', 'num', x.kb==null ? '—' : (x.kb + ' KB')));
+    tr.appendChild(el('td', 'mono', x.mtime || '—'));
+    tr.appendChild(el('td', 'mono', x.script));
+    tb.appendChild(tr);
+  });
+  if(osm.lines){
+    var tr2 = el('tr');
+    tr2.appendChild(el('td', 'mono', 'base_areas.json › lines'));
+    tr2.appendChild(el('td', null, '河道与地铁线（与上面同一文件）'));
+    tr2.appendChild(el('td', 'num', String(osm.lines)));
+    tr2.appendChild(el('td', 'num', '—'));
+    tr2.appendChild(el('td', 'mono', '—'));
+    tr2.appendChild(el('td', 'mono', 'scripts/build_osm_areas.py'));
+    tb.appendChild(tr2);
+  }
+  document.getElementById('osm-lic').innerHTML =
+    '来源：' + esc(osm.attribution || '—') + '　许可：' + esc(osm.license || '—') +
+    '　（衍生数据同许可，可用于提交物，但必须署名并注明 ODbL）';
+
+  var lg = document.getElementById('ledgers');
+  lg.innerHTML = '';
+  (d.ledgers || []).forEach(function(x){
+    var row = el('div');
+    row.appendChild(el('span', null, x.label + ' '));
+    var n = el('span', 'mono', x.rows + ' 行');
+    row.appendChild(n);
+    row.title = x.file;
+    lg.appendChild(row);
+  });
+
+  var st = document.getElementById('settings');
+  st.innerHTML = '';
+  (d.settings || []).forEach(function(x){
+    var li = el('li');
+    var b = el('b', null, x.what + '：' + (x.value || ''));
+    if(!x.value){ b.textContent = x.what; }
+    li.appendChild(b);
+    li.appendChild(el('span', 'why', x.how));
+    st.appendChild(li);
+  });
+
+  var ar = document.getElementById('alias-rows');
+  ar.innerHTML = '';
+  (d.roadAlias || []).forEach(function(x){
+    var tr = el('tr');
+    tr.appendChild(el('td', null, x.name));
+    tr.appendChild(el('td', null, x.real_name));
+    tr.appendChild(el('td', 'num', x.median_m + ' 米'));
+    tr.appendChild(el('td', 'num', x.p90_m + ' 米'));
+    ar.appendChild(tr);
+  });
+  if(!(d.roadAlias || []).length){
+    var tr3 = el('tr');
+    var td3 = el('td', 'miss', '还没有对照表：先跑 scripts/match_road_alias.py');
+    td3.colSpan = 4;
+    tr3.appendChild(td3);
+    ar.appendChild(tr3);
+  }
+
+  var cp = document.getElementById('computed');
+  cp.innerHTML = '';
+  (d.computed || []).forEach(function(x){
+    var li = el('li');
+    li.appendChild(el('b', null, x.what));
+    li.appendChild(el('span', 'why', x.how));
+    cp.appendChild(li);
+  });
+}).catch(function(e){
+  document.getElementById('osm-origin').textContent = '读取失败：' + e;
+});
+</script>
+</body>
+</html>"""
+
+
+def build_data_html() -> str:
+    """GET /data：数据来源与口径页。静态外壳，内容由 /api/data 填。"""
+    return _DATA_PAGE
+
+
 def build_portal_html() -> str:
     """门户首页。纯静态外壳，状态与跳次都由接口填——页面本身不碰数据。"""
     return _PORTAL_PAGE
@@ -7653,6 +7968,10 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return 200, "text/html; charset=utf-8", build_html().encode("utf-8")
     if parsed.path == "/api/portal":
         return _json(portal_payload())
+    if parsed.path == "/api/data":
+        return _json(data_payload())
+    if parsed.path == "/data":
+        return 200, "text/html; charset=utf-8", build_data_html().encode("utf-8")
     if parsed.path == "/twin3d":
         return 200, "text/html; charset=utf-8", build_twin3d_html().encode("utf-8")
     if parsed.path == "/feedback":

@@ -6,6 +6,7 @@ from decision_poc import visualize
 from decision_poc.scene_export import build_scene_payload
 from decision_poc.evolution_demo import build_evolution_html
 from decision_poc.web_demo import (
+    build_data_html,
     build_demo_payload,
     build_html,
     build_review_html,
@@ -171,6 +172,8 @@ def test_page_script_parses(tmp_path):
         ("review", build_review_html),
         ("evolution", build_evolution_html),
         ("workbench", build_workbench_html),
+        # /data 是数据来源页，脚本坏了会整页只剩标题
+        ("data", build_data_html),
     ):
         blocks = re.findall(r"<script[^>]*>(.*?)</script>", builder(), re.S)
         assert blocks, f"{name} 页面必须有脚本块"
