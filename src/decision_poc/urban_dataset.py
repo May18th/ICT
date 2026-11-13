@@ -279,6 +279,67 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
 )
 
 
+#: 补充资料根目录。台账目录是 `samples/assets/urban`，而这两份真实资料本来就不在台账里
+#: （它们不是演示场景的业务台账，是真实世界的公开材料），所以单独给一条通道。
+SAMPLES_ROOT = DEFAULT_DATASET_ROOT.parents[1]
+
+
+@dataclass(frozen=True)
+class SupplementaryAssetSpec:
+    """台账之外的补充资料：真实政府定级过程、真实雨量到推演情景的映射说明。
+
+    为什么单开一张表、不塞进 `URBAN_ASSETS`
+    --------------------------------------
+    `URBAN_ASSETS` 那 19 项是演示场景的业务台账，每一项都被 scene/manifest/证据链引用，
+    长度是冻结数字。这两份资料的用途完全不同：**被检索、被引用、用来教"真实的定级长什么样"**，
+    不参与场景构建。放进同一张表会让"台账条目数"这个数字失去意义（它回答的是
+    "这个片区有哪些业务台账"，不是"库里有几份文件"）。
+
+    `rel_path` 相对 `samples/`，因为文件确实不躺在台账目录下。
+    """
+
+    rel_path: str
+    asset_type: str
+    title: str
+    source_org: str
+    version: str
+    published_at: str
+    valid_from: str
+    scope: str | None = None
+    standard_refs: tuple[str, ...] = ()
+    note: str = ""
+
+
+SUPPLEMENTARY_ASSETS: tuple[SupplementaryAssetSpec, ...] = (
+    SupplementaryAssetSpec(
+        rel_path="scenarios/public_osm/response_events_chengdu_20200811.csv",
+        asset_type="emergency_response_case",
+        title="2020-08-11 成都市防汛应急响应定级过程（真实案例）",
+        source_org="成都市防汛抗旱指挥部（媒体转载，双源核对）",
+        version="2020",
+        published_at="2020-08-11T17:40:00+08:00",
+        valid_from="2020-08-11T00:00:00+08:00",
+        scope="CD-CITY",
+        standard_refs=("《成都市防汛抗旱应急预案》（2020）",),
+        note=(
+            "3 条真实定级（Ⅳ级蓝色→Ⅲ级黄色），逐条带 deciding_basis / trigger_facts / source_url；"
+            "「映射到预案第几条条件」是整理时补的推断，note 列已标明"
+        ),
+    ),
+    SupplementaryAssetSpec(
+        rel_path="weather/scenario_variant_20260801/mapping_report.md",
+        asset_type="weather_mapping",
+        title="ERA5 真实雨量到推演情景的映射说明",
+        source_org="Open-Meteo / ERA5（CC BY 4.0）",
+        version="v1",
+        published_at="2026-11-12T09:00:00+08:00",
+        valid_from="2026-11-12T00:00:00+08:00",
+        scope="CD-CITY",
+        note="24h 窗口实算累计雨量与预案四级条件逐条比对；原情景 V2 数据未被改动",
+    ),
+)
+
+
 def _parse(value: str) -> datetime:
     return datetime.fromisoformat(value)
 
@@ -296,6 +357,45 @@ def _governance_for(spec: UrbanAssetSpec, asset: DataAsset) -> AssetGovernance:
         content_hash=asset.checksum_sha256,
         status=spec.status,
     )
+
+
+def load_supplementary_assets(
+    samples_root: Path | str | None = None,
+) -> list[tuple[DataAsset, AssetGovernance, Path]]:
+    """登记补充资料，返回 `(资产, 治理记录, 绝对路径)`。
+
+    路径必须一起返回：这两份文件的 `asset_id` 在 `_assets` 里，但文件名不在
+    台账目录下，任何按 `dataset_root / file_name` 取正文的地方都会找不到人。
+    调用方拿到路径自己记着，比事后猜文件名可靠。
+
+    文件缺失时跳过而不是抛错——精简分发里可能只带台账、不带真实资料，
+    这时候服务要能起来，只是检索不到这几条。
+    """
+    base = Path(samples_root) if samples_root else SAMPLES_ROOT
+    rows: list[tuple[DataAsset, AssetGovernance, Path]] = []
+    for spec in SUPPLEMENTARY_ASSETS:
+        path = (base / spec.rel_path).resolve()
+        if not path.is_file():
+            continue
+        asset = identify_asset(
+            path,
+            doc_type=spec.asset_type,
+            equipment_id=spec.scope,
+            version=spec.version,
+            standard_refs=spec.standard_refs,
+        )
+        governance = AssetGovernance(
+            asset_type=spec.asset_type,
+            title=spec.title,
+            source_uri=f"demo://samples/{spec.rel_path}",
+            source_org=spec.source_org,
+            published_at=_parse(spec.published_at),
+            valid_from=_parse(spec.valid_from),
+            content_hash=asset.checksum_sha256,
+            status=AssetStatus.PUBLISHED,
+        )
+        rows.append((asset, governance, path))
+    return sorted(rows, key=lambda row: row[0].asset_id)
 
 
 FOREBAY_CURVE_FILE = "pump_forebay_curves.csv"

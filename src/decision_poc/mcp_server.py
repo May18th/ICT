@@ -185,13 +185,19 @@ class UrbanToolkit:
         self._deduction: Any = None
         self._skills: Any = None
         self.rules_path = Path(rules_path) if rules_path else _default_rules_path()
-        from .urban_dataset import DEFAULT_DATASET_ROOT, load_urban_assets
+        from .urban_dataset import DEFAULT_DATASET_ROOT, load_supplementary_assets, load_urban_assets
 
         self.dataset_root = Path(dataset_root) if dataset_root else DEFAULT_DATASET_ROOT
         self.knowledge_version = knowledge_version
         rows = load_urban_assets(self.dataset_root)
+        # 补充资料（真实定级过程、真实雨量映射说明）也在检索与取证范围内，
+        # 但它们不在台账目录下，取正文必须用登记时记下的绝对路径。
+        supplementary = load_supplementary_assets()
         self._assets = {asset.asset_id: asset for asset, _ in rows}
+        self._assets.update({asset.asset_id: asset for asset, _record, _path in supplementary})
         self._governance = {asset.asset_id: record for asset, record in rows}
+        self._governance.update({asset.asset_id: record for asset, record, _path in supplementary})
+        self._asset_paths = {asset.asset_id: path for asset, _record, path in supplementary}
         self.store = store or build_urban_semantic_store(
             str(self.dataset_root), knowledge_version=knowledge_version
         )
@@ -735,7 +741,8 @@ class UrbanToolkit:
         if kind == "region":
             return self._locate_region(asset.file_name, parsed["bbox"], data)
 
-        path = self.dataset_root / asset.file_name
+        # 补充资料不在台账目录下，登记时记下的绝对路径优先；台账资产仍按 dataset_root 拼。
+        path = self._asset_paths.get(asset_id) or (self.dataset_root / asset.file_name)
         if not path.is_file():
             return _error(
                 "evidence_locate", data, ErrorCode.NOT_FOUND, f"资产文件缺失: {asset.file_name}", self.version

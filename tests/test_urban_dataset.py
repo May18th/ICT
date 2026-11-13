@@ -8,6 +8,7 @@ from decision_poc.urban_dataset import (
     DEFAULT_DATASET_ROOT,
     URBAN_ASSETS,
     build_urban_manifest,
+    load_supplementary_assets,
     load_urban_assets,
 )
 
@@ -17,6 +18,16 @@ NOW = datetime.fromisoformat("2026-10-29T09:30:00+08:00")
 def test_every_declared_file_exists() -> None:
     missing = [spec.file_name for spec in URBAN_ASSETS if not (DEFAULT_DATASET_ROOT / spec.file_name).is_file()]
     assert missing == []
+    # 补充资料走单独通道：文件必须在，但不占台账名额（台账回答的是"片区有哪些业务台账"）。
+    # 它们能被 doc_search 检索到、能被 evidence_locate 取到原文，靠的就是这里登记的一致。
+    supplement = load_supplementary_assets()
+    assert {path.name for _, _, path in supplement} == {
+        "response_events_chengdu_20200811.csv",
+        "mapping_report.md",
+    }
+    assert all(asset.asset_id.startswith("AS-CD-CITY-") for asset, _, _ in supplement)
+    assert all(gov.status is AssetStatus.PUBLISHED for _, gov, _ in supplement)
+    assert all(path.is_file() for _, _, path in supplement)
 
 
 def test_manifest_counts_match_spec() -> None:

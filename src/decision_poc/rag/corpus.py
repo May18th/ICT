@@ -417,7 +417,9 @@ def load_corpus(
 _SKIP_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".pdf"}
 
 
-def load_registered_corpus(dataset_root: str | Path | None = None) -> Corpus:
+def load_registered_corpus(
+    dataset_root: str | Path | None = None, samples_root: str | Path | None = None
+) -> Corpus:
     """Build a corpus from the business asset ledger instead of walking a tree.
 
     Why this exists
@@ -427,8 +429,18 @@ def load_registered_corpus(dataset_root: str | Path | None = None) -> Corpus:
     A retrieval hit is only useful when it can be turned into an ``evidence_ref``
     the caller can hand to ``evidence_locate``, so the index has to reuse the
     ledger's own registration: same ``asset_id``, same ``locator``.
+
+    Supplementary material (real government response grading, the real-rainfall
+    mapping note) is indexed the same way but read from ``samples_root``: those
+    files are deliberately outside the ledger, because they are real-world
+    reference material rather than entries of the demo district's asset ledger.
     """
-    from ..urban_dataset import DEFAULT_DATASET_ROOT, URBAN_ASSETS
+    from ..urban_dataset import (
+        DEFAULT_DATASET_ROOT,
+        SAMPLES_ROOT,
+        URBAN_ASSETS,
+        load_supplementary_assets,
+    )
 
     base = Path(dataset_root).resolve() if dataset_root else DEFAULT_DATASET_ROOT
     chunks: list[RagChunk] = []
@@ -450,6 +462,18 @@ def load_registered_corpus(dataset_root: str | Path | None = None) -> Corpus:
             standard_refs=spec.standard_refs,
         )
         found_chunks, found_parents, warning = _text_units(path, base, spec.asset_type, asset=asset)
+        chunks.extend(found_chunks)
+        parents.extend(found_parents)
+        if warning:
+            unparsed.append(warning)
+
+    # 补充资料：整份文件本身就带真实出处（政府定级记录、ERA5 映射说明），
+    # 索引它们的目的是"能被检索到并引到原文"，不是给演示场景补事实。
+    supplement_root = Path(samples_root).resolve() if samples_root else SAMPLES_ROOT
+    for asset, _governance, path in load_supplementary_assets(supplement_root):
+        found_chunks, found_parents, warning = _text_units(
+            path, supplement_root, asset.doc_type, asset=asset
+        )
         chunks.extend(found_chunks)
         parents.extend(found_parents)
         if warning:
