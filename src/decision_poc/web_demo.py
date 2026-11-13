@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import csv
+import importlib.util
 import io
 import json
 import os
@@ -7073,6 +7074,37 @@ def build_workbench_html() -> str:
     return _WORKBENCH_PAGE.replace("__WEB_BASE__", web)
 
 
+def build_map2d_html() -> tuple[int, str, bytes]:
+    """GET /map2d：2.5D 俯视大屏。
+
+    页面本身由 `scripts/build_map2d.py` 生成（单文件、无依赖、无 three.js），
+    产物在 `dist/map2d/`，按仓库规矩不入库。所以这里做两件事：
+    产物不存在、或脚本比产物新，就现场跑一遍生成；再读出来返回。
+    演示时不必先记得敲命令，改完脚本刷新页面即可。
+
+    脚本在 `scripts/` 下不在包里，按路径加载——不要为了一个生成器把它塞进 src。
+    """
+    root = Path(__file__).resolve().parents[2]  # src/decision_poc/web_demo.py -> agent_poc
+    script = root / "scripts" / "build_map2d.py"
+    artifact = root / "dist" / "map2d" / "index.html"
+    if not script.is_file():
+        return _error("缺少 scripts/build_map2d.py，无法生成 2.5D 大屏", 500)
+    stale = (not artifact.is_file()) or artifact.stat().st_mtime < script.stat().st_mtime
+    if stale:
+        try:
+            spec = importlib.util.spec_from_file_location("_build_map2d", script)
+            if spec is None or spec.loader is None:
+                raise RuntimeError("无法加载生成脚本")
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            module.main()
+        except Exception as exc:  # noqa: BLE001 - 生成失败要给可读原因，不能抛 500 堆栈
+            return _error(f"2.5D 大屏生成失败：{type(exc).__name__}: {exc}"[:300], 500)
+    if not artifact.is_file():
+        return _error("2.5D 大屏产物缺失", 500)
+    return 200, "text/html; charset=utf-8", artifact.read_bytes()
+
+
 def workbench_status() -> tuple[int, str, bytes]:
     """GET /api/workbench/status：复用 /status 的判据，不另写一套。
 
@@ -7175,6 +7207,8 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return 200, "text/html; charset=utf-8", build_status_html().encode("utf-8")
     if parsed.path == "/workbench":
         return 200, "text/html; charset=utf-8", build_workbench_html().encode("utf-8")
+    if parsed.path == "/map2d":
+        return build_map2d_html()
     if segments[:3] == ["api", "workbench", "events"]:
         return workbench_events()
     if segments[:3] == ["api", "workbench", "event"]:
