@@ -5147,11 +5147,17 @@ def build_status_html() -> str:
 # 刻意不做：文件树与编辑器（业务方不改文件）、独立的聊天壳（会和平台对话界面分裂）。
 
 WORKBENCH_AGENTS = {
-    # 键是前端下拉值，值是平台上的 Agent 名。默认台账问答：它能接自由提问；
-    # 推演 Agent 是两步式协议，问法不对会整轮失败，所以放第二个并在页面上标注。
-    "asset_qa": "urban_asset_qa",
+    # 键是前端下拉值，值是平台上的 Agent 名。
+    # 默认推演：工作台这一屏本来就是某个事件，用户问的多半是"谁负责/先做什么"。
+    # 推演 Agent 是两步式协议，所以 `workbench_chat` 会把自由提问包成协议问法
+    # （`_deduction_query`）——不包的话问一句"这个事件谁负责"整轮拿不到结构化结论，
+    # 那才是早先把默认设成台账问答的真正原因。
     "deduction": "urban_deduction_agent",
+    "asset_qa": "urban_asset_qa",
 }
+
+#: 问题里出现事件编号就以它为准，否则用默认事件——现场换事件不必改代码。
+_EVENT_PATTERN = re.compile(r"WO-\d{8}-\d{3}")
 
 #: evidence_ref 的形状：`AS-<id>#<locator>#(line|row|region):<n>`。
 #: 用固定前缀 + 两段 locator，避免把正文里普通的 `#` 也当成引用。
@@ -5232,14 +5238,14 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
       <button class="sw on" data-mode="platform">平台对话</button>
       <button class="sw" data-mode="local">站内对话（可点引用）</button>
       <span class="spacer"></span>
-      <select id="agentSel" title="站内对话使用哪个 Agent"><option value="asset_qa">台账问答</option><option value="deduction">推演</option></select>
+      <select id="agentSel" title="站内对话使用哪个 Agent"><option value="deduction">推演（事件事实）</option><option value="asset_qa">台账问答</option></select>
     </div>
     <iframe id="frame" src="__WEB_BASE__/zh/workbench" title="平台对话"></iframe>
     <div class="hint">平台对话页是跨源内嵌：若这里一直转圈，多半是平台没启动或未登录——
     <a class="link" href="__WEB_BASE__/zh/workbench" target="_blank" rel="noopener">新窗口打开</a>，
     或切到左边「站内对话」，它不依赖平台前端。本页面读不到 iframe 里的内容，所以「点结论跳到原文」只在站内对话模式生效。</div>
     <div id="chatpane">
-      <div id="feed"><div class="msg ai">这一模式下回答里的 evidence_ref 会变成可点芯片，点一下右边出原文。台账类问题用「台账问答」，推演类用「推演」并带上事件编号。</div></div>
+      <div id="feed"><div class="msg ai">直接用一句话问就行：「谁负责」「先做什么」「依据哪条」。推演模式会把问题包进协议问法，事实一律取自 event_deduce，模型只负责转述。想换事件就把事件编号写进问题（如 WO-20261029-009）。回答里的 evidence_ref 是可点芯片，点一下右边出原文。</div></div>
       <form id="f"><textarea id="q" placeholder="Enter 发送 · Shift+Enter 换行"></textarea><button class="send" id="go">发送</button></form>
     </div>
   </section>
@@ -5285,6 +5291,7 @@ function send(){
       conv=res.d.conversation_id||conv;
       var body=res.d.answer_text||res.d.answer||'（空回答）';
       var n=bubble('ai',body);
+      if(res.d.structured){ renderStructured(res.d.structured,n); }
       var refs=res.d.evidence_refs||[];
       if(refs.length){
         var box=el('div','chips');
@@ -5413,6 +5420,30 @@ function searchRef(text){
 }
 
 var KIND_CN={overlap:'权限重叠',gap:'职责空白',contention:'资源争用'};
+// 六跳阶段名 -> 人话。英文阶段名是内核的字段名，不该直接摆在界面上给值班员看。
+var STAGE_CN={observed:'雨情与定级',affected:'受影响对象',owner:'责任部门',
+  conflict:'跨部门冲突',resource:'资源缺口',action:'处置动作'};
+// 证据 ref 形如 AS-A-03-work_order-6a1282a1#A-03/work_order/v1#row:5，
+// 界面上只显示「工单 · 第 5 行」，完整串留在 title 与点击行为里——可追溯不等于要给人看哈希。
+var DOC_CN={work_order:'工单',construction_plan:'施工组织方案',drainage_facility:'排水设施台账',
+  duty_list:'部门职责清单',emergency_plan:'防汛应急预案',emergency_response_case:'政府定级案例',
+  underpass:'下穿隧道台账',pipeline:'管线台账',resource_inventory:'应急物资清单',
+  weather_alert:'气象预警',road_network:'路网台账'};
+function humanRef(ref){
+  var s=String(ref||'');
+  var m=s.match(/#([^#]+)#(?:row|line|region):([0-9-]+)/);
+  if(!m){return s;}
+  var parts=m[1].split('/');
+  var type=parts.length>1?parts[1]:parts[0];
+  var doc=DOC_CN[type]||type;
+  return doc+' · 第 '+m[2].split('-')[0]+' 行';
+}
+// 2026-10-20T11:10:00+08:00 -> 2026-10-20 11:10
+function humanTime(v){
+  var s=String(v||'');
+  var m=s.match(/^([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2})/);
+  return m?(m[1]+' '+m[2]):s;
+}
 var LEVEL_CN={blue:'蓝色响应',yellow:'黄色响应',orange:'橙色响应',red:'红色响应'};
 
 function fetchEvent(ev){
@@ -5443,7 +5474,7 @@ function loadEvent(){
     fetchEvent(curEvent);
   };
   bar.appendChild(sel);
-  var tag=el('span','empty','时点取工单上报时间');
+  var tag=el('span','empty','按工单上报时间推演');
   tag.style.fontSize='11.5px';
   bar.appendChild(tag);
   pane.appendChild(bar);
@@ -5458,7 +5489,10 @@ function loadEvent(){
       opt.value=ev.event_id;
       opt.dataset.asof=ev.as_of;
       var desc=(ev.description||'').slice(0,26);
-      opt.textContent=ev.event_id+' · '+(ev.road_id||'')+(desc?(' · '+desc):'');
+      // 工单描述本身以路名开头（"兴华路 K0+320 积水深约…"），再拼一次路名会重复
+      var road=ev.road_name||ev.road_id||'';
+      if(road && desc.indexOf(road)===0){desc=desc.slice(road.length).replace(/^[ ·]+/,'');}
+      opt.textContent=ev.event_id+' · '+road+(desc?(' · '+desc):'');
       sel.appendChild(opt);
     });
     var want=(curEvent&&curEvent.id)||d.default||events[0].event_id;
@@ -5487,7 +5521,7 @@ function refChips(refs, limit){
   var box=el('div','chips');
   var shown=(limit&&refs.length>limit)?refs.slice(0,limit):refs;
   shown.forEach(function(ref){
-    var c=el('span','chip',ref); c.title='点击查看原文';
+    var c=el('span','chip',humanRef(ref)); c.title=ref+'（点击查看原文）';
     c.onclick=function(){locate(ref);};
     box.appendChild(c);
   });
@@ -5498,7 +5532,7 @@ function refChips(refs, limit){
     more.onclick=function(){
       var rest=el('div','chips');
       refs.slice(limit).forEach(function(ref){
-        var c=el('span','chip',ref); c.title='点击查看原文';
+        var c=el('span','chip',humanRef(ref)); c.title=ref+'（点击查看原文）';
         c.onclick=function(){locate(ref);};
         rest.appendChild(c);
       });
@@ -5523,17 +5557,34 @@ function fold(host, title, lines){
   inner.textContent=lines;
   det.appendChild(inner);
   host.appendChild(det);
+  return inner;
 }
 
 function renderEvent(d, target){
   var host=target||pane;
   var ob=d.observed||{};
+  // 台账里的「代号 -> 中文名」。内核产出的文本带 ORG-ROAD / DF-PS-01 / RES-PUMP-M 这类内部编号，
+  // 展示前换成中文名，原文留在 title 里——给值班员看人话，给核对的人留原串。
+  var LABELS=d.labels||{};
+  var LABEL_KEYS=Object.keys(LABELS).sort(function(a,b){return b.length-a.length;});
+  function H(s){
+    var out=String(s==null?'':s);
+    for(var i=0;i<LABEL_KEYS.length;i++){
+      var k=LABEL_KEYS[i];
+      if(out.indexOf(k)>=0){out=out.split(k).join(LABELS[k]);}
+    }
+    // 代号换成中文名后会在两侧留下空格（"由 ORG-ROAD 与" -> "由 区道路管理中心 与"），
+    // 中文之间不该有空格。只处理两个汉字之间的空白，英文与数字不受影响。
+    // 用字面字符区间而不是 \\u 转义：这整段是 Python 字符串，反斜杠会被 Python 先吃掉。
+    out=out.replace(/([一-龥])[ ]+(?=[一-龥])/g,'$1');
+    return out;
+  }
   var line=el('div');
   line.style.fontSize='15px'; line.style.fontWeight='600';
   // 已闭环事件引擎会直接拒推（conclusion.refused），不硬编结论——这一屏要把这件事说出来，
   // 而不是显示一排 0。判据就是 observed 里有没有 refused。
   if(ob.refused){
-    line.textContent=d.event_id+' · 未进入处置推演';
+    line.textContent=d.event_id+' · 工单已结案，不给出处置方案';
     line.className='warn';
   }else{
     line.textContent=(ob.district||'—')+' 片区 · '+(LEVEL_CN[ob.response_level]||ob.response_level||'未定级')
@@ -5547,12 +5598,14 @@ function renderEvent(d, target){
   }
 
   if(ob.refused){
-    var why=el('div','warn','原因：'+ob.refused);
+    var why=el('div','warn','这张工单在处理流程里已经结案。系统不会为它重新编排处置动作，也不去推断受影响的设施——'
+      +'宁可说"这次不推"，也不硬凑一份看着完整的方案。');
     why.style.fontSize='13px'; why.style.lineHeight='1.7'; why.style.margin='10px 0 4px';
     host.appendChild(why);
     var unc=d.uncovered_stages||[];
     if(unc.length){
-      host.appendChild(el('div','empty','未覆盖阶段：'+unc.join(' / ')));
+      var names=unc.map(function(x){return STAGE_CN[x]||x;});
+      host.appendChild(el('div','empty','本次没有推断：'+names.join('、')));
     }
     var refs0=d.evidence_refs||[];
     host.appendChild(blockTitle('依据','共 '+refs0.length+' 条，点开看原文'));
@@ -5560,9 +5613,11 @@ function renderEvent(d, target){
     host.appendChild(refChips(refs0, 12));
     var foot0=el('div','empty');
     foot0.style.marginTop='14px'; foot0.style.fontSize='11.5px';
-    foot0.textContent='事件 '+(d.event_id||'-')+' · 规则集 '+(d.rules_version||'-')
-      +' · 快照 '+String(d.snapshot_hash||'-').slice(0,12)+' · 时点 '+(d.as_of||'-');
+    foot0.textContent='工单上报时间 '+(humanTime(d.as_of)||'-');
     host.appendChild(foot0);
+    fold(host,'技术信息（这份结论由哪一版规则、哪一份数据算出）',
+      '规则版本 '+(d.rules_version||'-')+'；数据快照 '+String(d.snapshot_hash||'-')
+      +'。内核原话：'+(ob.refused||'-')+'。核对时可拿这几项回查同一次推演。');
     return;
   }
 
@@ -5571,8 +5626,24 @@ function renderEvent(d, target){
   if(!actions.length){host.appendChild(el('div','empty','无'));}
   var ol=el('ol');
   ol.style.margin='0'; ol.style.paddingLeft='20px'; ol.style.fontSize='13px'; ol.style.lineHeight='1.75';
-  actions.forEach(function(a){var li=el('li',null,a.action||''); li.style.marginBottom='2px'; ol.appendChild(li);});
+  actions.forEach(function(a){
+    var li=el('li',null,H(a.action||''));
+    li.style.marginBottom='2px';
+    li.title=(a.action||'');  // 悬停看内核原文，代号与措辞都没丢
+    ol.appendChild(li);
+  });
   host.appendChild(ol);
+  // 部门单列一行：动作被换成人话后代号就看不见了，这里仍要能一眼看出"这件事要惊动几个部门"。
+  var joined=actions.map(function(a){return a.action||'';}).join(' ');
+  var used=[];
+  Object.keys(LABELS).forEach(function(code){
+    if(code.indexOf('ORG-')===0 && joined.indexOf(code)>=0){used.push(LABELS[code]);}
+  });
+  if(used.length){
+    var legend=el('div','empty','涉及部门：'+used.join('、'));
+    legend.style.fontSize='11.5px'; legend.style.marginTop='6px';
+    host.appendChild(legend);
+  }
 
   var cf=d.conflicts||[];
   host.appendChild(blockTitle('跨部门冲突','共 '+cf.length+' 条'));
@@ -5582,12 +5653,21 @@ function renderEvent(d, target){
     row.style.fontSize='13px'; row.style.lineHeight='1.7'; row.style.padding='3px 0';
     row.appendChild(el('b',null,(c.conflict_id||'')+' '));
     row.appendChild(el('span','warn',(KIND_CN[c.kind]||c.kind||'')+'　'));
-    row.appendChild(el('span',null,(c.subject||'')+(c.detail?('：'+c.detail):'')));
+    var raw=((c.subject||'')+(c.detail?('：'+c.detail):''));
+    var body=el('span',null,H(raw));
+    body.title=raw;
+    row.appendChild(body);
     var orgs=c.orgs||[];
     if(orgs.length){
-      var oc=el('span',null,'　'+orgs.join(' / '));
-      oc.style.fontSize='11.5px'; oc.style.color='#6b7280';
-      row.appendChild(oc);
+      var names=orgs.map(function(x){return LABELS[x]||x;});
+      // 正文里已经点名了部门就不在右边再列一遍（C1 会重复成两遍同样两个部门）
+      var allIn=names.every(function(n){return H(raw).indexOf(n)>=0;});
+      if(!allIn){
+        var oc=el('span',null,'　'+names.join(' / '));
+        oc.style.fontSize='11.5px'; oc.style.color='#6b7280';
+        oc.title=orgs.join(' / ');
+        row.appendChild(oc);
+      }
     }
     host.appendChild(row);
   });
@@ -5598,24 +5678,30 @@ function renderEvent(d, target){
   gaps.forEach(function(g){
     var row=el('div');
     row.style.fontSize='13px'; row.style.padding='2px 0';
-    row.textContent=(g.resource_id||'')+'：需 '+g.required+' '+g.unit+'，可用 '+g.available+'，缺 '+g.gap+' '+g.unit;
+    var nm=LABELS[g.resource_id];
+    row.textContent=(nm||(g.resource_id||''))
+      +'：需 '+g.required+' '+g.unit+'，可用 '+g.available+'，缺 '+g.gap+' '+g.unit;
+    row.title=(g.resource_id||'');
     if(Number(g.gap)>0){row.className='bad';}
     host.appendChild(row);
   });
 
   var own=d.owner||{};
-  host.appendChild(blockTitle('职责','协调方 '+(own.coordinator||'-')));
+  host.appendChild(blockTitle('职责','协调方 '+(LABELS[own.coordinator]||own.coordinator||'-')));
   if(own.unassigned){
-    var ua=el('div','bad','无明确责任主体：'+own.unassigned);
+    var ua=el('div','bad','无明确责任主体：'+H(own.unassigned));
     ua.style.fontSize='12.5px'; ua.style.marginBottom='6px';
+    ua.title=String(own.unassigned||'');
     host.appendChild(ua);
   }
-  if(own.owners){ fold(host,'各对象责任部门', String(own.owners).split(';').join('；')); }
+  if(own.owners){ fold(host,'各对象责任部门', H(String(own.owners).split(';').join('；'))); }
 
   var af=d.affected||{};
   if(af.affected){
     var items=String(af.affected).split(',').filter(function(x){return x.trim();});
-    fold(host,'受影响对象 '+items.length+' 个', items.join('、'));
+    var human=items.map(H);
+    var box=fold(host,'受影响对象 '+items.length+' 个', human.join('、'));
+    if(box){box.title=items.join('、');}
     if(af.reason){ fold(host,'受影响原因', String(af.reason).split(';').join('；')); }
   }
 
@@ -5626,9 +5712,11 @@ function renderEvent(d, target){
 
   var foot=el('div','empty');
   foot.style.marginTop='14px'; foot.style.fontSize='11.5px';
-  foot.textContent='事件 '+(d.event_id||'-')+' · 规则集 '+(d.rules_version||'-')
-    +' · 快照 '+String(d.snapshot_hash||'-').slice(0,12)+' · 时点 '+(d.as_of||'-');
+  foot.textContent='推演时间 '+(humanTime(d.as_of)||'-');
   host.appendChild(foot);
+  fold(host,'技术信息（这份结论由哪一版规则、哪一份数据算出）',
+    '规则版本 '+(d.rules_version||'-')+'；数据快照 '+String(d.snapshot_hash||'-')
+    +'。核对时可拿这两项回查同一次推演。');
 }
 
 function loadReplay(){
@@ -5686,6 +5774,48 @@ function runReplay(btn){
     })
    .catch(function(e){btn.disabled=false; btn.textContent='复跑本事件'; stat.textContent='未连接';
       var box=document.getElementById('replayResult'); if(box){box.textContent='网络错误：'+e;}});
+}
+
+function renderStructured(s, host){
+  var wrap=el('div');
+  wrap.style.marginTop='8px';
+  var acts=s.action_order||[];
+  if(acts.length){
+    wrap.appendChild(blockTitle('处置顺序','共 '+acts.length+' 步'));
+    var ol=el('ol');
+    ol.style.margin='0'; ol.style.paddingLeft='20px'; ol.style.fontSize='12.5px'; ol.style.lineHeight='1.65';
+    acts.forEach(function(x){ol.appendChild(el('li',null,x));});
+    wrap.appendChild(ol);
+  }
+  var cf=s.conflicts||[];
+  if(cf.length){
+    wrap.appendChild(blockTitle('冲突','共 '+cf.length+' 条'));
+    cf.forEach(function(c){
+      var row=el('div');
+      row.style.fontSize='12.5px'; row.style.lineHeight='1.7';
+      row.appendChild(el('b',null,(c.conflict_id||'')+' '));
+      row.appendChild(el('span','warn',(KIND_CN[c.kind]||c.kind||'')+' '));
+      row.appendChild(el('span',null,c.subject||c.detail||''));
+      wrap.appendChild(row);
+    });
+  }
+  if(typeof s.resource_gap==='number'||typeof s.resource_gap==='string'){
+    wrap.appendChild(blockTitle('资源缺口'));
+    var g=el('div',null,'缺口 '+s.resource_gap+'（明细见右侧「事件」栏）');
+    g.style.fontSize='12.5px';
+    wrap.appendChild(g);
+  }
+  var raw=document.createElement('details');
+  raw.style.marginTop='8px';
+  var sum=document.createElement('summary');
+  sum.style.cursor='pointer'; sum.style.fontSize='12px'; sum.style.color='#6b7280';
+  sum.textContent='原始 JSON（模型交卷内容）';
+  raw.appendChild(sum);
+  var pre=el('pre','excerpt',JSON.stringify(s,null,1));
+  pre.style.fontSize='11.5px'; pre.style.maxHeight='240px'; pre.style.overflow='auto'; pre.style.marginTop='6px';
+  raw.appendChild(pre);
+  wrap.appendChild(raw);
+  host.appendChild(wrap);
 }
 
 function fmtCell(v){
@@ -6039,15 +6169,21 @@ def workbench_replay_history(limit: int = 10) -> tuple[int, str, bytes]:
     )
 
 
-def _work_order_rows() -> list[dict[str, str]]:
-    """读工单台账。事件清单与"时点缺省"两处都用它，避免各读一遍 CSV。"""
+def _ledger_rows(file_name: str) -> list[dict[str, str]]:
+    """读台账 CSV。工单、部门、物资三处都用它，免得每个接口各读一遍。"""
     from .urban_dataset import DEFAULT_DATASET_ROOT
 
-    path = DEFAULT_DATASET_ROOT / "work_orders.csv"
+    path = DEFAULT_DATASET_ROOT / file_name
     if not path.is_file():
         return []
-    with path.open(encoding="utf-8", newline="") as handle:
+    # utf-8-sig：这几张台账首列表头带 BOM（﻿org_id），按 utf-8 读会得到空键，
+    # 于是所有行挤成 {"": "最后一行"}——查部门名时静默失效，症状很像"数据没加载"。
+    with path.open(encoding="utf-8-sig", newline="") as handle:
         return [dict(row) for row in csv.DictReader(handle)]
+
+
+def _work_order_rows() -> list[dict[str, str]]:
+    return _ledger_rows("work_orders.csv")
 
 
 def workbench_events() -> tuple[int, str, bytes]:
@@ -6060,12 +6196,15 @@ def workbench_events() -> tuple[int, str, bytes]:
     rows = _work_order_rows()
     if not rows:
         return _error("工单台账缺失或为空", 500)
+    roads = {row.get("road_id", ""): row.get("name", "") for row in _ledger_rows("road_network.csv")}
     events = [
         {
             "event_id": row.get("order_id") or "",
             "as_of": row.get("reported_at") or "",
             "order_type": row.get("order_type") or "",
             "road_id": row.get("road_id") or "",
+            # 下拉里给人看的是路名，"R-101" 这种编号留在 road_id 里
+            "road_name": roads.get(row.get("road_id") or "", "") or (row.get("road_id") or ""),
             "facility_id": row.get("facility_id") or "",
             "severity": row.get("severity") or "",
             "description": (row.get("description") or "")[:80],
@@ -6135,8 +6274,138 @@ def workbench_event(body: bytes | None = None) -> tuple[int, str, bytes]:
             "uncovered_stages": data.get("uncovered_stages") or [],
             "actions": actions,
             "evidence_refs": refs,
+            # 代号 -> 中文名。界面上不该出现 ORG-ROAD / RES-PUMP-M / DF-PS-01 这种内部编号，
+            # 但代号仍是证据与判据里的原值，所以原样带回，由页面决定展示哪一种
+            # （页面把代号换成人话，原始串放 title 与折叠的技术信息里，可追溯性不丢）。
+            "labels": _label_maps(),
         }
     )
+
+
+def _label_maps() -> dict[str, str]:
+    """把四张台账里的「代号 -> 中文名」合成一张替换表。
+
+    为什么在展示层替换而不是改内核输出：内核产出的 `action` / `conflict.subject` 是
+    判据比对与证据引用的原值，改写它等于改结论。所以对照表只用于渲染，
+    原文保留在 title 与技术信息里。
+    """
+    labels: dict[str, str] = {}
+    for row in _ledger_rows("department_duties.csv"):
+        if row.get("org_id"):
+            labels[row["org_id"]] = row.get("org_name") or row["org_id"]
+    for row in _ledger_rows("resource_inventory.csv"):
+        if row.get("resource_id"):
+            labels[row["resource_id"]] = row.get("name") or row["resource_id"]
+    for file_name, key, field in (
+        ("drainage_facilities.csv", "facility_id", "name"),
+        ("underpasses.csv", "underpass_id", "name"),
+        ("road_network.csv", "road_id", "name"),
+    ):
+        for row in _ledger_rows(file_name):
+            if row.get(key):
+                labels[row[key]] = row.get(field) or row[key]
+    return labels
+
+
+def _deduction_query(question: str) -> tuple[str, str]:
+    """把一句自由提问包成推演 Agent 能接的协议问法，返回 (事件编号, 完整问法)。
+
+    推演 Agent 是两步式协议：第一步必须调 `event_deduce`，之后按固定字段交卷。
+    直接把"这个事件谁负责"丢过去，它要么当闲聊、要么走偏，整轮拿不到结构化结论。
+    包一层之后自由提问与协议可以同时成立：**用户问什么不改变事实来源，只影响模型
+    在 summary 里强调哪一句**。
+    """
+    match = _EVENT_PATTERN.search(question)
+    event_id = match.group(0) if match else WORKBENCH_REPLAY_EVENT
+    text = "\n".join(
+        [
+            f"城市内涝跨部门事件：{event_id}，时点 {WORKBENCH_REPLAY_AS_OF}，调用方身份 ORG-EMERG。",
+            "请使用已挂载的 MCP 工具完成六跳推演：",
+            "1) event_deduce 一次返回六跳全部事实、三类冲突、资源缺口与处置顺序；",
+            "2) 需要核对依据时用 evidence_locate 取原文，不得凭记忆编造。",
+            f"用户这次具体问的是：{question.strip()}",
+            "按约定字段输出 JSON，用 final_answer 交卷。",
+        ]
+    )
+    return event_id, text
+
+
+def _balanced_objects(body: str) -> list[dict[str, Any]]:
+    """列出文本里所有平衡的 JSON 对象，按出现顺序。"""
+    found: list[dict[str, Any]] = []
+    start = body.find("{")
+    while start != -1:
+        depth = 0
+        in_str = False
+        escape = False
+        for index in range(start, len(body)):
+            char = body[index]
+            if in_str:
+                if escape:
+                    escape = False
+                elif char == "\\":
+                    escape = True
+                elif char == '"':
+                    in_str = False
+                continue
+            if char == '"':
+                in_str = True
+            elif char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        found.append(json.loads(body[start : index + 1]))
+                    except json.JSONDecodeError:
+                        pass
+                    break
+        start = body.find("{", start + 1)
+    return found
+
+
+def _unescape_string_literal(text: str) -> str:
+    """`final_answer("<json>")` 里给的是字符串字面量，先解一层引号转义。
+
+    不解这一层，扫到的 `{` 全在字符串里，平衡扫描拿不到对象——症状是"明明答了 JSON，
+    页面上却只有一段带反斜杠的文字"。
+    """
+    try:
+        value = json.loads(text)
+    except json.JSONDecodeError:
+        return text
+    return value if isinstance(value, str) else text
+
+
+def extract_agent_json(answer: str) -> dict[str, Any] | None:
+    """从回答里找结构化结论（推演 JSON）。找不到返回 None，不抛。
+
+    平台有两种外壳：裸 JSON，以及 `final_answer("...")` 包装（内容还是 JSON 字符串）。
+    认两种，且只认带 `six_hops`/`action_order` 的那个，避免把动作历史里的片段当结论。
+    """
+    raw = answer or ""
+    texts: list[str] = []
+    stripped = re.sub(r"</?code>", "", raw).strip()
+    match = re.search(r"final_answer\((.*)\)\s*$", stripped, re.S)
+    if match:
+        inner = match.group(1).strip()
+        texts.append(inner)
+        texts.append(_unescape_string_literal(inner))
+    texts.append(stripped)
+
+    def is_result(obj: Any) -> bool:
+        return isinstance(obj, dict) and ("six_hops" in obj or "action_order" in obj)
+
+    for text in texts:
+        for obj in _balanced_objects(text):
+            if is_result(obj):
+                return obj
+            args = obj.get("arguments") if isinstance(obj, dict) else None
+            if isinstance(args, dict) and isinstance(args.get("content"), str):
+                for inner_obj in _balanced_objects(args["content"]):
+                    if is_result(inner_obj):
+                        return inner_obj
+    return None
 
 
 def workbench_chat(body: bytes | None) -> tuple[int, str, bytes]:
@@ -6149,9 +6418,16 @@ def workbench_chat(body: bytes | None) -> tuple[int, str, bytes]:
     if not message:
         return _error("message 不能为空", 400)
 
-    agent = WORKBENCH_AGENTS.get(str(payload.get("agent") or "asset_qa"))
+    agent_key = str(payload.get("agent") or "deduction")
+    agent = WORKBENCH_AGENTS.get(agent_key)
     if agent is None:
         return _error(f"未知 agent，可选：{'、'.join(WORKBENCH_AGENTS)}", 400)
+
+    # 推演走协议问法：自由提问包进固定骨架，事实一律由 event_deduce 给。
+    # 台账问答保持原话直传（它本来就是自由问答）。
+    event_id: str | None = None
+    if agent_key == "deduction":
+        event_id, message = _deduction_query(message)
 
     key = os.getenv("NEXENT_API_KEY", "").strip()
     if not key:
@@ -6179,12 +6455,19 @@ def workbench_chat(body: bytes | None) -> tuple[int, str, bytes]:
         return _error(f"平台调用失败：{type(exc).__name__}: {exc}"[:300], 502)
 
     answer = str(result.get("answer") or "")
+    structured = extract_agent_json(answer)
+    display = clean_agent_answer(answer)
+    if structured and structured.get("summary"):
+        # 结构化结论在时，聊天框先显示人话摘要；原始 JSON 由前端折叠，别把一屏 JSON 糊上去
+        display = str(structured["summary"])
     return _json(
         {
             "agent": agent,
+            "event_id": event_id,
             "conversation_id": result.get("conversation_id"),
             "answer": answer,
-            "answer_text": clean_agent_answer(answer),
+            "answer_text": display,
+            "structured": structured,
             "evidence_refs": sorted(set(_REF_PATTERN.findall(answer))),
             "citations": sorted({item.strip() for item in _CITATION_PATTERN.findall(answer)})[:8],
         }
