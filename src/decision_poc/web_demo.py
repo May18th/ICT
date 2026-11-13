@@ -5241,17 +5241,18 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
 <main>
   <section class="panel">
     <div class="switch">
-      <button class="sw on" data-mode="platform">平台对话</button>
-      <button class="sw" data-mode="local">站内对话（可点引用）</button>
+      <button class="sw" data-mode="platform">平台对话</button>
+      <button class="sw on" data-mode="local">站内对话（可点引用）</button>
       <span class="spacer"></span>
       <select id="agentSel" title="站内对话使用哪个 Agent"><option value="deduction">推演（事件事实）</option><option value="asset_qa">台账问答</option></select>
     </div>
-    <iframe id="frame" src="__WEB_BASE__/zh/workbench" title="平台对话"></iframe>
-    <div class="hint">平台对话页是跨源内嵌：若这里一直转圈，多半是平台没启动或未登录——
-    <a class="link" href="__WEB_BASE__/zh/workbench" target="_blank" rel="noopener">新窗口打开</a>，
-    或切到左边「站内对话」，它不依赖平台前端。本页面读不到 iframe 里的内容，所以「点结论跳到原文」只在站内对话模式生效。</div>
+    <iframe id="frame" data-src="__WEB_BASE__/zh/workbench" title="平台对话" style="display:none"></iframe>
+    <div class="hint">左边默认是「站内对话」——它不经过平台前端，页面打开就能问，回答里带定位的结论可以直接点开原文。
+    「平台对话」是把平台自己的工作台页内嵌进来，需要平台已启动且当前浏览器已登录；一直转圈就用
+    <a class="link" href="__WEB_BASE__/zh/workbench" target="_blank" rel="noopener">新窗口打开</a>。
+    内嵌页的内容本页面读不到，所以「点结论跳到原文」只在站内对话下生效。</div>
     <div id="chatpane">
-      <div id="feed"><div class="msg ai">直接用一句话问就行：「谁负责」「先做什么」「依据哪条」。推演模式会把问题包进协议问法，事实一律取自 event_deduce，模型只负责转述。想换事件就把事件编号写进问题（如 WO-20261029-009）。回答里的 evidence_ref 是可点芯片，点一下右边出原文。</div></div>
+      <div id="feed"><div class="msg ai">直接用一句话问就行：「谁负责」「先做什么」「依据哪条」。推演模式下，问题会被包成固定问法发给平台助手，事实全部由「事件推演」这一步算出来，模型只负责把这些事实讲成中文。想换事件，把事件编号写进问题里即可（例如 WO-20261029-009）。回答里带「原文定位」的结论可以点，点开右边就是原始台账那一行。</div></div>
       <form id="f"><textarea id="q" placeholder="Enter 发送 · Shift+Enter 换行"></textarea><button class="send" id="go">发送</button></form>
     </div>
   </section>
@@ -5281,6 +5282,16 @@ function switchMode(mode){
   for(var i=0;i<btns.length;i++){btns[i].className='sw'+(btns[i].dataset.mode===mode?' on':'');}
   frame.style.display = mode==='platform' ? 'block' : 'none';
   chatpane.style.display = mode==='local' ? 'flex' : 'none';
+  // 平台对话是跨源内嵌，要在平台已登录时才有内容。默认不加载：首屏给站内对话，
+  // 点了「平台对话」才真正去拉，省得打开就是一片空白转圈。
+  if(mode==='platform' && !frame.getAttribute('src')){
+    frame.setAttribute('src', frame.getAttribute('data-src')||'');
+    stat.textContent='正在连平台…';
+    frame.onload=function(){stat.textContent='就绪';};
+    setTimeout(function(){
+      if(stat.textContent==='正在连平台…'){stat.textContent='平台没连上';}
+    },8000);
+  }
 }
 
 function send(){
@@ -6079,6 +6090,8 @@ function loadStatus(){
 document.getElementById('f').addEventListener('submit',function(e){e.preventDefault();send();});
 q.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
 var sws=document.querySelectorAll('.sw'); for(var i=0;i<sws.length;i++){sws[i].onclick=function(){switchMode(this.dataset.mode);};}
+// 首屏进站内对话：它不依赖平台前端，打开就能问；平台页要等点了才加载。
+switchMode('local');
 var tabs=document.querySelectorAll('.tab'); for(var j=0;j<tabs.length;j++){tabs[j].onclick=function(){setTab(this.dataset.tab);};}
 // 允许直接链接到某一栏（演示时把 #replay 发出去，打开就是复跑面板）
 var __h=location.hash||'';
