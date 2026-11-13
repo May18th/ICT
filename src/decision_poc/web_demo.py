@@ -5382,11 +5382,33 @@ function locate(ref){
       pane.innerHTML='';
       if(!res.ok){pane.appendChild(el('div','empty','取不到原文：'+(res.d.error||'')));return;}
       var d=res.d, a=d.asset||{};
-      var span=d.span?('第 '+d.span.start+'–'+d.span.end+' 行 / 共 '+d.span.line_count+' 行'):'-';
-      var rows=[['引用',ref],['资产',a.asset_id],['文件',a.file_name],['类型',a.doc_type],['版本',a.version],['范围',span]];
+      // 只留三行给人看：这是哪份文件、指向第几行、哪一版。
+      // 文档类型与文件名本来是同义词（都叫"下穿隧道台账"），拆成两行等于重复。
+      // 用 String.fromCharCode(10) 拼换行：这整段是 Python 字符串，JS 里写反斜杠加 n
+      // 会被 Python 先变成真换行，整个 <script> 立刻语法错误、页面只剩布局。
+      var rows=[['出处',humanFile(a.file_name)+(d.span?('（该文件共 '+d.span.line_count+' 行）'):''),a.file_name],
+                ['原文位置',d.span?('第 '+d.span.start+(d.span.end!==d.span.start?('–'+d.span.end):'')+' 行'):'-',ref],
+                ['版本',a.version,'']];
       var dl=el('dl','kv');
-      rows.forEach(function(pair){dl.appendChild(el('dt',null,pair[0])); dl.appendChild(el('dd',null,pair[1]||'-'));});
+      rows.forEach(function(pair){
+        dl.appendChild(el('dt',null,pair[0]));
+        var dd=el('dd',null,pair[1]||'-');
+        if(pair[2]){dd.title=pair[2];}
+        dl.appendChild(dd);
+      });
       pane.appendChild(dl);
+      var det=document.createElement('details');
+      var sum=document.createElement('summary');
+      sum.style.cssText='cursor:pointer;font-size:12px;color:#6b7280;margin:6px 0';
+      sum.textContent='技术信息（原文引用串、资产编号与文件校验值）';
+      det.appendChild(sum);
+      var tech=['引用串 '+ref,'资产编号 '+((a.asset_id||'-')),
+                '文档类型 '+(a.doc_type||'-'),'文件 '+((a.file_name||'-')),
+                'sha256 '+String(a.checksum_sha256||'-').slice(0,32)+'…'].join(String.fromCharCode(10));
+      var inner=el('div','mono',tech);
+      inner.style.cssText='font-size:11.5px;color:#9aa1aa;line-height:1.8;word-break:break-all;white-space:pre-wrap';
+      det.appendChild(inner);
+      pane.appendChild(det);
       pane.appendChild(el('pre','excerpt',d.excerpt||'（空）'));
     })
    .catch(function(e){pane.textContent='网络错误：'+e;});
@@ -5404,12 +5426,15 @@ function searchRef(text){
       if(!hits.length){pane.appendChild(el('div','empty','索引里没有匹配切片。'));return;}
       hits.forEach(function(h){
         var box=el('div'); box.style.margin='12px 0'; box.style.borderTop='1px solid #f3f4f6'; box.style.paddingTop='10px';
-        var head=el('div','mono',h.source_path+(h.heading_path&&h.heading_path.length?(' · '+h.heading_path.join(' / ')):''));
+        var head=el('div',null,humanFile(h.source_path)
+          +(h.heading_path&&h.heading_path.length?(' · '+h.heading_path.join(' / ')):''));
         head.style.fontSize='12px'; head.style.color='#6b7280'; head.style.marginBottom='6px';
+        head.title=h.source_path||'';
         box.appendChild(head);
         box.appendChild(el('pre','excerpt',h.excerpt||''));
         if(h.evidence_ref){
-          var c=el('span','chip',h.evidence_ref); c.style.marginTop='8px'; c.style.display='inline-block'; c.title='点击查看原文';
+          var c=el('span','chip',humanRef(h.evidence_ref)); c.style.marginTop='8px'; c.style.display='inline-block';
+          c.title=h.evidence_ref+'（点击查看原文）';
           c.onclick=function(){locate(h.evidence_ref);};
           box.appendChild(c);
         }
@@ -5425,10 +5450,43 @@ var STAGE_CN={observed:'雨情与定级',affected:'受影响对象',owner:'责�
   conflict:'跨部门冲突',resource:'资源缺口',action:'处置动作'};
 // 证据 ref 形如 AS-A-03-work_order-6a1282a1#A-03/work_order/v1#row:5，
 // 界面上只显示「工单 · 第 5 行」，完整串留在 title 与点击行为里——可追溯不等于要给人看哈希。
-var DOC_CN={work_order:'工单',construction_plan:'施工组织方案',drainage_facility:'排水设施台账',
+var DOC_CN={work_order:'工单台账',construction_plan:'施工组织方案',drainage_facility:'排水设施台账',
   duty_list:'部门职责清单',emergency_plan:'防汛应急预案',emergency_response_case:'政府定级案例',
-  underpass:'下穿隧道台账',pipeline:'管线台账',resource_inventory:'应急物资清单',
-  weather_alert:'气象预警',road_network:'路网台账'};
+  underpass:'下穿隧道台账',pipeline_ledger:'管线台账',resource_inventory:'应急物资清单',
+  weather_alert:'气象预警',road_network:'路网台账',procedure:'处置规程',
+  public_notice:'对外通告',schematic_map:'管线示意图',forebay_curve:'泵站前池曲线'};
+// 文件名同样是内部标识（underpasses.csv）。给人看中文名，文件名放 title。
+var FILE_CN={'road_network.csv':'路网台账','pipeline_ledger.csv':'管线台账',
+  'drainage_facilities.csv':'排水设施台账','construction_plans.csv':'施工组织方案',
+  'work_orders.csv':'工单台账','weather_alerts.csv':'气象预警',
+  'department_duties.csv':'部门职责清单','resource_inventory.csv':'应急物资清单',
+  'plan_flood_emergency_v2.md':'防汛应急预案 v2','plan_flood_emergency_v1.md':'防汛应急预案 v1',
+  'plan_flood_emergency_chengdu_2020.md':'成都市防汛应急预案（2020）',
+  'plan_flood_emergency_cd_2026.md':'防汛应急预案（2026）',
+  'procedure_waterlogging.md':'内涝处置规程','procedure_gas_protection.md':'燃气保护规程',
+  'notice_road_closure.md':'封路通告','notice_gas_construction.md':'燃气施工通告',
+  'pipeline_map.png':'管线示意图','underpasses.csv':'下穿隧道台账',
+  'pump_forebay_curves.csv':'泵站前池曲线',
+  'response_events_chengdu_20200811.csv':'成都 2020-08-11 定级记录',
+  'mapping_report.md':'ERA5 雨量映射说明'};
+// MCP 工具名是给开发看的（event_deduce）。工具轨迹栏要能让人读，逐个给中文动作名。
+var TOOL_CN={semantic_query:'语义检索',twin_neighbors:'孪生邻接查询',doc_search:'知识检索',
+  evidence_locate:'原文取证',claim_trace:'断言溯源',provenance_verify:'数据来源核验',
+  event_deduce:'事件推演',counterfactual_run:'反事实推演',conflict_check:'冲突识别',
+  allocation_plan:'资源调拨',scene_render:'场景渲染',scene_status:'场景状态',
+  scene_compare:'场景对比',asset_lookup:'台账查询',collab_run:'跨部门协同编排'};
+// 工具日志里的 ts 是 UTC（…+0000），直接截字符串会差 8 小时。按本机时区格式化。
+function humanClock(iso){
+  var d=new Date(iso);
+  if(isNaN(d.getTime())){return String(iso||'-');}
+  var p=function(n){return (n<10?'0':'')+n;};
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '
+    +p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+}
+function humanFile(name){
+  var s=String(name||'');
+  return FILE_CN[s]||s;
+}
 function humanRef(ref){
   var s=String(ref||'');
   var m=s.match(/#([^#]+)#(?:row|line|region):([0-9-]+)/);
@@ -5820,7 +5878,10 @@ function renderStructured(s, host){
 
 function fmtCell(v){
   if(v===null||v===undefined){return '-';}
-  if(typeof v==='string'){return v;}
+  // 表里出现的布尔与阶段名都是内核口径：true -> 是，observed -> 雨情与定级
+  if(typeof v==='boolean'){return v?'是':'否';}
+  if(Array.isArray(v)){return v.map(function(x){return STAGE_CN[x]||x;}).join('、');}
+  if(typeof v==='string'){return STAGE_CN[v]||v;}
   return JSON.stringify(v);
 }
 
@@ -5898,24 +5959,46 @@ function loadTools(){
     var rows=(d.entries||[]).slice().reverse();
     if(!rows.length){pane.appendChild(el('div','empty','还没有工具调用记录。'));return;}
     var t=el('table'), head=el('tr');
-    ['时间','工具','状态','耗时','快照'].forEach(function(h){head.appendChild(el('th',null,h));});
+    ['时间','做了什么','结果','耗时','数据快照'].forEach(function(h){head.appendChild(el('th',null,h));});
     t.appendChild(head);
     rows.forEach(function(r){
       var tr=el('tr');
-      var ts=(r.ts||'').replace('T',' ').slice(0,19);
-      tr.appendChild(el('td','mono',ts));
-      tr.appendChild(el('td',null,r.tool||'-'));
-      tr.appendChild(el('td',r.status==='ok'?'ok':'bad',r.status||'-'));
+      tr.appendChild(el('td','mono',humanClock(r.ts)));
+      // 工具名换成动作名（event_deduce -> 事件推演），原名放 title
+      var td=el('td',null,TOOL_CN[r.tool]||r.tool||'-');
+      td.title=r.tool||'';
+      if(r.knowledge_version){td.title=(r.tool||'')+' · 知识库 '+(r.knowledge_version);}
+      tr.appendChild(td);
+      var ok=r.status==='ok';
+      var st=el('td',ok?'ok':'bad',ok?'正常':'失败');
+      if(!ok&&r.error_code){st.title='错误码 '+r.error_code;}
+      tr.appendChild(st);
       tr.appendChild(el('td','mono',(r.latency_ms!==null&&r.latency_ms!==undefined)?(r.latency_ms+' ms'):'-'));
-      tr.appendChild(el('td','mono',(r.snapshot_hash||'').slice(0,10)));
+      var snap=el('td','mono',(r.snapshot_hash||'').slice(0,10)||'-');
+      if(r.snapshot_hash){snap.title='完整快照哈希 '+r.snapshot_hash;}
+      tr.appendChild(snap);
       t.appendChild(tr);
     });
     pane.appendChild(t);
+    var note=el('div','empty','共 '+rows.length+' 条 · 时间为本机时区（日志原始记录是 UTC）·「数据快照」是同一份数据的指纹，'
+      +'同一指纹表示几次调用读的是同一批台账。');
+    note.style.cssText='font-size:11.5px;line-height:1.7;margin-top:8px';
+    pane.appendChild(note);
   }).catch(function(e){pane.textContent='读取失败：'+e;});
 }
 
 function loadStatus(){
   pane.innerHTML=''; pane.appendChild(el('div','empty','读取中…'));
+  // 自检明细里的少量英文标识（PRODUCTION_LABEL、northbound）是内核常量与取数口径，
+  // 在展示层换成人话；这层不改 selfcheck 的输出，/status 页与自检指纹都不受影响。
+  function humanStatus(text){
+    return String(text==null?'':text)
+      .replace('PRODUCTION_LABEL =','生产策略标识：')
+      // source 说的是"这份快照当初怎么来的"，不是"平台现在活着"。别翻成"实时取数"。
+      .replace('取数来源 northbound','快照原由平台接口抓取')
+      .replace('取数来源 snapshot','取自本地快照')
+      .replace('取数来源 db','快照取自平台数据库');
+  }
   fetch('/api/workbench/status').then(function(r){return r.json();}).then(function(d){
     pane.innerHTML='';
     var checks=d.checks||[];
@@ -5926,9 +6009,23 @@ function loadStatus(){
       var cls=c.state==='ok'?'ok':(c.state==='warn'?'warn':'bad');
       row.appendChild(el('b',null,c.name+'　'));
       row.appendChild(el('span',cls,label));
-      row.appendChild(el('div','empty',c.detail));
+      row.appendChild(el('div','empty',humanStatus(c.detail)));
       pane.appendChild(row);
     });
+    var okCount=checks.filter(function(c){return c.state==='ok';}).length;
+    var note=el('div','empty','共 '+checks.length+' 项，通过 '+okCount+' 项。这些检查只读本地台账与快照，'
+      +'不发外部请求——平台挂不挂，这一栏都能打开。');
+    note.style.cssText='font-size:11.5px;line-height:1.7;margin-top:10px';
+    pane.appendChild(note);
+
+    var snap=d.platform_snapshot||{};
+    if(snap.available){
+      var when=humanClock(snap.generated_at);
+      var tip=el('div','empty','「平台 Agent 可读」读的是 '+when+' 生成的版本快照（'+snap.agents
+        +' 个 Agent），不是实时探活。要看平台此刻在不在，去问一句或看左侧对话。');
+      tip.style.cssText='font-size:11.5px;line-height:1.7;margin-top:6px;color:#9aa1aa';
+      pane.appendChild(tip);
+    }
   }).catch(function(e){pane.textContent='读取失败：'+e;});
 }
 
@@ -5939,6 +6036,10 @@ var tabs=document.querySelectorAll('.tab'); for(var j=0;j<tabs.length;j++){tabs[
 // 允许直接链接到某一栏（演示时把 #replay 发出去，打开就是复跑面板）
 var __h=location.hash||'';
 if(__h.indexOf('#replay')===0){setTab('replay');}
+else if(__h.indexOf('#tools')===0){setTab('tools');}
+else if(__h.indexOf('#selfcheck')===0){setTab('selfcheck');}
+// #ref=<evidence_ref>：直接打开某一条原文，演示时可以把链接发出去
+else if(__h.indexOf('#ref=')===0){setTab('evidence'); locate(decodeURIComponent(__h.slice(5)));}
 else{
   // #event=<事件编号>：演示时可以直接链到某个事件，不用手点下拉框
   if(__h.indexOf('#event=')===0){curEvent={id:decodeURIComponent(__h.slice(7)), asOf:''};}
@@ -6670,8 +6771,25 @@ def build_workbench_html() -> str:
 
 
 def workbench_status() -> tuple[int, str, bytes]:
-    """GET /api/workbench/status：复用 /status 的判据，不另写一套。"""
-    return _json({"checks": status_checks()})
+    """GET /api/workbench/status：复用 /status 的判据，不另写一套。
+
+    额外回带平台版本快照的生成时间：那几项是**读本地快照**，不是实时探活。
+    页面必须把这件事说出来，否则"平台 Agent 可读 通过"会被读成"平台现在活着"。
+    """
+    from .selfcheck import platform_versions_payload
+
+    snapshot = platform_versions_payload()
+    return _json(
+        {
+            "checks": status_checks(),
+            "platform_snapshot": {
+                "available": bool(snapshot.get("available")),
+                "generated_at": snapshot.get("generated_at"),
+                "source": snapshot.get("source"),
+                "agents": len(snapshot.get("platform_agents") or []),
+            },
+        }
+    )
 
 
 def _feedback_submit(body: bytes | None) -> tuple[int, str, bytes]:
