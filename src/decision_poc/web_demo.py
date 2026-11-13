@@ -5245,18 +5245,19 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
   </section>
   <section class="panel">
     <div class="tabs">
-      <button class="tab on" data-tab="evidence">证据</button>
+      <button class="tab on" data-tab="event">事件</button>
+      <button class="tab" data-tab="evidence">证据</button>
       <button class="tab" data-tab="tools">工具轨迹</button>
       <button class="tab" data-tab="selfcheck">自检</button>
       <button class="tab" data-tab="replay">复跑</button>
     </div>
-    <div class="body" id="pane"><div class="empty">点左侧站内对话里的 ref 芯片，这里显示原文。</div></div>
+    <div class="body" id="pane"></div>
   </section>
 </main>
 <script>
 var feed=document.getElementById('feed'), pane=document.getElementById('pane'), q=document.getElementById('q');
 var go=document.getElementById('go'), stat=document.getElementById('stat');
-var conv=null, current='evidence', agentSel=null;
+var conv=null, current='event', agentSel=null;
 
 function el(tag, cls, text){var n=document.createElement(tag); if(cls){n.className=cls;} if(text!==null&&text!==undefined){n.textContent=String(text);} return n;}
 function bubble(kind, text){var n=el('div','msg '+kind, text); feed.appendChild(n); feed.scrollTop=feed.scrollHeight; return n;}
@@ -5411,6 +5412,149 @@ function searchRef(text){
    .catch(function(e){pane.textContent='网络错误：'+e;});
 }
 
+var KIND_CN={overlap:'权限重叠',gap:'职责空白',contention:'资源争用'};
+var LEVEL_CN={blue:'蓝色响应',yellow:'黄色响应',orange:'橙色响应',red:'红色响应'};
+
+function loadEvent(){
+  pane.innerHTML=''; pane.appendChild(el('div','empty','读取事件事实（本地引擎，不经模型）…'));
+  fetch('/api/workbench/event').then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+   .then(function(res){
+      pane.innerHTML='';
+      if(!res.ok){pane.appendChild(el('div','empty','读取失败：'+(res.d.error||'')));return;}
+      renderEvent(res.d);
+    })
+   .catch(function(e){pane.textContent='网络错误：'+e;});
+}
+
+function blockTitle(text, tail){
+  var h=el('div');
+  h.style.fontSize='12px'; h.style.fontWeight='600'; h.style.color='#6b7280';
+  h.style.letterSpacing='.4px'; h.style.margin='14px 0 6px';
+  h.textContent=text;
+  if(tail){
+    var t=el('span',null,'　'+tail);
+    t.style.fontWeight='400'; t.style.color='#9aa1aa';
+    h.appendChild(t);
+  }
+  return h;
+}
+
+function refChips(refs, limit){
+  refs=refs||[];
+  var box=el('div','chips');
+  var shown=(limit&&refs.length>limit)?refs.slice(0,limit):refs;
+  shown.forEach(function(ref){
+    var c=el('span','chip',ref); c.title='点击查看原文';
+    c.onclick=function(){locate(ref);};
+    box.appendChild(c);
+  });
+  // 47 条全铺开会把下面内容顶走；先给前 12 条，其余点开再补。
+  if(limit&&refs.length>limit){
+    var more=el('span','chip','展开其余 '+(refs.length-limit)+' 条');
+    more.style.borderStyle='dashed'; more.style.color='#6b7280';
+    more.onclick=function(){
+      var rest=el('div','chips');
+      refs.slice(limit).forEach(function(ref){
+        var c=el('span','chip',ref); c.title='点击查看原文';
+        c.onclick=function(){locate(ref);};
+        rest.appendChild(c);
+      });
+      box.parentNode.insertBefore(rest, box.nextSibling);
+      more.remove();
+    };
+    box.appendChild(more);
+  }
+  return box;
+}
+
+function fold(host, title, lines){
+  var det=document.createElement('details');
+  det.style.margin='0 0 10px';
+  var sum=document.createElement('summary');
+  sum.style.cursor='pointer'; sum.style.fontSize='12.5px'; sum.style.color='#374151';
+  sum.textContent=title;
+  det.appendChild(sum);
+  var inner=el('div');
+  inner.style.padding='6px 0 0 12px'; inner.style.fontSize='12.5px'; inner.style.lineHeight='1.8';
+  inner.style.color='#4b5563'; inner.style.wordBreak='break-word';
+  inner.textContent=lines;
+  det.appendChild(inner);
+  host.appendChild(det);
+}
+
+function renderEvent(d){
+  var ob=d.observed||{};
+  var line=el('div');
+  line.style.fontSize='15px'; line.style.fontWeight='600';
+  line.textContent=(ob.district||'-')+' 片区 · '+(LEVEL_CN[ob.response_level]||ob.response_level||'-')
+    +' · 积水 '+(ob.depth_cm||'-')+' cm';
+  pane.appendChild(line);
+  var sub=el('div','empty','触发：'+(ob.trigger||'-'));
+  sub.style.fontSize='12px';
+  pane.appendChild(sub);
+
+  var actions=d.actions||[];
+  pane.appendChild(blockTitle('处置顺序','共 '+actions.length+' 步'));
+  var ol=el('ol');
+  ol.style.margin='0'; ol.style.paddingLeft='20px'; ol.style.fontSize='13px'; ol.style.lineHeight='1.75';
+  actions.forEach(function(a){var li=el('li',null,a.action||''); li.style.marginBottom='2px'; ol.appendChild(li);});
+  pane.appendChild(ol);
+
+  var cf=d.conflicts||[];
+  pane.appendChild(blockTitle('跨部门冲突','共 '+cf.length+' 条'));
+  cf.forEach(function(c){
+    var row=el('div');
+    row.style.fontSize='13px'; row.style.lineHeight='1.7'; row.style.padding='3px 0';
+    row.appendChild(el('b',null,(c.conflict_id||'')+' '));
+    row.appendChild(el('span','warn',(KIND_CN[c.kind]||c.kind||'')+'　'));
+    row.appendChild(el('span',null,(c.subject||'')+(c.detail?('：'+c.detail):'')));
+    var orgs=c.orgs||[];
+    if(orgs.length){
+      var oc=el('span',null,'　'+orgs.join(' / '));
+      oc.style.fontSize='11.5px'; oc.style.color='#6b7280';
+      row.appendChild(oc);
+    }
+    pane.appendChild(row);
+  });
+
+  var gaps=d.resource_gaps||[];
+  pane.appendChild(blockTitle('资源缺口','共 '+gaps.length+' 项'));
+  if(!gaps.length){pane.appendChild(el('div','empty','无'));}
+  gaps.forEach(function(g){
+    var row=el('div');
+    row.style.fontSize='13px'; row.style.padding='2px 0';
+    row.textContent=(g.resource_id||'')+'：需 '+g.required+' '+g.unit+'，可用 '+g.available+'，缺 '+g.gap+' '+g.unit;
+    if(Number(g.gap)>0){row.className='bad';}
+    pane.appendChild(row);
+  });
+
+  var own=d.owner||{};
+  pane.appendChild(blockTitle('职责','协调方 '+(own.coordinator||'-')));
+  if(own.unassigned){
+    var ua=el('div','bad','无明确责任主体：'+own.unassigned);
+    ua.style.fontSize='12.5px'; ua.style.marginBottom='6px';
+    pane.appendChild(ua);
+  }
+  if(own.owners){ fold(pane,'各对象责任部门', String(own.owners).split(';').join('；')); }
+
+  var af=d.affected||{};
+  if(af.affected){
+    var items=String(af.affected).split(',').filter(function(x){return x.trim();});
+    fold(pane,'受影响对象 '+items.length+' 个', items.join('、'));
+    if(af.reason){ fold(pane,'受影响原因', String(af.reason).split(';').join('；')); }
+  }
+
+  var refs=d.evidence_refs||[];
+  pane.appendChild(blockTitle('依据','共 '+refs.length+' 条，点开看原文'));
+  pane.appendChild(refChips(refs, 12));
+
+  var foot=el('div','empty');
+  foot.style.marginTop='14px'; foot.style.fontSize='11.5px';
+  foot.textContent='事件 '+(d.event_id||'-')+' · 规则集 '+(d.rules_version||'-')
+    +' · 快照 '+String(d.snapshot_hash||'-').slice(0,12)+' · 时点 '+(d.as_of||'-');
+  pane.appendChild(foot);
+}
+
 function loadReplay(){
   pane.innerHTML='';
   var bar=el('div');
@@ -5534,7 +5678,8 @@ function setTab(name){
   current=name;
   var tabs=document.querySelectorAll('.tab');
   for(var i=0;i<tabs.length;i++){tabs[i].className='tab'+(tabs[i].dataset.tab===name?' on':'');}
-  if(name==='tools'){loadTools();}
+  if(name==='event'){loadEvent();}
+  else if(name==='tools'){loadTools();}
   else if(name==='selfcheck'){loadStatus();}
   else if(name==='replay'){loadReplay();}
   else if(!pane.querySelector('dl')){pane.innerHTML='<div class="empty">点左侧站内对话里的 ref 芯片，这里显示原文。</div>';}
@@ -5586,7 +5731,7 @@ q.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.prev
 var sws=document.querySelectorAll('.sw'); for(var i=0;i<sws.length;i++){sws[i].onclick=function(){switchMode(this.dataset.mode);};}
 var tabs=document.querySelectorAll('.tab'); for(var j=0;j<tabs.length;j++){tabs[j].onclick=function(){setTab(this.dataset.tab);};}
 // 允许直接链接到某一栏（演示时把 #replay 发出去，打开就是复跑面板）
-if(location.hash==='#replay'){setTab('replay');}
+if(location.hash==='#replay'){setTab('replay');} else {setTab('event');}
 </script></body></html>
 """
 
@@ -5808,6 +5953,64 @@ def workbench_replay_history(limit: int = 10) -> tuple[int, str, bytes]:
             "runs": [{key: run.get(key) for key in fields} for run in runs],
             "latest": latest,
             "diff": _replay_diff(latest, previous) if latest else {"available": False, "reason": "还没有复跑记录"},
+        }
+    )
+
+
+def workbench_event(body: bytes | None = None) -> tuple[int, str, bytes]:
+    """GET/POST /api/workbench/event：把事件的六跳事实摆出来，**不经过 LLM**。
+
+    为什么要有这一屏：工作台打开是一句"点 ref 看原文"，评委得先知道该问什么。
+    这一栏给的是事件本身——定级、受影响对象、职责、冲突、资源缺口、处置顺序，
+    全部来自本地引擎（确定性、秒出、不消耗模型），每条依据都能点回原文。
+    它也是"复核"的参照物：下面几栏核的是模型答得对不对，这一栏是标准答案的事实层。
+    """
+    payload: dict[str, Any] = {}
+    if body:
+        try:
+            payload = json.loads(body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return _error("请求体不是合法 JSON", 400)
+    event_id = str(payload.get("event_id") or WORKBENCH_REPLAY_EVENT).strip()
+    as_of = str(payload.get("as_of") or WORKBENCH_REPLAY_AS_OF).strip()
+
+    try:
+        result = _workbench_toolkit().call(
+            "event_deduce",
+            {"event_id": event_id, "as_of": as_of, "caller_labels": ["ORG-EMERG"]},
+        )
+    except Exception as exc:  # noqa: BLE001 - 事件不存在/规则校验失败都给可读原因
+        return _error(f"推演失败：{type(exc).__name__}: {exc}"[:300], 500)
+    if result.status != "ok":
+        message = getattr(result.error, "message", None) or "该事件推演不可用"
+        return _error(str(message), 404)
+
+    data = result.data
+    stages: dict[str, Any] = {}
+    actions: list[dict[str, Any]] = []
+    for step in data.get("steps") or []:
+        if step.get("stage") == "action":
+            actions.append(step.get("conclusion") or {})
+        else:
+            stages[str(step.get("stage"))] = step.get("conclusion") or {}
+    # order 在结论里是字符串（"1"），按数值排，别按字典序——10 会排到 2 前面
+    actions.sort(key=lambda item: int(str(item.get("order") or 0)))
+
+    refs = sorted({ref for step in data.get("steps") or [] for ref in (step.get("evidence_refs") or [])})
+    return _json(
+        {
+            "event_id": event_id,
+            "as_of": as_of,
+            "rules_version": data.get("rules_version"),
+            "snapshot_hash": data.get("snapshot_hash"),
+            "observed": stages.get("observed") or {},
+            "affected": stages.get("affected") or {},
+            "owner": stages.get("owner") or {},
+            "conflicts": data.get("conflicts") or [],
+            "resource_gaps": data.get("resource_gaps") or [],
+            "uncovered_stages": data.get("uncovered_stages") or [],
+            "actions": actions,
+            "evidence_refs": refs,
         }
     )
 
@@ -6144,6 +6347,8 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return 200, "text/html; charset=utf-8", build_status_html().encode("utf-8")
     if parsed.path == "/workbench":
         return 200, "text/html; charset=utf-8", build_workbench_html().encode("utf-8")
+    if segments[:3] == ["api", "workbench", "event"]:
+        return workbench_event(body)
     if segments[:3] == ["api", "workbench", "replay"]:
         if method.upper() == "POST":
             return workbench_replay(body)
