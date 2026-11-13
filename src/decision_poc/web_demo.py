@@ -5156,6 +5156,12 @@ WORKBENCH_AGENTS = {
     "asset_qa": "urban_asset_qa",
 }
 
+#: 工作台取证时假定的调用方身份（应急指挥）。
+#: 只是**一个身份**，不是越权开关：受限依据（部门规程的可见性标签里写着 ORG-GAS /
+#: ORG-DRAIN / ORG-EMERG）若不包含它，取证仍然会被 PERMISSION_DENIED 挡住，
+#: 页面会如实说"权限受限"，不会把它写成"引用造假"。
+WORKBENCH_CALLER = "ORG-EMERG"
+
 #: 问题里出现事件编号就以它为准，否则用默认事件——现场换事件不必改代码。
 _EVENT_PATTERN = re.compile(r"WO-\d{8}-\d{3}")
 
@@ -5291,7 +5297,7 @@ function send(){
       conv=res.d.conversation_id||conv;
       var body=res.d.answer_text||res.d.answer||'（空回答）';
       var n=bubble('ai',body);
-      if(res.d.structured){ renderStructured(res.d.structured,n); }
+      if(res.d.structured){ renderStructured(res.d.structured,n,res.d.labels||{}); }
       var refs=res.d.evidence_refs||[];
       if(refs.length){
         var box=el('div','chips');
@@ -5301,7 +5307,12 @@ function send(){
       var cites=res.d.citations||[];
       if(cites.length){
         var cbox=el('div','chips');
-        cites.forEach(function(txt){var c=el('span','chip',txt); c.title='反查这条引用对应的台账切片'; c.onclick=function(){searchRef(txt);}; cbox.appendChild(c);});
+        cites.forEach(function(txt){
+          var c=el('span','chip',humanWith(txt,res.d.labels));
+          c.title=txt+'（点击反查这条引用对应的台账切片）';
+          c.onclick=function(){searchRef(txt);};
+          cbox.appendChild(c);
+        });
         n.appendChild(cbox);
       }
       note(res.d.agent+' · 会话 '+(conv||'-')+(refs.length?(' · '+refs.length+' 条可定位引用'):'')+(cites.length?(' · '+cites.length+' 条知识库引用'):''));
@@ -5486,6 +5497,22 @@ function humanClock(iso){
 function humanFile(name){
   var s=String(name||'');
   return FILE_CN[s]||s;
+}
+// 统一的人话化：代号 -> 中文名，文件名 -> 中文名，折断替换后多余的空格。
+// 聊天回答、引用芯片、结构化段落都走它，避免三处各写一份规则。
+function humanWith(text, labels){
+  var out=String(text==null?'':text);
+  var K=Object.keys(labels||{}).sort(function(a,b){return b.length-a.length;});
+  for(var i=0;i<K.length;i++){ if(out.indexOf(K[i])>=0){out=out.split(K[i]).join(labels[K[i]]);} }
+  var F=Object.keys(FILE_CN).sort(function(a,b){return b.length-a.length;});
+  for(var j=0;j<F.length;j++){ if(out.indexOf(F[j])>=0){out=out.split(F[j]).join(FILE_CN[F[j]]);} }
+  // 模型常把代号和名字一起写，换完会成口吃（"区排水公司（区排水公司）"）
+  var V=[]; for(var m=0;m<K.length;m++){ if(labels[K[m]]){V.push(labels[K[m]]);} }
+  for(var n=0;n<V.length;n++){
+    out=out.split(V[n]+'（'+V[n]+'）').join(V[n]);
+    out=out.split(V[n]+' '+V[n]).join(V[n]);
+  }
+  return out.replace(/([一-龥])[ ]+(?=[一-龥])/g,'$1');
 }
 function humanRef(ref){
   var s=String(ref||'');
@@ -5834,15 +5861,31 @@ function runReplay(btn){
       var box=document.getElementById('replayResult'); if(box){box.textContent='网络错误：'+e;}});
 }
 
-function renderStructured(s, host){
+function renderStructured(s, host, labels){
   var wrap=el('div');
   wrap.style.marginTop='8px';
+  // 模型复述的处置动作/冲突里也带 ORG-ROAD 这类代号，用后端回的对照表换成人话；
+  // 原文留在 title 与下面的原始 JSON 里。
+  var LK=Object.keys(labels||{}).sort(function(a,b){return b.length-a.length;});
+  var LV=[]; for(var i=0;i<LK.length;i++){ if(labels[LK[i]]){LV.push(labels[LK[i]]);} }
+  LV.sort(function(a,b){return b.length-a.length;});
+  function H(t){
+    var out=String(t==null?'':t);
+    for(var i=0;i<LK.length;i++){ if(out.indexOf(LK[i])>=0){out=out.split(LK[i]).join(labels[LK[i]]);} }
+    // 模型常把代号和名字一起写，换完会成口吃（"区排水公司（区排水公司）"），折叠掉
+    for(var j=0;j<LV.length;j++){
+      var n=LV[j];
+      out=out.split(n+'（'+n+'）').join(n);
+      out=out.split(n+' '+n).join(n);
+    }
+    return out.replace(/([一-龥])[ ]+(?=[一-龥])/g,'$1');
+  }
   var acts=s.action_order||[];
   if(acts.length){
     wrap.appendChild(blockTitle('处置顺序','共 '+acts.length+' 步'));
     var ol=el('ol');
     ol.style.margin='0'; ol.style.paddingLeft='20px'; ol.style.fontSize='12.5px'; ol.style.lineHeight='1.65';
-    acts.forEach(function(x){ol.appendChild(el('li',null,x));});
+    acts.forEach(function(x){var li=el('li',null,H(x)); li.title=String(x||''); ol.appendChild(li);});
     wrap.appendChild(ol);
   }
   var cf=s.conflicts||[];
@@ -5853,7 +5896,11 @@ function renderStructured(s, host){
       row.style.fontSize='12.5px'; row.style.lineHeight='1.7';
       row.appendChild(el('b',null,(c.conflict_id||'')+' '));
       row.appendChild(el('span','warn',(KIND_CN[c.kind]||c.kind||'')+' '));
-      row.appendChild(el('span',null,c.subject||c.detail||''));
+      // 模型有时只交 conflict_id 与 kind，不给正文（实测过一次），别留一片空白
+      var bodyText=H(c.subject||c.detail||'');
+      var body=el('span',bodyText?'':'empty',bodyText||'（这条只给了编号与类型，正文见右侧「事件」栏）');
+      body.title=String(c.subject||c.detail||'');
+      row.appendChild(body);
       wrap.appendChild(row);
     });
   }
@@ -6045,6 +6092,19 @@ else{
   if(__h.indexOf('#event=')===0){curEvent={id:decodeURIComponent(__h.slice(7)), asOf:''};}
   setTab('event');
 }
+// #ask=<问题>&agent=deduction：打开就自动问一句，演示时把链接发出去即可。
+// 只在显式带这个 hash 时才触发，正常打开不会偷偷调平台。
+(function(){
+  if(__h.indexOf('#ask=')!==0){return;}
+  var rest=__h.slice(5), agentKey='asset_qa';
+  var idx=rest.indexOf('&agent=');
+  if(idx>=0){agentKey=decodeURIComponent(rest.slice(idx+7)); rest=rest.slice(0,idx);}
+  switchMode('local');
+  var sel=document.getElementById('agentSel');
+  if(sel){sel.value=agentKey;}
+  q.value=decodeURIComponent(rest);
+  send();
+})();
 </script></body></html>
 """
 
@@ -6408,6 +6468,104 @@ def _label_maps() -> dict[str, str]:
     return labels
 
 
+def _humanize(text: str) -> str:
+    """把台账代号换成人话，仅供展示。
+
+    用在两处：事件栏（内核产出的动作/冲突文本）与聊天回答（模型自己写的代号）。
+    顺序有讲究——先把代号全换成中文名，再折叠替换造成的重复，最后收空格；
+    反过来的话 "ORG-DRAIN（区排水公司）" 会变成 "区排水公司（区排水公司）"。
+    """
+    labels = _label_maps()
+    out = str(text or "")
+    for code in sorted(labels, key=len, reverse=True):
+        if code in out:
+            out = out.replace(code, labels[code])
+
+    # 模型常把代号和名字一起写（"兴华路下穿隧道东端（UP-XH-101）"），换完就成了口吃
+    for name in sorted(set(labels.values()), key=len, reverse=True):
+        out = out.replace(f"{name}（{name}）", name)
+        out = re.sub(re.escape(name) + r"[ ]{1,3}" + re.escape(name), name, out)
+
+    # 字段名与枚举值：close_threshold_m=0.25 -> 封控阈值 0.25 m
+    for field, (cn, unit) in _FIELD_CN.items():
+        out = re.sub(
+            re.escape(field) + r"=([0-9]+(?:\.[0-9]+)?)",
+            lambda m, cn=cn, unit=unit: f"{cn} {m.group(1)}{unit}",
+            out,
+        )
+        out = out.replace(field + "=", f"{cn}：")
+        # 裸字段名（"台账 owner_org 未填"）没有等号，单独收一遍
+        out = out.replace(field, cn)
+    for token, cn in _VALUE_CN.items():
+        out = out.replace(f"（{token}）", "")          # "淤积（clogged）" 括号里是重复信息
+        # "状态为 clogged" / "状态 clogged" / "状态：clogged" 都要换
+        out = re.sub(r"状态[为是]?[ ]*" + re.escape(token), f"状态：{cn}", out)
+
+    # "挡水槛 entry_sill_height_m=0.15" 换完是"挡水槛 挡水槛高度 0.15 m"——字段名的中文
+    # 和前面那个词重了。空格要一起吃掉，所以重复折叠放在最后收完空格之后再跑一遍。
+    # 文件名换中文名：underpasses.csv -> 下穿隧道台账
+    for name, cn in _FILE_CN.items():
+        out = out.replace(name, cn)
+
+    # 模型常把字段名塞在括号里（"0.25 m（close_threshold_m）"），中文句子里多余
+    out = re.sub(r"[（(][a-z][a-z0-9_]{3,}[）)]", "", out)
+    # 平台内部的引用角标 [[a1]]：正文里已有「出处：…」，展示时去掉
+    out = re.sub(r"\[\[[A-Za-z0-9_\-]+\]\]", "", out)
+    # 模型爱写 markdown 加粗，聊天框是纯文本，星号会原样露出来
+    out = out.replace("**", "")
+
+    # 收掉代号替换留下的汉字间空格，再折一次重复术语（"挡水槛 挡水槛高度"）
+    out = re.sub(r"(?<=[一-龥])[ ]+(?=[一-龥])", "", out)
+    for term in ("挡水槛", "封控阈值", "运维主体", "最低点标高"):
+        out = out.replace(term + term, term)
+    return out
+
+
+#: 台账字段名 -> (中文名, 数值单位)。只收界面上真会出现的，别贪多。
+_FIELD_CN: dict[str, tuple[str, str]] = {
+    "close_threshold_m": ("封控阈值", " m"),
+    "entry_sill_height_m": ("挡水槛高度", " m"),
+    "lowest_point_z_m": ("最低点标高", " m"),
+    "capacity_m3h": ("抽排能力", " m³/h"),
+    "owner_org": ("运维主体", ""),
+    "status": ("状态", ""),
+    "qty_available": ("可用数量", ""),
+}
+
+#: 台账枚举值 -> 人话。括号里只写英文枚举的，展示时直接去掉括号（中文句子里已经说了）。
+_VALUE_CN: dict[str, str] = {
+    "clogged": "淤积堵塞",
+    "open": "进行中",
+    "closed": "已结案",
+    "normal": "正常",
+    "fault_pending_repair": "待检修",
+}
+
+#: 文件名 -> 中文名。与页面里的 FILE_CN 同源，两边都要用（后端换聊天回答，前端换卡片）。
+_FILE_CN: dict[str, str] = {
+    "road_network.csv": "路网台账",
+    "pipeline_ledger.csv": "管线台账",
+    "drainage_facilities.csv": "排水设施台账",
+    "construction_plans.csv": "施工组织方案",
+    "work_orders.csv": "工单台账",
+    "weather_alerts.csv": "气象预警",
+    "department_duties.csv": "部门职责清单",
+    "resource_inventory.csv": "应急物资清单",
+    "plan_flood_emergency_v2.md": "防汛应急预案 v2",
+    "plan_flood_emergency_v1.md": "防汛应急预案 v1",
+    "plan_flood_emergency_chengdu_2020.md": "成都市防汛应急预案（2020）",
+    "plan_flood_emergency_cd_2026.md": "防汛应急预案（2026）",
+    "procedure_waterlogging.md": "内涝处置规程",
+    "procedure_gas_protection.md": "燃气保护规程",
+    "notice_road_closure.md": "封路通告",
+    "notice_gas_construction.md": "燃气施工通告",
+    "underpasses.csv": "下穿隧道台账",
+    "pump_forebay_curves.csv": "泵站前池曲线",
+    "response_events_chengdu_20200811.csv": "成都 2020-08-11 定级记录",
+    "mapping_report.md": "ERA5 雨量映射说明",
+}
+
+
 def _deduction_query(question: str) -> tuple[str, str]:
     """把一句自由提问包成推演 Agent 能接的协议问法，返回 (事件编号, 完整问法)。
 
@@ -6561,14 +6719,17 @@ def workbench_chat(body: bytes | None) -> tuple[int, str, bytes]:
     if structured and structured.get("summary"):
         # 结构化结论在时，聊天框先显示人话摘要；原始 JSON 由前端折叠，别把一屏 JSON 糊上去
         display = str(structured["summary"])
+    # 模型自己也会写 ORG-ROAD / DF-PS-01 这类台账代号，同样换成人话。
+    # 只动展示串，`answer` 保持原文——要核对的人仍能拿到模型逐字输出。
     return _json(
         {
             "agent": agent,
             "event_id": event_id,
             "conversation_id": result.get("conversation_id"),
             "answer": answer,
-            "answer_text": display,
+            "answer_text": _humanize(display),
             "structured": structured,
+            "labels": _label_maps(),
             "evidence_refs": sorted(set(_REF_PATTERN.findall(answer))),
             "citations": sorted({item.strip() for item in _CITATION_PATTERN.findall(answer)})[:8],
         }
@@ -6586,7 +6747,9 @@ def workbench_locate(body: bytes | None) -> tuple[int, str, bytes]:
         return _error("evidence_ref 不能为空", 400)
 
     try:
-        result = _workbench_toolkit().call("evidence_locate", {"evidence_ref": ref})
+        result = _workbench_toolkit().call(
+            "evidence_locate", {"evidence_ref": ref, "caller_labels": [WORKBENCH_CALLER]}
+        )
     except Exception as exc:  # noqa: BLE001 - 资产缺失/解析异常都转成可读错误
         return _error(f"取证失败：{type(exc).__name__}: {exc}"[:300], 500)
     if result.status != "ok":
@@ -6660,27 +6823,55 @@ def _verify_one(kind: str, text: str) -> dict[str, Any]:
             head, _, anchor = text.partition("·")
             file_hint = head.strip()
             anchor = anchor.strip()
-            found = toolkit.call("doc_search", {"query": text, "top_k": 3})
-            if found.status != "ok":
-                item["reason"] = str(getattr(found.error, "message", None) or "检索不可用")
+
+            # 台账类（.csv）不走向量检索，直接查文件：
+            # 实测「DF-IN-101」在 drainage_facilities.csv 里明明有这一行，但向量排序把
+            # 别的行顶上来，top-5 都挤不进去，于是真引用被判悬空。台账是**结构化底账**，
+            # 逐行扫一遍比向量近邻可靠，也不受切片粒度影响。
+            if file_hint.endswith(".csv"):
+                rows = _ledger_rows(file_hint)
+                if not rows:
+                    item["reason"] = f"台账文件 {file_hint} 不存在"
+                    return item
+                row = next(
+                    (row for row in rows if anchor and any(anchor in str(v) for v in row.values())),
+                    None,
+                )
+                if row is None:
+                    item["reason"] = f"台账 {file_hint} 里没有「{anchor}」，这条引用指错了位置"
+                    return item
+                item.update(
+                    {
+                        "ok": True,
+                        "source_path": file_hint,
+                        "verified_by": "台账直查",
+                        "excerpt": "；".join(f"{k}={v}" for k, v in row.items() if v)[:300],
+                    }
+                )
                 return item
-            hits = found.data.get("hits") or []
+
+            def matches(hit: dict[str, Any]) -> bool:
+                source = str(hit.get("source_path") or "")
+                return bool(file_hint) and (
+                    source == file_hint or source.endswith("/" + file_hint) or file_hint in source
+                )
+
+            # 检索词先只给「章节主题」，不带文件名：实测带 `procedure_waterlogging.md`
+            # 反而把 work_orders.csv 顶到第一（词袋里扩展名和字段名互相干扰），
+            # 而「3 雨水口清掏」能一击命中。找不到再退回到带文件名的查法。
+            hits: list[dict[str, Any]] = []
+            for query in ([anchor, f"{anchor} {file_hint}"] if anchor else [file_hint]):
+                found = toolkit.call("doc_search", {"query": query, "top_k": 5})
+                if found.status != "ok":
+                    item["reason"] = str(getattr(found.error, "message", None) or "检索不可用")
+                    return item
+                hits = found.data.get("hits") or []
+                if any(matches(hit) for hit in hits):
+                    break
             if not hits:
                 item["reason"] = "索引里没有匹配切片"
                 return item
-            chosen = next(
-                (
-                    hit
-                    for hit in hits
-                    if file_hint
-                    and (
-                        str(hit.get("source_path") or "") == file_hint
-                        or str(hit.get("source_path") or "").endswith("/" + file_hint)
-                        or file_hint in str(hit.get("source_path") or "")
-                    )
-                ),
-                None,
-            )
+            chosen = next((hit for hit in hits if matches(hit)), None)
             if chosen is None:
                 item["reason"] = f"检索到的切片都不是「{file_hint}」，这条引用与原文对不上"
                 return item
@@ -6695,8 +6886,21 @@ def _verify_one(kind: str, text: str) -> dict[str, Any]:
             ref = text
             heading = ""
 
-        located = toolkit.call("evidence_locate", {"evidence_ref": ref})
+        located = toolkit.call(
+            "evidence_locate", {"evidence_ref": ref, "caller_labels": [WORKBENCH_CALLER]}
+        )
         if located.status != "ok":
+            # 受限资产（部门规程）不越权取正文。这不是"引用造假"，要说清区别。
+            error_code = str(getattr(located.error, "code", ""))
+            if "PERMISSION" in error_code:
+                item["blocked"] = True
+                details = getattr(located.error, "details", None) or {}
+                needed = details.get("required_labels") or []
+                item["reason"] = (
+                    f"权限受限：该依据只对 {'、'.join(needed) or '特定身份'} 开放，"
+                    f"工作台身份是 {WORKBENCH_CALLER}"
+                )
+                return item
             item["reason"] = str(getattr(located.error, "message", None) or "取不到原文")
             return item
         data = located.data
@@ -6751,15 +6955,23 @@ def workbench_verify(body: bytes | None) -> tuple[int, str, bytes]:
 
     items = [_verify_one("ref", ref) for ref in refs] + [_verify_one("citation", text) for text in citations]
     passed = sum(1 for item in items if item["ok"])
-    missing = len(items) - passed
+    blocked = sum(1 for item in items if item.get("blocked"))
+    missing = len(items) - passed - blocked
+    parts = [f"{passed}/{len(items)} 条引用可取证"]
+    if blocked:
+        # 权限受限与"引用对不上"是两件事：前者说明依据存在但当前身份看不到，
+        # 后者说明这条引用是编的或指错了。混成一个"悬空"会冤枉真引用。
+        parts.append(f"{blocked} 条权限受限（依据存在，当前身份看不到）")
+    if missing:
+        parts.append(f"{missing} 条悬空")
     return _json(
         {
             "total": len(items),
             "ok": passed,
+            "blocked": blocked,
             "missing": missing,
             "items": items,
-            "verdict": f"{passed}/{len(items)} 条引用可取证"
-            + ("" if not missing else f"，{missing} 条悬空"),
+            "verdict": "，".join(parts),
         }
     )
 
