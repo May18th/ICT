@@ -86,7 +86,11 @@ OUR_TOOLS = {
 #: `<|tool_call_start|>`。工具列表才是模型真正读的"提示词"，收窄挂载是唯一稳的约束方式。
 #: 协同入口 `collab_run` 挂在专用协同 Agent 上，否则主 Agent 会绕过 event_deduce，
 #: 8 项结论一致性校验就守不住。
-MAIN_TOOLS = {"event_deduce", "evidence_locate"}
+#
+#: 2026-11-13 起加入 doc_search（第 3 个）：真实预案进库后，推演需要能查到"依据哪一条"。
+#: 但必须限定用途——它只负责找规则依据，不负责提供事实。事实仍只认 event_deduce，
+#: 否则模型会用检索片段拼六跳，8 项结论一致性校验立刻失守（这条约束写进 DUTY_PROMPT）。
+MAIN_TOOLS = {"event_deduce", "evidence_locate", "doc_search"}
 
 DUTY_PROMPT = """你是城市内涝跨部门决策智能体。用户给出事件编号与时点后，严格按两步执行：
 
@@ -103,7 +107,16 @@ as_of 取值规则（**必须遵守，取错会让整轮结论失真**）：
 禁止事项（违反即视为答错）：不要用 python_interpreter 读技能文档或写代码；不要调用 read_skill_md；
 不要使用 parallel_executor；不要先输出思考再补工具调用。event_deduce 一次返回就包含六跳全部事实
 （observed/affected/owner/conflict/resource/action）、三类冲突、资源缺口与 action_order，
-所以拿到返回后**不要再调任何工具**。
+**所以事实层面不需要再调任何工具**。
+
+唯一允许的第二次工具调用是 doc_search，规则严格限定（违反即答错）：
+- 只在需要说明"这件事依据哪条预案/规程"时才调，query 用条款主题词
+  （如「Ⅳ级响应启动条件」「下穿隧道封控阈值」「泵站运维主体的界定」），不要用事件编号去搜；
+- **它只提供规则依据，不提供事实**：检索回来的条文不得写进 six_hops / conflicts /
+  resource_gap / action_order 的取值，也不得凭它新增或删减处置动作；
+- 检索结果与 event_deduce 返回冲突时，**一律以 event_deduce 为准**；
+- 最多调用 1 次；检索不到就按 event_deduce 的事实作答，并在 summary 里注明"未检索到对应条款"，
+  不要用常识补全。
 
 第二步：只根据 event_deduce 的返回结果构造 JSON 对象，字段如下（不得增删字段）：
 {"event_id": "...", "as_of": "...", "summary": "<一句话结论>",
@@ -117,7 +130,8 @@ as_of 取值规则（**必须遵守，取错会让整轮结论失真**）：
  "handoff_required": <true|false>}
 
 要求：工具返回里没有的数字不要编；evidence_refs 只列最有代表性的 3~5 条，不要把全部依据抄一遍
-（输出过长会被运行时按截断处理，整轮判失败）。
+（输出过长会被运行时按截断处理，整轮判失败）。evidence_refs 可以包含 doc_search 返回的
+`asset_id#locator`（那是规则依据的出处，可被 evidence_locate 复核），但事实类依据必须来自 event_deduce。
 **最后一步必须用 final_answer 交卷**：写一个 `<code>` 代码块，块内只有
 `final_answer(json.dumps(上面那个对象, ensure_ascii=False))` 这一句，块外不要再写 JSON 正文。
 代码块只能用 `<code>` / `</code>` 标签包裹，**不要用 ``` 三反引号围栏**——围栏不会被平台执行，

@@ -46,7 +46,7 @@
 - Nexent 北向传输层（SSE 聚合、幂等键、401/429/冲突错误映射，默认不联网）；
 - Nexent SDK 传输层（无平台环境时的内嵌路径，可选依赖）；
 - 北向链路真机验证（本机 Nexent v2.7.0，SSE → 结构化决策）；
-- 城市内涝主链路 Nexent 真机集成：MCP-over-SSE（15 工具）+ Agent 发布 v19（DeepSeek-Chat）+ 8/8 结论一致性校验（conversation_id=120）；
+- 城市内涝主链路 Nexent 真机集成：MCP-over-SSE（15 工具）+ Agent 发布 v24（DeepSeek-Chat）+ 8/8 结论一致性校验（v24 加 doc_search 后复跑仍 8/8；历史真机留痕 conversation_id=120）；
 - 多模态数据资产标识（表格 / 文本 / 图片统一登记、结构摘要、标准引用、可引用定位）；
 - 本体半自动构建（种子本体 → 规则抽取 → 置信度分档 + 跨文档多跳证据 + 合并计划）；
 - 城市内涝数字孪生语义层 + 六跳跨部门推演 + 三类职责冲突 + 反事实重放（P4–P6）；
@@ -275,10 +275,10 @@ uv run --locked python -c "from decision_poc.nexent_sdk_transport import NexentS
 赛题 3 的「基于 Nexent 可运行」不是"能连上"，而是"平台 Agent 调工具产出的结论与离线一致"。当前已在本机
 Nexent **v2.7.0**（主 Agent v19，模型 DeepSeek-Chat）跑通。原绑定的 openPangu-2.0-Pro 走华为 ModelArts，
 2026-11-06 因账户欠费停服，主/协同 Agent 改挂平台已注册的 DeepSeek-Chat（`MODEL_IDS` 默认 5），
-重发布 v19 / v7 后同一提示词复测仍 8/8；下文的真机证据以 v19 那一轮为准：
+（历史）重发布到 v19 / v7 后同一提示词复测仍 8/8；下文真机证据以那一轮为准，当前线上为 v24：
 
 - MCP 服务 `urban-twin-mcp`（15 工具）以 SSE 方式跑在 `nexent_network` 容器里；
-- Agent `urban_deduction_agent`（agent_id=3，已发布 v19）只挂 2 个工具（`event_deduce` / `evidence_locate`，收窄原因见真机报告 §6）；
+- Agent `urban_deduction_agent`（agent_id=3，已发布 v24）挂三个工具（`event_deduce` / `evidence_locate` / `doc_search`，收窄原因见真机报告 §6）；`doc_search` 只查规则依据，事实仍只认 `event_deduce`；
 - 一次真实对话（**conversation_id=120**）产出六跳 JSON，与离线 `DeductionEngine` **8/8 项一致**；
 - 平台侧确实发生了工具调用：`event_deduce`（18ms）+ 一次协议修复重试（6ms），
   两条日志快照哈希一致（协同链路的 3 次 `collab_run` 实测另见 `samples/nexent/live/collab_live.json`，成功率 2/3）。

@@ -76,7 +76,7 @@
   | ② 低资源本体半自动构建 | 种子本体 → 规则抽取 → 置信度分档 → 人工确认 → 版本发布/回滚；改 1 格只产 2 条候选，回滚哈希逐位一致 | 强 |
   | ③ MCP / Skills 编排 | 15 个 MCP 工具 + 5 Skill 编排 + 2 个已上传 `SKILL.md`；平台 Agent 实调工具产出结论 | 强 |
   | ④ 跨文档多跳推理与溯源 | 六跳 + 三类冲突 + 反事实重放 + 哈希链账本；引用完整率 100%、篡改可定位 | 强 |
-  | ⑤ 基于 Nexent 可运行 | 真机：15 工具注册、Agent 发布 v19（DeepSeek-Chat）、`conversation_id=120`、六跳结论 8/8 一致 | 强（单环境单事件） |
+  | ⑤ 基于 Nexent 可运行 | 真机：15 工具注册、Agent 发布 v24（DeepSeek-Chat）、`conversation_id=120`、六跳结论 8/8 一致 | 强（单环境单事件） |
 
 - **截图 / 证据**：本页表格直接套版（右侧留一列放考点徽章，不放截图，避免挤）。
   每行的可打开文件：① `docs/reports/data-gate-report.md` ② `docs/reports/p3-evolution-report.md`
@@ -126,7 +126,7 @@
 - **屏上标题**：不是本地脚本装智能体，是平台上真调工具
 - **要点（≤5 条）**
   1. MCP 服务 `urban-twin-mcp` 以 SSE 注册进平台，**15 个工具**
-  2. Agent `urban_deduction_agent`（DeepSeek-Chat）发布 **v19**
+  2. Agent `urban_deduction_agent`（DeepSeek-Chat）发布 **v24**
   3. 真机对话 `conversation_id=120`，六跳结论与离线推演 **8/8 一致**，两条快照哈希一致
   4. 平台侧调用日志可查：`event_deduce` 28 ms、`attempts=1`（未触发协议修复重试）
   5. 2 个 `SKILL.md` 已上传平台技能仓库（`skill_id=2/3`，正文逐位一致）

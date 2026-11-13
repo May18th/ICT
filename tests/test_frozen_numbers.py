@@ -117,12 +117,6 @@ REAL_PUBLIC_PLAN_ASSETS = 2
 #: 合法但**不是总数**的命中：(family, 文件, 值) -> (允许出现次数, 理由)。
 #: 次数不是装饰：同一文件里同值若出现两次而只登记一次，说明有一处没解释，必须红。
 ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
-    ("tools", "README.md", 2): (1, "「Agent 只挂 2 个工具」是绑定数，不是工具总数"),
-    (
-        "tools",
-        "docs/competition/OFFLINE.md",
-        2,
-    ): (1, "「主 Agent 只挂 2 个工具」是绑定数，不是工具总数"),
     (
         "tools",
         "docs/competition/skills-mcp-design.md",
@@ -138,16 +132,6 @@ ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
         "docs/赛道3-组件边界与推进路径-v0.1.md",
         48,
     ): (1, "「Nexent 工具表共 48 个工具」指平台全量工具库（含 local 类），不是本 MCP 服务的工具数"),
-    (
-        "tools",
-        "docs/赛道3-组件边界与推进路径-v0.1.md",
-        2,
-    ): (1, "「主 Agent 只启用 2 个工具」是 MAIN_TOOLS 的挂载数，不是工具总数"),
-    (
-        "tools",
-        "docs/competition/winning-gap-audit.md",
-        2,
-    ): (1, "「2 工具主 Agent」是主 Agent 的挂载数，不是工具总数"),
     (
         "tools",
         "docs/competition/winning-gap-audit.md",

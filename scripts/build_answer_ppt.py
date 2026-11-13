@@ -276,7 +276,7 @@ _rect(s, 0, 0, W, H, BG)
 _header(s, "P6 · Nexent 平台真机（3:15–4:05）", "不是本地脚本装智能体，是平台上真调工具")
 _bullets(s, Inches(0.62), Inches(2.0), Inches(5.6), Inches(4.3), [
     "MCP 服务 urban-twin-mcp 以 SSE 注册进平台，15 个工具",
-    "Agent urban_deduction_agent（DeepSeek-Chat）已发布 v19",
+    "Agent urban_deduction_agent（DeepSeek-Chat）已发布 v24",
     "真机对话六跳结论与离线推演 8/8 一致，快照哈希一致",
     "平台侧调用日志可查：event_deduce 实际调用",
     "2 个 SKILL.md 已上传平台技能仓库（skill_id=2/3）",
