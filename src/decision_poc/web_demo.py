@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import csv
+import io
 import json
 import os
 import re
@@ -5247,6 +5248,7 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
       <button class="tab on" data-tab="evidence">证据</button>
       <button class="tab" data-tab="tools">工具轨迹</button>
       <button class="tab" data-tab="selfcheck">自检</button>
+      <button class="tab" data-tab="replay">复跑</button>
     </div>
     <div class="body" id="pane"><div class="empty">点左侧站内对话里的 ref 芯片，这里显示原文。</div></div>
   </section>
@@ -5295,9 +5297,73 @@ function send(){
         n.appendChild(cbox);
       }
       note(res.d.agent+' · 会话 '+(conv||'-')+(refs.length?(' · '+refs.length+' 条可定位引用'):'')+(cites.length?(' · '+cites.length+' 条知识库引用'):''));
+      if(refs.length||cites.length){ verifyAll(refs,cites,n); }
       stat.textContent='已连接';
     })
    .catch(function(e){go.disabled=false; bubble('ai','（网络错误）'+e); stat.textContent='未连接';});
+}
+
+var lastVerify=null;
+function verifyAll(refs,cites,host){
+  var badge=el('span','chip','证据链核验中…');
+  badge.style.marginLeft='8px'; badge.style.cursor='pointer';
+  badge.onclick=function(){ if(lastVerify){ renderVerify(lastVerify); } };
+  host.appendChild(badge);
+  fetch('/api/workbench/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refs:refs,citations:cites})})
+   .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+   .then(function(res){
+      if(!res.ok){ badge.textContent='证据链核验失败'; badge.title=res.d.error||''; return; }
+      lastVerify=res.d;
+      badge.textContent='证据链 '+res.d.ok+'/'+res.d.total+' 可取证';
+      badge.title='点击查看逐条核验结果';
+      if(res.d.missing){
+        badge.textContent+='（'+res.d.missing+' 条悬空）';
+        badge.style.borderColor='#e8b4a0'; badge.style.color='#b4532a';
+      }
+    })
+   .catch(function(e){ badge.textContent='证据链核验失败'; badge.title=String(e); });
+}
+
+function renderVerify(d){
+  setTab('evidence'); pane.innerHTML='';
+  var head=el('div','empty',d.verdict);
+  head.style.color = d.missing ? '#b4532a' : '#0f766e';
+  head.style.fontWeight='600';
+  pane.appendChild(head);
+  pane.appendChild(el('div','empty','悬空 = 这条引用回不到原文，要么原文里没有，要么定位信息不全；两种都要人工核对，不能当作已证实。'));
+  (d.items||[]).forEach(function(it){
+    var box=el('div');
+    box.style.margin='12px 0'; box.style.borderTop='1px solid #f3f4f6'; box.style.paddingTop='10px';
+    var tag=el('span','chip',it.ok?'可取证':'悬空');
+    if(!it.ok){ tag.style.borderColor='#e8b4a0'; tag.style.color='#b4532a'; }
+    box.appendChild(tag);
+    var kind=el('span','mono',it.kind==='citation'?'知识库引用':'直接引用');
+    kind.style.fontSize='12px'; kind.style.color='#6b7280'; kind.style.marginLeft='8px';
+    box.appendChild(kind);
+    var src=el('div','mono',it.input);
+    src.style.fontSize='12px'; src.style.color='#374151'; src.style.marginTop='6px'; src.style.wordBreak='break-all';
+    box.appendChild(src);
+    if(it.ok){
+      var meta=el('div','mono',(it.source_path||'')+(it.span?(' · 第 '+it.span.start+'–'+it.span.end+' 行'):(it.row?(' · 第 '+it.row+' 行'):'')));
+      meta.style.fontSize='12px'; meta.style.color='#6b7280'; meta.style.marginTop='4px';
+      box.appendChild(meta);
+      box.appendChild(el('pre','excerpt',it.excerpt||''));
+      var target=it.resolved_ref||it.input;
+      var c=el('span','chip',target); c.style.marginTop='6px'; c.style.display='inline-block'; c.title='点击查看原文';
+      c.onclick=function(){ locate(target); };
+      box.appendChild(c);
+    }else{
+      var why=el('div','empty','原因：'+(it.reason||'未说明'));
+      why.style.marginTop='4px';
+      box.appendChild(why);
+      if(it.resolved_ref){
+        var r=el('span','chip',it.resolved_ref); r.style.marginTop='6px'; r.style.display='inline-block'; r.title='这条切片本身可定位，点开看原文';
+        r.onclick=function(){ locate(it.resolved_ref); };
+        box.appendChild(r);
+      }
+    }
+    pane.appendChild(box);
+  });
 }
 
 function locate(ref){
@@ -5345,12 +5411,132 @@ function searchRef(text){
    .catch(function(e){pane.textContent='网络错误：'+e;});
 }
 
+function loadReplay(){
+  pane.innerHTML='';
+  var bar=el('div');
+  bar.style.display='flex'; bar.style.alignItems='center'; bar.style.gap='10px';
+  bar.style.marginBottom='12px'; bar.style.flexWrap='wrap';
+  var btn=el('button','send','复跑本事件');
+  btn.id='replayBtn'; btn.style.height='32px'; btn.style.borderRadius='8px';
+  btn.onclick=function(){runReplay(this);};
+  bar.appendChild(btn);
+  bar.appendChild(el('span','empty','同一事件真机跑一遍主 Agent，八项判据实时重算，并与上一轮逐项比对（约 10–30 秒）。'));
+  pane.appendChild(bar);
+  var host=el('div'); host.id='replayResult'; pane.appendChild(host);
+  host.appendChild(el('div','empty','读取历史…'));
+  fetch('/api/workbench/replay').then(function(r){return r.json();}).then(function(d){
+    host.innerHTML='';
+    var runs=d.runs||[];
+    if(!runs.length){host.appendChild(el('div','empty','还没有复跑记录。点上面的按钮跑第一次。'));return;}
+    if(d.latest){ renderReplay({current:d.latest, diff:d.diff||{}}); }
+    var sep=el('div','empty','最近 '+runs.length+' 轮');
+    sep.style.margin='16px 0 6px'; sep.style.paddingTop='10px'; sep.style.borderTop='1px solid #f3f4f6';
+    host.appendChild(sep);
+    var t=el('table'), head=el('tr');
+    ['时间','版本','判据','耗时','会话'].forEach(function(h){head.appendChild(el('th',null,h));});
+    t.appendChild(head);
+    runs.forEach(function(x){
+      var tr=el('tr');
+      tr.appendChild(el('td','mono',(x.ts||'').replace('T',' ').slice(0,19)));
+      tr.appendChild(el('td','mono',(x.agent_version===null||x.agent_version===undefined)?'-':('v'+x.agent_version)));
+      tr.appendChild(el('td',x.passed?'ok':'bad',(x.checks_passed||0)+'/'+(x.checks_total||0)));
+      tr.appendChild(el('td','mono',(x.elapsed_s===null||x.elapsed_s===undefined)?'-':(x.elapsed_s+' s')));
+      tr.appendChild(el('td','mono',x.conversation_id||'-'));
+      t.appendChild(tr);
+    });
+    host.appendChild(t);
+  }).catch(function(e){host.textContent='读取历史失败：'+e;});
+}
+
+function runReplay(btn){
+  btn.disabled=true; btn.textContent='复跑中…';
+  stat.textContent='复跑中…';
+  var host=document.getElementById('replayResult');
+  if(host){host.innerHTML=''; host.appendChild(el('div','empty','正在调用平台，八项判据重算中…'));}
+  fetch('/api/workbench/replay',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+   .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+   .then(function(res){
+      btn.disabled=false; btn.textContent='复跑本事件'; stat.textContent='就绪';
+      var box=document.getElementById('replayResult');
+      if(!box){return;}
+      box.innerHTML='';
+      if(!res.ok){box.appendChild(el('div','empty','复跑失败：'+(res.d.error||'')));return;}
+      // 跑完直接重载历史：新记录进日志，明细与列表都从同一份数据渲染，避免两处口径不一致
+      loadReplay();
+    })
+   .catch(function(e){btn.disabled=false; btn.textContent='复跑本事件'; stat.textContent='未连接';
+      var box=document.getElementById('replayResult'); if(box){box.textContent='网络错误：'+e;}});
+}
+
+function fmtCell(v){
+  if(v===null||v===undefined){return '-';}
+  if(typeof v==='string'){return v;}
+  return JSON.stringify(v);
+}
+
+function maybeNum(v){return (v===null||v===undefined)?'?':v;}
+
+function renderReplay(d){
+  var box=document.getElementById('replayResult'); if(!box){return;}
+  var c=d.current||{};
+  var verdict=el('div');
+  verdict.style.fontWeight='600'; verdict.style.marginBottom='6px';
+  verdict.className = c.passed?'ok':'bad';
+  verdict.textContent = c.passed
+    ? ('与离线基线一致：'+c.checks_passed+'/'+c.checks_total)
+    : ('与离线基线不一致：'+c.checks_passed+'/'+c.checks_total+' 项通过');
+  box.appendChild(verdict);
+
+  box.appendChild(el('div','empty',
+    '版本 v'+maybeNum(c.agent_version)+' · 会话 '+(c.conversation_id||'-')
+    +' · 耗时 '+c.elapsed_s+' s · 证据 '+(c.evidence_count||0)+' 条 · '+(c.ts||'').replace('T',' ').slice(0,19)));
+
+  var t=el('table'), head=el('tr');
+  ['判据','期望','实际','结果'].forEach(function(h){head.appendChild(el('th',null,h));});
+  t.appendChild(head);
+  (c.checks||[]).forEach(function(item){
+    var tr=el('tr');
+    var nameCell=el('td',null,item.name);
+    nameCell.style.whiteSpace='nowrap'; nameCell.style.width='96px';
+    tr.appendChild(nameCell);
+    tr.appendChild(el('td','mono',fmtCell(item.expected)));
+    tr.appendChild(el('td','mono',fmtCell(item.actual)));
+    tr.appendChild(el('td',item.passed?'ok':'bad',item.passed?'通过':'不符'));
+    t.appendChild(tr);
+  });
+  box.appendChild(t);
+
+  var diff=d.diff||{};
+  var dbox=el('div');
+  dbox.style.marginTop='14px'; dbox.style.paddingTop='10px'; dbox.style.borderTop='1px solid #f3f4f6';
+  if(!diff.available){
+    dbox.appendChild(el('div','empty',diff.reason||'没有上一轮可比。'));
+  }else{
+    dbox.appendChild(el('div','empty',
+      '与上一轮（'+(diff.previous_ts||'').replace('T',' ').slice(0,19)+' · v'+maybeNum(diff.previous_version)
+      +' · '+maybeNum(diff.previous_checks_passed)+' 项通过）相比：'
+      +(diff.same_checks?'八项判定完全未变':('恢复 '+diff.fixed.length+' 项，新增失败 '+diff.broken.length+' 项'))));
+    if(diff.version_changed){
+      dbox.appendChild(el('div','warn','注意：这一轮换了 Agent 版本，差异可能来自版本而不是模型波动。'));
+    }
+    if((diff.fixed||[]).length){dbox.appendChild(el('div','ok','恢复：'+diff.fixed.join('、')));}
+    if((diff.broken||[]).length){dbox.appendChild(el('div','bad','新增失败：'+diff.broken.join('、')));}
+  }
+  box.appendChild(dbox);
+
+  if((c.errors||[]).length){
+    var err=el('div','bad','平台报错：'+c.errors.join(' / '));
+    err.style.marginTop='8px'; box.appendChild(err);
+  }
+}
+
 function setTab(name){
   current=name;
   var tabs=document.querySelectorAll('.tab');
   for(var i=0;i<tabs.length;i++){tabs[i].className='tab'+(tabs[i].dataset.tab===name?' on':'');}
   if(name==='tools'){loadTools();}
   else if(name==='selfcheck'){loadStatus();}
+  else if(name==='replay'){loadReplay();}
   else if(!pane.querySelector('dl')){pane.innerHTML='<div class="empty">点左侧站内对话里的 ref 芯片，这里显示原文。</div>';}
 }
 
@@ -5399,6 +5585,8 @@ document.getElementById('f').addEventListener('submit',function(e){e.preventDefa
 q.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
 var sws=document.querySelectorAll('.sw'); for(var i=0;i<sws.length;i++){sws[i].onclick=function(){switchMode(this.dataset.mode);};}
 var tabs=document.querySelectorAll('.tab'); for(var j=0;j<tabs.length;j++){tabs[j].onclick=function(){setTab(this.dataset.tab);};}
+// 允许直接链接到某一栏（演示时把 #replay 发出去，打开就是复跑面板）
+if(location.hash==='#replay'){setTab('replay');}
 </script></body></html>
 """
 
@@ -5428,6 +5616,200 @@ def clean_agent_answer(answer: str) -> str:
     if len(text) >= 2 and text[0] == text[-1] and text[0] in {'"', "'"}:
         text = text[1:-1]
     return text
+
+
+#: 复跑用的默认事件：必须与主链路验收同一个事件，否则"跟上次比"没有可比性。
+WORKBENCH_REPLAY_EVENT = "WO-20261029-007"
+WORKBENCH_REPLAY_AS_OF = "2026-10-29T09:40:00+08:00"
+
+
+def _replay_log_path() -> Path:
+    """运行历史落在 `artifacts/` 下（已 gitignore）：它是运行产物，不是证据样本。
+
+    为什么不写进 `samples/`：每点一次就追加一行，进版本库等于把仓库当日志用。
+    要留档的结论另外落到 `samples/nexent/live/`。
+    """
+    directory = Path(__file__).resolve().parents[2] / "artifacts" / "workbench"
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory / "replay_runs.jsonl"
+
+
+def read_replay_runs(*, event_id: str | None = None, limit: int = 10) -> list[dict[str, Any]]:
+    """读复跑历史，新的在前。坏行跳过——日志被手工编辑过也不该让页面崩。"""
+    path = _replay_log_path()
+    if not path.is_file():
+        return []
+    runs: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if event_id and record.get("event_id") != event_id:
+            continue
+        runs.append(record)
+    return list(reversed(runs))[:limit]
+
+
+def _live_agent_version(agent_name: str) -> int | None:
+    """查一次平台当前版本号，用于判断两次复跑之间换没换版本。
+
+    失败返回 None，不抛：版本查不到只影响"这次变化能否归因到版本"，
+    不该让复跑本身失败。
+    """
+    import urllib.request
+
+    base = os.getenv("NEXENT_BASE_URL", "http://localhost:5013").rstrip("/")
+    key = os.getenv("NEXENT_API_KEY", "").strip()
+    request = urllib.request.Request(
+        f"{base}/nb/v1/agents",
+        headers={"Authorization": f"Bearer {key}", "Accept": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            payload = json.loads(response.read().decode("utf-8", errors="replace"))
+    except Exception:  # noqa: BLE001 - 版本号是附加信息
+        return None
+    for item in payload.get("data") or []:
+        if item.get("name") == agent_name:
+            return item.get("current_version_no")
+    return None
+
+
+def _replay_diff(current: dict[str, Any], previous: dict[str, Any] | None) -> dict[str, Any]:
+    """逐项比两次复跑。只比 passed，不比 expected/actual 文本——
+    期望值来自同一份离线基线，实际值措辞会变，逐字比会把改写误判成结论变化。
+    """
+    if not previous:
+        return {"available": False, "reason": "这是第一次复跑，没有可比的上一轮"}
+    before = {item["name"]: item.get("passed") for item in previous.get("checks", [])}
+    after = {item["name"]: item.get("passed") for item in current.get("checks", [])}
+    return {
+        "available": True,
+        "previous_ts": previous.get("ts"),
+        "previous_version": previous.get("agent_version"),
+        "previous_checks_passed": previous.get("checks_passed"),
+        "version_changed": previous.get("agent_version") != current.get("agent_version"),
+        # 上轮不过、这轮过；上轮过、这轮不过。两个都空 = 判定没动。
+        "fixed": [name for name, ok in after.items() if ok and before.get(name) is False],
+        "broken": [name for name, ok in after.items() if (not ok) and before.get(name) is True],
+        "same_checks": bool(before) and before == after,
+    }
+
+
+def workbench_replay(body: bytes | None) -> tuple[int, str, bytes]:
+    """POST /api/workbench/replay：同一事件真机复跑一次，并与上一次逐项比对。
+
+    为什么值得单独做一个端点：`8/8` 目前只是一份 JSON 里的数字，谁也当场复现不了。
+    点一下，八项判据实时重算、和上一轮摊在一起比，"可进化"才有可验证的形式。
+    """
+    try:
+        payload = json.loads((body or b"{}").decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return _error("请求体不是合法 JSON", 400)
+    event_id = str(payload.get("event_id") or WORKBENCH_REPLAY_EVENT).strip()
+    as_of = str(payload.get("as_of") or WORKBENCH_REPLAY_AS_OF).strip()
+
+    key = os.getenv("NEXENT_API_KEY", "").strip()
+    if not key:
+        return _error("未配置 NEXENT_API_KEY（北向访问凭据），无法复跑", 503)
+
+    from .nexent_transport import NexentSettings
+    from .nexent_urban import DEFAULT_LABELS
+    from .nexent_urban import run as urban_run
+
+    settings = NexentSettings(
+        base_url=os.getenv("NEXENT_BASE_URL", "http://localhost:5013").rstrip("/"),
+        api_key=key,
+        agent_name=WORKBENCH_AGENTS["deduction"],
+    )
+    previous_runs = read_replay_runs(event_id=event_id, limit=1)
+    started = time.time()
+    try:
+        report = urban_run(
+            settings=settings,
+            event_id=event_id,
+            as_of=as_of,
+            labels=list(DEFAULT_LABELS),
+            attempts=1,
+            out=io.StringIO(),
+        )
+    except Exception as exc:  # noqa: BLE001 - 平台不通要给可读原因，不能抛 500 堆栈
+        return _error(f"复跑失败：{type(exc).__name__}: {exc}"[:300], 502)
+
+    answer = report.answer
+    current: dict[str, Any] = {
+        "ts": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "event_id": event_id,
+        "as_of": as_of,
+        "agent": settings.agent_name,
+        "agent_version": _live_agent_version(settings.agent_name),
+        "conversation_id": report.conversation_id,
+        "elapsed_s": round(time.time() - started, 1),
+        "checks_passed": sum(1 for item in report.checks if item.passed),
+        "checks_total": len(report.checks),
+        "passed": not report.errors
+        and bool(report.checks)
+        and all(item.passed for item in report.checks),
+        "checks": [
+            {"name": item.name, "expected": item.expected, "actual": item.actual, "passed": item.passed}
+            for item in report.checks
+        ],
+        "summary": (answer.summary if answer else "")[:300],
+        "evidence_count": len(answer.evidence_refs) if answer else 0,
+        "errors": list(report.errors)[:3],
+    }
+
+    with _replay_log_path().open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(current, ensure_ascii=False, default=str) + "\n")
+
+    previous = previous_runs[0] if previous_runs else None
+    return _json(
+        {
+            "current": current,
+            "previous": {
+                "ts": previous.get("ts"),
+                "agent_version": previous.get("agent_version"),
+                "conversation_id": previous.get("conversation_id"),
+                "checks_passed": previous.get("checks_passed"),
+                "checks_total": previous.get("checks_total"),
+            }
+            if previous
+            else None,
+            "diff": _replay_diff(current, previous),
+        }
+    )
+
+
+def workbench_replay_history(limit: int = 10) -> tuple[int, str, bytes]:
+    """GET /api/workbench/replay：最近几轮复跑。
+
+    除了摘要列表，还回最近一轮的**完整明细**与它跟上一轮的差异：页面打开就该有东西看，
+    不必先花 10 秒跑一次才知道上次结果如何。
+    """
+    fields = (
+        "ts",
+        "event_id",
+        "agent_version",
+        "conversation_id",
+        "elapsed_s",
+        "checks_passed",
+        "checks_total",
+        "passed",
+    )
+    runs = read_replay_runs(limit=limit)
+    latest = runs[0] if runs else None
+    previous = runs[1] if len(runs) > 1 else None
+    return _json(
+        {
+            "runs": [{key: run.get(key) for key in fields} for run in runs],
+            "latest": latest,
+            "diff": _replay_diff(latest, previous) if latest else {"available": False, "reason": "还没有复跑记录"},
+        }
+    )
 
 
 def workbench_chat(body: bytes | None) -> tuple[int, str, bytes]:
@@ -5548,6 +5930,129 @@ def workbench_search(body: bytes | None) -> tuple[int, str, bytes]:
     return _json({"query": query, "hits": hits})
 
 
+def _verify_one(kind: str, text: str) -> dict[str, Any]:
+    """核验一条引用：能不能落回原文。取不到就记原因，不吞掉。
+
+    两种引用走两条路：
+    - `ref`（`AS-…#locator#line:n`）直接 `evidence_locate`；
+    - `citation`（「文件 · 编号」）先 `doc_search` 反查切片拿 locator，再 locate。
+
+    **反查必须校验文件名与锚点，不能直接取 top-1**：`doc_search` 永远会返回最近的切片，
+    拿它当"找到原文"会把编造的引用也判成通过（实测「完全不存在的引用 · ZZ-999」被
+    匹配到了防汛预案）。所以要求命中的 `source_path` 与引用里写的文件名一致，
+    且引用后半段的编号/条款要真的出现在原文里，缺一条就判悬空。
+    """
+    item: dict[str, Any] = {"kind": kind, "input": text, "ok": False}
+    toolkit = _workbench_toolkit()
+    try:
+        if kind == "citation":
+            head, _, anchor = text.partition("·")
+            file_hint = head.strip()
+            anchor = anchor.strip()
+            found = toolkit.call("doc_search", {"query": text, "top_k": 3})
+            if found.status != "ok":
+                item["reason"] = str(getattr(found.error, "message", None) or "检索不可用")
+                return item
+            hits = found.data.get("hits") or []
+            if not hits:
+                item["reason"] = "索引里没有匹配切片"
+                return item
+            chosen = next(
+                (
+                    hit
+                    for hit in hits
+                    if file_hint
+                    and (
+                        str(hit.get("source_path") or "") == file_hint
+                        or str(hit.get("source_path") or "").endswith("/" + file_hint)
+                        or file_hint in str(hit.get("source_path") or "")
+                    )
+                ),
+                None,
+            )
+            if chosen is None:
+                item["reason"] = f"检索到的切片都不是「{file_hint}」，这条引用与原文对不上"
+                return item
+            ref = chosen.get("evidence_ref")
+            item["resolved_ref"] = ref
+            item["score"] = chosen.get("score")
+            heading = " ".join(str(part) for part in (chosen.get("heading_path") or []))
+            if not ref:
+                item["reason"] = "命中的切片没有 locator，回不到原文"
+                return item
+        else:
+            ref = text
+            heading = ""
+
+        located = toolkit.call("evidence_locate", {"evidence_ref": ref})
+        if located.status != "ok":
+            item["reason"] = str(getattr(located.error, "message", None) or "取不到原文")
+            return item
+        data = located.data
+        if kind == "citation" and anchor:
+            excerpt = str(data.get("excerpt") or "")
+            # 锚点有两种合法形态：条目编号（原文里有这个字符串）与章节标题
+            # （`plan_flood… · 3 封路判定标准`）。后者不会在正文里重复标题，
+            # 只能靠命中切片的 heading_path 认，否则真引用会被误判成悬空（踩过）。
+            if anchor not in excerpt and anchor not in heading:
+                item["reason"] = f"原文里没有「{anchor}」，这条引用指错了位置"
+                return item
+        asset = data.get("asset") or {}
+        item.update(
+            {
+                "ok": True,
+                "asset_id": asset.get("asset_id"),
+                "source_path": asset.get("file_name"),
+                "span": data.get("span"),
+                "row": data.get("row"),
+                "excerpt": (data.get("excerpt") or "")[:300],
+            }
+        )
+    except Exception as exc:  # noqa: BLE001 - 单条失败不能让整次体检中断
+        item["reason"] = f"{type(exc).__name__}: {exc}"[:200]
+    return item
+
+
+def workbench_verify(body: bytes | None) -> tuple[int, str, bytes]:
+    """POST /api/workbench/verify：把一次回答的引用全部核一遍，给出可取证率。
+
+    这条接口存在的原因：`/locate` 是"点一条看一条"，而"证据链完整"是一句**可证伪的
+    断言**——它得能报出"12 条引用 12 条可取证"或"11/12，1 条悬空"。没有这个总数，
+    完整性就只是形容词。
+    """
+    try:
+        payload = json.loads((body or b"{}").decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return _error("请求体不是合法 JSON", 400)
+
+    def _clean(values: Any) -> list[str]:
+        seen: dict[str, None] = {}
+        for value in values or []:
+            text = str(value).strip()
+            if text:
+                seen.setdefault(text, None)
+        return list(seen)
+
+    refs = _clean(payload.get("refs"))[:24]
+    citations = _clean(payload.get("citations"))[:24]
+    if not refs and not citations:
+        return _error("没有可核验的引用", 400)
+
+    items = [_verify_one("ref", ref) for ref in refs] + [_verify_one("citation", text) for text in citations]
+    passed = sum(1 for item in items if item["ok"])
+    missing = len(items) - passed
+    return _json(
+        {
+            "total": len(items),
+            "ok": passed,
+            "missing": missing,
+            "items": items,
+            "verdict": f"{passed}/{len(items)} 条引用可取证"
+            + ("" if not missing else f"，{missing} 条悬空"),
+        }
+    )
+
+
 def build_workbench_html() -> str:
     """注入平台对话页地址。平台 Web 与北向不是同一个端口，所以单独取 env。"""
     web = os.getenv("NEXENT_WEB_BASE", "http://localhost:3000").rstrip("/")
@@ -5639,6 +6144,10 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return 200, "text/html; charset=utf-8", build_status_html().encode("utf-8")
     if parsed.path == "/workbench":
         return 200, "text/html; charset=utf-8", build_workbench_html().encode("utf-8")
+    if segments[:3] == ["api", "workbench", "replay"]:
+        if method.upper() == "POST":
+            return workbench_replay(body)
+        return workbench_replay_history()
     if segments[:3] == ["api", "workbench", "chat"]:
         if method.upper() != "POST":
             return _error("只接受 POST", 405)
@@ -5653,6 +6162,10 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         if method.upper() != "POST":
             return _error("只接受 POST", 400)
         return workbench_search(body)
+    if segments[:3] == ["api", "workbench", "verify"]:
+        if method.upper() != "POST":
+            return _error("只接受 POST", 400)
+        return workbench_verify(body)
     if parsed.path == "/feedback/history":
         return 200, "application/json; charset=utf-8", json.dumps(
             {"runs": read_feedback_runs(limit=30)}, ensure_ascii=False
