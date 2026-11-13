@@ -12,6 +12,8 @@ from __future__ import annotations
 import csv
 import json
 import os
+import re
+import time
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -499,7 +501,7 @@ html.projection .scene-detail-grid strong{font-size:15.5px}
 def build_html() -> str:
     return """<!doctype html><html lang=zh-CN><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Urban Twin</title>
 <style>body{font:15px system-ui;margin:0;background:#0b1220;color:#e8eef7}main{max-width:1180px;margin:auto;padding:28px}h1{color:#7dd3fc;margin-bottom:4px}.sub{color:#9fb1c8}.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:22px 0}button{background:#38bdf8;border:0;border-radius:6px;padding:10px 18px;font-weight:700;cursor:pointer;white-space:nowrap;flex:0 0 auto}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.card{background:#152238;border:1px solid #263a55;border-radius:10px;padding:16px}.card h2{font-size:17px;margin:0 0 12px;color:#bae6fd}.metric{display:inline-block;background:#20344d;border-radius:7px;padding:10px;margin:0 8px 8px 0}.metric b{display:block;font-size:22px;color:#7dd3fc}.pill{display:inline-block;background:#334155;padding:3px 8px;border-radius:99px;margin:3px;font-size:12px}.warn{color:#fbbf24}.ok{color:#86efac}.trace{border-left:2px solid #38bdf8;padding-left:12px;margin:8px 0}.evidence{font-size:12px;color:#b8c7d9;word-break:break-all}svg{width:100%;height:330px;background:#0e1a2c;border-radius:8px}.road{stroke:#64748b;stroke-width:8}.flood{fill:#38bdf8;opacity:.35}.zone{fill:#1d3252;fill-opacity:.25;stroke:#2f4a6b;stroke-width:1.5;stroke-dasharray:6 6}.node{fill:#fbbf24;stroke:#fff;stroke-width:2}.navlink{color:#7dd3fc;text-decoration:none;margin-left:auto;font-weight:600}.guide{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:20px 0 0;border-top:1px solid #263a55}.guide>div{padding:14px 20px 0;border-left:1px solid #263a55;font-size:13px;color:#b8c7d9;line-height:1.65}.guide>div:first-child{border-left:0;padding-left:0}.guide b{display:block;font:700 12px ui-monospace,monospace;color:#38bdf8;letter-spacing:.1em}.guide span{display:block;font-size:16px;font-weight:700;color:#e8eef7;margin:2px 0 5px}.lgd{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 0;font-size:12px;color:#8fa4bd}.lgd i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}.cap{font-size:12px;color:#8fa4bd;margin:10px 0 4px}.cvwho{margin:12px 0 4px;color:#7dd3fc;font-weight:700;font-size:14px}.cvwho .tag{margin-left:8px;font-weight:400}.cvrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:start;padding:5px 0;border-bottom:1px dashed #1e3250;font-size:13px}.cvact{color:#cfe3f7;line-height:1.5;overflow-wrap:anywhere}.dp{font-size:11px;color:#7f93ab;line-height:1.5;margin:-2px 0 7px}.row.inv{color:#e8eef7}.tech{margin-top:18px;border:1px solid #263a55;border-radius:10px;background:#111d30}.tech>summary{cursor:pointer;padding:13px 16px;color:#8fa4bd;font-size:13px;font-weight:600;list-style:none}.tech>summary::-webkit-details-marker{display:none}.tech>summary::before{content:"▸ ";color:#38bdf8}.tech[open]>summary::before{content:"▾ "}.tech>div{padding:0 16px 16px}@media(max-width:800px){.grid{grid-template-columns:1fr}.guide{grid-template-columns:1fr}.guide>div{border-left:0;padding:9px 0;font-size:12px}.guide b{display:inline;margin-right:6px}.guide span{display:inline;font-size:14px;margin:0 6px 0 0}}</style>
-<style>#flood-scene{position:relative;border:1px solid #263a55;border-radius:12px;background:#0d1a2a;overflow:hidden;min-height:300px}#flood-map{display:block;width:100%;height:100%;min-height:300px;background:#0d1a2a}#flood-rain{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .5s;background-image:repeating-linear-gradient(115deg,rgba(125,211,252,.32) 0 1px,transparent 1px 30px);animation:fmRain .45s linear infinite}#flood-rain.on{opacity:1}@keyframes fmRain{to{background-position:30px 52px}}.fm-zone{fill:rgba(47,74,107,.20);stroke:#3f5a75;stroke-dasharray:6 5;stroke-width:1.5}.fm-road{stroke:#54708a;stroke-width:5;stroke-linecap:round;fill:none;transition:stroke .3s}.fm-road-closed{stroke:#8a6534}.fm-node{stroke:#f4f8fb;stroke-width:1.5;transition:fill .2s}.fm-node-in{fill:#d9a53a}.fm-node-ps{fill:#38bdf8}.fm-water{fill:#38bdf8;fill-opacity:.32;stroke:#7dd3fc;stroke-width:1.2;transition:fill-opacity .5s}.fm-lbl{fill:#c3d3e2;font-size:10.5px;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3px;stroke-linejoin:round}.fm-evlbl{fill:#e0f2fe;font-size:11.5px;font-weight:700;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3.5px;stroke-linejoin:round}.fx-event{animation:fmPulse 1.1s ease-in-out infinite}.fx-affected{stroke:#7dd3fc;stroke-width:2.5;filter:drop-shadow(0 0 5px rgba(125,211,252,.9))}.fx-owner{stroke:#34d399;stroke-width:3;filter:drop-shadow(0 0 4px rgba(52,211,153,.8))}.fx-conflict{stroke:#fbbf24;stroke-width:3;animation:fmPulse .85s ease-in-out infinite}.fx-fault{fill:#ef4444;stroke:#fecaca;animation:fmFault .65s steps(2,end) infinite}.fx-closed{stroke:#fb923c;stroke-width:7;stroke-dasharray:14 8;animation:fmPulse 1.2s ease-in-out infinite}@keyframes fmPulse{50%{opacity:.4}}@keyframes fmFault{50%{opacity:.25}}.flood-caption{position:absolute;left:12px;top:12px;z-index:3;max-width:76%;padding:9px 13px;border-radius:9px;background:rgba(7,18,28,.68);pointer-events:none}.flood-caption b{display:block;font-size:15px;color:#e0f2fe;line-height:1.35}.flood-caption span{display:block;margin-top:3px;font-size:12.5px;line-height:1.5;color:#b9cbd9}.flood-readout{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:#b8c7d9}.flood-readout b{color:#7dd3fc;font-size:18px}.flood-story{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 0}.flood-cause{padding:9px 10px;border:1px solid #29425d;border-radius:8px;background:#101d30;color:#b8c7d9;font-size:12px;line-height:1.45}.flood-cause b{display:block;color:#bae6fd;font-size:13px}.flood-cause.on{border-color:#38bdf8;background:#14334a;box-shadow:inset 3px 0 #38bdf8}@media(max-width:700px){.flood-story{grid-template-columns:1fr}}</style><main><header class=page-hero><div><div class=eyebrow>URBAN TWIN · 成都内涝推演</div><h1>城市内涝跨部门事件推演</h1><div class=sub>从一张积水工单，到一套可执行的跨部门调度方案。</div></div><a class=navlink href='/evolution'>查看决策进化对比 →</a><a class=navlink href='/feedback'>提交内涝反馈 →</a><a class=navlink href='/review'>参与方案评审 →</a><a class=navlink href='/status'>系统自检 →</a></header>
+<style>#flood-scene{position:relative;border:1px solid #263a55;border-radius:12px;background:#0d1a2a;overflow:hidden;min-height:300px}#flood-map{display:block;width:100%;height:100%;min-height:300px;background:#0d1a2a}#flood-rain{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .5s;background-image:repeating-linear-gradient(115deg,rgba(125,211,252,.32) 0 1px,transparent 1px 30px);animation:fmRain .45s linear infinite}#flood-rain.on{opacity:1}@keyframes fmRain{to{background-position:30px 52px}}.fm-zone{fill:rgba(47,74,107,.20);stroke:#3f5a75;stroke-dasharray:6 5;stroke-width:1.5}.fm-road{stroke:#54708a;stroke-width:5;stroke-linecap:round;fill:none;transition:stroke .3s}.fm-road-closed{stroke:#8a6534}.fm-node{stroke:#f4f8fb;stroke-width:1.5;transition:fill .2s}.fm-node-in{fill:#d9a53a}.fm-node-ps{fill:#38bdf8}.fm-water{fill:#38bdf8;fill-opacity:.32;stroke:#7dd3fc;stroke-width:1.2;transition:fill-opacity .5s}.fm-lbl{fill:#c3d3e2;font-size:10.5px;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3px;stroke-linejoin:round}.fm-evlbl{fill:#e0f2fe;font-size:11.5px;font-weight:700;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3.5px;stroke-linejoin:round}.fx-event{animation:fmPulse 1.1s ease-in-out infinite}.fx-affected{stroke:#7dd3fc;stroke-width:2.5;filter:drop-shadow(0 0 5px rgba(125,211,252,.9))}.fx-owner{stroke:#34d399;stroke-width:3;filter:drop-shadow(0 0 4px rgba(52,211,153,.8))}.fx-conflict{stroke:#fbbf24;stroke-width:3;animation:fmPulse .85s ease-in-out infinite}.fx-fault{fill:#ef4444;stroke:#fecaca;animation:fmFault .65s steps(2,end) infinite}.fx-closed{stroke:#fb923c;stroke-width:7;stroke-dasharray:14 8;animation:fmPulse 1.2s ease-in-out infinite}@keyframes fmPulse{50%{opacity:.4}}@keyframes fmFault{50%{opacity:.25}}.flood-caption{position:absolute;left:12px;top:12px;z-index:3;max-width:76%;padding:9px 13px;border-radius:9px;background:rgba(7,18,28,.68);pointer-events:none}.flood-caption b{display:block;font-size:15px;color:#e0f2fe;line-height:1.35}.flood-caption span{display:block;margin-top:3px;font-size:12.5px;line-height:1.5;color:#b9cbd9}.flood-readout{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:#b8c7d9}.flood-readout b{color:#7dd3fc;font-size:18px}.flood-story{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 0}.flood-cause{padding:9px 10px;border:1px solid #29425d;border-radius:8px;background:#101d30;color:#b8c7d9;font-size:12px;line-height:1.45}.flood-cause b{display:block;color:#bae6fd;font-size:13px}.flood-cause.on{border-color:#38bdf8;background:#14334a;box-shadow:inset 3px 0 #38bdf8}@media(max-width:700px){.flood-story{grid-template-columns:1fr}}</style><main><header class=page-hero><div><div class=eyebrow>URBAN TWIN · 成都内涝推演</div><h1>城市内涝跨部门事件推演</h1><div class=sub>从一张积水工单，到一套可执行的跨部门调度方案。</div></div><a class=navlink href='/evolution'>查看决策进化对比 →</a><a class=navlink href='/feedback'>提交内涝反馈 →</a><a class=navlink href='/review'>参与方案评审 →</a><a class=navlink href='/status'>系统自检 →</a><a class=navlink href='/workbench'>证据工作台 →</a></header>
 <section class=guide><div><b>01</b><span>先看结论</span>出什么事、要几台泵、实际有几台、怎么分 —— 见“事件概览 / 工单 / 资源 / 方案”</div><div><b>02</b><span>再看依据</span>这结论是谁算的、引用了台账哪一行 —— 见“演示链路 / 决策事件流”</div><div><b>03</b><span>最后改条件</span>少一台泵或封一条路，看结论怎么重算 —— 见“人工干预”</div></section>
 <div class=toolbar><button onclick="run()">运行演示</button><button class=ghost id=btn-proj onclick="toggleProjection()">投屏模式</button><span id=status>等待运行</span></div><section id=summary class='card outcome-card'><div class=summary-head><h2>事件结论</h2><span id=data-source class=src-chip>合成情景 · 合成气象</span></div><div id=metrics>点击“运行演示”加载推演结果</div></section>
 <section class='card process-card'><h2>推演主线 <span>事件输入 → 证据核验 → 协同复核 → 方案复算</span></h2><div class=toolbar style='margin:0 0 8px'><button onclick="runChain()">跑一遍链路</button><span id=chainstatus class=sub>未加载</span></div><div id=chain class=chain></div><div id=chainfoot class=sub style='margin-top:8px'></div></section>
@@ -2294,7 +2296,25 @@ function build(sched){
   window.__roadBlocks=[];   // 供事件动画引用：封路护栏组（每组一个 Group）
   const blockMat=new THREE.MeshStandardMaterial({color:0xffc21a,roughness:.5,metalness:.2});
   const coneMat=new THREE.MeshStandardMaterial({color:0xff5a2d,roughness:.4});
-  netRoads.forEach(rd=>{if(!/已封|under_construction|closed/.test(rd.label||'')&&!/已封|closed/.test(rd.detail||''))return;
+  // 台账里"已封"的路段有 4 条，其中 3 条在作业点 25~325m 外。
+  // 原来给每条都建两块 20~23.75m 的封路板，全景里同时出现 8 块黄板横穿路面
+  // （实测 t=1.0 画面里 3 条黄色长龙），既不是本次事件的内容，也把路面切碎。
+  // 只给**作业点所在那条路**建，其余路段用图例 + 路名变色表达"已封"状态即可。
+  const WP0={x:-12.48,z:-1.6};
+  let _pickRoad=null,_pickD=1e9;
+  netRoads.forEach(rd=>{
+    if(!/已封|under_construction|closed/.test(rd.label||'')&&!/已封|closed/.test(rd.detail||''))return;
+    const ps=rd.pts;if(!ps||ps.length<2)return;
+    for(let i=0;i<ps.length-1;i++){
+      const a=W(ps[i][0],ps[i][1]),c=W(ps[i+1][0],ps[i+1][1]);
+      const vx=c[0]-a[0],vz=c[1]-a[1],L2=vx*vx+vz*vz||1e-6;
+      let tt=((WP0.x-a[0])*vx+(WP0.z-a[1])*vz)/L2;tt=Math.max(0,Math.min(1,tt));
+      const d=Math.hypot(a[0]+vx*tt-WP0.x,a[1]+vz*tt-WP0.z);
+      if(d<_pickD){_pickD=d;_pickRoad=rd;}
+    }
+  });
+  const bkRoads=_pickRoad?[_pickRoad]:[];
+  bkRoads.forEach(rd=>{if(!/已封|under_construction|closed/.test(rd.label||'')&&!/已封|closed/.test(rd.detail||''))return;
     const ps=rd.pts;if(!ps||ps.length<2)return;
     const wid=ROAD_W[rd.id]||2.8;
     // 路段方向角（世界 = 场景方向，W 是等比例缩放）
@@ -5068,7 +5088,7 @@ a{color:#5eead4}
 <h1>系统自检 · <span>谁在跑、跑的是哪版、对不对得上</span></h1>
 <div class="sub">每项都是只读检查，不写任何状态。参数逐项比对与全量测试在命令行完成
 （<code>scripts/policy_sensitivity.py</code>、<code>pytest</code>），这页只回答"当前这四类事实是否自洽"。
-<a href="/">← 回推演页</a> · <a href="/feedback">反馈注入 →</a> · <a href="/review">方案评审 →</a> · <a href="/evolution">进化对比 →</a></div>
+<a href="/">← 回推演页</a> · <a href="/feedback">反馈注入 →</a> · <a href="/review">方案评审 →</a> · <a href="/evolution">进化对比 →</a> · <a href="/workbench">证据工作台 →</a></div>
 <div class="verdict">__VERDICT__</div>
 <table><thead><tr><th>检查项</th><th>状态</th><th>详情</th></tr></thead><tbody>__ROWS__</tbody></table>
 <div class="hint">检查时间：__WHEN__<br>
@@ -5115,6 +5135,428 @@ def build_status_html() -> str:
         .replace("__ROWS__", rows)
         .replace("__WHEN__", _esc(when))
     )
+
+
+# --- 证据工作台（对话 + 核查） ------------------------------------------------
+#
+# 为什么不是"再做一个聊天页面"：平台自带的对话界面已经能问，缺的是**问完之后能不能核**——
+# 结论出自哪份文件的哪一行、这次到底调了哪些工具、系统自身是否自洽。所以这里只做
+# 左对话 + 右核查，「证据 / 工具轨迹 / 自检」三块都是现成的数据，拼到一屏即可。
+#
+# 刻意不做：文件树与编辑器（业务方不改文件）、独立的聊天壳（会和平台对话界面分裂）。
+
+WORKBENCH_AGENTS = {
+    # 键是前端下拉值，值是平台上的 Agent 名。默认台账问答：它能接自由提问；
+    # 推演 Agent 是两步式协议，问法不对会整轮失败，所以放第二个并在页面上标注。
+    "asset_qa": "urban_asset_qa",
+    "deduction": "urban_deduction_agent",
+}
+
+#: evidence_ref 的形状：`AS-<id>#<locator>#(line|row|region):<n>`。
+#: 用固定前缀 + 两段 locator，避免把正文里普通的 `#` 也当成引用。
+_REF_PATTERN = re.compile(r"AS-[A-Za-z0-9_\-]+#[A-Za-z0-9_\-/\.]+#(?:line|row|region):[0-9\-]+")
+
+#: 台账问答（平台知识库）给的引用形如「（出处：underpasses.csv · UP-XH-101）」，
+#: 它不是 MCP 的 asset_id，取不到原文；但可以拿它当检索词反查切片。
+_CITATION_PATTERN = re.compile(r"（出处：([^）]{2,120})）")
+
+#: 工作台页面。左半边**直接嵌平台的对话页**（`/zh/workbench`），不重写聊天；
+#: 右半边是本项目自己的核查面板：证据原文 / 工具轨迹 / 自检。
+#: 平台页面没有 X-Frame-Options，可以内嵌；嵌入后是跨源 iframe，不能脚本读内容，
+#: 所以"点结论跳到原文"只在下面的「站内对话」模式里生效——两种模式各司其职。
+_WORKBENCH_PAGE = """<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>证据工作台 · 城市内涝决策</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f5f6f8;color:#1f2328;font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+header{display:flex;align-items:baseline;gap:12px;padding:14px 20px;background:#fff;border-bottom:1px solid #e5e7eb}
+h1{font-size:17px;margin:0;font-weight:600}
+.tag{font-size:12px;color:#6b7280}
+.spacer{flex:1}
+select,button,input,textarea{font:inherit;color:inherit}
+select{background:#fff;border:1px solid #d8dbe0;border-radius:6px;padding:4px 8px;font-size:12.5px}
+.link{color:#0f766e;text-decoration:none;font-size:12.5px;border-bottom:1px dashed #9fd3cb}
+main{display:grid;grid-template-columns:minmax(380px,48%) 1fr;gap:14px;padding:14px 18px 20px;height:calc(100vh - 57px)}
+.panel{background:#fff;border:1px solid #e5e7eb;border-radius:10px;display:flex;flex-direction:column;min-height:0}
+.panel>h2{font-size:12px;font-weight:600;color:#6b7280;letter-spacing:.4px;margin:0;padding:9px 14px;border-bottom:1px solid #eef0f3}
+.switch{display:flex;align-items:center;gap:4px;padding:8px 12px 0;border-bottom:1px solid #eef0f3}
+.switch select{margin-bottom:6px}
+.sw{background:none;border:0;padding:6px 10px;font-size:13px;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent}
+.sw.on{color:#0f766e;border-bottom-color:#0f766e}
+#frame{flex:1;border:0;width:100%;min-height:0;background:#fff;border-radius:0 0 10px 10px}
+#chatpane{flex:1;display:none;flex-direction:column;min-height:0}
+.hint{padding:8px 14px 11px;font-size:12px;line-height:1.6;color:#9aa1aa;border-top:1px solid #eef0f3}
+#feed{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:93%;font-size:13.5px;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.me{align-self:flex-end;background:#e8f4f1;border:1px solid #cde7e1;border-radius:10px 10px 2px 10px;padding:8px 11px}
+.ai{align-self:flex-start;background:#fbfbfc;border:1px solid #eceef1;border-radius:10px 10px 10px 2px;padding:9px 11px}
+.meta{align-self:flex-start;font-size:11.5px;color:#8a919b}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-family:ui-monospace,Consolas,monospace;font-size:11px;background:#f3f4f6;border:1px solid #e1e4e8;border-radius:5px;padding:2px 6px;cursor:pointer;color:#0f766e}
+.chip:hover{background:#e8f4f1}
+form{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #eef0f3}
+textarea{flex:1;resize:none;height:42px;border:1px solid #d8dbe0;border-radius:8px;padding:9px 10px;font-size:13px}
+textarea:focus{outline:2px solid #cde7e1}
+.send{background:#0f766e;color:#fff;border:0;border-radius:8px;padding:0 16px;cursor:pointer;font-size:13px}
+.send:disabled{opacity:.5;cursor:default}
+.tabs{display:flex;gap:4px;padding:8px 12px 0;border-bottom:1px solid #eef0f3}
+.tab{background:none;border:0;padding:6px 10px;font-size:13px;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent}
+.tab.on{color:#0f766e;border-bottom-color:#0f766e}
+.body{flex:1;overflow:auto;padding:14px}
+.empty{color:#9aa1aa;font-size:13px}
+.kv{display:grid;grid-template-columns:80px 1fr;gap:5px 10px;font-size:12.5px;margin:0 0 12px}
+.kv dt{color:#8a919b}
+.kv dd{margin:0;word-break:break-all}
+pre.excerpt{margin:0;background:#fbfbfc;border:1px solid #eceef1;border-radius:8px;padding:12px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;color:#8a919b;font-weight:500;padding:5px 8px;border-bottom:1px solid #eceef1;white-space:nowrap}
+td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
+.ok{color:#0f766e}.warn{color:#b45309}.bad{color:#b91c1c}
+.mono{font-family:ui-monospace,Consolas,monospace}
+.row{padding:7px 0;border-bottom:1px solid #f3f4f6;font-size:13px}
+@media(max-width:900px){main{grid-template-columns:1fr;height:auto}#feed{max-height:42vh}#frame{height:60vh}}
+</style></head><body>
+<header>
+  <h1>证据工作台</h1>
+  <span class="tag">左边问、右边核：每条结论都能落到原文某一行</span>
+  <span class="spacer"></span>
+  <a class="link" href="__WEB_BASE__/zh/workbench" target="_blank" rel="noopener">新窗口打开平台对话 ↗</a>
+  <span class="tag" id="stat">就绪</span>
+</header>
+<main>
+  <section class="panel">
+    <div class="switch">
+      <button class="sw on" data-mode="platform">平台对话</button>
+      <button class="sw" data-mode="local">站内对话（可点引用）</button>
+      <span class="spacer"></span>
+      <select id="agentSel" title="站内对话使用哪个 Agent"><option value="asset_qa">台账问答</option><option value="deduction">推演</option></select>
+    </div>
+    <iframe id="frame" src="__WEB_BASE__/zh/workbench" title="平台对话"></iframe>
+    <div class="hint">平台对话页是跨源内嵌：若这里一直转圈，多半是平台没启动或未登录——
+    <a class="link" href="__WEB_BASE__/zh/workbench" target="_blank" rel="noopener">新窗口打开</a>，
+    或切到左边「站内对话」，它不依赖平台前端。本页面读不到 iframe 里的内容，所以「点结论跳到原文」只在站内对话模式生效。</div>
+    <div id="chatpane">
+      <div id="feed"><div class="msg ai">这一模式下回答里的 evidence_ref 会变成可点芯片，点一下右边出原文。台账类问题用「台账问答」，推演类用「推演」并带上事件编号。</div></div>
+      <form id="f"><textarea id="q" placeholder="Enter 发送 · Shift+Enter 换行"></textarea><button class="send" id="go">发送</button></form>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="tabs">
+      <button class="tab on" data-tab="evidence">证据</button>
+      <button class="tab" data-tab="tools">工具轨迹</button>
+      <button class="tab" data-tab="selfcheck">自检</button>
+    </div>
+    <div class="body" id="pane"><div class="empty">点左侧站内对话里的 ref 芯片，这里显示原文。</div></div>
+  </section>
+</main>
+<script>
+var feed=document.getElementById('feed'), pane=document.getElementById('pane'), q=document.getElementById('q');
+var go=document.getElementById('go'), stat=document.getElementById('stat');
+var conv=null, current='evidence', agentSel=null;
+
+function el(tag, cls, text){var n=document.createElement(tag); if(cls){n.className=cls;} if(text!==null&&text!==undefined){n.textContent=String(text);} return n;}
+function bubble(kind, text){var n=el('div','msg '+kind, text); feed.appendChild(n); feed.scrollTop=feed.scrollHeight; return n;}
+function note(text){var n=el('div','meta',text); feed.appendChild(n); return n;}
+
+function switchMode(mode){
+  var frame=document.getElementById('frame'), chatpane=document.getElementById('chatpane');
+  var btns=document.querySelectorAll('.sw');
+  for(var i=0;i<btns.length;i++){btns[i].className='sw'+(btns[i].dataset.mode===mode?' on':'');}
+  frame.style.display = mode==='platform' ? 'block' : 'none';
+  chatpane.style.display = mode==='local' ? 'flex' : 'none';
+}
+
+function send(){
+  var text=q.value.trim(); if(!text||go.disabled){return;}
+  q.value=''; bubble('me',text); go.disabled=true; stat.textContent='调用中…';
+  var agent=(document.getElementById('agentSel')||{}).value||'asset_qa';
+  var payload={message:text, agent:agent};
+  if(conv){payload.conversation_id=conv;}
+  fetch('/api/workbench/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+   .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+   .then(function(res){
+      go.disabled=false;
+      if(!res.ok){bubble('ai','（失败）'+(res.d.error||'未知错误')); stat.textContent='未连接'; return;}
+      conv=res.d.conversation_id||conv;
+      var body=res.d.answer_text||res.d.answer||'（空回答）';
+      var n=bubble('ai',body);
+      var refs=res.d.evidence_refs||[];
+      if(refs.length){
+        var box=el('div','chips');
+        refs.forEach(function(ref){var c=el('span','chip',ref); c.title='点击查看原文'; c.onclick=function(){locate(ref);}; box.appendChild(c);});
+        n.appendChild(box);
+      }
+      var cites=res.d.citations||[];
+      if(cites.length){
+        var cbox=el('div','chips');
+        cites.forEach(function(txt){var c=el('span','chip',txt); c.title='反查这条引用对应的台账切片'; c.onclick=function(){searchRef(txt);}; cbox.appendChild(c);});
+        n.appendChild(cbox);
+      }
+      note(res.d.agent+' · 会话 '+(conv||'-')+(refs.length?(' · '+refs.length+' 条可定位引用'):'')+(cites.length?(' · '+cites.length+' 条知识库引用'):''));
+      stat.textContent='已连接';
+    })
+   .catch(function(e){go.disabled=false; bubble('ai','（网络错误）'+e); stat.textContent='未连接';});
+}
+
+function locate(ref){
+  setTab('evidence'); pane.innerHTML=''; pane.appendChild(el('div','empty','取原文中…'));
+  fetch('/api/workbench/locate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({evidence_ref:ref})})
+   .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+   .then(function(res){
+      pane.innerHTML='';
+      if(!res.ok){pane.appendChild(el('div','empty','取不到原文：'+(res.d.error||'')));return;}
+      var d=res.d, a=d.asset||{};
+      var span=d.span?('第 '+d.span.start+'–'+d.span.end+' 行 / 共 '+d.span.line_count+' 行'):'-';
+      var rows=[['引用',ref],['资产',a.asset_id],['文件',a.file_name],['类型',a.doc_type],['版本',a.version],['范围',span]];
+      var dl=el('dl','kv');
+      rows.forEach(function(pair){dl.appendChild(el('dt',null,pair[0])); dl.appendChild(el('dd',null,pair[1]||'-'));});
+      pane.appendChild(dl);
+      pane.appendChild(el('pre','excerpt',d.excerpt||'（空）'));
+    })
+   .catch(function(e){pane.textContent='网络错误：'+e;});
+}
+
+function searchRef(text){
+  setTab('evidence'); pane.innerHTML=''; pane.appendChild(el('div','empty','反查中…'));
+  fetch('/api/workbench/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:text})})
+   .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+   .then(function(res){
+      pane.innerHTML='';
+      if(!res.ok){pane.appendChild(el('div','empty','反查失败：'+(res.d.error||'')));return;}
+      pane.appendChild(el('div','empty','引用：'+text));
+      var hits=res.d.hits||[];
+      if(!hits.length){pane.appendChild(el('div','empty','索引里没有匹配切片。'));return;}
+      hits.forEach(function(h){
+        var box=el('div'); box.style.margin='12px 0'; box.style.borderTop='1px solid #f3f4f6'; box.style.paddingTop='10px';
+        var head=el('div','mono',h.source_path+(h.heading_path&&h.heading_path.length?(' · '+h.heading_path.join(' / ')):''));
+        head.style.fontSize='12px'; head.style.color='#6b7280'; head.style.marginBottom='6px';
+        box.appendChild(head);
+        box.appendChild(el('pre','excerpt',h.excerpt||''));
+        if(h.evidence_ref){
+          var c=el('span','chip',h.evidence_ref); c.style.marginTop='8px'; c.style.display='inline-block'; c.title='点击查看原文';
+          c.onclick=function(){locate(h.evidence_ref);};
+          box.appendChild(c);
+        }
+        pane.appendChild(box);
+      });
+    })
+   .catch(function(e){pane.textContent='网络错误：'+e;});
+}
+
+function setTab(name){
+  current=name;
+  var tabs=document.querySelectorAll('.tab');
+  for(var i=0;i<tabs.length;i++){tabs[i].className='tab'+(tabs[i].dataset.tab===name?' on':'');}
+  if(name==='tools'){loadTools();}
+  else if(name==='selfcheck'){loadStatus();}
+  else if(!pane.querySelector('dl')){pane.innerHTML='<div class="empty">点左侧站内对话里的 ref 芯片，这里显示原文。</div>';}
+}
+
+function loadTools(){
+  pane.innerHTML=''; pane.appendChild(el('div','empty','读取中…'));
+  fetch('/api/tool-log?limit=20').then(function(r){return r.json();}).then(function(d){
+    pane.innerHTML='';
+    var rows=(d.entries||[]).slice().reverse();
+    if(!rows.length){pane.appendChild(el('div','empty','还没有工具调用记录。'));return;}
+    var t=el('table'), head=el('tr');
+    ['时间','工具','状态','耗时','快照'].forEach(function(h){head.appendChild(el('th',null,h));});
+    t.appendChild(head);
+    rows.forEach(function(r){
+      var tr=el('tr');
+      var ts=(r.ts||'').replace('T',' ').slice(0,19);
+      tr.appendChild(el('td','mono',ts));
+      tr.appendChild(el('td',null,r.tool||'-'));
+      tr.appendChild(el('td',r.status==='ok'?'ok':'bad',r.status||'-'));
+      tr.appendChild(el('td','mono',(r.latency_ms!==null&&r.latency_ms!==undefined)?(r.latency_ms+' ms'):'-'));
+      tr.appendChild(el('td','mono',(r.snapshot_hash||'').slice(0,10)));
+      t.appendChild(tr);
+    });
+    pane.appendChild(t);
+  }).catch(function(e){pane.textContent='读取失败：'+e;});
+}
+
+function loadStatus(){
+  pane.innerHTML=''; pane.appendChild(el('div','empty','读取中…'));
+  fetch('/api/workbench/status').then(function(r){return r.json();}).then(function(d){
+    pane.innerHTML='';
+    var checks=d.checks||[];
+    if(!checks.length){pane.appendChild(el('div','empty','没有自检项。'));return;}
+    checks.forEach(function(c){
+      var row=el('div','row');
+      var label=c.state==='ok'?'通过':(c.state==='warn'?'待注意':'不通过');
+      var cls=c.state==='ok'?'ok':(c.state==='warn'?'warn':'bad');
+      row.appendChild(el('b',null,c.name+'　'));
+      row.appendChild(el('span',cls,label));
+      row.appendChild(el('div','empty',c.detail));
+      pane.appendChild(row);
+    });
+  }).catch(function(e){pane.textContent='读取失败：'+e;});
+}
+
+document.getElementById('f').addEventListener('submit',function(e){e.preventDefault();send();});
+q.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
+var sws=document.querySelectorAll('.sw'); for(var i=0;i<sws.length;i++){sws[i].onclick=function(){switchMode(this.dataset.mode);};}
+var tabs=document.querySelectorAll('.tab'); for(var j=0;j<tabs.length;j++){tabs[j].onclick=function(){setTab(this.dataset.tab);};}
+</script></body></html>
+"""
+
+_WORKBENCH_TOOLKIT: Any = None
+
+
+def _workbench_toolkit() -> Any:
+    """进程内复用一个工具链实例：构造要读台账与语义库，每次请求都建一遍太亏。"""
+    global _WORKBENCH_TOOLKIT
+    if _WORKBENCH_TOOLKIT is None:
+        from .mcp_server import UrbanToolkit
+
+        _WORKBENCH_TOOLKIT = UrbanToolkit()
+    return _WORKBENCH_TOOLKIT
+
+
+def clean_agent_answer(answer: str) -> str:
+    """去掉运行时的交卷外壳，只留人话。
+
+    平台要求模型用 `<code> final_answer("...")</code>` 交卷；北向原样返回这段文本，
+    直接贴到聊天框里会像代码。这里只剥壳，不改内容。
+    """
+    text = re.sub(r"</?code>", "", answer or "").strip()
+    match = re.match(r"final_answer\(\s*(.*)\)\s*$", text, re.S)
+    if match:
+        text = match.group(1).strip()
+    if len(text) >= 2 and text[0] == text[-1] and text[0] in {'"', "'"}:
+        text = text[1:-1]
+    return text
+
+
+def workbench_chat(body: bytes | None) -> tuple[int, str, bytes]:
+    """POST /api/workbench/chat：把一句话转给平台 Agent，回答案与引用清单。"""
+    try:
+        payload = json.loads((body or b"{}").decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return _error("请求体不是合法 JSON", 400)
+    message = str(payload.get("message") or "").strip()
+    if not message:
+        return _error("message 不能为空", 400)
+
+    agent = WORKBENCH_AGENTS.get(str(payload.get("agent") or "asset_qa"))
+    if agent is None:
+        return _error(f"未知 agent，可选：{'、'.join(WORKBENCH_AGENTS)}", 400)
+
+    key = os.getenv("NEXENT_API_KEY", "").strip()
+    if not key:
+        # 不静默降级成"本地假回答"：那会让人以为平台通了，实际没通。
+        return _error("未配置 NEXENT_API_KEY（北向访问凭据），工作台无法对话", 503)
+
+    from .nexent_transport import NexentHttpTransport, NexentSettings
+
+    settings = NexentSettings(
+        base_url=os.getenv("NEXENT_BASE_URL", "http://localhost:5013").rstrip("/"),
+        api_key=key,
+        agent_name=agent,
+    )
+    request: dict[str, Any] = {
+        "request_id": f"workbench-{int(time.time() * 1000)}",
+    }
+    conversation_id = payload.get("conversation_id")
+    if conversation_id:
+        request["conversation_id"] = int(conversation_id)
+
+    transport = NexentHttpTransport(settings=settings, query_builder=lambda _p: message)
+    try:
+        result = transport(request)
+    except Exception as exc:  # noqa: BLE001 - 平台不通要给可读原因，不能抛 500 堆栈
+        return _error(f"平台调用失败：{type(exc).__name__}: {exc}"[:300], 502)
+
+    answer = str(result.get("answer") or "")
+    return _json(
+        {
+            "agent": agent,
+            "conversation_id": result.get("conversation_id"),
+            "answer": answer,
+            "answer_text": clean_agent_answer(answer),
+            "evidence_refs": sorted(set(_REF_PATTERN.findall(answer))),
+            "citations": sorted({item.strip() for item in _CITATION_PATTERN.findall(answer)})[:8],
+        }
+    )
+
+
+def workbench_locate(body: bytes | None) -> tuple[int, str, bytes]:
+    """POST /api/workbench/locate：把一个 evidence_ref 还原成原文。"""
+    try:
+        payload = json.loads((body or b"{}").decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return _error("请求体不是合法 JSON", 400)
+    ref = str(payload.get("evidence_ref") or "").strip()
+    if not ref:
+        return _error("evidence_ref 不能为空", 400)
+
+    try:
+        result = _workbench_toolkit().call("evidence_locate", {"evidence_ref": ref})
+    except Exception as exc:  # noqa: BLE001 - 资产缺失/解析异常都转成可读错误
+        return _error(f"取证失败：{type(exc).__name__}: {exc}"[:300], 500)
+    if result.status != "ok":
+        message = getattr(result.error, "message", None) or "该引用取不到原文"
+        return _error(str(message), 404)
+
+    data = result.data
+    return _json(
+        {
+            "evidence_ref": ref,
+            "asset": data.get("asset"),
+            "locator_kind": data.get("locator_kind"),
+            "span": data.get("span"),
+            "row": data.get("row"),
+            "excerpt": data.get("excerpt"),
+        }
+    )
+
+
+def workbench_search(body: bytes | None) -> tuple[int, str, bytes]:
+    """POST /api/workbench/search：拿知识库引用当检索词，反查原始切片。
+
+    为什么需要它：台账问答的引用是「文件 · 编号」，不是 asset_id，`evidence_locate`
+    取不到；但反查一次就能拿到带 locator 的切片，再点就能看原文，链路不至于断在这。
+    """
+    try:
+        payload = json.loads((body or b"{}").decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return _error("请求体不是合法 JSON", 400)
+    query = str(payload.get("query") or "").strip()
+    if not query:
+        return _error("query 不能为空", 400)
+
+    try:
+        result = _workbench_toolkit().call("doc_search", {"query": query, "top_k": 3})
+    except Exception as exc:  # noqa: BLE001 - 索引缺失等都要给可读原因
+        return _error(f"检索失败：{type(exc).__name__}: {exc}"[:300], 500)
+    if result.status != "ok":
+        message = getattr(result.error, "message", None) or "检索不可用"
+        return _error(str(message), 503)
+
+    hits = [
+        {
+            "evidence_ref": item.get("evidence_ref"),
+            "source_path": item.get("source_path"),
+            "heading_path": item.get("heading_path"),
+            "score": item.get("score"),
+            "excerpt": (item.get("excerpt") or "")[:600],
+        }
+        for item in (result.data.get("hits") or [])
+    ]
+    return _json({"query": query, "hits": hits})
+
+
+def build_workbench_html() -> str:
+    """注入平台对话页地址。平台 Web 与北向不是同一个端口，所以单独取 env。"""
+    web = os.getenv("NEXENT_WEB_BASE", "http://localhost:3000").rstrip("/")
+    return _WORKBENCH_PAGE.replace("__WEB_BASE__", web)
+
+
+def workbench_status() -> tuple[int, str, bytes]:
+    """GET /api/workbench/status：复用 /status 的判据，不另写一套。"""
+    return _json({"checks": status_checks()})
 
 
 def _feedback_submit(body: bytes | None) -> tuple[int, str, bytes]:
@@ -5195,6 +5637,22 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return 200, "text/html; charset=utf-8", build_review_html().encode("utf-8")
     if parsed.path == "/status":
         return 200, "text/html; charset=utf-8", build_status_html().encode("utf-8")
+    if parsed.path == "/workbench":
+        return 200, "text/html; charset=utf-8", build_workbench_html().encode("utf-8")
+    if segments[:3] == ["api", "workbench", "chat"]:
+        if method.upper() != "POST":
+            return _error("只接受 POST", 405)
+        return workbench_chat(body)
+    if segments[:3] == ["api", "workbench", "locate"]:
+        if method.upper() != "POST":
+            return _error("只接受 POST", 405)
+        return workbench_locate(body)
+    if segments[:3] == ["api", "workbench", "status"]:
+        return workbench_status()
+    if segments[:3] == ["api", "workbench", "search"]:
+        if method.upper() != "POST":
+            return _error("只接受 POST", 400)
+        return workbench_search(body)
     if parsed.path == "/feedback/history":
         return 200, "application/json; charset=utf-8", json.dumps(
             {"runs": read_feedback_runs(limit=30)}, ensure_ascii=False

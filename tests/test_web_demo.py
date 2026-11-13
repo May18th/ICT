@@ -10,6 +10,7 @@ from decision_poc.web_demo import (
     build_html,
     build_review_html,
     build_twin3d_html,
+    build_workbench_html,
     render_snapshot,
     route,
 )
@@ -169,6 +170,7 @@ def test_page_script_parses(tmp_path):
         ("twin3d", build_twin3d_html),
         ("review", build_review_html),
         ("evolution", build_evolution_html),
+        ("workbench", build_workbench_html),
     ):
         blocks = re.findall(r"<script[^>]*>(.*?)</script>", builder(), re.S)
         assert blocks, f"{name} 页面必须有脚本块"
