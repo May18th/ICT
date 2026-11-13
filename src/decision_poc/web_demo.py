@@ -1143,7 +1143,11 @@ def build_twin3d_html() -> str:
 #legend i.ring{background:transparent;border:1px solid #7ed4ff;border-radius:50%}
 #tip{position:fixed;right:18px;bottom:16px;z-index:5;font-size:12px;color:#64788c;pointer-events:none}#evidence-card{position:fixed;left:18px;top:102px;width:236px;z-index:7;padding:11px;border-radius:10px;background:rgba(7,18,28,.78);backdrop-filter:blur(8px);border:1px solid rgba(122,162,198,.4);font-size:11.5px;color:#a9bfd2}#evidence-card b{color:#e0f2fe;display:block;margin-bottom:6px}#entity-card{position:fixed;right:18px;top:102px;width:250px;z-index:7;padding:12px;border-radius:10px;background:rgba(7,18,28,.82);backdrop-filter:blur(8px);border:1px solid rgba(122,162,198,.4);display:none}#entity-card b{color:#e0f2fe}#entity-card span{display:block;margin-top:6px;color:#a9bfd2;font-size:12px}#timeline{position:fixed;left:18px;right:18px;bottom:48px;z-index:6;display:flex;gap:6px;align-items:center;background:rgba(7,18,28,.84);padding:8px 10px;border-radius:10px;flex-wrap:wrap}#timeline button{background:#1a3042;color:#d7e4f0;border:1px solid #496579;border-radius:5px;padding:4px 8px;cursor:pointer}#timeline button.active{background:#1976a8}#timeline button.layer{background:#0f3a4a;color:#9fd8e8;border-color:#2b7f9f}#timeline button.layer.off{background:#1a3042;color:#5a7088;border-color:#3a4a58;text-decoration:line-through}#timeline #jump-buttons{display:flex;gap:4px;flex-wrap:wrap}#progress{flex:1;min-width:140px;accent-color:#4fc3f7;height:20px;cursor:pointer}#progress-time{font-size:11px;color:#8fb7d6;font-family:ui-monospace,monospace;min-width:44px;text-align:center}
 canvas{display:block}
-#entity-card{width:322px;max-height:calc(100vh - 190px);overflow:auto}
+/* 322px 宽 + 内部滚动是对的，但预留量按 190px 算少了：卡片从 top:102 起，
+   底边会撞上右下的「处置前后结果」面板（那里约占用屏幕底部 160px）。
+   实拍确认泵站卡片有工单 + 4 条断言 + 责任部门 + 动作卡，滚动是常态，不是偶发。
+   预留改 300px，卡片最高到 100vh-300，与底部面板留出空隙。 */
+#entity-card{width:322px;max-height:calc(100vh - 300px);overflow:auto}
 #entity-card::-webkit-scrollbar{width:6px}#entity-card::-webkit-scrollbar-thumb{background:#2c4459;border-radius:3px}
 .ec-sec{margin-top:9px;padding-top:8px;border-top:1px solid rgba(122,162,198,.25)}
 .ec-sec>small{display:block;color:#7b93aa;font-size:11px;margin-bottom:4px;letter-spacing:.4px}
@@ -1509,49 +1513,78 @@ function renderExec(d){
   const el=document.getElementById('exec-body');if(!el)return;
   if(!d||d.status!=='ok'){el.textContent='执行账本不可用';return;}
   const p=d.plan||{},c=d.counts||{};
-  window.__execBehind=p.behind||[];      // 差额卡 id，结算按钮要用
+  const cards=d.cards||[];                    // 接口返回的是数组，不是字典
+  const byId={};(cards.forEach?cards:[]).forEach(function(x){if(x&&x.card_id)byId[x.card_id]=x});
+  window.__execBehind=p.behind||[];           // 差额卡 id，结算按钮要用
   const delta=p.delta==null?'—':(p.delta>0?'+'+p.delta:p.delta);
   const deltaCls=p.delta<0?'delta-behind':(p.delta>0?'':'');
-  const pend=c.pending==null?'-':c.pending;
+  // 差额归因：从 cards 的 state / co_sign_required / signatures 里读，不猜。
+  // 演示环境只有一个身份（服务端固定 ORG-EMERG），别的部门会签签不上，
+  // 所以"实际完成 0"是**会签未完成**，不是账本坏了——这句话不写出来，看画面的人会以为系统出错。
+  let running=0,needSign={};
+  (p.behind||[]).forEach(function(id){
+    const x=byId[id];if(!x)return;
+    if(x.state==='running')running++;
+    (x.co_sign_required||[]).forEach(function(o){
+      if(!(x.signatures||{})[o])needSign[o]=(needSign[o]||0)+1;
+    });
+  });
+  const signTxt=Object.keys(needSign).map(function(o){return o+' ×'+needSign[o]}).join(' · ');
   el.innerHTML='<div>计划完成 <b>'+p.planned_done+'</b> 张 · 账本实际完成 <b>'+p.actual_done+'</b> 张 · 偏差 <b class="'+deltaCls+'">'+delta+'</b></div>'
-    +'<div style="margin-top:4px;color:#7b93aa;font-size:10.5px">账本状态：待执行 '+pend+' · 已完成 '+c.done+' · 待人工确认 '+c.needs_confirm+'</div>'
-    // 口径必须写出来：差额 -5 不是渲染错误，是账本 events.jsonl 里真的没有执行记录。
-    // 不写明这一点，看画面的人会以为系统坏了。
+    +'<div style="margin-top:4px;color:#7b93aa;font-size:10.5px">账本状态：待执行 '+(c.pending==null?'-':c.pending)
+      +' · 执行中 '+(c.running||0)+' · 已完成 '+(c.done||0)+' · 待会签 '+(c.needs_confirm||0)+'</div>'
+    +(signTxt?'<div style="margin-top:3px;color:#c9a86a;font-size:10px">差额卡待会签：'+signTxt+'（演示环境只有 ORG-EMERG 一个身份，会签签不上）</div>':'')
     +'<div style="margin-top:3px;color:#64788c;font-size:10px">'+(d.source||'账本只记动作卡执行，不改冻结的 work_orders.csv')+'</div>'
     +((p.actual_done<p.planned_done&&window.__execBehind.length)
       ? '<button id="exec-settle" style="margin-top:5px;padding:3px 8px;font-size:10px;cursor:pointer;'
         +'background:#20303f;color:#9fd0ee;border:1px solid #35516a;border-radius:3px">'
-        +'演示：按接口结算 '+window.__execBehind.length+' 张差额卡</button>'
+        +'演示：按接口推进 '+window.__execBehind.length+' 张差额卡</button>'
       : '');
   const btn=document.getElementById('exec-settle');
   if(btn)btn.onclick=settleExecDemo;
 }
-// 演示结算：不直接改前端数字，而是对 /api/execution/events 逐张推进 pending→running→done。
-// 账本是 append-only 的，所以这里只新增事件、不删不改；note 里写明是演示，事后可查。
-// 服务端会自己补 actor/工单/依据（前端传了也不认），状态机不合法时会返回 error，按失败计数。
+// 演示推进：逐张读最新卡片状态，按状态机走一步（pending→running，
+// running 且会签已齐则可到 done，否则停在 running）。
+// 每一步都用接口刚返回的 version 做乐观锁——写死 0 会从第二张开始就 409（第一版踩过）。
 async function settleExecDemo(){
   const ids=(window.__execBehind||[]).slice();
   const btn=document.getElementById('exec-settle');
   if(!ids.length)return;
-  if(btn){btn.disabled=true;btn.textContent='结算中…';}
+  if(btn){btn.disabled=true;btn.textContent='推进中…';}
   let ok=0,err=0,lastErr='';
+  const pull=async function(){const r=await fetch('/api/execution');return await r.json()};
   for(const id of ids){
-    for(const st of ['running','done']){
+    for(let step=0;step<4;step++){
+      let d0;
+      try{d0=await pull()}catch(e){err++;lastErr=String(e);break;}
+      const arr=d0.cards||[];
+      const card=(arr.forEach?arr:[]).filter(function(x){return x&&x.card_id===id})[0];
+      if(!card||card.state==='done'||card.state==='cancelled')break;
+      let body;
+      if(card.state==='pending'){
+        body={to_state:'running'};
+      }else if(card.state==='running'||card.state==='needs_confirm'){
+        const miss=(card.co_sign_required||[]).filter(function(o){return !((card.signatures||{})[o])});
+        if(miss.length)break;               // 会签缺人：停在当前状态，交给人去签
+        body={to_state:'done'};
+      }else break;
       try{
         const r=await fetch('/api/execution/events',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({event_id:'DEMO-'+st.toUpperCase()+'-'+id+'-'+Date.now(),
-            card_id:id,action:'transition',to_state:st,expected_version:0,
+          body:JSON.stringify({event_id:'DEMO-'+id+'-'+card.state+'-'+Date.now(),
+            card_id:id,action:'transition',to_state:body.to_state,
+            expected_version:card.version||0,
             note:'演示：沙盘按接口推进动作卡（非现场回传）'})});
         const j=await r.json();
-        if(j&&j.status==='error'){err++;lastErr=j.error||'';} else {ok++;}
-      }catch(e){err++;lastErr=String(e);}
+        if(j&&j.status==='error'){err++;lastErr=j.error||'';break;}
+        ok++;
+      }catch(e){err++;lastErr=String(e);break;}
     }
   }
   try{
     const r=await fetch('/api/execution');const d=await r.json();renderExec(d);
     const line=document.createElement('div');
     line.style.cssText='margin-top:4px;font-size:10px;color:'+(err?'#e0a06a':'#7fc99a');
-    line.textContent='演示结算：成功 '+ok+' 条事件'+(err?(' · 失败 '+err+' 条'+(lastErr?('（'+lastErr+'）'):'')):'');
+    line.textContent='演示推进：成功 '+ok+' 步'+(err?(' · 失败 '+err+' 步'+(lastErr?('（'+lastErr+'）'):'')):'');
     const el=document.getElementById('exec-body');
     if(el)el.appendChild(line);
   }catch(e){}
