@@ -7099,10 +7099,41 @@ def build_map2d_html() -> tuple[int, str, bytes]:
             spec.loader.exec_module(module)
             module.main()
         except Exception as exc:  # noqa: BLE001 - 生成失败要给可读原因，不能抛 500 堆栈
+            # 生成脚本正在被人改到一半时（语法错、数据文件缺失），刷新页面不该 500。
+            # 上一版产物还在就照旧返回，顶上挂一条黄条说明"这是旧图"——
+            # 悄悄给旧图比报错更糟：看着正常，其实不是最新结论。
+            if artifact.is_file():
+                note = f"{type(exc).__name__}: {exc}"[:200]
+                return 200, "text/html; charset=utf-8", _map2d_with_banner(artifact.read_bytes(), note)
             return _error(f"2.5D 大屏生成失败：{type(exc).__name__}: {exc}"[:300], 500)
     if not artifact.is_file():
         return _error("2.5D 大屏产物缺失", 500)
     return 200, "text/html; charset=utf-8", artifact.read_bytes()
+
+
+def _map2d_with_banner(html: bytes, note: str) -> bytes:
+    """在旧产物顶上插一条"这次没生成成功"的提示。只做展示，不碰图表本身。"""
+    safe = (
+        str(note)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+    style = (
+        "position:fixed;left:0;right:0;top:0;z-index:99;background:#fff7e6;"
+        "border-bottom:1px solid #f0d9a8;color:#8a5a00;padding:6px 14px;"
+        "font:12px/1.6 'Microsoft YaHei',system-ui,sans-serif"
+    )
+    banner = (
+        '<div style="' + style + '">'
+        + "这一屏是上一版产物：本次重新生成失败（" + safe + "），图表可能不是最新。"
+        + "生成脚本改好后刷新即可。</div>"
+    )
+    marker = b"<body>"
+    if marker in html:
+        return html.replace(marker, marker + banner.encode("utf-8"), 1)
+    return html
 
 
 #: 主 Agent 挂的 MCP 工具。真源在 `deploy/nexent/setup_nexent.py` 的 `MAIN_TOOLS`，
@@ -7305,9 +7336,9 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
     <article class=card>
       <div class=kicker>态势</div>
       <h2>2.5D 俯视大屏</h2>
-      <p>一屏看现场：积水范围与深度、封路、泵站状态、跨区调泵。七跳推演可播放。</p>
+      <p>一屏看现场：积水范围与深度、封路、泵站状态、跨区调泵。七拍推演可播放。</p>
       <ul class=points>
-        <li>真实台账尺寸，非美术示意</li>
+        <li>台账尺寸按真实米数，平面布局为示意坐标</li>
         <li>抽排资源分配按冻结案例</li>
       </ul>
       <div class=go><a href="/map2d">打开大屏 →</a></div>
