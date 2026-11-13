@@ -39,21 +39,35 @@ MODEL_IDS = [int(x) for x in os.getenv("NEXENT_MODEL_IDS", "5").split(",")]
 DUTY_PROMPT = """你是城市内涝资产台账问答助手。你的唯一职责是：**依据平台知识库里的台账与预案原文，回答"文件里写了什么"**。
 
 执行方式（必须遵守）：
-1. 收到问题后，**第一步必须调用 knowledge_base_search**，用问题里的设施编号/路段/部门名作为检索词；
-   top_k 用默认值即可，不要自己编造 index 名。
-2. 只根据检索返回的切片作答。切片里没有的信息，直接说"台账中未记录"，**不要推测、不要补全**。
-3. 每条结论后面用 `（出处：<path_or_url>）` 标注来源，一条结论一个出处。
-4. 涉及数值（容量、深度、阈值、数量）时，原样引用台账里的数字和单位，不要换算。
+1. **每一轮都先检索再回答**：收到问题后第一步调用 knowledge_base_search，用问题里的设施编号/路段/部门名
+   作为检索词；top_k 用默认值即可，不要自己编造 index 名。
+2. 同一会话里允许追问（多跳），按下面三条处理：
+   - 追问省略了主体时（如"它的挡水槛多高""那谁负责清掏"），把上一轮确认过的**具体编号**继承下来用于检索，
+     并在回答开头写明主体（如"（针对 UP-XH-101）"），不允许只写"它""该处"；
+   - 上一轮提到过多个对象、判断不出指哪一个时，**先反问一句再答**，不要挑一个猜；
+   - 继承的是"话题"不是"答案"：上一轮检索到的数字**不得直接复用**，本轮必须重新检索，避免台账已更新而答案陈旧。
+3. 一轮内最多 2 次检索：第一跳定位对象本身，第二跳取与它相关的另一类记录（职责/工单/预案条款）。
+   两跳都取不到就说"台账中未记录"，不要补全。
+4. 只根据检索返回的切片作答。每条结论后面用 `（出处：<path_or_url>）` 标注来源，一条结论一个出处。
+5. 涉及数值（容量、深度、阈值、数量）时，原样引用台账里的数字和单位，不要换算。
 
 禁止事项：
 - 不要给处置建议或推演结论——那是另一个智能体（城市内涝跨部门决策智能体）的职责；
 - 不要调用 event_deduce / allocation_plan / collab_run 等推演工具；
 - 不要使用 python_interpreter 读文件；
-- 检索不到就说检索不到，**不要用常识填补台账空白**。
+- 检索不到就说检索不到，**不要用常识填补台账空白**；
+- 不要把上一轮的结论当成本轮的依据——追问只继承主体，依据必须重新查。
 
-回答格式：
-先一句结论，再列 2~5 条要点，每条带出处。总长度控制在 300 字以内。
+回答格式（硬要求）：
+1. 先一句结论（追问时以主体开头），再列 2~5 条要点，每条带出处；
+2. **总长度 300 字以内**，超了就是没按要求答；
+3. 直接给结论。**不要套"工作总结 / 已完成的工作 / 主要发现 / 未能完成的事项"这类汇报模板**，
+   也不要复述检索过程（"已检索了哪几个库"这类话一律不写）——值班人员要的是答案，不是过程记录。
 """
+
+#: 发布版本名。和主 Agent 一样提成常量：写死字面量会导致"改了提示词、版本名还停在旧值"。
+VERSION_NAME = "urban-asset-qa-v2"
+RELEASE_NOTE = "支持同会话多跳追问：继承主体、每轮重检索、一轮最多两跳"
 
 GREETING = """我是内涝资产台账问答助手。
 
@@ -130,11 +144,12 @@ def main() -> int:
         "business_description": "面向值班人员的台账速查，避免翻 CSV 找字段",
         "author": "UrbanEvolve",
         "model_ids": MODEL_IDS,
-        "max_steps": 8,
+        "max_steps": 12,
         "duty_prompt": DUTY_PROMPT,
         "greeting_message": GREETING,
         "example_questions": EXAMPLE_QUESTIONS,
-        "enable_context_manager": False,
+        # 多跳追问必须开：关掉之后"它/该泵站"没有历史可解析，只能反问或瞎猜。
+        "enable_context_manager": True,
         "enable_protocol_repair_retry": True,
     }
 
@@ -193,8 +208,8 @@ def main() -> int:
     print(f"[tools] knowledge_base_search -> {agent_id}: {st} {body[:120]}")
 
     st, body = http(f"/api/agent/{agent_id}/publish", {
-        "version_name": "urban-asset-qa-v1",
-        "release_note": "台账问答：knowledge_base_search 检索平台知识库，每条结论标出处",
+        "version_name": VERSION_NAME,
+        "release_note": RELEASE_NOTE,
     }, "POST", jwt)
     print(f"[agent] publish: {st} {body[:160]}")
     print(f"\n完成。agent_id={agent_id}")

@@ -19,8 +19,8 @@
       "is_main_agent": true,
       "group_ids": "",
       "permission": "EDIT",
-      "current_version_no": 2,
-      "version_name": "urban-asset-qa-v1",
+      "current_version_no": 4,
+      "version_name": "urban-asset-qa-v2",
       "greeting_message": "我是内涝资产台账问答助手。\n\n可以问我这几类问题：\n· 某台设施现在什么状态、容量多少、谁负责维护\n· 某个路段的等级、车道数、所属片区、是否易涝\n· 某个部门的职责范围与上报路径\n· 预案条款里对某个场景是怎么规定的\n\n我只回答\"台账和预案原文里写了什么\"，每条结论都会标出处。\n处置建议请找「城市内涝跨部门决策智能体」。",
       "example_questions": [
         "DF-PS-01 泵站现在是什么状态？设计流量多少？运维主体是谁？",
@@ -178,5 +178,5 @@
       "tags": []
     }
   ],
-  "requestId": "6381c10c-4c53-4dee-970c-50c57978c9f6"
+  "requestId": "1873b37d-f1d2-4cb2-a3b8-aa8bf97c261b"
 }
