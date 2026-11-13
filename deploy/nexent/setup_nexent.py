@@ -88,9 +88,14 @@ OUR_TOOLS = {
 #: 8 项结论一致性校验就守不住。
 #
 #: 2026-11-13 起加入 doc_search（第 3 个）：真实预案进库后，推演需要能查到"依据哪一条"。
-#: 但必须限定用途——它只负责找规则依据，不负责提供事实。事实仍只认 event_deduce，
+#: 但必须限定用途——它只负责找依据，不负责提供事实。事实仍只认 event_deduce，
 #: 否则模型会用检索片段拼六跳，8 项结论一致性校验立刻失守（这条约束写进 DUTY_PROMPT）。
 MAIN_TOOLS = {"event_deduce", "evidence_locate", "doc_search"}
+
+#: 发布版本名。**必须是常量，不能在各处写死字面量**：曾经在 `publish()` 里写死
+#: `urban-mcp-v3`，而平台实际已是 v4，跑一次装配就会把版本命名写回旧值，事后只能翻
+#: 数据库对着 `version_no` 反推。改提示词/工具集时同步改这里。
+MAIN_VERSION_NAME = "urban-mcp-v5"
 
 DUTY_PROMPT = """你是城市内涝跨部门决策智能体。用户给出事件编号与时点后，严格按两步执行：
 
@@ -110,12 +115,16 @@ as_of 取值规则（**必须遵守，取错会让整轮结论失真**）：
 **所以事实层面不需要再调任何工具**。
 
 唯一允许的第二次工具调用是 doc_search，规则严格限定（违反即答错）：
-- 只在需要说明"这件事依据哪条预案/规程"时才调，query 用条款主题词
-  （如「Ⅳ级响应启动条件」「下穿隧道封控阈值」「泵站运维主体的界定」），不要用事件编号去搜；
-- **它只提供规则依据，不提供事实**：检索回来的条文不得写进 six_hops / conflicts /
+- 只在需要外部依据时才调，**最多 1 次**，query 用主题词，不要用事件编号去搜。允许两类用途：
+  ① 规则依据：预案/规程条款（如「Ⅳ级响应启动条件」「下穿隧道封控阈值」「泵站运维主体的界定」）；
+  ② 同类先例：真实政府的定级过程（如「成都 2020-08-11 防汛响应升级 依据」）——
+     用来回答"同类情形以前是怎么定的"，库里有就引，没有就说不掌握，不要编；
+- **它只提供依据，不提供事实**：检索回来的条文与先例不得写进 six_hops / conflicts /
   resource_gap / action_order 的取值，也不得凭它新增或删减处置动作；
+- 先例只能出现在 summary 的一句话对照和 evidence_refs 里，**它的等级、雨量、部门名称一律
+  不得搬到本事件**——那是另一个城市、另一场雨，搬过来就是编数据；
 - 检索结果与 event_deduce 返回冲突时，**一律以 event_deduce 为准**；
-- 最多调用 1 次；检索不到就按 event_deduce 的事实作答，并在 summary 里注明"未检索到对应条款"，
+- 检索不到就按 event_deduce 的事实作答，并在 summary 里注明"未检索到对应条款"，
   不要用常识补全。
 
 第二步：只根据 event_deduce 的返回结果构造 JSON 对象，字段如下（不得增删字段）：
@@ -374,8 +383,11 @@ class Platform(PlatformClient):
     def publish(self, agent_id: int) -> None:
         status, body = self.call(
             f"/api/agent/{agent_id}/publish",
+            payload={
+                "version_name": MAIN_VERSION_NAME,
+                "release_note": "两步式提示词：先 event_deduce 再输出 JSON；doc_search 限规则依据与同类先例",
+            },
             method="POST",
-            payload={"version_name": "urban-mcp-v3", "release_note": "两步式提示词：先 event_deduce 再输出 JSON"},
         )
         print(f"[agent] publish: {status} {str(body)[:200]}")
 

@@ -1,8 +1,15 @@
 {
   "schema_version": "nexent-live-evidence-1",
   "nexent_base_url": "http://localhost:5013",
-  "conversation_id": 148,
+  "conversation_id": 179,
   "agents": [
+    {
+      "name": "urban_asset_qa",
+      "display_name": "内涝资产台账问答",
+      "model_name": "DeepSeek-Chat",
+      "current_version_no": 2,
+      "version_name": "urban-asset-qa-v1"
+    },
     {
       "name": "urban_control_no_tools",
       "display_name": "对照：无 MCP 工具的城市内涝智能体",
@@ -21,35 +28,57 @@
       "name": "urban_collab_agent",
       "display_name": "城市内涝应急协同总控",
       "model_name": "DeepSeek-Chat",
-      "current_version_no": 7,
+      "current_version_no": 9,
       "version_name": "urban-collab-v1"
     },
     {
       "name": "urban_deduction_agent",
       "display_name": "城市内涝跨部门决策智能体",
       "model_name": "DeepSeek-Chat",
-      "current_version_no": 19,
-      "version_name": "urban-mcp-v3"
+      "current_version_no": 25,
+      "version_name": "urban-mcp-v5"
     }
   ],
   "tool_calls": [
     {
       "error_code": null,
       "knowledge_version": "kb-v1.0.0",
-      "latency_ms": 28,
+      "latency_ms": 19,
       "origin": "mcp",
       "snapshot_hash": "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891",
       "status": "ok",
       "tool": "event_deduce",
       "trace_id": null,
-      "ts": "2026-11-06T09:20:43+0000"
+      "ts": "2026-11-13T03:58:39+0000"
+    },
+    {
+      "error_code": null,
+      "knowledge_version": "kb-v1.0.0",
+      "latency_ms": 7,
+      "origin": "mcp",
+      "snapshot_hash": "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891",
+      "status": "ok",
+      "tool": "event_deduce",
+      "trace_id": null,
+      "ts": "2026-11-13T03:58:47+0000"
+    },
+    {
+      "error_code": null,
+      "knowledge_version": "kb-v1.0.0",
+      "latency_ms": 36,
+      "origin": "mcp",
+      "snapshot_hash": "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891",
+      "status": "ok",
+      "tool": "doc_search",
+      "trace_id": null,
+      "ts": "2026-11-13T03:58:49+0000"
     }
   ],
   "tool_log": {
     "path": "samples\\nexent\\live\\mcp_tool_log.jsonl",
-    "lines": 1,
-    "file_mtime": "2026-11-06T17:20:43",
-    "container_started_at": null,
+    "lines": 3,
+    "file_mtime": "2026-11-13T11:58:49",
+    "container_started_at": "2026-11-13T03:57:09.09462598Z",
     "snapshot_hashes": [
       "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891"
     ]

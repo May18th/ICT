@@ -1,0 +1,108 @@
+{
+  "event_id": "WO-20261029-007",
+  "as_of": "2026-10-29T09:40:00+08:00",
+  "query": "城市内涝跨部门事件：WO-20261029-007，时点 2026-10-29T09:40:00+08:00，调用方身份 ORG-EMERG。\n请使用已挂载的 MCP 工具完成六跳推演：\n1) event_deduce 一次返回六跳全部事实、三类冲突、资源缺口与处置顺序；\n2) 需要核对依据时用 evidence_locate 取原文，不得凭记忆编造。\n另外用户追问一句：同类情形以前政府是怎么定级的？库里有真实案例就用 doc_search 查一次并把出处放进 evidence_refs，只作对照，不得改变本事件的判定。\n最后按约定字段输出 JSON，用 final_answer 交卷。",
+  "conversation_id": 180,
+  "checks": [
+    {
+      "name": "六跳齐全",
+      "expected": [
+        "observed",
+        "affected",
+        "owner",
+        "conflict",
+        "resource",
+        "action"
+      ],
+      "actual": [
+        "observed",
+        "affected",
+        "owner",
+        "conflict",
+        "resource",
+        "action"
+      ],
+      "passed": true
+    },
+    {
+      "name": "冲突编号",
+      "expected": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "actual": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "passed": true
+    },
+    {
+      "name": "冲突类型",
+      "expected": [
+        "contention",
+        "gap",
+        "overlap"
+      ],
+      "actual": [
+        "contention",
+        "gap",
+        "overlap"
+      ],
+      "passed": true
+    },
+    {
+      "name": "资源缺口",
+      "expected": 2,
+      "actual": 2,
+      "passed": true
+    },
+    {
+      "name": "隔离先于抽排",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "name": "关键处置动作齐全",
+      "expected": [
+        "隔离风险源",
+        "抽排",
+        "封控"
+      ],
+      "actual": "停止基坑开挖并覆盖或围堰，燃气浓度检测提升至每 2 小时一次；封闭下穿隧道洞口全幅（外部积水漫过入口挡水槛或洞内积水达封控阈值），由 ORG-ROAD 与 ORG-TRAFFIC 联合发布；封控水深阈值沿用道路 25cm（假设值，待核实）；隔离风险源：确认无泄漏后关阀或断电，未确认不得进入下一步；封闭积水路段全幅（深度 ≥25cm 或面积 ≥200m²），范围覆盖积水区上下游各 50m；封路由 ORG-ROAD 与 ORG-TRAFFIC 联合发布，单一部门发布无效；先清掏反涌雨水口再抽排，避免无效抽排；启动泵站抽排；泵站不可用时按 400 m³/h 折算投入移动泵，缺口上报跨区调配；绕行方案避开占道施工路段；无法避开时同步通知施工单位并增设现场疏导；全程同步交通管制与信息发布；水位降至基坑底以下 0.3m 后复检管道悬空与泄漏，方可恢复作业",
+      "passed": true
+    },
+    {
+      "name": "证据非空",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "name": "事件编号一致",
+      "expected": "WO-20261029-007",
+      "actual": "WO-20261029-007",
+      "passed": true
+    }
+  ],
+  "checks_passed": 8,
+  "checks_total": 8,
+  "answer_passed": true,
+  "summary": "A-03 区积水 30cm（≥25cm 封路阈值且外部积水漫过下穿隧道入口挡水槛）判为橙色/Ⅱ级响应，DF-IN-101/201、PL-DRN-101、PL-GAS-101、PL-PWR-101、DF-PS-01、R-101/103/105/201、UP-XH-101、CP-2026-041 等受影响；存在封路联合发布（C1）、泵站 DF-PS-01 无运维主体（C2）、移动泵缺 2 台（C3）三类冲突，需跨部门移交；同类对照：成都 2020-08-11 按《成都市防汛抗旱应急预案》由Ⅳ级（蓝）逐级升至Ⅲ级（黄），属另一城市另一场雨，仅作定级方式对照，不改变本事件判定。",
+  "evidence_refs": [
+    "AS-A-03-work_order-6a1282a1#A-03/work_order/v1#row:2",
+    "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:29",
+    "AS-A-03-drainage_facility-073cc674#A-03/drainage_facility/v1#row:2",
+    "AS-A-03-resource_inventory-8133c741#A-03/resource_inventory/v1#row:3",
+    "AS-CD-CITY-emergency_response_case-e00d311b#CD-CITY/emergency_response_case/2020#line:1-2"
+  ],
+  "precedent_refs": [
+    "AS-CD-CITY-emergency_response_case-e00d311b#CD-CITY/emergency_response_case/2020#line:1-2"
+  ],
+  "precedent_cited": true,
+  "errors": [],
+  "note": "同一轮对话里两件事同时成立：六跳与离线基线八项一致（先例未污染结论），且 evidence_refs 引用了真实定级资产（确实检索过，不是嘴上说'有先例'）。",
+  "generated_at": "2026-11-13T11:58:53+0800"
+}

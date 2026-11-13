@@ -285,3 +285,42 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 | MCP 卡片 | `urban-twin-mcp`、连接成功、**15 个工具**、已启用（截图 `captures/nexent/mcp-space.png`，2026-11-07 00:10 重拍） |
 | 技能绑定 | 主 Agent v19 上 2 条实例 `enabled=true` |
 | 导出包 | 重导 7 982 B，内容指纹 `0a3aef9c61d8e5e523424ad738c93dd737772580a3b3082c3c81ee8810836221`（连导两次一致） |
+
+## 2026-11-13 追加：真实案例进检索后，先例被引用且不污染六跳（v25）
+
+### 改了什么
+
+`doc_search` 的本地索引（`--registered` 口径）此前只收台账登记的 18 份文件。真实政府定级
+记录（2020-08-11 成都）与 ERA5 雨量映射说明虽然早在平台知识库，MCP 侧查不到——"库里有、
+智能体检索不到"等于没蒸馏。本次给它们开了一条不占台账名额的通道：18 文件 / 72 chunk →
+20 文件 / 79 chunk，资产 id 形如
+`AS-CD-CITY-emergency_response_case-e00d311b`，locator 形如
+`CD-CITY/emergency_response_case/2020#line:3-3`。
+
+配套修了一处会让闭环断在最后一步的问题：`evidence_locate` 原本按 `dataset_root / file_name`
+取正文，而补充资料不在台账目录下，不修就是"检索得到、取证失败"。
+
+提示词同步放开第二类用途（版本 v24 → v25，`urban-mcp-v5`）：`doc_search` 除查规则条款外，
+可取"同类先例"，但先例的等级/雨量/部门名**不得搬到本事件**，只能出现在 summary 的一句话
+对照与 `evidence_refs` 里。
+
+### 为什么验收要两项一起看
+
+只验八项一致性，分不清"没检索"和"检索了但没乱用"；只验"引用了先例"，又可能放过污染。
+所以 `scripts/nexent_precedent_live.py` 同时断言：八项全过 + `evidence_refs` 里出现
+`AS-CD-CITY-emergency_response_case` 前缀的引用。
+
+### 实测结果（2026-11-13，MCP 调用日志清空后的干净窗口）
+
+| 项 | 结果 |
+| --- | --- |
+| 标准推演 | 8/8 一致，`conversation_id=179`，`attempts=1`，工具调用 `event_deduce` 1 次 |
+| 追问先例 | 8/8 一致，`conversation_id=180`，工具调用 `event_deduce` + `doc_search` 各 1 次 |
+| 先例出处 | `AS-CD-CITY-emergency_response_case-e00d311b#CD-CITY/emergency_response_case/2020#line:1-2` |
+| 结论纪律 | summary 写明"同类先例中成都 2020-08-11 由市防指依预案Ⅳ级条件启动蓝色响应，**其等级与雨量口径不适用于本事件**" |
+| 取证闭环 | 该 ref 交给 `evidence_locate` 可取回原文，`span=1-2/4` |
+| 调用日志 | 3 条，`event_deduce`×2 + `doc_search`×1，快照哈希一致 |
+
+证据文件：`samples/eval/nexent_urban_smoke.json`（179）、
+`samples/nexent/live/precedent_live.json`（180）、`samples/nexent/live/live_evidence.json`、
+`samples/nexent/live/mcp_tool_log.jsonl`。

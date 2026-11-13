@@ -156,8 +156,8 @@
       "is_main_agent": true,
       "group_ids": "2",
       "permission": "EDIT",
-      "current_version_no": 24,
-      "version_name": "urban-mcp-v4",
+      "current_version_no": 25,
+      "version_name": "urban-mcp-v5",
       "greeting_message": "我是城市内涝跨部门决策智能体。给我一个工单号（如 WO-20261029-007），我按「事件现象 → 受影响设施 → 责任部门 → 资源需求 → 处置动作 → 后续风险」六跳推演，每个结论都标注依据来源与版本。",
       "example_questions": [
         "WO-20261029-007 应该怎么处置？先给结论，再给六跳推演链路。",
@@ -178,5 +178,5 @@
       "tags": []
     }
   ],
-  "requestId": "c1660859-da7f-449a-b8b0-3fc0b02a0f37"
+  "requestId": "6381c10c-4c53-4dee-970c-50c57978c9f6"
 }
