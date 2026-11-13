@@ -5257,7 +5257,7 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
 <script>
 var feed=document.getElementById('feed'), pane=document.getElementById('pane'), q=document.getElementById('q');
 var go=document.getElementById('go'), stat=document.getElementById('stat');
-var conv=null, current='event', agentSel=null;
+var conv=null, current='event', agentSel=null, curEvent=null;
 
 function el(tag, cls, text){var n=document.createElement(tag); if(cls){n.className=cls;} if(text!==null&&text!==undefined){n.textContent=String(text);} return n;}
 function bubble(kind, text){var n=el('div','msg '+kind, text); feed.appendChild(n); feed.scrollTop=feed.scrollHeight; return n;}
@@ -5415,15 +5415,58 @@ function searchRef(text){
 var KIND_CN={overlap:'权限重叠',gap:'职责空白',contention:'资源争用'};
 var LEVEL_CN={blue:'蓝色响应',yellow:'黄色响应',orange:'橙色响应',red:'红色响应'};
 
-function loadEvent(){
-  pane.innerHTML=''; pane.appendChild(el('div','empty','读取事件事实（本地引擎，不经模型）…'));
-  fetch('/api/workbench/event').then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
+function fetchEvent(ev){
+  var host=document.getElementById('eventBody');
+  if(!host){return;}
+  host.innerHTML=''; host.appendChild(el('div','empty','推演中（本地引擎，不经模型）…'));
+  fetch('/api/workbench/event',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({event_id:ev.id, as_of:ev.asOf})})
+   .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
    .then(function(res){
-      pane.innerHTML='';
-      if(!res.ok){pane.appendChild(el('div','empty','读取失败：'+(res.d.error||'')));return;}
-      renderEvent(res.d);
+      host.innerHTML='';
+      if(!res.ok){host.appendChild(el('div','empty','推演失败：'+(res.d.error||'')));return;}
+      renderEvent(res.d, host);
     })
-   .catch(function(e){pane.textContent='网络错误：'+e;});
+   .catch(function(e){host.textContent='网络错误：'+e;});
+}
+
+function loadEvent(){
+  pane.innerHTML='';
+  var bar=el('div');
+  bar.style.display='flex'; bar.style.gap='8px'; bar.style.alignItems='center';
+  bar.style.marginBottom='10px'; bar.style.flexWrap='wrap';
+  var sel=document.createElement('select');
+  sel.id='eventSel'; sel.style.maxWidth='340px';
+  sel.onchange=function(){
+    var o=this.options[this.selectedIndex];
+    curEvent={id:o.value, asOf:o.dataset.asof||''};
+    fetchEvent(curEvent);
+  };
+  bar.appendChild(sel);
+  var tag=el('span','empty','时点取工单上报时间');
+  tag.style.fontSize='11.5px';
+  bar.appendChild(tag);
+  pane.appendChild(bar);
+  var host=el('div'); host.id='eventBody'; pane.appendChild(host);
+  host.appendChild(el('div','empty','读取事件清单…'));
+
+  fetch('/api/workbench/events').then(function(r){return r.json();}).then(function(d){
+    var events=d.events||[];
+    if(!events.length){host.innerHTML=''; host.appendChild(el('div','empty','工单台账里没有事件。'));return;}
+    events.forEach(function(ev){
+      var opt=document.createElement('option');
+      opt.value=ev.event_id;
+      opt.dataset.asof=ev.as_of;
+      var desc=(ev.description||'').slice(0,26);
+      opt.textContent=ev.event_id+' · '+(ev.road_id||'')+(desc?(' · '+desc):'');
+      sel.appendChild(opt);
+    });
+    var want=(curEvent&&curEvent.id)||d.default||events[0].event_id;
+    for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value===want){ sel.selectedIndex=i; break; } }
+    var picked=sel.options[sel.selectedIndex];
+    curEvent={id:picked.value, asOf:picked.dataset.asof||''};
+    fetchEvent(curEvent);
+  }).catch(function(e){host.textContent='读取事件清单失败：'+e;});
 }
 
 function blockTitle(text, tail){
@@ -5482,26 +5525,58 @@ function fold(host, title, lines){
   host.appendChild(det);
 }
 
-function renderEvent(d){
+function renderEvent(d, target){
+  var host=target||pane;
   var ob=d.observed||{};
   var line=el('div');
   line.style.fontSize='15px'; line.style.fontWeight='600';
-  line.textContent=(ob.district||'-')+' 片区 · '+(LEVEL_CN[ob.response_level]||ob.response_level||'-')
-    +' · 积水 '+(ob.depth_cm||'-')+' cm';
-  pane.appendChild(line);
-  var sub=el('div','empty','触发：'+(ob.trigger||'-'));
-  sub.style.fontSize='12px';
-  pane.appendChild(sub);
+  // 已闭环事件引擎会直接拒推（conclusion.refused），不硬编结论——这一屏要把这件事说出来，
+  // 而不是显示一排 0。判据就是 observed 里有没有 refused。
+  if(ob.refused){
+    line.textContent=d.event_id+' · 未进入处置推演';
+    line.className='warn';
+  }else{
+    line.textContent=(ob.district||'—')+' 片区 · '+(LEVEL_CN[ob.response_level]||ob.response_level||'未定级')
+      +' · '+(ob.depth_cm?('积水 '+ob.depth_cm+' cm'):'无水深记录');
+  }
+  host.appendChild(line);
+  if(ob.trigger){
+    var sub=el('div','empty','触发：'+ob.trigger);
+    sub.style.fontSize='12px';
+    host.appendChild(sub);
+  }
+
+  if(ob.refused){
+    var why=el('div','warn','原因：'+ob.refused);
+    why.style.fontSize='13px'; why.style.lineHeight='1.7'; why.style.margin='10px 0 4px';
+    host.appendChild(why);
+    var unc=d.uncovered_stages||[];
+    if(unc.length){
+      host.appendChild(el('div','empty','未覆盖阶段：'+unc.join(' / ')));
+    }
+    var refs0=d.evidence_refs||[];
+    host.appendChild(blockTitle('依据','共 '+refs0.length+' 条，点开看原文'));
+    if(!refs0.length){host.appendChild(el('div','empty','无'));}
+    host.appendChild(refChips(refs0, 12));
+    var foot0=el('div','empty');
+    foot0.style.marginTop='14px'; foot0.style.fontSize='11.5px';
+    foot0.textContent='事件 '+(d.event_id||'-')+' · 规则集 '+(d.rules_version||'-')
+      +' · 快照 '+String(d.snapshot_hash||'-').slice(0,12)+' · 时点 '+(d.as_of||'-');
+    host.appendChild(foot0);
+    return;
+  }
 
   var actions=d.actions||[];
-  pane.appendChild(blockTitle('处置顺序','共 '+actions.length+' 步'));
+  host.appendChild(blockTitle('处置顺序','共 '+actions.length+' 步'));
+  if(!actions.length){host.appendChild(el('div','empty','无'));}
   var ol=el('ol');
   ol.style.margin='0'; ol.style.paddingLeft='20px'; ol.style.fontSize='13px'; ol.style.lineHeight='1.75';
   actions.forEach(function(a){var li=el('li',null,a.action||''); li.style.marginBottom='2px'; ol.appendChild(li);});
-  pane.appendChild(ol);
+  host.appendChild(ol);
 
   var cf=d.conflicts||[];
-  pane.appendChild(blockTitle('跨部门冲突','共 '+cf.length+' 条'));
+  host.appendChild(blockTitle('跨部门冲突','共 '+cf.length+' 条'));
+  if(!cf.length){host.appendChild(el('div','empty','无'));}
   cf.forEach(function(c){
     var row=el('div');
     row.style.fontSize='13px'; row.style.lineHeight='1.7'; row.style.padding='3px 0';
@@ -5514,45 +5589,46 @@ function renderEvent(d){
       oc.style.fontSize='11.5px'; oc.style.color='#6b7280';
       row.appendChild(oc);
     }
-    pane.appendChild(row);
+    host.appendChild(row);
   });
 
   var gaps=d.resource_gaps||[];
-  pane.appendChild(blockTitle('资源缺口','共 '+gaps.length+' 项'));
-  if(!gaps.length){pane.appendChild(el('div','empty','无'));}
+  host.appendChild(blockTitle('资源缺口','共 '+gaps.length+' 项'));
+  if(!gaps.length){host.appendChild(el('div','empty','无'));}
   gaps.forEach(function(g){
     var row=el('div');
     row.style.fontSize='13px'; row.style.padding='2px 0';
     row.textContent=(g.resource_id||'')+'：需 '+g.required+' '+g.unit+'，可用 '+g.available+'，缺 '+g.gap+' '+g.unit;
     if(Number(g.gap)>0){row.className='bad';}
-    pane.appendChild(row);
+    host.appendChild(row);
   });
 
   var own=d.owner||{};
-  pane.appendChild(blockTitle('职责','协调方 '+(own.coordinator||'-')));
+  host.appendChild(blockTitle('职责','协调方 '+(own.coordinator||'-')));
   if(own.unassigned){
     var ua=el('div','bad','无明确责任主体：'+own.unassigned);
     ua.style.fontSize='12.5px'; ua.style.marginBottom='6px';
-    pane.appendChild(ua);
+    host.appendChild(ua);
   }
-  if(own.owners){ fold(pane,'各对象责任部门', String(own.owners).split(';').join('；')); }
+  if(own.owners){ fold(host,'各对象责任部门', String(own.owners).split(';').join('；')); }
 
   var af=d.affected||{};
   if(af.affected){
     var items=String(af.affected).split(',').filter(function(x){return x.trim();});
-    fold(pane,'受影响对象 '+items.length+' 个', items.join('、'));
-    if(af.reason){ fold(pane,'受影响原因', String(af.reason).split(';').join('；')); }
+    fold(host,'受影响对象 '+items.length+' 个', items.join('、'));
+    if(af.reason){ fold(host,'受影响原因', String(af.reason).split(';').join('；')); }
   }
 
   var refs=d.evidence_refs||[];
-  pane.appendChild(blockTitle('依据','共 '+refs.length+' 条，点开看原文'));
-  pane.appendChild(refChips(refs, 12));
+  host.appendChild(blockTitle('依据','共 '+refs.length+' 条，点开看原文'));
+  if(!refs.length){host.appendChild(el('div','empty','无'));}
+  host.appendChild(refChips(refs, 12));
 
   var foot=el('div','empty');
   foot.style.marginTop='14px'; foot.style.fontSize='11.5px';
   foot.textContent='事件 '+(d.event_id||'-')+' · 规则集 '+(d.rules_version||'-')
     +' · 快照 '+String(d.snapshot_hash||'-').slice(0,12)+' · 时点 '+(d.as_of||'-');
-  pane.appendChild(foot);
+  host.appendChild(foot);
 }
 
 function loadReplay(){
@@ -5564,7 +5640,7 @@ function loadReplay(){
   btn.id='replayBtn'; btn.style.height='32px'; btn.style.borderRadius='8px';
   btn.onclick=function(){runReplay(this);};
   bar.appendChild(btn);
-  bar.appendChild(el('span','empty','同一事件真机跑一遍主 Agent，八项判据实时重算，并与上一轮逐项比对（约 10–30 秒）。'));
+  bar.appendChild(el('span','empty','固定跑 WO-20261029-007（八项离线基线只对该事件定义）：真机跑一遍主 Agent，八项判据实时重算，并与上一轮逐项比对（约 10–30 秒）。'));
   pane.appendChild(bar);
   var host=el('div'); host.id='replayResult'; pane.appendChild(host);
   host.appendChild(el('div','empty','读取历史…'));
@@ -5731,7 +5807,13 @@ q.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.prev
 var sws=document.querySelectorAll('.sw'); for(var i=0;i<sws.length;i++){sws[i].onclick=function(){switchMode(this.dataset.mode);};}
 var tabs=document.querySelectorAll('.tab'); for(var j=0;j<tabs.length;j++){tabs[j].onclick=function(){setTab(this.dataset.tab);};}
 // 允许直接链接到某一栏（演示时把 #replay 发出去，打开就是复跑面板）
-if(location.hash==='#replay'){setTab('replay');} else {setTab('event');}
+var __h=location.hash||'';
+if(__h.indexOf('#replay')===0){setTab('replay');}
+else{
+  // #event=<事件编号>：演示时可以直接链到某个事件，不用手点下拉框
+  if(__h.indexOf('#event=')===0){curEvent={id:decodeURIComponent(__h.slice(7)), asOf:''};}
+  setTab('event');
+}
 </script></body></html>
 """
 
@@ -5957,6 +6039,42 @@ def workbench_replay_history(limit: int = 10) -> tuple[int, str, bytes]:
     )
 
 
+def _work_order_rows() -> list[dict[str, str]]:
+    """读工单台账。事件清单与"时点缺省"两处都用它，避免各读一遍 CSV。"""
+    from .urban_dataset import DEFAULT_DATASET_ROOT
+
+    path = DEFAULT_DATASET_ROOT / "work_orders.csv"
+    if not path.is_file():
+        return []
+    with path.open(encoding="utf-8", newline="") as handle:
+        return [dict(row) for row in csv.DictReader(handle)]
+
+
+def workbench_events() -> tuple[int, str, bytes]:
+    """GET /api/workbench/events：可切换的事件清单，直接读工单台账。
+
+    为什么不做成"输入框随便填"：填一个不存在的事件只会拿到 NOT_FOUND，
+    演示时像个坏掉的系统。这里把台账里真实存在的工单列出来，
+    选哪个就推哪个——顺带说明这套东西不是一个事件写死的。
+    """
+    rows = _work_order_rows()
+    if not rows:
+        return _error("工单台账缺失或为空", 500)
+    events = [
+        {
+            "event_id": row.get("order_id") or "",
+            "as_of": row.get("reported_at") or "",
+            "order_type": row.get("order_type") or "",
+            "road_id": row.get("road_id") or "",
+            "facility_id": row.get("facility_id") or "",
+            "severity": row.get("severity") or "",
+            "description": (row.get("description") or "")[:80],
+        }
+        for row in rows
+    ]
+    return _json({"events": events, "default": WORKBENCH_REPLAY_EVENT})
+
+
 def workbench_event(body: bytes | None = None) -> tuple[int, str, bytes]:
     """GET/POST /api/workbench/event：把事件的六跳事实摆出来，**不经过 LLM**。
 
@@ -5972,7 +6090,13 @@ def workbench_event(body: bytes | None = None) -> tuple[int, str, bytes]:
         except (UnicodeDecodeError, json.JSONDecodeError):
             return _error("请求体不是合法 JSON", 400)
     event_id = str(payload.get("event_id") or WORKBENCH_REPLAY_EVENT).strip()
-    as_of = str(payload.get("as_of") or WORKBENCH_REPLAY_AS_OF).strip()
+    as_of = str(payload.get("as_of") or "").strip()
+    if not as_of:
+        # 没给时点就取该工单自己的上报时间；用别的事件的时点会推出错误定级。
+        as_of = next(
+            (row.get("reported_at") or "" for row in _work_order_rows() if row.get("order_id") == event_id),
+            "",
+        ) or WORKBENCH_REPLAY_AS_OF
 
     try:
         result = _workbench_toolkit().call(
@@ -6347,6 +6471,8 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return 200, "text/html; charset=utf-8", build_status_html().encode("utf-8")
     if parsed.path == "/workbench":
         return 200, "text/html; charset=utf-8", build_workbench_html().encode("utf-8")
+    if segments[:3] == ["api", "workbench", "events"]:
+        return workbench_events()
     if segments[:3] == ["api", "workbench", "event"]:
         return workbench_event(body)
     if segments[:3] == ["api", "workbench", "replay"]:
