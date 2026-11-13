@@ -1,0 +1,86 @@
+{
+  "kind": "collab-ab-evidence",
+  "event_id": "WO-20261029-007",
+  "as_of": "2026-10-29T09:40:00+08:00",
+  "offline": {
+    "kernel_fingerprint": "ab94413cf94bc9a5",
+    "cards": 26,
+    "merge_order": 15,
+    "covered_agents": 6,
+    "constraint_violations": []
+  },
+  "agents": {
+    "urban_collab_control_no_tools": {
+      "version_no": 2,
+      "version_name": "control-collab-no-tools-v1"
+    },
+    "urban_asset_qa": {
+      "version_no": 8,
+      "version_name": "urban-asset-qa-v2"
+    },
+    "urban_control_no_tools": {
+      "version_no": 1,
+      "version_name": "control-no-tools-v1"
+    },
+    "urban_llm_decision_agent": {
+      "version_no": 2,
+      "version_name": "llm-decision-v2"
+    },
+    "urban_collab_agent": {
+      "version_no": 9,
+      "version_name": "urban-collab-v1"
+    },
+    "urban_deduction_agent": {
+      "version_no": 25,
+      "version_name": "urban-mcp-v5"
+    }
+  },
+  "groups": {
+    "with_tools": {
+      "agent": "urban_collab_agent",
+      "conversation_id": 197,
+      "elapsed_s": 7.4,
+      "json_parsed": true,
+      "kernel_fingerprint": "ab94413cf94bc9a5",
+      "fingerprint_match": true,
+      "cards": 26,
+      "merge_order": 15,
+      "covered_agents": 6,
+      "constraint_violations": [],
+      "answer_len": 8342
+    },
+    "without_tools": {
+      "agent": "urban_collab_control_no_tools",
+      "conversation_id": 198,
+      "elapsed_s": 41.1,
+      "json_parsed": false,
+      "answer_len": 1379,
+      "answer_head": "<code>\nimport json\n\nsummary = \"\"\"## 工作总结\n\n### 1. 已完成的工作\n- 按任务要求，首步即尝试调用 `collab_run(event_id=\"WO-20261029-007\", as_of=\"2026-10-29T09:40:00+08:00\", caller_labels=[\"ORG-EMERG\"])`，共重试 20 次，覆盖直接调用与“先判 `data` 类型再 `json.loads`”的两种取值写法。\n- 每次调用均抛出同一异常：`NameError: name 'collab_run' is not defined`。\n- 已核对当前运行"
+    },
+    "without_tools_pressed": {
+      "agent": "urban_collab_control_no_tools",
+      "conversation_id": 199,
+      "elapsed_s": 29.8,
+      "json_parsed": true,
+      "kernel_fingerprint": "b7f3c2a9e41d5806",
+      "fingerprint_match": false,
+      "cards": 8,
+      "merge_order": 8,
+      "covered_agents": 6,
+      "constraint_violations": [],
+      "answer_len": 1991
+    }
+  },
+  "verdict": {
+    "with_tools_derived_from_mcp": true,
+    "without_tools_reproduced": false,
+    "without_tools_pressed_reproduced": false,
+    "passed": true
+  },
+  "notes": [
+    "三组同题、同模型、同提示词；B/C 组是零工具对照，C 组额外要求凭经验直接出方案。",
+    "指纹是六跳内核的哈希，逐字相等才算复现；B/C 出现即判定工具未解绑或结果被注入。",
+    "B 组未产出可解析 JSON（含拒答）属于合格表现；C 组若编了一个指纹，看它是否与离线相等。"
+  ],
+  "generated_at": "2026-11-13T14:39:01+0800"
+}

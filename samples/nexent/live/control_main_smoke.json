@@ -1,0 +1,105 @@
+{
+  "event_id": "WO-20261029-007",
+  "as_of": "2026-10-29T09:40:00+08:00",
+  "conversation_id": 200,
+  "answer": {
+    "event_id": "WO-20261029-007",
+    "as_of": "2026-10-29T09:40:00+08:00",
+    "six_hops": [
+      "observed",
+      "affected",
+      "owner",
+      "conflict",
+      "resource",
+      "action"
+    ],
+    "conflicts": [],
+    "resource_gap": 0,
+    "action_order": [],
+    "summary": "事件六跳事实与三类冲突无法获取：event_deduce 与 evidence_locate 工具均未挂载到本运行时，无法核对原文依据，故不作任何结论性推断。",
+    "residual_risks": [
+      "工具不可用导致事件态势未被核实，存在处置延误与跨部门协同失效风险"
+    ],
+    "evidence_refs": [],
+    "handoff_required": true
+  },
+  "checks": [
+    {
+      "name": "六跳齐全",
+      "expected": [
+        "observed",
+        "affected",
+        "owner",
+        "conflict",
+        "resource",
+        "action"
+      ],
+      "actual": [
+        "observed",
+        "affected",
+        "owner",
+        "conflict",
+        "resource",
+        "action"
+      ],
+      "passed": true
+    },
+    {
+      "name": "冲突编号",
+      "expected": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "actual": [],
+      "passed": false
+    },
+    {
+      "name": "冲突类型",
+      "expected": [
+        "contention",
+        "gap",
+        "overlap"
+      ],
+      "actual": [],
+      "passed": false
+    },
+    {
+      "name": "资源缺口",
+      "expected": 2,
+      "actual": 0,
+      "passed": false
+    },
+    {
+      "name": "隔离先于抽排",
+      "expected": true,
+      "actual": false,
+      "passed": false
+    },
+    {
+      "name": "关键处置动作齐全",
+      "expected": [
+        "隔离风险源",
+        "抽排",
+        "封控"
+      ],
+      "actual": "",
+      "passed": false
+    },
+    {
+      "name": "证据非空",
+      "expected": true,
+      "actual": false,
+      "passed": false
+    },
+    {
+      "name": "事件编号一致",
+      "expected": "WO-20261029-007",
+      "actual": "WO-20261029-007",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "attempts_used": 1,
+  "attempt_errors": []
+}

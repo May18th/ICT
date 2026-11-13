@@ -306,9 +306,41 @@ uv run --locked python -m decision_poc.nexent_urban --attempts 2 --json samples/
 不是"任何模型没有工具都必然答错"。对照组 Agent 保留在平台上（display_name 已标"对照"），
 便于换环境后重跑同一实验，不作为业务入口。
 
+### 协同侧的对照实验（2026-11-13）
+
+主 Agent 的对照只回答"六跳要不要工具"。协同 Agent 此前只有"2/2 指纹一致"，
+那只说明**它会照着工具返回值抄**，说明不了"动作卡与处置顺序不是它自己排的"。
+所以补三组同题实验（同模型、同提示词，唯一差别是有没有工具）：
+
+| 组 | Agent | 工具 | 问法 | 指纹 | 卡片 / 顺序 |
+| --- | --- | --- | --- | --- | --- |
+| A | `urban_collab_agent`（v9） | 6 个 | 先调 `collab_run` | `ab94413cf94bc9a5`，一致 | 26 / 15 |
+| B | `urban_collab_control_no_tools`（v2） | 0 个 | 同上 | 无（连可解析 JSON 都没产出） | — |
+| C | 同上 | 0 个 | 明令不许调工具，要求凭经验出方案 | `b7f3c2a9e41d5806`（编的，格式合法） | 8 / 8 |
+
+C 组是这组实验里最有用的一格：它编出来的指纹**格式完全正确**（16 位十六进制）。
+如果验收只检查"有没有 `kernel_fingerprint` 字段"，就会被它骗过去；能对得上只能来自内核。
+卡片 id 也露馅——真实是内核命名的卡，C 组编的是 `CARD-01…CARD-08`，数量只有 26 的三分之一。
+不同轮次它编的指纹还不一样（另一次是拿事件编号拼的 `WO20261029007A0`），
+说明"编一个像指纹的字符串"是随机的，这正是不该只看格式的原因。
+
+跑法：
+
+```bash
+docker cp deploy/nexent/no_tools_control.py nexent-config:/tmp/no_tools_control.py
+docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/no_tools_control.py --role collab"
+PYTHONPATH=src python scripts/nexent_collab_ab.py   # 三组同题，写 samples/nexent/live/collab_ab.json
+```
+
+主侧对照组同日复跑仍 **2/8**（conversation 200），通过项依旧是"事件编号回填"与
+"六跳字段名照抄"——升到 v25 后行为没有变化，说明那两个薄弱项是判据本身的形状，不是版本回归。
+
+边界：一个事件、每组跑一次。B/C 组的合格形态是"拿不到凭据"，不是"必须拒答"——
+B 组这次写的是 `<code>print("collab_run" in dir())</code>`，它去运行时查符号，也没硬编答案。
+
 ## 多智能体协同 Agent（`collab_run`，路径 B）
 
-MCP 工具数已到 **14**（含 `collab_run`，分组 `collaboration`）。平台侧两条装配线：
+MCP 工具数已到 **15**（含 `collab_run`，分组 `collaboration`）。平台侧两条装配线：
 
 | 命令 | 作用 |
 | --- | --- |
