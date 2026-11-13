@@ -2300,30 +2300,82 @@ function build(sched){
     // 路段方向角（世界 = 场景方向，W 是等比例缩放）
     const ang=-Math.atan2(ps[1][1]-ps[0][1],ps[1][0]-ps[0][0]);
     const grp=new THREE.Group();
-    // 封路是「路段两头封死」，不是沿路均匀摆三道：
-    // 摆在 1/4、1/2、3/4 处既挡不住从两端驶入的车，视觉上也像一排装饰栏杆。
-    [0.07,0.93].forEach(function(f){
-      const px=ps[0][0]+(ps[1][0]-ps[0][0])*f, py=ps[0][1]+(ps[1][1]-ps[0][1])*f;
-      const[wx,wz]=W(px,py);
-      // 每组护栏要横跨车行道：子 Group 绕 Y 轴转到「垂直于路」，宽度按实际路宽给。
-      // 原来护栏固定沿世界 X 轴、长度写死 3.6，路一旦不是东西向就变成顺着路摆一块板，
-      // 视觉上就是「只堵了一边」。
+    // 封控点：取路段上离作业点最近的位置，向上下游各放 1.45 世界单位（约 9m）。
+    // 原来放在整段路的 7%/93% 处——R-101 全长 480m，护栏因此跑到 156m 外，
+    // 而特写机位画幅只有 ±11m，封路这个动作永远拍不到（实测护栏 x=-37.6，作业点 x=-12.5）。
+    // 现场本来就是"把作业区两头封住"，两头各 9m 正好落在特写画幅里。
+    // 最近点必须**投影到线段上**，不能只取折线顶点：R-101 只有两个端点，
+    // 取顶点的结果还是 156m 外的路端（实测 x=-46.3），封路照样在画外。
+    const WP={x:-12.48,z:-1.6};
+    let bx=0,bz=0,bD=1e9;
+    for(let i=0;i<ps.length-1;i++){
+      const a=W(ps[i][0],ps[i][1]),c=W(ps[i+1][0],ps[i+1][1]);
+      const vx=c[0]-a[0],vz=c[1]-a[1];
+      const L2=vx*vx+vz*vz||1e-6;
+      let tt=((WP.x-a[0])*vx+(WP.z-a[1])*vz)/L2;
+      tt=Math.max(0,Math.min(1,tt));
+      const qx=a[0]+vx*tt,qz=a[1]+vz*tt;
+      const dd=Math.hypot(qx-WP.x,qz-WP.z);
+      if(dd<bD){bD=dd;bx=qx;bz=qz;}
+    }
+    const bp=[bx,bz];
+    const dx=Math.cos(ang),dz=-Math.sin(ang);
+    // 路面法向单位向量：从路中线沿它往外走就是路缘。
+    const nx=Math.sin(ang), nz=Math.cos(ang);
+    const barW=wid+1.0;
+    // 真实施工围栏：板高 1.10m、厚 60mm、腿高同板高。K=0.16 → 板高 0.176 世界。
+    // 旧值 0.8 世界 = 5.0 米高、0.26 厚 = 1.6 米厚，这尺寸是围墙不是围栏，
+    // 特写里一块黄板横过去就把人和车全挡住了。
+    const H=1.10*K, TH=0.06*K;
+    [-1.45,1.45].forEach(function(off,k){
+      const wx=bp[0]+dx*off, wz=bp[1]+dz*off;
+      // 封路前：整块围栏顺着路停在路缘内侧（还没挡道）。封路时由工人把它推到路中并转正。
+      // 两块板从对角推入（k=0 走南缘、k=1 走北缘），避免两块 27m 长的板在同一侧街沿上重叠。
+      const sgn=(k===0?-1:1);
+      // 停放点取在**路缘**（半路宽 + 0.2 世界 ≈ 1.5m 让开人行道），封路时推到路中。
+      // 推入行程 ≈ 半路宽 = 8.6m，两个人各推一侧，画面上是"两块板从两边合拢把路封死"。
+      const offN=wid*0.5+0.20;
+      const fx=wx+nx*sgn*offN, fz=wz+nz*sgn*offN;
       const seg=new THREE.Group();
-      seg.position.set(wx,0,wz);
+      // 组基准抬到车行道顶面 0.385：原来 seg 原点在地面基底(0)，腿长 0.9 有一半插进路面，
+      // 而横板中心写 0.9 等于悬空 0.5 世界单位（3 米高），整组读起来像一堵黄墙。
+      seg.position.set(fx,0.385,fz);
       seg.rotation.y=ang+Math.PI/2;
-      const barW=wid+1.0;
-      const bar=new THREE.Mesh(new THREE.BoxGeometry(barW,0.8,0.26),blockMat);
-      bar.position.y=0.9;bar.castShadow=true;seg.add(bar);
-      const leg1=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.9,0.22),blockMat);
-      leg1.position.set(-barW/2+0.25,0.45,0);seg.add(leg1);
-      const leg2=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.9,0.22),blockMat);
-      leg2.position.set(barW/2-0.25,0.45,0);seg.add(leg2);
-      const cone=new THREE.Mesh(new THREE.ConeGeometry(0.45,0.9,10),coneMat);
-      cone.position.set(barW*0.3,0.45,0.95);seg.add(cone);
+      const bar=new THREE.Mesh(new THREE.BoxGeometry(barW,H,TH),blockMat);
+      bar.position.y=H/2+0.04;bar.castShadow=true;seg.add(bar);
+      // 底脚改成 4 个轮子（施工围挡本来就有脚轮）：一块 17m 长的板由一个人推着横移，
+      // 没有轮子在任何角度看都"推不动"；有轮子才读成"把围挡推到位"，而且不需要拆成 10 节。
+      const wheelGeo=new THREE.CylinderGeometry(0.020,0.020,0.022,10);
+      const wheelMat=new THREE.MeshStandardMaterial({color:0x14181c,roughness:.92});
+      [-0.40,-0.14,0.14,0.40].forEach(function(f){
+        const w=new THREE.Mesh(wheelGeo,wheelMat);
+        w.rotation.x=Math.PI/2;
+        w.position.set(barW*f,0.020,0);seg.add(w);
+      });
+      // 围栏脚边的锥桶：0.7m 高、底径 0.36m，摆在板前 0.9m（原来 0.95 世界 = 5.9 米外，
+      // 跑到路中间去了，且 0.45/0.9 的锥底是 2.8m 宽 5.6m 高的一个巨型锥，占掉半屏）
+      const cone=new THREE.Mesh(new THREE.ConeGeometry(0.18*K,0.70*K,10),coneMat);
+      cone.position.set(barW*0.3,0.35*K,0.15);seg.add(cone);
+      // 停放位 / 封路位：updateCollab 每帧按「推入进度 push」在两者之间插值，
+      // 而 push 由推这块板的那个工人的走位驱动（见 moveCrew 里的 sealW/sealE）。
+      // hand0/hand1 是工人的站位。站位不能放在板的**端头**——一块 27m 长的板被一个站在
+      // 端头的人横着推，读起来是"板自己在滑"。正确姿势是站在板面外侧、手扶板面、侧身推：
+      //   · 沿板方向偏 barW*0.20（在板的上游 1/5 处，不在正中，正中像在推一扇大门）
+      //   · 沿路方向偏 0.14 世界（0.9m，人贴着板面站，手才够得着；0.34 时人离板 2.1m，
+      //     画面里就是"一个人站在黄板旁边发呆"）
+      //   · 方向取 **-路向**：机位在西南，人必须站在板的西侧（镜头这一侧），
+      //     站到东侧会被 17m 长的板整个挡死——实测只露出一个黄帽子尖。
+      // pat 是路向单位向量，moveCrew 用它算"人面朝板"的朝向。
+      const aLong=barW*0.20, bSide=-0.14;
+      seg.userData={
+        fix:{x:fx,z:fz},park:{x:wx,z:wz},side:k,pat:{x:dx,z:dz},
+        hand0:{x:fx+nx*sgn*aLong+dx*bSide,z:fz+nz*sgn*aLong+dz*bSide},
+        hand1:{x:wx+nx*sgn*aLong+dx*bSide,z:wz+nz*sgn*aLong+dz*bSide}
+      };
       grp.add(seg);
     });
     // 封路标牌
-    const sign=makeLabel('封路','#ffc21a');sign.position.set(grp.children.length?grp.children[0].position.x:W(ps[0][0],ps[0][1])[0],3.0,grp.children.length?grp.children[0].position.z:W(ps[0][0],ps[0][1])[1]);
+    const sign=makeLabel('封路','#ffc21a');sign.position.set(grp.children.length?grp.children[0].position.x:W(ps[0][0],ps[0][1])[0],1.30,grp.children.length?grp.children[0].position.z:W(ps[0][0],ps[0][1])[1]);
     grp.add(sign);
     grp.visible=false;   // 封路是事件动作：施工队到场后才出现，不在一开始就摆着
     grp.userData={entityId:rd.id,name:rd.label||'封路',kind:'road',detail:rd.detail||''};
@@ -2333,8 +2385,11 @@ function build(sched){
   // 全过程都在兴华路中线上（场景 z=160）：车从东侧驶入，停在积水东缘外侧，
   // 人员步行进入作业点。之所以不让人"凭空出现在路口"，是因为现场处置本身是有到达过程的。
   (function buildCrew(){
-    const drive=W(470,160);   // 驶入起点（东侧远处）
-    const park =W(334,159);   // 停车点：积水东缘之外，靠路南侧
+    const drive=W(430,160);   // 驶入起点（东侧远处，默认机位画外）
+    // 停车点必须贴着作业点：原来停在 W(334,159)，离雨水口 62m，
+    // 而"到场"只有 1 秒多的窗口 → 人只能以 200km/h 的速度"飞"过去。
+    // 现在停在作业点西侧 1.05 世界单位（≈6.6m），下车走 7.4m 到井口，正常步速即可。
+    const park =W(279,158);
     const work =W(272,155);   // 作业点：堵塞的雨水口（DF-IN-101）所在的路缘
 
     // 排水抢险车：驾驶室 + 车厢 + 反光条 + 顶部黄色警灯 + 四轮。
@@ -2456,9 +2511,11 @@ function build(sched){
       // 试过两种都不行：LoopOnce+clampWhenFinished 会停在末尾（末尾是站起来）；
       // timeScale=0 在 r128 里不保证姿势被累加，渲染出来还是旧姿态。
       // 真正可靠的做法是在 tick 里每帧把 action.time 钉回去（见 __kneelHold）。
-      if(name==='kneel'){next.setLoop(THREE.LoopOnce,1);next.time=window.__kneelAt;}
-      // 相位错开只在首次播放时定一次；每次换片段都跳时间会让动作从中间开始
-      if(first&&rig.phase){
+      // kneel 从头播（起→跪→撬）：到 KNEEL_AT 由 tick 钉住。
+      // 原来一进来就 next.time=KNEEL_AT，等于第一帧就是"跪稳"，看不到蹲下去的过程。
+      if(name==='kneel'){next.setLoop(THREE.LoopOnce,1);next.time=0;}
+      // 相位错开只对循环片生效；kneel 是叙事片，跳时间会把"蹲下去"跳掉
+      if(first&&rig.phase&&name!=='kneel'){
         const d=next.getClip().duration;
         if(d>0)next.time=(rig.phase*1.7)%d;
       }
@@ -2673,6 +2730,86 @@ function build(sched){
     ].map((x,i)=>{const lab=makeLabel(x[0],i===2?'#ffe0a6':'#bde8ff');lab.position.set(x[1],4.6,x[2]);lab.visible=false;scene3.add(lab);return lab;});
     window.__dispatchBubble=bub;
     window.__dispatchFlow=flow;
+  })();
+  // ---- 跨部门协作层：让"谁指挥、卡派给谁、封路为什么必须两个部门一起签"在画面里发生 ----
+  // 不是侧栏文字，是四件能看见的事：
+  //   ① 每个部门一块站牌，牌面写「部门｜这一跳在干什么」，颜色 = 该部门动作卡在**这一跳**的状态
+  //      （灰=待接单 / 蓝=执行中 / 橙=待会签·待确认 / 绿=已完成）
+  //   ② 第 3 跳「部门落位」：三张任务卡从应急局飞到排水/道路/交警的站点＝派单
+  //   ③ 第 6 跳「处置顺序」：道路和交警两张卡分别从封路段两端飞到路中央会合，
+  //      出现「联合会签 ✓」之后护栏才升起——这就是"单一部门发布无效"的可视化
+  //   ④ 同跳：一张「移动泵 400m³/h」从泵站飞到作业点，随后泵启动出水
+  // 数据全部来自 /api/twin-links 的动作卡（归口部门 + 7 跳状态 + 会签要求）
+  // 与 /api/scheduler 的部门台账，不写死"谁在第几跳做什么"。
+  (function buildCollab(){
+    const work=W(272,155), emerg=W(330,120);
+    const segs=(window.__roadBlocks&&window.__roadBlocks[0]&&window.__roadBlocks[0].mesh.children)||[];
+    const blk=segs[0]?{x:segs[0].position.x,z:segs[0].position.z}:{x:work[0]+1.4,z:work[1]};
+    const ps=W(285,151.1);            // 兴华路雨水泵站 DF-PS-01（台账坐标，与泵房用同一套投影）
+    const SITES=[
+      // 动作卡里的总控 agent_id 是 EMERG-COORD，不是部门台账的 ORG-EMERG——
+      // 用错键的结果是"应急局"站牌永远不显示（实测 site[0] 恒为 0）。
+      {org:'EMERG-COORD',x:emerg[0],          y:5.9,  z:emerg[1]},
+      {org:'ORG-DRAIN',  x:work[0]+0.56,      y:1.42, z:work[1]+0.34},
+      {org:'ORG-ROAD',   x:blk.x,             y:2.10, z:blk.z},
+      {org:'ORG-TRAFFIC',x:blk.x+1.55,        y:2.70, z:blk.z-0.75},
+      {org:'ORG-POWER',  x:ps[0],             y:2.55, z:ps[1]}
+    ];
+    function siteSprite(){
+      const sp=makeLabel(' ','#cfe6f5');
+      sp.material.depthTest=false;sp.renderOrder=130;   // 协作层是"管理层"，不被楼体挡住
+      sp.scale.set(LABEL_W*0.78,LABEL_H*0.78,1);
+      sp.visible=false;scene3.add(sp);return sp;
+    }
+    SITES.forEach(function(s){s.sp=siteSprite();s.sp.position.set(s.x,s.y,s.z);s.key='';});
+    // 每个工人头顶挂一块"我是哪个部门、在干什么"的牌子。
+    // 没有这块牌子，画面里就只是"三个橙衣人在动"，观众没法把人和部门对上——
+    // 这是"看不到怎么跨部门"最直接的一处。
+    const CREW_TAGS=[['排水·开篦子','#5cc8f5'],['排水·接吸水管','#5cc8f5'],['道路·布锥警戒','#ffc21a']];
+    ((window.__roadCrew||{}).slots||[]).forEach(function(sl,i){
+      if(!CREW_TAGS[i])return;
+      const tag=makeLabel(CREW_TAGS[i][0],CREW_TAGS[i][1]);
+      tag.material.depthTest=false;tag.renderOrder=133;
+      tag.scale.set(LABEL_W*0.58,LABEL_H*0.58,1);
+      tag.position.set(0,0.60,0);
+      sl.add(tag);
+    });
+    // 飞行卡：一块小牌子在两站之间划一道弧线，读起来就是"这张卡从 A 交到 B"
+    function flySprite(text,col){
+      const sp=makeLabel(text,col||'#ffe6a8');
+      sp.material.depthTest=false;sp.renderOrder=131;
+      sp.scale.set(LABEL_W*0.86,LABEL_H*0.86,1);
+      sp.visible=false;scene3.add(sp);return sp;
+    }
+    const A={x:emerg[0],y:4.6,z:emerg[1]};
+    const D={x:work[0]+0.56,y:1.3,z:work[1]+0.34};
+    const R={x:blk.x,y:1.9,z:blk.z};
+    const T={x:blk.x+1.55,y:2.4,z:blk.z-0.75};
+    const P={x:ps[0],y:1.6,z:ps[1]};
+    const MID={x:blk.x,y:1.55,z:blk.z};
+    window.__collab={sites:SITES,flights:[],badge:null,built:true};
+    // 派单弧线：起点略抬高，避免从楼里穿出来
+    window.__collab.flights.push(
+      {sp:flySprite('派单 → 排水公司','#9fe6ff'),t0:0.336,t1:0.392,a:A,b:D,lift:1.2},
+      {sp:flySprite('派单 → 道路中心','#ffd98a'),t0:0.350,t1:0.406,a:A,b:R,lift:1.4},
+      {sp:flySprite('派单 → 交警一大队','#ffb08a'),t0:0.364,t1:0.420,a:A,b:T,lift:1.6},
+      // 会签：两张卡从封路段两端飞到路中央会合
+      {sp:flySprite('道路中心 · 拟封','#ffd98a'),t0:0.700,t1:0.748,a:{x:blk.x+1.1,y:1.9,z:blk.z},b:MID,lift:0.5},
+      {sp:flySprite('交警 · 会签','#ffb08a'),t0:0.706,t1:0.752,a:{x:blk.x-1.1,y:1.9,z:blk.z},b:MID,lift:0.5},
+      // 调泵：泵站把移动泵交到作业点
+      {sp:flySprite('移动泵 400m³/h → 作业点','#a8e6a0'),t0:0.792,t1:0.846,a:P,b:D,lift:0.7}
+    );
+    // 会签结果徽标：合流之后才出现，紧跟着才是护栏升起
+    const badge=makeLabel('道路＋交警 · 联合会签 ✓','#8ef0b8');
+    badge.material.depthTest=false;badge.renderOrder=132;
+    badge.scale.set(LABEL_W*0.92,LABEL_H*0.92,1);
+    badge.position.set(blk.x,2.35,blk.z);badge.visible=false;
+    scene3.add(badge);window.__collab.badge=badge;
+    // 封路动作的位姿**已经在 build 阶段算好了**（见 __roadBlocks 构建处的 userData：
+    // fix / park / hand0 / hand1 / pat / side）。这里绝不能再按公式重算一遍——
+    // 原来这段用 `seg.position + sin(ry)*(w*0.5+0.55)` 覆盖了 park，那是个"沿路方向平移
+    // 半个板长"的旧公式；而工人站位 hand0/hand1 是按"沿法向平移 0.30·路宽"算的。
+    // 两份数据方向差 90°：围栏横着往东滑、人却往北走，画面上就是"人推着空气"。
   })();
   // 场景摆完才建光环与锚点：此时每个实体的 mesh 已经挂在 scene 上
   buildRings();
@@ -2998,7 +3135,12 @@ let __evtClock=0,__evtPlaying=false,__lastFrame=performance.now();
 // 总时长 26→34：26 秒里「涨水 12s + 峰值 1s + 回落 6s」，峰值只闪一下，
 // 观感像「水一戳就破」，和真实内涝（雨停后还要高位维持）不符。
 // 拉长到 34 秒后：涨水 15s、高位平台 6.8s、回落 8.2s，三段都站得住。
-const EVT_DURATION=34;         // 整条事件线总时长（秒），播放/拖动都映射到这个区间
+const EVT_DURATION=44;         // 整条事件线总时长（秒），播放/拖动都映射到这个区间
+// 34→38→44：施工段要装下「下车 → 走到围栏边 → 两人各推一侧围栏 → 封路完成 →
+// 回井口 → 撬盖 → 接管 → 开泵」八个动作。按 34 秒算这段只有 10.9 秒，
+// 而 0 号从车走到西侧围栏就是 15.6m，按压到 2.7 秒等于 20km/h——这就是"人是飞过来的"。
+// 44 秒时走位窗口 5.9 秒（15.6m ⇒ 2.7m/s 快走）、推板 4.6 秒（6.6m ⇒ 1.4m/s），都落在常识范围内。
+// 所有节点都是 0~1 的比例值，改总时长只拉长绝对时间，阶段顺序和相对节奏不变。
 // 时间轴结构：EVT_JUMPS[0] 之前是「降雨前奏」——只有雨，地面还没有积水；
 // 第 1 跳「事件识别」时水才刚在低洼处积起来。事件链是
 // 降雨 → 积水上涨 → 事件识别 → 影响扩散 → 部门落位 → 冲突暴露 → 资源缺口 → 动作/疏通 → 处置后回落。
@@ -3124,6 +3266,7 @@ function setJump(i){
   // 相机按跳次自己的时刻取景：全景跳 → 全景机位，封路/作业跳 → 推到作业点特写。
   // 这样静止在某一跳时看到的画面，和播放到该时刻一致（原来只有播放时才运镜，
   // 手动跳到第 5 跳是全景，人在画面里只有几个像素）。
+  window.__camUser=false;      // 跳次是系统取景，收回"用户手动视角"的让位
   driveCamera(__evtClock/EVT_DURATION);
 }
 // 在两个相邻跳次之间做连续线性插值：让水位/雨势/颜色平滑过渡，而不是瞬间跳变
@@ -3854,9 +3997,13 @@ function tick(){
   if(__evtPlaying){__evtClock+=dt;if(__evtClock>=EVT_DURATION){__evtClock=EVT_DURATION;__evtPlaying=false;renderJumpControls();}}
   // 人物的骨骼动画（worker_rig.glb）：整体跟着画面推进，暂停时也保持播放
   (window.__crewMixers||[]).forEach(function(mx){
-    // kneel 的定格：在 update 之前把时间钉回 KNEEL_AT，而不是靠 timeScale=0。
+    // kneel 的定格：只在**超过** KNEEL_AT 之后才钉住，之前让它自然播。
+    // 原来是无条件钉在 KNEEL_AT，于是切到 kneel 的那一帧就已经是"跪稳"的姿势，
+    // 观众看不到人从站着蹲下去的过程——"直接就是最终动作"就是这么来的。
     (window.__crewRigs||[]).forEach(function(r){
-      if(r&&r.cur==='kneel'&&r.acts&&r.acts.kneel)r.acts.kneel.time=window.__kneelAt;
+      if(r&&r.cur==='kneel'&&r.acts&&r.acts.kneel&&r.acts.kneel.time>window.__kneelAt){
+        r.acts.kneel.time=window.__kneelAt;
+      }
     });
     mx.update(dt);
   });
@@ -3866,7 +4013,10 @@ function tick(){
   // 播放中同步当前跳次（供证据面板/按钮高亮跟随时间轴）
   if(__evtPlaying){syncJumpFromClock();}
   // 关键动作相机运镜：封路阶段（施工队到场→放下栏杆）自动拉近到封路点，给"现场镜头"
-  if(__evtPlaying&&camera&&window.__roadCrew){driveCamera(t);}
+  // 暂停时也要算一次：暂停后画面必须停在同一构图上，而围栏位置是由 __seal 驱动的动态值。
+  // 只在播放时算的话，用 ?t= 直接打开某一帧会拍到"围栏还在路缘、人已经站到路中"的错位画面。
+  // __camUser：用户手动拖过视角就让位，直到再点播放/跳次（那时会清掉这个标志）。
+  if(camera&&window.__roadCrew&&(__evtPlaying||!window.__camUser)){driveCamera(t);}
   // 雨丝：每滴是 line 的两个端点，一起下移；落到地面以下就回到顶部重新落。
   // 不用"暂停就冻住"——雨是环境，不是被推演驱动的对象，停下来反而像画面卡住。
   if(rain&&rain.material&&rain.material.opacity>0.03){
@@ -3923,6 +4073,8 @@ function tick(){
   });
   // 施工队到场后：从路边走到路口（连续移动插值，不是瞬移）
   moveCrew();
+  // 跨部门协作层：部门站牌 + 派单/会签/调泵的卡片飞行 + 护栏推进到位
+  updateCollab(__evtClock/EVT_DURATION);
   // 事件淡入：派单气泡/封路护栏出现时透明度从 0→1 平滑过渡（不是瞬间冒出）
   fadeInOut();
   // shader 水面：推进波纹时间（顶点波浪随时间流动）
@@ -3968,12 +4120,126 @@ function syncProgress(){
 // 施工队：到场阶段，从路口一侧走到封路点（连续移动，不是瞬移）
 // 现场处置的到达过程：工程车驶入 → 人员下车 → 步行到作业点 → 布锥桶 → 接移动泵
 // 全部挂在同一条时间轴上（第 5 跳 施工队到场 → 第 6 跳 封路完成），不让人凭空出现在路口
-const CREW_STATUS=[
-  [0.00,'工程车驶入'],
-  [0.42,'班组下车'],
-  [0.62,'布设警示锥'],
-  [0.82,'接泵疏通']
-];
+// ---- 协作层的每帧更新：站牌文案随跳次换、任务卡在两点之间飞、护栏从路缘推进到位 ----
+const ORG_SHORT={'EMERG-COORD':'应急局','ORG-EMERG':'应急局','ORG-DRAIN':'排水公司','ORG-ROAD':'道路中心','ORG-TRAFFIC':'交警','ORG-POWER':'供电'};
+const CARD_STATE_COLOR={pending:'#6b7f92',running:'#5cc8f5',done:'#4fdb95',needs_confirm:'#ffb347',cancelled:'#6b7f92'};
+// 站牌/飞行卡的文字纹理。640×96 的宽画布 + 自动缩字号：
+// 「道路中心｜封积水路段·待交警会签」这种长句在 512 画布上会溢出成半个字。
+function collabTex(text,color){
+  const cv=document.createElement('canvas');cv.width=640;cv.height=96;
+  const g=cv.getContext('2d');
+  let fs=28;
+  do{g.font='bold '+fs+'px system-ui';if(g.measureText(text).width<=606)break;fs-=2;}while(fs>=16);
+  g.textAlign='center';g.textBaseline='middle';
+  g.lineWidth=7;g.strokeStyle='rgba(8,16,24,.92)';g.strokeText(text,320,48);
+  g.fillStyle=color||'#d5e4f0';g.fillText(text,320,48);
+  const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;return tex;
+}
+// 动作卡原文常常是一整句话（"封闭积水路段全幅（深度≥25cm…）"），站牌上放不下，
+// 按关键词压成 4~6 字。压不出来就截断，不做猜测性改写。
+function shortAction(c){
+  const a=String((c&&c.action)||'');
+  const M={observed:'识别事件',affected:'圈定影响',owner:'派单·责任落位',conflict:'上报冲突',resource:'核验缺口',dispatch_pump:'调移动泵'};
+  if(M[a])return M[a];
+  if(/联合发布|单一部门/.test(a))return '联合发布封路';
+  if(/封闭下穿隧道/.test(a))return '封下穿隧道';
+  if(/封闭积水路段/.test(a))return '封积水路段';
+  if(/绕行方案/.test(a))return '组织绕行';
+  if(/先清掏/.test(a))return '清掏后抽排';
+  if(/隔离风险源/.test(a))return '隔离风险源';
+  if(/启动泵站/.test(a))return '启动泵站';
+  if(/复检管道/.test(a))return '复检燃气';
+  if(/停止基坑/.test(a))return '停止开挖';
+  if(/交通管制/.test(a))return '交通管制';
+  return a.slice(0,8);
+}
+// 一个部门在同一跳可能挂着好几张卡（道路中心在处置跳有 3 张封路卡），
+// 取"最需要被看见"的那张：待会签 > 执行中 > 已完成，都pending就当本跳没它的事。
+function pickOrgCard(org,jump){
+  const cards=(typeof LINKS!=='undefined'&&LINKS&&LINKS.cards)||[];
+  const RANK={needs_confirm:3,running:2,done:1,pending:0,cancelled:0};
+  let best=null,br=-1;
+  for(let i=0;i<cards.length;i++){
+    const c=cards[i];
+    if(c.agent_id!==org)continue;
+    const st=(c.states||[])[jump];
+    if(!st||st==='pending')continue;
+    const r=RANK[st]||0;
+    if(r>br){br=r;best=c;best.__st=st;}
+  }
+  return best;
+}
+function updateCollab(t){
+  const C=window.__collab;if(!C||!C.built)return;
+  const jump=Math.max(0,Math.min(6,twinState.currentJump|0));
+  // ① 部门站牌：写"这一跳它在干什么"，颜色是这张卡在这一跳的状态
+  C.sites.forEach(function(s){
+    const c=pickOrgCard(s.org,jump);
+    if(!c){s.sp.visible=false;s.rv=-1;return;}
+    const st=c.__st||'pending';
+    let txt=ORG_SHORT[s.org]+'｜'+shortAction(c);
+    const cs=(c.co_sign_required||[]);
+    if(st!=='done'&&cs.length)txt+='·待'+(ORG_SHORT[cs[0]]||'')+'会签';
+    if(st==='done')txt+=' ✓';
+    const key=txt+'|'+st;
+    if(key!==s.key){
+      s.key=key;
+      if(s.sp.material.map)s.sp.material.map.dispose();
+      s.sp.material.map=collabTex(txt,CARD_STATE_COLOR[st]||'#cfe6f5');
+      s.sp.material.needsUpdate=true;
+    }
+    s.sp.visible=true;
+    // 站牌也是淡入，不硬弹（0.68 秒）
+    if(!s.rv||s.rv<0)s.rv=t;
+    s.sp.material.opacity=Math.min(1,(t-s.rv)/0.020);
+  });
+  // ② 任务卡飞行：从 A 站划一道弧线交到 B 站
+  C.flights.forEach(function(f){
+    const p=(t-f.t0)/(f.t1-f.t0);
+    if(p<0||p>1){f.sp.visible=false;return;}
+    const e=p*p*(3-2*p);
+    f.sp.visible=true;
+    f.sp.position.set(
+      f.a.x+(f.b.x-f.a.x)*e,
+      f.a.y+(f.b.y-f.a.y)*e+Math.sin(Math.PI*e)*(f.lift||1),
+      f.a.z+(f.b.z-f.a.z)*e
+    );
+    f.sp.material.opacity=Math.min(1,Math.min(p,1-p)*8);
+  });
+  // ③ 会签徽标：两张卡在路中央合流之后才亮，护栏随即到位
+  if(C.badge){
+    const on=t>=0.750&&t<=0.968;
+    C.badge.visible=on;
+    if(on)C.badge.material.opacity=Math.min(1,(t-0.750)/0.018);
+  }
+  // ④ 封路这个动作：两块围栏由 0 号/1 号分别从南北路缘推入路中。
+  //    **进度不再由时间函数驱动**，而是由 moveCrew 里推板那个人的走位写出（__seal.w/.e），
+  //    所以「谁推的、推到哪」和画面上那个人的位置是同一份数据，不会出现"人还没走到、牌已经封好"。
+  //    旧实现是一个全局 be=(t-0.742)/0.058，两块板同时凭空滑进来，与工人无关——这是
+  //    "封路不是工人封的"的根子。
+  const seal=window.__seal||(window.__seal={w:0,e:0});
+  (window.__roadBlocks||[]).forEach(function(b){
+    b.mesh.children.forEach(function(seg){
+      const f=seg.userData&&seg.userData.fix,k=seg.userData&&seg.userData.park;
+      if(!f||!k)return;
+      let p=(seg.userData.side===0)?seal.w:seal.e;
+      p=Math.max(0,Math.min(1,p));
+      const be=p*p*(3-2*p);
+      seg.position.x=f.x+(k.x-f.x)*be;
+      seg.position.z=f.z+(k.z-f.z)*be;
+    });
+  });
+}
+// 道具出场：从 0 长到 1（dur 是时间轴比例，0.016≈0.55 秒）。
+// 所有道具 Group 的原点都落在地面/落点上，缩放读起来就是"就地立起来 / 放下去"。
+// 之前一律用 visible 开关，观感是硬弹出来——这是"事件不连贯"最主要的来源。
+function popIn(obj,t0,t,dur){
+  if(!obj)return false;
+  const p=Math.max(0,Math.min(1,(t-t0)/(dur||0.016)));
+  obj.visible=p>0;
+  if(p>0){const e=1-Math.pow(1-p,3);obj.scale.setScalar(e);}
+  return p>=1;
+}
 function moveCrew(){
   const c=window.__roadCrew;if(!c)return;
   const t=__evtClock/EVT_DURATION;
@@ -3984,110 +4250,131 @@ function moveCrew(){
   // t0 定在 0.62（第 5 跳 0.56 之后 0.06）：车开进来要 4 秒多，
   // 到约 0.759 才停稳放人下车——正好卡在第 6 跳（0.76，文案切到「处置顺序」）那一刻。
   // 之前为让特写里有人把 t0 提前到 0.54，结果人在「缺口核验」阶段就下车干活，文案和画面对不上。
-  const t0=EVT_JUMPS[4]+0.06,t1=0.95;
-  const on=t>=t0;
+  // ---- 到场时间轴（t 为 0~1，×44 秒）----
+  //   0.300 工程车驶入 → 0.500 停稳在作业点东侧 6.6m
+  //   0.505 三人下车
+  //   0.505~0.640 0 号往西走 15.6m 到西侧围栏、1 号往东 2.2m 到东侧围栏（2 号开始沿锥线下锥）
+  //   0.640~0.745 两人把围栏从路缘推到路中 → 封路完成（「封路」牌子此时才亮）
+  //   0.745~0.800 两人退回井口就位 → 0.800 撬棍 → 0.835 掀盖
+  //   0.860 卸泵 → 0.872 接管 → 0.895 泵启动出水
+  // **顺序是硬的**：封路没完成不可能撬盖——撬棍的出场面卡在 T_SEAL_DONE 上（见下面的 gate），
+  // 不是"时间上碰巧排在前面"。
+  // 原来这段的顺序是反的：0.700 就跪下撬盖，而围栏 0.742~0.800 才由时间函数自动推进来，
+  // 变成"人已经在掏井，栏杆自己飘过来"。用户指出"封路应该是工人封的、先封路再工作"就是这件事。
+  const T_TRUCK0=0.300, T_PARK=0.500, T_WALK0=0.505;
+  const T_SEAL_AT=0.640, T_SEAL_DONE=0.745, T_BACK=0.800, T_DONE=0.950;
+  const on=t>=T_TRUCK0;
   if(c.truck)c.truck.visible=on;
   if(!on){
-    c.group.visible=false;(c.cones||[]).forEach(g=>g.visible=false);
+    c.group.visible=false;
+    (c.cones||[]).forEach(g=>{g.visible=false;});
     ['pump','jet','hose','lid','mud','pry','status','marker'].forEach(k=>{if(c[k])c[k].visible=false;});
     return;
   }
-  const f=clamp01((t-t0)/(t1-t0));
-  const sm=x=>x*x*(3-2*x);
-  // 1) 工程车驶入并停在积水东缘之外
-  // 车程压到 f/0.22（≈2.5 秒）：原来 0.42 要走 5 秒，车在路上磨蹭、
-  // 人迟迟不下车，特写里一直是空水面。
-  const drv=sm(clamp01(f/0.22));
-  if(c.truck)c.truck.position.x=c.drive.x+(c.park.x-c.drive.x)*drv;
-  // 2) 人员下车，沿路走到作业点
-  // 下车门槛必须跟走位起点同步（walk 从 f=0.06 起步）。
-  // 原来写 0.22 是"走过去才出现"的旧口径，走位提前后没跟着改：
-  // f=0.06~0.22 这段人其实已经在走了，但整组 visible=false，
-  // 镜头 0.68（f=0.182）到位时对着一片空水面——验收时"特写里没有人"就是这么来的，
-  // 和相机参数、人的坐标都没关系（坐标一直是准的）。
-  const out=f>=0.06;
-  c.group.visible=out;
-  // 走位窗口 0.22→0.11：镜头 0.66 已锁在作业点，人却要走到 0.78 才到位，
-  // 中间两秒的画面是"一片空水面 + 远处一个橙色小人"，读起来像镜头放错了地方。
-  // 到位时间必须早于雨停（0.76）：原来 f=0.22 才起步、f=0.33 才到位，
-  // 换算成时间轴是 t=0.729 —— 而雨 0.76 就停了，于是"雨里人在作业点"这个
-  // 最该被看见的画面根本不存在，能拍到的全是"雨停了/人还没到"的空档。
-  // 提前到 f=0.06 起步、f=0.16 到位（t≈0.673），留出 3 秒雨中作业窗口。
-  const walk=sm(clamp01((f-0.06)/0.10));
-  c.group.position.x=c.park.x+(c.to.x-c.park.x)*walk;
-  c.group.position.z=c.park.z+(c.to.z-c.park.z)*walk;
-  if(c.label)c.label.visible=out;
-  if(c.marker)c.marker.visible=out;
-  // 2b) 各就各位：0 号蹲在井口西侧撬篦子、1 号守在泵边扶管、2 号沿路摆锥（来回搬）
-  //     站位是相对作业点的世界单位偏移（0.5 世界单位≈3m），人到位后带轻微起伏，
-  //     避免三个人像柱子一样杵着不动。基准高度 0.40 = 车行道顶面，脚不能陷进路面。
-  // 0 号要跪在雨水口边上撬盖：原来是 (-0.17,0.03)，离井口 1.3m，
-  // 人是跪在空地上、手离篦子还有一臂远，看着像在地上摸什么。
-  // 挪到 (-0.105,0.015)，膝盖贴着井口，手的落点才压在盖缝上。
-  const ST=[[-0.105,0.015],[0.37,-0.21],[-0.42,0.16]];
-  const go=sm(clamp01((f-0.10)/0.10));   // 站位跟随走位一起展开，别让人先站成一排再走
-  // 展开窗口 0.16→0.10 起步：镜头在 t=0.68（f=0.182）就位，原来 f=0.16 才开始散开，
-  // 到位那一刻三人还挤在 0.07 世界单位内（实测间距 7cm，画面上就是一团橙点），
-  // 再等 0.7 秒才拉成 0.8 世界单位的作业位形。现在 0.10 起步、0.20 展开完，
-  // 镜头到位时已散开 90%，"人到场"这一刻才立得住。
-  // 干活的节奏：0 号一下一下往下压撬棍（掏篦子），周期 ≈2.4s。
-  // 这个周期不是随便给的——比"呼吸"慢、比"走路"快，读起来像在用力。
+  const sm=function(x){x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
+  // 1) 工程车驶入并停稳：ease-out，越接近终点越慢，读起来是"刹停"而不是匀速滑过
+  const dp=Math.max(0,Math.min(1,(t-T_TRUCK0)/(T_PARK-T_TRUCK0)));
+  const drv=1-Math.pow(1-dp,2.0);
+  if(c.truck){
+    c.truck.position.x=c.drive.x+(c.park.x-c.drive.x)*drv;
+    c.truck.position.z=c.drive.z+(c.park.z-c.drive.z)*drv;
+  }
+  // 2) 下车 + 走位：每人从车门走到自己工位，各错 0.55 秒
+  if(t<T_WALK0){c.group.visible=false;return;}
+  c.group.visible=true;
+  if(c.label)c.label.visible=false;
+  if(c.marker)c.marker.visible=false;
+  const P=c.park,TO=c.to;
+  const L=function(wx,wz){return [wx-P.x,wz-P.z];};   // 世界 → slot 局部（group 钉在停车点）
+  // 工位（相对作业点）：0 号跪在井口西端撬盖，1 号蹲在井口东端插吸水管
+  // （两个人分别管"开盖"和"接管"，这是现场真实分工；早先 1 号站在泵边，
+  //   身边没有任何能碰到的东西，看着就是蹲在那儿发呆）
+  const ST=[[-0.105,0.015],[0.150,-0.105],[0,0]];
+  // 2 号的行走路径：车门 → 沿锥线逐个下锥 → 锥线末端站定警戒
+  const CS=(c.cones&&c.cones.length)?c.cones.map(g=>[g.position.x-TO.x,g.position.z-TO.z]):[[0.60,-0.22],[0.86,-0.22],[1.12,-0.22],[1.38,-0.22]];
+  const P2=[L(TO.x+0.24,TO.z+0.30)].concat(CS.map(cn=>L(TO.x+cn[0],TO.z+cn[1]))).concat([L(TO.x+1.52,TO.z-0.30)]);
+  const segL=[];let total2=0;
+  for(let k=1;k<P2.length;k++){const d=Math.hypot(P2[k][0]-P2[k-1][0],P2[k][1]-P2[k-1][1]);segL.push(d);total2+=d;}
+  const frac2=[];{let acc=0;for(let k=0;k<segL.length;k++){acc+=segL[k];frac2.push(total2>0?acc/total2:1);}}
+  const at2=function(u){
+    let want=Math.max(0,Math.min(1,u))*total2;
+    for(let k=0;k<segL.length;k++){
+      if(want<=segL[k]||k===segL.length-1){
+        const q=segL[k]>0?Math.min(1,want/segL[k]):1;
+        return [P2[k][0]+(P2[k+1][0]-P2[k][0])*q,P2[k][1]+(P2[k+1][1]-P2[k][1])*q];
+      }
+      want-=segL[k];
+    }
+    return P2[P2.length-1];
+  };
   const pull=Math.sin(__evtClock*2.6);
+  // 封路进度：**由 t 直接反推**，不依赖"这一帧是否落在推板窗口内"。
+  // 时间轴可以任意跳（点跳次、拖进度条），如果只在推板那几帧里写 __seal，
+  // 直接跳到 0.75 时 seal 会停在初始 0，围栏退回路缘——验收时就踩到过。
+  // 人在这段窗口里的位置也用同一个 p 算，所以"手在板上、板跟着人走"是同一份参数。
+  const seal=window.__seal||(window.__seal={w:0,e:0});
+  const sealP=Math.max(0,Math.min(1,(t-T_SEAL_AT)/Math.max(0.001,T_SEAL_DONE-T_SEAL_AT)));
+  seal.w=sealP;seal.e=sealP;
+  // 取围栏的停放位/封路位：和 updateCollab 用的是同一份 userData
+  const RB=(window.__roadBlocks&&window.__roadBlocks[0]&&window.__roadBlocks[0].mesh&&window.__roadBlocks[0].mesh.children)||[];
+  const boardOf=function(k){
+    for(let q=0;q<RB.length;q++){const u=RB[q].userData;if(u&&u.side===k&&u.fix&&u.park)return u;}
+    return null;
+  };
   (c.slots||[]).forEach(function(s,i){
-    let x=ST[i][0]*go,z=ST[i][1]*go;
-    if(i===2&&f>=0.60&&f<0.80)x+=Math.sin((f-0.60)*46)*0.16*go;   // 来回搬运锥桶
-    // 0 号跟着撬棍一起沉肩起肩（脚不离地，只压 1cm），1 号扶管时小幅前后挪，2 号搬锥带步态起伏
-    let lift=0;
-    if(f>0.56){lift=Math.sin(__evtClock*5+i*2)*0.008;}
-    if(i===0&&f>=0.52){lift-=0.004+0.004*pull;}
-    if(i===2&&f>=0.46&&f<0.72){lift+=Math.abs(Math.sin((f-0.46)*52))*0.010;}
-    // 重心位移：只会"上下浮动"的人看着像在原地原地踏步，不像在使劲。
-    // 无骨骼模型做不了关节，但可以让整个身体在用力瞬间往前顶一点点（1.2cm 量级），
-    // 配合撬棍摆动，"压下去"这件事才读得出来。幅度必须小：大了就是人在滑步。
-    let px=0,pz=0;
-    if(i===0&&f>=0.52){const a=Math.sin(__evtClock*2.6);px+=0.0055*a;pz+=0.0038*Math.sin(__evtClock*2.6+1.1);}
-    if(i===1&&f>=0.64){pz+=0.0045*Math.sin(__evtClock*1.7);}
-    s.position.set(x+px,0.40+lift,z+pz);
-    // slot 只负责朝向：弯腰现在交给骨骼做（之前的整体前倾是因为模型没有骨）。
-    s.rotation.set(0,(i===0?Math.PI*0.55:(i===1?-Math.PI*0.45:0)),0);
-    // 动作：优先播关键帧片段，按阶段换（走路 → 各自干活）。
-    // 程序化摆姿势只在 worker_anim.json 没加载出来时兜底。
-    const rg=(window.__crewRigs||[])[i];
-    if(rg&&rg.acts&&window.__setCrewClip){
-      // 0.33 之前都在从车上走向作业点；到位后各有各的活：
-      // 0 号跪在井口撬盖（kneel，Fixing_Kneeling 的跪地段往返循环），
-      // 1 号半蹲扶管（crouch），2 号来回搬锥桶（走→停→走），其余时间站着（idle）。
-      // 走位窗已经提前到 f=0.06~0.16（见 walk），动作切换必须同步提前，
-      // 否则人站在工位上还在播走路动画——看着像"原地踏步等着"。
-      let want;
-      if(f<0.16)want='walk';
-      else if(i===0)want='kneel';
-      // 1 号扶管用 crouch（半蹲）。早先因为 Crouch_Idle_Loop 有一只手向后甩，
-      // 把 1 号也改成 kneel，结果 0/1 两人姿势完全重复，像复制粘贴；
-      // 特写里还因为 1 号朝向转了 -45°、kneel 俯身又大，整个人几乎贴平水面像漂着。
-      // 三人姿态必须各不相同：0 跪撬盖、1 半蹲扶管、2 走动搬锥，这样才读得出"分工"。
-      else if(i===1)want='crouch';
-      else want='walk';   // 2 号来回搬锥桶，一直走反而读得对
-      window.__setCrewClip(rg,want,0.32);
-    }else if(rg&&rg.bones&&rg.base){
-      const b=rg.bones,bs=rg.base;
-      const sway=Math.sin(__evtClock*(i===0?2.6:1.7)+i*1.7);
-      if(b.spine)b.spine.rotation.x=bs.spine[0]+sway*0.030;
-      if(b.chest)b.chest.rotation.x=bs.chest[0]+sway*0.026;
-      if(b.head)b.head.rotation.x=bs.head[0]-sway*0.018;
-      if(i===0){
-        // 压撬棍：上身跟着压下去一点，双肘回收
-        const push=pull*0.09;
-        if(b.upperArm_L){b.upperArm_L.rotation.x=bs.upperArm_L[0]-push;b.upperArm_L.rotation.y=bs.upperArm_L[1]-push*0.5;}
-        if(b.upperArm_R){b.upperArm_R.rotation.x=bs.upperArm_R[0]+push;b.upperArm_R.rotation.y=bs.upperArm_R[1]+push*0.5;}
-        if(b.foreArm_L)b.foreArm_L.rotation.x=bs.foreArm_L[0]-push*1.1;
-        if(b.foreArm_R)b.foreArm_R.rotation.x=bs.foreArm_R[0]+push*1.1;
-      } else if(i===1){
-        const t2=Math.sin(__evtClock*1.9);
-        if(b.foreArm_L)b.foreArm_L.rotation.x=bs.foreArm_L[0]+t2*0.045;
-        if(b.foreArm_R)b.foreArm_R.rotation.x=bs.foreArm_R[0]-t2*0.045;
+    const st0=T_WALK0+i*0.010;
+    s.visible=t>=st0;
+    if(!s.visible)return;
+    let x=0,z=0,yaw=0,want='idle',arrived=false;
+    if(i===2){
+      // 2 号：车门 → 沿锥线逐个下锥 → 锥线末端站定警戒
+      const u2=Math.max(0,Math.min(1,(t-(T_WALK0+0.022))/(T_DONE-0.02-(T_WALK0+0.022))));
+      const p2=at2(u2);x=p2[0];z=p2[1];
+      if(u2<0.995){const a=at2(u2),b=at2(Math.min(1,u2+0.012));yaw=Math.atan2(b[0]-a[0],b[1]-a[1]);}
+      else yaw=Math.PI*0.5;
+      want=(t<T_DONE-0.010)?'walk':'idle';
+    }else{
+      // 0/1 号：下车 → 走到自己那侧围栏外端 → 推板入位 → 回井口工位
+      const bd=boardOf(i);
+      const sx=0.30-i*0.10, sz=0.42+i*0.05;                // 车门（车厢右后侧）
+      const h0=bd?L(bd.hand0.x,bd.hand0.z):[sx,sz];         // 围栏停放时人站的位置
+      const h1=bd?L(bd.hand1.x,bd.hand1.z):[sx,sz];         // 围栏推到路中时人站的位置
+      const ex=TO.x+ST[i][0]-P.x, ez=TO.z+ST[i][1]-P.z;     // 井口工位
+      if(t<T_SEAL_AT){
+        const q=sm((t-st0)/Math.max(0.001,T_SEAL_AT-st0));
+        x=sx+(h0[0]-sx)*q; z=sz+(h0[1]-sz)*q;
+        yaw=Math.atan2(h0[0]-sx,h0[1]-sz);
+        want='walk';
+      }else if(t<T_SEAL_DONE){
+        // 推围栏：位移用与板完全相同的 smoothstep（p→p²(3-2p)），
+        // 人的手和板的端头是同一份参数推出来的，不可能错位。
+        const p=Math.max(0,Math.min(1,(t-T_SEAL_AT)/(T_SEAL_DONE-T_SEAL_AT)));
+        const be=p*p*(3-2*p);
+        x=h0[0]+(h1[0]-h0[0])*be; z=h0[1]+(h1[1]-h0[1])*be;
+        // 面朝板面（板横跨路面，法向＝路向），侧身把它推入——不是背对板追着它跑。
+        const pt=(bd&&bd.pat)?bd.pat:{x:0,z:1};
+        yaw=Math.atan2(pt.x,pt.z);
+        want='push';
+      }else{
+        const q=sm((t-T_SEAL_DONE)/Math.max(0.001,T_BACK-T_SEAL_DONE));
+        x=h1[0]+(ex-h1[0])*q; z=h1[1]+(ez-h1[1])*q;
+        arrived=q>0.985;
+        yaw=arrived?Math.atan2(-ST[i][0],-ST[i][1]):Math.atan2(ex-h1[0],ez-h1[1]);
+        want=arrived?(i===0?'kneel':'crouch'):'walk';
       }
     }
+    // 到位后的微动作：0 号跟着撬棍沉肩、1 号扶管小幅前后；2 号走锥线时不吃这套
+    let lift=0,px=0,pz=0;
+    if(arrived){
+      lift=Math.sin(__evtClock*5+i*2)*0.008;
+      if(i===0){lift-=0.004+0.004*pull;px=0.0055*Math.sin(__evtClock*2.6);pz+=0.0038*Math.sin(__evtClock*2.6+1.1);}
+      if(i===1){pz+=0.0045*Math.sin(__evtClock*1.7);}
+    }
+    s.position.set(x+px,0.40+lift,z+pz);
+    s.rotation.set(0,yaw,0);
+    // 动作片段：走路 / 推围栏 / 到位后按分工（0 跪撬 · 1 半蹲接管 · 2 站定警戒）
+    const rg=(window.__crewRigs||[])[i];
+    if(rg&&rg.acts&&window.__setCrewClip)window.__setCrewClip(rg,want,0.24);
   });
   // 撬棍：底端插在井盖缝里不动，杆身每帧指向 0 号真正握杆的那只手。
   // 之前是"人摆一个角度、棍子自己来回摆"，两者没有共同约束，特写里手和杆必然错位；
@@ -4116,31 +4403,38 @@ function moveCrew(){
       }
     }
   }
-  // 3) 警示锥逐个摆出，圈出作业区
-  (c.cones||[]).forEach((g,i)=>{g.visible=f>=0.46+i*0.04;});
-  // 4) 撬棍 → 掀盖 → 卸泵接管 → 泵启动出水，按因果顺序一个个出现
-  if(c.pry)c.pry.visible=f>=0.52;
-  if(c.lid)c.lid.visible=f>=0.58;
-  if(c.mud)c.mud.visible=f>=0.62;
-  if(c.hose)c.hose.visible=f>=0.64;
-  if(c.pump)c.pump.visible=f>=0.60;
-  if(c.jet){
-    c.jet.visible=f>=0.70;
-    if(c.jet.visible){const p=1+0.10*Math.sin(__evtClock*9);c.jet.children[1].scale.set(p,p,1);}
+  // 3) 警示锥：2 号走到哪个锥位，哪个锥就地"放下去"（从 0 长到 1），不是整排同时弹出
+  (c.cones||[]).forEach(function(g,i){
+    const at=T_WALK0+0.030+(T_DONE-(T_WALK0+0.030))*(frac2[i]||0);
+    popIn(g,at,t,0.012);
+  });
+  // 作业起点 = 回位时刻 + 跪稳时间。0 号 0.800 到位才开始下场跪，
+  // kneel 片段要 1.4 秒才跪稳（__kneelAt），撬棍必须等这 1.4 秒——
+  // 早出场会跟着还在下落的手一起飘，"棍子先于人到位"就是穿帮。
+  const T_WORK=T_BACK+0.032;   // ≈0.832
+  popIn(c.pry, T_WORK,        t,0.016);
+  popIn(c.lid, T_WORK+0.033,  t,0.016);
+  popIn(c.mud, T_WORK+0.037,  t,0.016);
+  popIn(c.pump,T_WORK+0.053,  t,0.020);
+  popIn(c.hose,T_WORK+0.065,  t,0.016);
+  popIn(c.jet, T_WORK+0.083,  t,0.014);   // ≈0.915，hold 到 0.96 留 1.8 秒"出水"特写
+  if(c.jet&&c.jet.visible&&c.jet.children[1]){
+    const p=1+0.10*Math.sin(__evtClock*9);c.jet.children[1].scale.set(p,p,1);
   }
   // 5) 现场状态文字：说明"此刻在干什么"
   if(c.status){
-    let txt=CREW_STATUS[0][1];
-    CREW_STATUS.forEach(s=>{if(f>=s[0])txt=s[1];});
-    c.status.visible=out;
+    let txt='工程车驶入';
+    // 文案跟着动作走，不许出现"人还在推围栏、字已经写接泵疏通"
+    [[T_TRUCK0,'工程车驶入'],[T_WALK0,'班组下车'],[T_WALK0+0.020,'布设警示锥 · 推围栏封路'],
+     [T_SEAL_DONE,'封路完成 · 开始作业'],[T_WORK+0.053,'接泵疏通'],[T_WORK+0.083,'泵启动 · 抽排中']]
+      .forEach(s=>{if(t>=s[0])txt=s[1];});
+    c.status.visible=true;
     if(!c.status.userData.cache||c.status.userData.cache!==txt){
       c.status.material.map=makeLabelTex(txt,'#ffe0a6');
       c.status.material.needsUpdate=true;
       c.status.userData.cache=txt;
     }
   }
-  // 三段动作提示与阶段对齐，不早于对应动作出现
-  (c.actions||[]).forEach((lab,i)=>{lab.visible=f>=[0.46,0.84,0.64][i];});
 }// 事件淡入淡出：派单气泡、封路护栏、施工队在"该出现"的时间点附近做透明度过渡，避免瞬间冒出
 function fadeInOut(){
   const t=__evtClock/EVT_DURATION;
@@ -4168,14 +4462,28 @@ function fadeInOut(){
   if(flags.block&&blkAt<0)flags.blockAt=t;
   if(!flags.block)flags.blockAt=-1;
   const f5=clamp01((t-Math.max(0,flags.blockAt))/FADE);
+  // 封路 = 工人把围栏推入（0.640 走到位 → 0.745 推完）：
+  //   围栏在工人走到它旁边那一刻才出现（BLK_SHOW），
+  //   位移由 __seal 驱动（见 updateCollab），「封路」牌子在**工人推完**那一刻亮。
+  // 原来围栏 0.700 就凭空立在路缘、0.742~0.800 自己飘到路中央，
+  // 与任何工人动作都没有关系——观感就是"栏杆自己长出来、自己挪过去"。
+  const BLK_SHOW=0.640;
+  const sealNow=window.__seal||{w:0,e:0};
+  const sealed=(sealNow.w>=0.999&&sealNow.e>=0.999);
   (window.__roadBlocks||[]).forEach(b=>{
-    const on=!!flags.block;
-    b.mesh.visible=on;
-    if(on){
-      b.mesh.children.forEach((child,idx)=>{
-        if(child.isMesh&&child.material){child.material.transparent=true;child.material.opacity=clamp01(f5*3-idx*0.4);}
+    // 牌子：工人推到位就算封了；flags.block（推演数据）作兜底，
+    // 万一人物模型没加载、封路支路没跑，围栏也要在该封的时候亮牌。
+    const on=sealed||!!flags.block;
+    const show=on||t>=BLK_SHOW;
+    b.mesh.visible=show;
+    if(!show)return;
+    b.mesh.children.forEach(child=>{
+      if(child.isSprite){child.visible=on;return;}          // 「封路」牌子等真封了才亮
+      if(child.isMesh&&child.material){child.material.transparent=true;child.material.opacity=1;}
+      if(child.isGroup)child.traverse(function(o){
+        if(o.isMesh&&o.material){o.material.transparent=true;o.material.opacity=1;}
       });
-    }
+    });
   });
 }
 function clamp01(x){return Math.max(0,Math.min(1,x));}
@@ -4183,26 +4491,23 @@ function clamp01(x){return Math.max(0,Math.min(1,x));}
 // 一到封路阶段相机就整个跳到别处，像换了个场景）。
 // 特写只做一件事：沿同一条视线方向推近到 CAM_CLOSE_R，不做大幅转向。
 const CAM_HOME={x:-6,y:15.6,z:20.6}, CAM_HOME_T={x:-18,y:0.6,z:0.6};   // 必须与 init 里的初始视角一致
-// 特写距离 2.2 世界单位 ≈ 14m。这个数是被"人到底占多大"定下来的，不是随手给的：
-// 相机 fov 46°，距离 d 处的画面高度 = 2·d·tan23° ≈ 0.85d；
-// 2.2 → 画面高约 11.7m，1.75m 的人占画面高度约 15%，三人 + 泵 + 井口 + 一段水面刚好铺满画面。
-// 早期写 11（≈69m，人只占画面 3%）——远景像"到此一游"，看不出他们在掏井口还是站着；
-// 试过 1.75（人占 19%）又太挤：泵和锥桶被挤出画面，只剩三个人围着井口。
-// 特写距离 2.2 世界单位 ≈ 13.8m，中景。画面高约 11.5m，1.75m 的人占画面高度约 15%。
-// 这个距离是配合"模型可辨识度"定的：低模角色在 11m 以内会被看清是低模，
-// 13.8m 外只读到轮廓、配色和动作，正好是这套资产能站住的距离。
-// 2.5（占 12.5%）时人偏小、下半屏空水面太多；1.75（占 19%）泵和锥桶会被挤出画面。
-const CAM_CLOSE_R=2.2;
-// 特写机位的方位（单位向量，指向相机相对目标点的方向）：从西南上方看作业点。
-// 不能沿用全景机位方向——那里正对着雨淋泵站，泵房和出水管会挡在镜头和工人之间。
-// 仰角压到 0.30：相机落到约 6m 高、俯角 17°，接近"人站在水边"的高度。
-// 这不只是构图选择——水面的反射强度由掠射角决定（fresnel），俯角 40° 时几乎看不到倒影，
-// 压到 17° 才让"积水映着天光"这件事显出来。游戏里的湿街面镜头基本都是这个机位。
-// 俯角再压到约 14°（y 0.31→0.17，相机落到 4.8m 高）：这是"水岸线"能站住的临界角。
-// 17° 时画面里的水面仍被压成一条带，读不出"一汪水"；14° 以下倒影拉长、
-// 水岸线在画面里获得足够的高度，才像游戏里的湿街面镜头。
-// 注意：再低（<10°）相机会低于泵体和车辆，被前景挡住，所以 0.17 是下限附近。
-const CAM_CLOSE_DIR={x:-0.46,y:0.17,z:0.44};
+// 特写距离 2.9 世界单位 ≈ 18m。这个数是被"这一帧要讲清什么"倒推出来的：
+// 相机 fov 46°，距离 d 处画面高 ≈ 0.85d、宽 ≈ 1.5d。
+// 作业区里必须同框的东西横跨约 20m：抢险车(作业点东 6.75m)、井口/泵/三个人、
+// 两端封路围栏(各 9m)。2.2(13.8m) 时画幅只有 21×12m——车出右边界、两端围栏全在画外，
+// 观众看到的是"三个人趴在水里"，这就是"看不出在干什么"的直接原因。
+// 3.4(21m) 能全框住，但人只剩 9.6%（543px 图上 52px），跪/蹲分不出。
+// 2.9(18m) 画幅 27×15m：车和两端围栏都在内，人占 11.4%（约 62px），姿势与道具仍可辨。
+const CAM_CLOSE_R=2.9;
+// 机位方位（单位向量，相机相对目标点的方向）。**从西南上方斜 45°、俯角 33°**。
+// 三个约束卡住这个角度（都是在 4 个候选机位上截图比出来的，不是估的）：
+// ① 围栏横跨路面（沿南北延伸），正南正对着看只有端头，画面上是一条线；
+//    斜 45° 才看得到板面（1.1m 高 × 17m 宽），才读得出"有一道围栏"。
+// ② 俯角必须 ≥30°：25° 时围栏被工程车和路面反光吃掉，只剩一条黄边；
+//    33° 时围栏立在车两侧、三道东西（车/人/围栏）在同一画面里分得开。
+// ③ 再陡（>38°）就变平面图，人物立不起来、水面反光全丢。
+// 东南机位（+x）围栏更清楚，但车会被挤到画面下边缘，所以取西南。
+const CAM_CLOSE_DIR={x:-0.45,y:0.545,z:0.710};
 // 第三机位「封路中景」：作业特写里看不到护栏，而封路恰恰是"推演结论落到现场"的证据，
 // 必须给一个能同时装下护栏与退水路面的机位。7 世界单位 ≈ 44m，画面高约 37m，
 // 一段横向护栏（宽 2~3 世界）占画面 6~8%，路面与两端的车道线一起留白，读得出"封了"。
@@ -4210,36 +4515,42 @@ const CAM_CLOSE_DIR={x:-0.46,y:0.17,z:0.44};
 // 收尾机位 7→10.5 世界单位（44→66m）：7 的时候画面里只剩一块黄护栏和一个锥桶，
 // 没有路口、没有退水后的路面、没有收工的泵——结尾等于没交代结论。
 // 退到 10.5 才装得下"封路 + 退水 + 作业点"三件事。
-const CAM_BLOCK_R=10.5;
-const CAM_BLOCK_DIR={x:-0.55,y:0.60,z:0.58};
-// 第四机位「收尾中景」：t 过 0.92 后镜头不回全景，而是停在 8.5 世界单位（≈53m）、
-// 俯角 25° 的中景上，取景中心是「作业点↔封路点」的中点。
-// 回全景时（26 世界单位外）三个人只有 15px、封路护栏只在画面右下角露一小块黄，
-// 结局镜头等于没交代结论。退到 8.5 能同时装下：封路护栏、退水后的路面、收工的作业点。
-// 方位沿用特写方向（-0.46,·,0.44）只把俯角从 0.17 抬到 0.30，
-// 这样 0.92→1.00 的插值路径是特写机位的自然延续，不会像绕去封路点那样擦到树冠。
+// 第三个机位「封路特写」：0.63~0.76 摇到西侧围栏旁，专门拍"两人把围栏推进路里"。
+// 为什么必须单独给一个镜头：作业中景在 18m 外，1.75m 的人只有 50px，手臂动作 5px——
+// "手扶着板推"这个细节在那个尺度下物理上不可见，加标签也读不出来。
+// 距离 1.55 世界（9.7m）、俯角 30°：围栏高占画面 14%、人占 22%（715px 图上约 160px），
+// 手臂前伸的动作有 23px，"推"这个细节看得见。
+// 俯角从 20° 提到 30° 是被穿模逼的：机位在 20°/1.35 时只有 5.7m 高，从作业特写摇过来的
+// 那段路上正好从工人头顶擦过，实测 t=0.61 整屏是一个肉色的头（相机钻进模型里）。
+// 抬到 30°/1.55 后相机在人头顶上方 3.5m，路径怎么走都不会穿。
+const CAM_BLOCK_R=1.55;
+const CAM_BLOCK_DIR={x:-0.47,y:0.50,z:0.73};
+// 第四机位「收尾中景」：t 过 0.96 后镜头不回全景，而是停在 8.5 世界单位（≈53m）、
+// 俯角 25° 的中景上，取景中心是收工后的作业点。回全景（26 世界单位外）三个人只有 15px，
+// 结局镜头等于没交代结论。
 const CAM_FINAL_R=8.5;
 const CAM_FINAL_DIR={x:-0.46,y:0.30,z:0.44};
 function blockAnchor(){
   const arr=window.__roadBlocks||[];
-  if(!arr.length)return null;
-  const m=arr[0]&&arr[0].mesh;
-  if(!m)return null;
-  return {x:m.position.x,y:0.5,z:m.position.z};
+  const g=arr[0]&&arr[0].mesh;
+  if(!g||!g.children||!g.children.length)return null;
+  // 取西侧那块板（0 号推的那块）的**实时位置**：板在动，锚点必须跟着它走，
+  // 否则镜头对着空白路面，人推着板从画外滑过去。
+  // 旧版返回的是外层 Group 的 position——那个 Group 一直在原点 (0,0,0)，
+  // 所以这个机位从来没对上过封路点（等于死代码）。
+  const s=g.children[0];
+  return {x:s.position.x,y:0.46,z:s.position.z};
 }
 function driveCamera(t){
   if(!camera||!controls)return;
   if(location.hash==='#top')return;   // 俯视调试视角优先
-  // 机位时间窗的排法只看一件事：**满特写必须覆盖施工全过程**。
-  // 旧排法 a=0.60→b=0.82 是全程渐变，满特写只落在 0.82~0.86（约 1 秒），
-  // 而撬盖 0.62、接管 0.80、泵启动 0.86 全在过渡段里——结果镜头卡在全景与特写中间，
-  // 对着泵站外墙，工人在画面边缘。这是"看不到施工过程"的真正原因，不是场景没做。
-  // 推近起点跟车同步（0.62），不再从 0.52 就推：
-  // 0.52 推近的话，0.52~0.69 这 5.8 秒画面里只有一片空水面，
-  // 人会以为镜头放错了地方。现在镜头到位（0.68）时车也刚好停稳。
-  const a=EVT_JUMPS[4]+0.06;   // 0.62 开始推近（与工程车起步同时）
-  const b=a+0.06;              // 0.68 到达作业特写
-  const hold=0.92;             // 满特写保持到 0.92：覆盖撬盖→接管→泵启动→出水
+  // 推近起点跟着「车停稳」走（0.548），到位点卡在「两人扶住围栏、开始推」之前（0.625）：
+  // 满特写要覆盖的因果链是 走到围栏边 → 推围栏封路 → 回井口 → 撬盖 → 接管 → 开泵。
+  // 原来 a=0.62/b=0.68，镜头到位时推围栏已经进行了一半，观众只看到"栏杆自己在动"，
+  // 看不到"人去推它"这一步——这正是用户指出的"封路不是工人封的"。
+  const a=EVT_JUMPS[4];        // 0.56：车刹停、人推门，镜头开始推近
+  const b=a+0.065;             // 0.625：到作业特写，正好赶在人扶上围栏那一刻
+  const hold=0.96;             // 满特写保持到 0.96：覆盖推围栏→撬盖→接管→泵启动→出水
   const release=EVT_JUMPS[6];  // 1.00 回到全景
   let w1=0,w2=0;
   if(t>=a&&t<=b)w1=(t-a)/(b-a);
@@ -4249,7 +4560,18 @@ function driveCamera(t){
   // 会贴着行道树的树冠擦过去——实测 t=0.90 整屏被一棵绿树糊住。
   // 全景才是真正的结论画面：封路、退水、作业点、泵站四件事只有它装得下。
   else if(t>=hold)w1=1-(t-hold)/Math.max(0.001,release-hold);
-  w1=clamp01(w1);w2=clamp01(w2);
+  w1=clamp01(w1);
+  // ---- 封路特写：0.628~0.762 摇到西侧围栏旁，只拍"两人把围栏推进路里" ----
+  // 这不是炫技切镜头：作业中景里 1.75m 的人只有 50px、手臂 5px，
+  // "手扶着板推"在这个尺度下**物理上不可见**。要让人看见"封路是工人封的"，
+  // 只能给这个动作一个近景。两端各 0.032（≈1.4 秒）过渡，读起来是摇镜不是硬切。
+  const SB0=0.628,SB1=0.762,SBF=0.032;
+  if(t>SB0&&t<SB1){
+    w2=Math.min(1,(t-SB0)/SBF)*Math.min(1,(SB1-t)/SBF);
+    w2=Math.max(0,w2);
+    w1=w1*(1-w2);          // 让位：这段画面给围栏，井口退到次要位置
+  }
+  w2=clamp01(w2);
   if(w1+w2>1){const s=w1+w2;w1/=s;w2/=s;}
   const w0=clamp01(1-w1-w2);
   const e1=w1*w1*(3-2*w1);      // 平滑只在各自权重上做
@@ -4311,6 +4633,11 @@ function driveCamera(t){
   const dz=oz/len*w0+CAM_CLOSE_DIR.z/cdLen*e1+CAM_BLOCK_DIR.z/bdLen*e2;
   const dl=Math.hypot(dx,dy,dz)||1;
   camera.position.set(tx+dx/dl*d,ty+dy/dl*d,tz+dz/dl*d);
+  // 推近过程中走一条略微抬起的弧线（中段 +0.45 世界 ≈ 2.8m，两端自然归零）：
+  // 全景→特写是直线插值，中段正好从南侧人行道上空、2 号工人的走位线掠过，
+  // 实测有一帧相机撞进人物模型里，整屏是一颗肉色的头。抬弧避开这段，不影响两端机位。
+  const liftPath=Math.sin(Math.PI*clamp01(w1))*(1-w2)*0.45;
+  camera.position.y+=liftPath;
   controls.target.set(tx,ty,tz);
   controls.update();
 }
@@ -4346,6 +4673,13 @@ const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
 // 会在 init() 之前抛 TypeError，把后面的按钮绑定和 init() 一起带走——
 // 表现就是页面全黑且毫无提示（真浏览器 console 才看得到）。
 function bindUI(){
+  // 用户一旦自己拖/滚了视角，就让出运镜权（tick 里据此跳过 driveCamera），
+  // 否则自动运镜每帧把 target 抢回去，鼠标刚拖动就被拉回原位。
+  // 点播放/跳次/拖进度条会把它清掉，重新交回系统取景。
+  // 这两行必须在 bindUI 里：顶层 init 阶段直接取 renderer.domElement 会抛错并
+  // 连累整个 init（历史回归，见 test_twin_page_binds_click_after_renderer_exists）。
+  renderer.domElement.addEventListener('pointerdown',function(){window.__camUser=true;});
+  renderer.domElement.addEventListener('wheel',function(){window.__camUser=true;},{passive:true});
   renderer.domElement.addEventListener('click',ev=>{
     pointer.x=(ev.clientX/innerWidth)*2-1;pointer.y=-(ev.clientY/innerHeight)*2+1;
     raycaster.setFromCamera(pointer,camera);
@@ -4365,7 +4699,7 @@ function bindUI(){
   // 重播 = 从降雨前奏（t=0）开始播，而不是直接跳到第 1 跳：
   // 用户要看到的是"先下雨、再积水"，重播如果不给前奏就等于又跳过了起因。
   document.getElementById('restart').onclick=()=>{
-    twinState.currentJump=0;__evtClock=0;__evtPlaying=true;
+    twinState.currentJump=0;__evtClock=0;__evtPlaying=true;window.__camUser=false;
     applyTimeline(0);paintHighlights();renderJumpControls();updateEvidence();renderResults();
     if(twinState.selectedEntity)renderEntityCard(twinState.selectedEntity);
     renderEventBar(0);syncProgress();
@@ -4383,13 +4717,14 @@ function bindUI(){
   document.getElementById('settle').onclick=()=>setJump(6);
   document.getElementById('play').onclick=()=>{
     if(__evtClock>=EVT_DURATION)__evtClock=0;   // 播到末尾再点播放 = 从头重播
-    __evtPlaying=!__evtPlaying;renderJumpControls();
+    __evtPlaying=!__evtPlaying;window.__camUser=false;renderJumpControls();
   };
   // 进度条拖动 = seek 到任意时刻
   const prog=document.getElementById('progress');
   prog.addEventListener('input',()=>{
     __evtPlaying=false;
     __evtClock=Number(prog.value)/1000*EVT_DURATION;
+    window.__camUser=false;              // 拖进度条 = 要系统取景，不是手动视角
     applyTimeline(__evtClock/EVT_DURATION);
     syncJumpFromClock();
   });
