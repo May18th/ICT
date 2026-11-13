@@ -75,6 +75,26 @@ CSV_FILES = [
     "pump_forebay_curves.csv",
 ]
 
+# 额外资料：不在 samples/assets/urban 下，但对"按真实案例判断"有直接用处。
+# 故意与主数据同一个索引、同一个 path 前缀——它们是资料，不是展品，
+# 不单独建"真实数据"索引（那等于在检索层打标签，把来源差异暴露给所有提问者）。
+EXTRA_FILES: list[tuple[Path, str]] = [
+    # 2020-08-11 成都真实响应定级过程：3 条，每行带 deciding_basis、trigger_facts、
+    # source_url，以及"映射到预案Ⅳ/Ⅲ级哪条条件"的说明。这是全库最接近
+    # 「真实政府怎么定级、依据什么、哪一步属于推断」的样本，比预案条文更适合被检索。
+    (
+        ASSETS.parents[2] / "samples" / "scenarios" / "public_osm"
+        / "response_events_chengdu_20200811.csv",
+        "csv",
+    ),
+    # ERA5 真实雨量如何映射到演示事件时间窗、哪些数字是实测、哪些是推导。
+    (
+        ASSETS.parents[2] / "samples" / "weather" / "scenario_variant_20260801"
+        / "mapping_report.md",
+        "md",
+    ),
+]
+
 
 def split_markdown(path: Path) -> list[dict]:
     """按 ## 切；每段带上文件名与所在节标题。"""
@@ -138,6 +158,12 @@ def build_docs() -> list[dict]:
             docs.extend(split_csv(p))
         else:
             print(f"[warn] 缺失 {name}", file=sys.stderr)
+    # 额外资料缺了就跳过、不阻断：它是补充，不是主链
+    for p, kind in EXTRA_FILES:
+        if not p.exists():
+            print(f"[warn] 额外资料缺失，已跳过：{p.name}", file=sys.stderr)
+            continue
+        docs.extend(split_csv(p) if kind == "csv" else split_markdown(p))
     return docs
 
 
@@ -177,11 +203,27 @@ def main() -> int:
     ap.add_argument("--index-id", default="", help="已存在的索引 id（形如 2-5ab0...）；不传则新建")
     ap.add_argument("--embedding-model-id", type=int, default=3, help="bge-m3 默认 3")
     ap.add_argument("--batch", type=int, default=20)
+    ap.add_argument(
+        "--only",
+        default="",
+        help="只灌指定文件（逗号分隔文件名），用于增量补录；不传则全量",
+    )
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
     docs = build_docs()
+    # 增量补录：写入端是纯追加、不覆盖，全量重灌会让已有切片翻倍，
+    # 所以补录新文件必须用 --only 圈定范围。
+    if args.only:
+        want = {s.strip() for s in args.only.split(",") if s.strip()}
+        docs = [d for d in docs if d["filename"] in want]
+        missing = want - {d["filename"] for d in docs}
+        if missing:
+            print(f"[warn] --only 未匹配到任何切片：{sorted(missing)}", file=sys.stderr)
+        if not docs:
+            print("[失败] --only 过滤后没有可写入的记录", file=sys.stderr)
+            return 1
     total_chars = sum(len(d["content"]) for d in docs)
     print(f"切分结果：{len(docs)} 条记录，共 {total_chars} 字")
     by_file: dict[str, int] = {}
