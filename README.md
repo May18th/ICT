@@ -12,6 +12,29 @@
 
 运行 `run_evolution_showcase()` 可重复演示一次发布和一次拒绝路径，结果包含版本历史，便于后续接入 Nexent 或整理赛题材料。
 
+## 入口
+
+`python -m decision_poc.web_demo --port 18765` 起服务后：
+
+| 路径 | 是什么 |
+| --- | --- |
+| `/` | 门户首页：三条动线入口 + 平台状态（Agent 版本 / MCP 工具 / 验收口径） |
+| `/workbench` | 证据工作台：问一句，每条结论点开是台账那一行；含工具轨迹、自检与复跑 |
+| `/map2d` | 2.5D 俯视大屏：积水 / 封路 / 泵站 / 跨区调泵，六跳可播放 |
+| `/twin3d` | 三维沙盘：空间关系与逐跳场景状态 |
+| `/demo` | 旧的决策面板页（首页改成门户后保留在此） |
+| `/status` | 自检明细与台账口径 |
+
+Windows 一键起演示环境（检查容器 → 拉起未运行的容器 → 取北向 key → 起工作台 → 打开门户）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\start_demo.ps1
+# 只体检不改状态：
+powershell -ExecutionPolicy Bypass -File scripts\start_demo.ps1 -CheckOnly
+```
+
+离线部署自检（镜像 / 容器 / 端点 / 断网证据）在 `deploy/nexent/offline/verify-offline.sh`。
+
 ## 项目目标
 
 外部知识引用可通过 `external_items_to_tool_result` 转成现有证据信封后再进入决策校验；`equipment_decision_agent`（历史对照，已于 2026-11-05 从本机平台下线，以下为历史观测）的四段式报告则通过 `parse_business_report` 独立解析，不与 JSON 决策契约混用。
