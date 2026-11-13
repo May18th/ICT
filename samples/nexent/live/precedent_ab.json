@@ -1,0 +1,108 @@
+{
+  "event_id": "WO-20261029-007",
+  "as_of": "2026-10-29T09:40:00+08:00",
+  "groups": {
+    "with_precedent": {
+      "conversation_id": 181,
+      "checks_passed": 8,
+      "checks_total": 8,
+      "passed": true,
+      "errors": [],
+      "summary": "A-03 区积水 30cm 触发橙色（Ⅱ级）响应，受影响对象含下穿隧道 UP-XH-101（积水漫过 15cm 挡水槛、已倒灌）与开挖 2.5m 基坑 CP-2026-041，存在封路联合发布重叠（C1）、泵站 DF-PS-01 无运维主体职责空白（C2）、移动泵缺口 2 台（C3），需移交；同类先例中成都市 2020-08-11 是先启动Ⅳ级（蓝色）响应、当日再升级，其等级与雨量不得套用本事件。",
+      "evidence_refs": [
+        "AS-A-03-work_order-6a1282a1#A-03/work_order/v1#row:2",
+        "AS-A-03-underpass-d4ae624c#A-03/underpass/v1#row:2",
+        "AS-A-03-drainage_facility-073cc674#A-03/drainage_facility/v1#row:2",
+        "AS-A-03-resource_inventory-8133c741#A-03/resource_inventory/v1#row:2",
+        "AS-CD-CITY-emergency_response_case-e00d311b#CD-CITY/emergency_response_case/2020#line:1-2"
+      ],
+      "precedent_refs": [
+        "AS-CD-CITY-emergency_response_case-e00d311b#CD-CITY/emergency_response_case/2020#line:1-2"
+      ],
+      "core": {
+        "six_hops": [
+          "observed",
+          "affected",
+          "owner",
+          "conflict",
+          "resource",
+          "action"
+        ],
+        "conflicts": [
+          [
+            "C1",
+            "overlap"
+          ],
+          [
+            "C2",
+            "gap"
+          ],
+          [
+            "C3",
+            "contention"
+          ]
+        ],
+        "resource_gap": 2,
+        "action_families": [
+          "封控",
+          "抽排",
+          "隔离风险源"
+        ]
+      }
+    },
+    "without_precedent": {
+      "conversation_id": 182,
+      "checks_passed": 8,
+      "checks_total": 8,
+      "passed": true,
+      "errors": [],
+      "summary": "A-03 区积水 30cm 已达封路阈值（单点≥25cm 触发橙色/Ⅱ级），下穿隧道 UP-XH-101 已漫槛倒灌、泵站 DF-PS-01 无运维主体且过载、移动泵需求 8 台仅可用 6 台缺口 2 台，须按先隔离风险源、再封控、后抽排的顺序处置并提请跨部门交办。",
+      "evidence_refs": [
+        "AS-A-03-work_order-6a1282a1#A-03/work_order/v1#row:2",
+        "AS-A-03-drainage_facility-073cc674#A-03/drainage_facility/v1#row:2",
+        "AS-A-03-underpass-d4ae624c#A-03/underpass/v1#row:2",
+        "AS-A-03-resource_inventory-8133c741#A-03/resource_inventory/v1#row:2",
+        "AS-A-03-emergency_plan-df41ffb1#A-03/emergency_plan/v2.0#line:29"
+      ],
+      "precedent_refs": [],
+      "core": {
+        "six_hops": [
+          "observed",
+          "affected",
+          "owner",
+          "conflict",
+          "resource",
+          "action"
+        ],
+        "conflicts": [
+          [
+            "C1",
+            "overlap"
+          ],
+          [
+            "C2",
+            "gap"
+          ],
+          [
+            "C3",
+            "contention"
+          ]
+        ],
+        "resource_gap": 2,
+        "action_families": [
+          "封控",
+          "抽排",
+          "隔离风险源"
+        ]
+      }
+    }
+  },
+  "verdict": {
+    "both_consistent_with_offline": true,
+    "same_structured_core": true,
+    "citation_follows_instruction": true,
+    "passed": true
+  },
+  "note": "A/B 用同一事件、同一离线基线。结论骨架相同说明先例没有改事实；引用只出现在被允许的那一组，说明它由指令控制而非碰巧命中。",
+  "generated_at": "2026-11-13T12:06:23+0800"
+}
