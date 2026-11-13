@@ -5490,7 +5490,11 @@ var FILE_CN={'road_network.csv':'路网台账','pipeline_ledger.csv':'管线台�
   'pipeline_map.png':'管线示意图','underpasses.csv':'下穿隧道台账',
   'pump_forebay_curves.csv':'泵站前池曲线',
   'response_events_chengdu_20200811.csv':'成都 2020-08-11 定级记录',
-  'mapping_report.md':'ERA5 雨量映射说明'};
+  'mapping_report.md':'ERA5 雨量映射说明',
+  // 自检栏会报文件名（decision_memory.json 命中 1 条），这四个是自检用到的台账，
+  // 名字同样要能读——"命中 1 条"对评委没有信息量，"决策依据台账"才有。
+  'decision_memory.json':'决策依据台账','allocation_cases.json':'调拨评测集',
+  'decision_reviews.json':'专家评审样例','history.jsonl':'反馈闭环记录'};
 // MCP 工具名是给开发看的（event_deduce）。工具轨迹栏要能让人读，逐个给中文动作名。
 var TOOL_CN={semantic_query:'语义检索',twin_neighbors:'孪生邻接查询',doc_search:'知识检索',
   evidence_locate:'原文取证',claim_trace:'断言溯源',provenance_verify:'数据来源核验',
@@ -5523,7 +5527,18 @@ function humanWith(text, labels){
     out=out.split(V[n]+'（'+V[n]+'）').join(V[n]);
     out=out.split(V[n]+' '+V[n]).join(V[n]);
   }
-  return out.replace(/([一-龥])[ ]+(?=[一-龥])/g,'$1');
+  out=out.replace(/([一-龥])[ ]+(?=[一-龥])/g,'$1');
+  // 内核字段名转述：「（order 1）」-> 「第 1 步」
+  out=out.replace(/order[ ]*[=:]?[ ]*(\d+)/g,'第 $1 步');
+  // 与后端 _humanize 同一套收尾：先吃掉叠词（"兴华路雨水泵站泵站"），
+  // 再把「区应急（区应急管理局）」这类"简称（全称）"折成全称。
+  ['泵站','雨水口组','雨水口','下穿隧道','管线','管道','道路','路段'].forEach(function(s){
+    out=out.split(s+s).join(s);
+  });
+  out=out.replace(/([一-龥]{2,6})（([一-龥]{2,12})）/g,function(all,a,b){
+    return (b.indexOf(a)===0&&b.length>a.length)?b:all;
+  });
+  return out;
 }
 function humanRef(ref){
   var s=String(ref||'');
@@ -5662,19 +5677,9 @@ function renderEvent(d, target){
   // 台账里的「代号 -> 中文名」。内核产出的文本带 ORG-ROAD / DF-PS-01 / RES-PUMP-M 这类内部编号，
   // 展示前换成中文名，原文留在 title 里——给值班员看人话，给核对的人留原串。
   var LABELS=d.labels||{};
-  var LABEL_KEYS=Object.keys(LABELS).sort(function(a,b){return b.length-a.length;});
-  function H(s){
-    var out=String(s==null?'':s);
-    for(var i=0;i<LABEL_KEYS.length;i++){
-      var k=LABEL_KEYS[i];
-      if(out.indexOf(k)>=0){out=out.split(k).join(LABELS[k]);}
-    }
-    // 代号换成中文名后会在两侧留下空格（"由 ORG-ROAD 与" -> "由 区道路管理中心 与"），
-    // 中文之间不该有空格。只处理两个汉字之间的空白，英文与数字不受影响。
-    // 用字面字符区间而不是 \\u 转义：这整段是 Python 字符串，反斜杠会被 Python 先吃掉。
-    out=out.replace(/([一-龥])[ ]+(?=[一-龥])/g,'$1');
-    return out;
-  }
+  // 统一走 humanWith：代号、文件名、叠词、括号全称、order 编号这一整套规则只在这里写一份。
+  // 原来事件栏和结构化段落各写一份简化版，改一处忘一处就会漏出 ORDER 1 这种串。
+  function H(s){ return humanWith(s, LABELS); }
   var line=el('div');
   line.style.fontSize='15px'; line.style.fontWeight='600';
   // 已闭环事件引擎会直接拒推（conclusion.refused），不硬编结论——这一屏要把这件事说出来，
@@ -5798,7 +5803,14 @@ function renderEvent(d, target){
     var human=items.map(H);
     var box=fold(host,'受影响对象 '+items.length+' 个', human.join('、'));
     if(box){box.title=items.join('、');}
-    if(af.reason){ fold(host,'受影响原因', String(af.reason).split(';').join('；')); }
+    if(af.reason){
+      // 原因串里两种内部记号混着：对象代号（DF-IN-101）和 kind 值（waterlogging）。
+      // 代号走 H() 的台账对照表，kind 值只有几个，直接列词表换掉。
+      var reasonTxt=H(String(af.reason)).split(';').join('；').replace(/:/g,'：')
+        .replace(/waterlogging/g,'积水').replace(/gas_leak/g,'燃气泄漏')
+        .replace(/power_outage/g,'停电').replace(/road_closure/g,'封路');
+      fold(host,'受影响原因', reasonTxt);
+    }
   }
 
   var refs=d.evidence_refs||[];
@@ -5824,7 +5836,7 @@ function loadReplay(){
   btn.id='replayBtn'; btn.style.height='32px'; btn.style.borderRadius='8px';
   btn.onclick=function(){runReplay(this);};
   bar.appendChild(btn);
-  bar.appendChild(el('span','empty','固定跑 WO-20261029-007（八项离线基线只对该事件定义）：真机跑一遍主 Agent，八项判据实时重算，并与上一轮逐项比对（约 10–30 秒）。'));
+  bar.appendChild(el('span','empty','只跑 WO-20261029-007（八项判据的标准答案只对这一个事件定过）：点一下，真机跑一遍主 Agent，八项判据当场重算，并与上一轮逐项比。约 10–30 秒。'));
   pane.appendChild(bar);
   var host=el('div'); host.id='replayResult'; pane.appendChild(host);
   host.appendChild(el('div','empty','读取历史…'));
@@ -5832,19 +5844,19 @@ function loadReplay(){
     host.innerHTML='';
     var runs=d.runs||[];
     if(!runs.length){host.appendChild(el('div','empty','还没有复跑记录。点上面的按钮跑第一次。'));return;}
-    if(d.latest){ renderReplay({current:d.latest, diff:d.diff||{}}); }
+    if(d.latest){ renderReplay({current:d.latest, diff:d.diff||{}, labels:d.labels||{}}); }
     var sep=el('div','empty','最近 '+runs.length+' 轮');
     sep.style.margin='16px 0 6px'; sep.style.paddingTop='10px'; sep.style.borderTop='1px solid #f3f4f6';
     host.appendChild(sep);
     var t=el('table'), head=el('tr');
-    ['时间','版本','判据','耗时','会话'].forEach(function(h){head.appendChild(el('th',null,h));});
+    ['时间','主 Agent 第几版','判据通过','耗时','平台会话'].forEach(function(h){head.appendChild(el('th',null,h));});
     t.appendChild(head);
     runs.forEach(function(x){
       var tr=el('tr');
       tr.appendChild(el('td','mono',(x.ts||'').replace('T',' ').slice(0,19)));
-      tr.appendChild(el('td','mono',(x.agent_version===null||x.agent_version===undefined)?'-':('v'+x.agent_version)));
+      tr.appendChild(el('td','mono',(x.agent_version===null||x.agent_version===undefined)?'-':('第 '+x.agent_version+' 版')));
       tr.appendChild(el('td',x.passed?'ok':'bad',(x.checks_passed||0)+'/'+(x.checks_total||0)));
-      tr.appendChild(el('td','mono',(x.elapsed_s===null||x.elapsed_s===undefined)?'-':(x.elapsed_s+' s')));
+      tr.appendChild(el('td','mono',(x.elapsed_s===null||x.elapsed_s===undefined)?'-':(x.elapsed_s+' 秒')));
       tr.appendChild(el('td','mono',x.conversation_id||'-'));
       t.appendChild(tr);
     });
@@ -5877,20 +5889,7 @@ function renderStructured(s, host, labels){
   wrap.style.marginTop='8px';
   // 模型复述的处置动作/冲突里也带 ORG-ROAD 这类代号，用后端回的对照表换成人话；
   // 原文留在 title 与下面的原始 JSON 里。
-  var LK=Object.keys(labels||{}).sort(function(a,b){return b.length-a.length;});
-  var LV=[]; for(var i=0;i<LK.length;i++){ if(labels[LK[i]]){LV.push(labels[LK[i]]);} }
-  LV.sort(function(a,b){return b.length-a.length;});
-  function H(t){
-    var out=String(t==null?'':t);
-    for(var i=0;i<LK.length;i++){ if(out.indexOf(LK[i])>=0){out=out.split(LK[i]).join(labels[LK[i]]);} }
-    // 模型常把代号和名字一起写，换完会成口吃（"区排水公司（区排水公司）"），折叠掉
-    for(var j=0;j<LV.length;j++){
-      var n=LV[j];
-      out=out.split(n+'（'+n+'）').join(n);
-      out=out.split(n+' '+n).join(n);
-    }
-    return out.replace(/([一-龥])[ ]+(?=[一-龥])/g,'$1');
-  }
+  function H(t){ return humanWith(t, labels||{}); }
   var acts=s.action_order||[];
   if(acts.length){
     wrap.appendChild(blockTitle('处置顺序','共 '+acts.length+' 步'));
@@ -5934,12 +5933,17 @@ function renderStructured(s, host, labels){
   host.appendChild(wrap);
 }
 
-function fmtCell(v){
+// 复跑表里的值来自内核：布尔、阶段名、冲突类型三种。三层都要翻，漏一层就会在
+// 「期望 / 实际」列里留下 contention 这种英文（复跑栏曾经整列都是英文冲突类型）。
+function cnTerm(x){
+  return KIND_CN[x]||STAGE_CN[x]||DOC_CN[x]||FILE_CN[x]||x;
+}
+function fmtCell(v, labels){
   if(v===null||v===undefined){return '-';}
-  // 表里出现的布尔与阶段名都是内核口径：true -> 是，observed -> 雨情与定级
   if(typeof v==='boolean'){return v?'是':'否';}
-  if(Array.isArray(v)){return v.map(function(x){return STAGE_CN[x]||x;}).join('、');}
-  if(typeof v==='string'){return STAGE_CN[v]||v;}
+  // 实际值是模型原话，带 ORG-ROAD / DF-PS-01 这类台账代号，走同一份对照表换成人话。
+  if(Array.isArray(v)){return v.map(function(x){return humanWith(cnTerm(x),labels);}).join('、');}
+  if(typeof v==='string'){return humanWith(cnTerm(v),labels);}
   return JSON.stringify(v);
 }
 
@@ -5952,24 +5956,39 @@ function renderReplay(d){
   verdict.style.fontWeight='600'; verdict.style.marginBottom='6px';
   verdict.className = c.passed?'ok':'bad';
   verdict.textContent = c.passed
-    ? ('与离线基线一致：'+c.checks_passed+'/'+c.checks_total)
-    : ('与离线基线不一致：'+c.checks_passed+'/'+c.checks_total+' 项通过');
+    ? ('与本机规则引擎的结论一致 '+c.checks_passed+'/'+c.checks_total)
+    : ('与本机规则引擎不一致：'+c.checks_passed+'/'+c.checks_total+' 项通过');
   box.appendChild(verdict);
 
   box.appendChild(el('div','empty',
-    '版本 v'+maybeNum(c.agent_version)+' · 会话 '+(c.conversation_id||'-')
-    +' · 耗时 '+c.elapsed_s+' s · 证据 '+(c.evidence_count||0)+' 条 · '+(c.ts||'').replace('T',' ').slice(0,19)));
+    '主 Agent 第 '+maybeNum(c.agent_version)+' 版 · 平台会话 #'+(c.conversation_id||'-')
+    +' · 耗时 '+c.elapsed_s+' 秒 · 取到依据 '+(c.evidence_count||0)+' 条 · '+(c.ts||'').replace('T',' ').slice(0,19)));
 
-  var t=el('table'), head=el('tr');
+  var legend=el('div','empty','「期望」是本机规则引擎算出的标准答案（不经过大模型），「实际」这次真机跑出来的；两项对不上就是不符。');
+  legend.style.cssText='font-size:11.5px;line-height:1.7;margin:8px 0 4px';
+  box.appendChild(legend);
+  var LB=d.labels||{};
+  var t=el('table');
+  // 固定列宽：不固定时「实际」列的长段落会把「期望」列挤成竖条（一个字一行），
+  // 复跑栏最该读的八项期望值反而看不清。
+  t.style.tableLayout='fixed';
+  var cg=document.createElement('colgroup');
+  // 只钉「判据」和「结果」两头，中间两列均分剩余宽度——给 31% 这种固定比例时，
+  // 「期望」列在窄侧栏里还是会被压到只剩两三个字一行。
+  [['108px'],[],[],['56px']].forEach(function(w){
+    var col=document.createElement('col'); if(w[0]){col.style.width=w[0];} cg.appendChild(col);
+  });
+  t.appendChild(cg);
+  var head=el('tr');
   ['判据','期望','实际','结果'].forEach(function(h){head.appendChild(el('th',null,h));});
   t.appendChild(head);
   (c.checks||[]).forEach(function(item){
     var tr=el('tr');
     var nameCell=el('td',null,item.name);
-    nameCell.style.whiteSpace='nowrap'; nameCell.style.width='96px';
+    nameCell.style.width='110px';
     tr.appendChild(nameCell);
-    tr.appendChild(el('td','mono',fmtCell(item.expected)));
-    tr.appendChild(el('td','mono',fmtCell(item.actual)));
+    tr.appendChild(el('td','mono',fmtCell(item.expected,LB)));
+    tr.appendChild(el('td','mono',fmtCell(item.actual,LB)));
     tr.appendChild(el('td',item.passed?'ok':'bad',item.passed?'通过':'不符'));
     t.appendChild(tr);
   });
@@ -5982,8 +6001,8 @@ function renderReplay(d){
     dbox.appendChild(el('div','empty',diff.reason||'没有上一轮可比。'));
   }else{
     dbox.appendChild(el('div','empty',
-      '与上一轮（'+(diff.previous_ts||'').replace('T',' ').slice(0,19)+' · v'+maybeNum(diff.previous_version)
-      +' · '+maybeNum(diff.previous_checks_passed)+' 项通过）相比：'
+      '与上一轮（'+(diff.previous_ts||'').replace('T',' ').slice(0,19)+' · 第 '+maybeNum(diff.previous_version)
+      +' 版 · '+maybeNum(diff.previous_checks_passed)+' 项通过）相比：'
       +(diff.same_checks?'八项判定完全未变':('恢复 '+diff.fixed.length+' 项，新增失败 '+diff.broken.length+' 项'))));
     if(diff.version_changed){
       dbox.appendChild(el('div','warn','注意：这一轮换了 Agent 版本，差异可能来自版本而不是模型波动。'));
@@ -6050,8 +6069,19 @@ function loadStatus(){
   // 自检明细里的少量英文标识（PRODUCTION_LABEL、northbound）是内核常量与取数口径，
   // 在展示层换成人话；这层不改 selfcheck 的输出，/status 页与自检指纹都不受影响。
   function humanStatus(text){
-    return String(text==null?'':text)
-      .replace('PRODUCTION_LABEL =','生产策略标识：')
+    var s=String(text==null?'':text);
+    // 自检明细原本直接抛文件名（decision_memory.json）。文件名叫什么与"自洽不自洽"无关，
+    // 换成人读的名字，原始文件名留在这一行的 title 里，要核对回查照样看得见。
+    Object.keys(FILE_CN).forEach(function(k){s=s.replace(k,FILE_CN[k]);});
+    // 「唯一」这条的明细是 `PRODUCTION_LABEL = flood-response-v1.2`。把等号左边那个常量名
+    // 摊成人话，并把 label 里的版本号读出来——判断依据是"只有这一份"，说出来才算数。
+    var m=/^PRODUCTION_LABEL\\s*=\\s*(\\S+)\\s*$/.exec(s);
+    if(m){
+      var ver=/-v([0-9.]+)$/.exec(m[1]);
+      return '当前生效的是 '+m[1]+(ver?('（洪涝调拨策略第 '+ver[1]+' 版）'):'')
+        +'，全平台只认这一份';
+    }
+    return s
       // source 说的是"这份快照当初怎么来的"，不是"平台现在活着"。别翻成"实时取数"。
       .replace('取数来源 northbound','快照原由平台接口抓取')
       .replace('取数来源 snapshot','取自本地快照')
@@ -6311,6 +6341,7 @@ def workbench_replay(body: bytes | None) -> tuple[int, str, bytes]:
             if previous
             else None,
             "diff": _replay_diff(current, previous),
+            "labels": _label_maps(),
         }
     )
 
@@ -6339,6 +6370,9 @@ def workbench_replay_history(limit: int = 10) -> tuple[int, str, bytes]:
             "runs": [{key: run.get(key) for key in fields} for run in runs],
             "latest": latest,
             "diff": _replay_diff(latest, previous) if latest else {"available": False, "reason": "还没有复跑记录"},
+            # 判据的「实际」值是模型原话，里面带 ORG-ROAD / DF-PS-01 这类台账代号。
+            # 页面拿这张对照表换成人名，否则复跑栏会出现"街道中心与交警"以外的英文串。
+            "labels": _label_maps(),
         }
     )
 
@@ -6478,6 +6512,25 @@ def _label_maps() -> dict[str, str]:
         for row in _ledger_rows(file_name):
             if row.get(key):
                 labels[row[key]] = row.get(field) or row[key]
+    # 管线台账没有 name 列，但「受影响原因」和「各对象责任部门」里满屏 PL-DRN-101。
+    # 用「路名 + 口径 + 管种」拼一个能读的名字，比留代号强，也比编一个不存在的
+    # 官方名老实——拼出来的每一段都来自台账本身。
+    roads = {row.get("road_id"): row.get("name") for row in _ledger_rows("road_network.csv")}
+    kind_cn = {"drainage": "雨水", "gas": "燃气", "power": "电力", "tel": "通信", "water": "给水"}
+    for row in _ledger_rows("pipeline_ledger.csv"):
+        pid = row.get("pipeline_id")
+        if not pid:
+            continue
+        pieces = [
+            roads.get(row.get("road_id") or "") or "",
+            f"DN{row['diameter_mm']}" if row.get("diameter_mm") else "",
+            (kind_cn.get(row.get("kind") or "", "") or "") + "管",
+        ]
+        labels[pid] = " ".join(piece for piece in pieces if piece).strip() or pid
+    # 施工计划在正文里就是项目名（CP-2026-041 = 兴华路燃气主干管更换），直接用。
+    for row in _ledger_rows("construction_plans.csv"):
+        if row.get("plan_id"):
+            labels[row["plan_id"]] = row.get("project_name") or row["plan_id"]
     return labels
 
 
@@ -6531,6 +6584,31 @@ def _humanize(text: str) -> str:
     out = re.sub(r"(?<=[一-龥])[ ]+(?=[一-龥])", "", out)
     for term in ("挡水槛", "封控阈值", "运维主体", "最低点标高"):
         out = out.replace(term + term, term)
+
+    # 换成中文名之后会叠词：「DF-PS-01 泵站无书面运维主体」-> 「兴华路雨水泵站泵站无…」。
+    # 名字本身已经以「泵站」结尾，原文后面那个「泵站」就多余了。
+    for suffix in ("泵站", "雨水口组", "雨水口", "下穿隧道", "管线", "管道", "道路", "路段"):
+        out = out.replace(suffix + suffix, suffix)
+
+    # 「区应急（区应急管理局）」：括号里其实是同一个主体的全称，模型写作"简称（全称）"。
+    # 只在括号内是括号外的延长时才换成全称，并列关系（A（B））不动。
+    def _fold_alias(match: "re.Match[str]") -> str:
+        short, full = match.group(1), match.group(2)
+        return full if full.startswith(short) and len(full) > len(short) else match.group(0)
+
+    out = re.sub(r"([一-龥]{2,6})（([一-龥]{2,12})）", _fold_alias, out)
+
+    # 模型按内核字段名转述步骤号：「先停基坑开挖（order 1）」。翻成「第 1 步」。
+    out = re.sub(r"order[ ]*[=:]?[ ]*(\d+)", r"第 \1 步", out)
+    # 事件类别在台账与内核里是英文枚举（waterlogging）。这几个词不会和中文撞车，
+    # 直接全局换掉即可——留在正文里就是"工单直接报出：waterlogging"。
+    for token, cn in (
+        ("waterlogging", "积水"),
+        ("gas_leak", "燃气泄漏"),
+        ("power_outage", "停电"),
+        ("road_closure", "封路"),
+    ):
+        out = out.replace(token, cn)
     return out
 
 
