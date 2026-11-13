@@ -5249,7 +5249,7 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
     </div>
     <iframe id="frame" data-src="__WEB_BASE__/zh/workbench" title="平台对话" style="display:none"></iframe>
     <div class="hint">左边默认是「站内对话」——它不经过平台前端，页面打开就能问，回答里带定位的结论可以直接点开原文。
-    「平台对话」是把平台自己的工作台页内嵌进来，需要平台已启动且当前浏览器已登录；一直转圈就用
+    「平台对话」直接嵌入平台原生对话页，需要平台已启动且当前浏览器已登录；一直转圈就用
     <a class="link" href="__WEB_BASE__/zh/workbench" target="_blank" rel="noopener">新窗口打开</a>。
     内嵌页的内容本页面读不到，所以「点结论跳到原文」只在站内对话下生效。</div>
     <div id="chatpane">
@@ -5837,7 +5837,7 @@ function loadReplay(){
   btn.id='replayBtn'; btn.style.height='32px'; btn.style.borderRadius='8px';
   btn.onclick=function(){runReplay(this);};
   bar.appendChild(btn);
-  bar.appendChild(el('span','empty','只跑 WO-20261029-007（八项判据的标准答案只对这一个事件定过）：点一下，真机跑一遍主 Agent，八项判据当场重算，并与上一轮逐项比。约 10–30 秒。'));
+  bar.appendChild(el('span','empty','只跑 WO-20261029-007（八项判据的标准答案只对这一个事件定过）：点一下，真机跑一遍主智能体，八项判据当场重算，并与上一轮逐项比。约 10–30 秒。'));
   pane.appendChild(bar);
   var host=el('div'); host.id='replayResult'; pane.appendChild(host);
   host.appendChild(el('div','empty','读取历史…'));
@@ -5850,7 +5850,7 @@ function loadReplay(){
     sep.style.margin='16px 0 6px'; sep.style.paddingTop='10px'; sep.style.borderTop='1px solid #f3f4f6';
     host.appendChild(sep);
     var t=el('table'), head=el('tr');
-    ['时间','主 Agent 第几版','判据通过','耗时','平台会话'].forEach(function(h){head.appendChild(el('th',null,h));});
+    ['时间','主智能体第几版','判据通过','耗时','平台会话'].forEach(function(h){head.appendChild(el('th',null,h));});
     t.appendChild(head);
     runs.forEach(function(x){
       var tr=el('tr');
@@ -5962,7 +5962,7 @@ function renderReplay(d){
   box.appendChild(verdict);
 
   box.appendChild(el('div','empty',
-    '主 Agent 第 '+maybeNum(c.agent_version)+' 版 · 平台会话 #'+(c.conversation_id||'-')
+    '主智能体第 '+maybeNum(c.agent_version)+' 版 · 平台会话 #'+(c.conversation_id||'-')
     +' · 耗时 '+c.elapsed_s+' 秒 · 取到依据 '+(c.evidence_count||0)+' 条 · '+(c.ts||'').replace('T',' ').slice(0,19)));
 
   var legend=el('div','empty','「期望」是本机规则引擎算出的标准答案（不经过大模型），「实际」这次真机跑出来的；两项对不上就是不符。');
@@ -6006,7 +6006,7 @@ function renderReplay(d){
       +' 版 · '+maybeNum(diff.previous_checks_passed)+' 项通过）相比：'
       +(diff.same_checks?'八项判定完全未变':('恢复 '+diff.fixed.length+' 项，新增失败 '+diff.broken.length+' 项'))));
     if(diff.version_changed){
-      dbox.appendChild(el('div','warn','注意：这一轮换了 Agent 版本，差异可能来自版本而不是模型波动。'));
+      dbox.appendChild(el('div','warn','注意：这一轮换了智能体版本，差异可能来自版本而不是模型波动。'));
     }
     if((diff.fixed||[]).length){dbox.appendChild(el('div','ok','恢复：'+diff.fixed.join('、')));}
     if((diff.broken||[]).length){dbox.appendChild(el('div','bad','新增失败：'+diff.broken.join('、')));}
@@ -6080,7 +6080,7 @@ function loadStatus(){
     if(m){
       var ver=/-v([0-9.]+)$/.exec(m[1]);
       return '当前生效的是 '+m[1]+(ver?('（洪涝调拨策略第 '+ver[1]+' 版）'):'')
-        +'，全平台只认这一份';
+        +'，平台上只发布这一份';
     }
     return s
       // source 说的是"这份快照当初怎么来的"，不是"平台现在活着"。别翻成"实时取数"。
@@ -6110,8 +6110,10 @@ function loadStatus(){
     var snap=d.platform_snapshot||{};
     if(snap.available){
       var when=humanClock(snap.generated_at);
-      var tip=el('div','empty','「平台 Agent 可读」读的是 '+when+' 生成的版本快照（'+snap.agents
-        +' 个 Agent），不是实时探活。要看平台此刻在不在，去问一句或看左侧对话。');
+      // 不复述项名：项名「平台 Agent 可读」是 selfcheck.py 里的字面值，会进冻结
+      // 期望文件，改名就破 108/108。改用「这一项」指代，读起来也不别扭。
+      var tip=el('div','empty','这一项读的是 '+when+' 生成的版本快照（'+snap.agents
+        +' 个智能体），不是此刻探测。要看平台此刻在不在，去问一句或看左侧对话。');
       tip.style.cssText='font-size:11.5px;line-height:1.7;margin-top:6px;color:#9aa1aa';
       pane.appendChild(tip);
     }
@@ -7147,13 +7149,13 @@ PORTAL_MAIN_TOOLS: tuple[tuple[str, str], ...] = (
 #: 门户上的角色名。平台里的 `urban_deduction_agent` 对评委没有意义，
 #: 但核对时要能对上平台，所以中文角色与平台 Agent 名同时出现。
 PORTAL_AGENT_ROLES: tuple[tuple[str, str], ...] = (
-    ("urban_deduction_agent", "主 Agent · 事件推演"),
-    ("urban_collab_agent", "协同 Agent · 跨部门编排"),
+    ("urban_deduction_agent", "主智能体 · 事件推演"),
+    ("urban_collab_agent", "协同智能体 · 跨部门编排"),
     ("urban_asset_qa", "台账问答 · 多跳检索"),
 )
 PORTAL_CONTROL_ROLES: tuple[tuple[str, str], ...] = (
-    ("urban_control_no_tools", "对照组 · 主 Agent 零工具"),
-    ("urban_collab_control_no_tools", "对照组 · 协同零工具"),
+    ("urban_control_no_tools", "对照组 · 主智能体不用工具"),
+    ("urban_collab_control_no_tools", "对照组 · 协同不用工具"),
 )
 
 
@@ -7208,7 +7210,7 @@ def portal_payload() -> dict[str, Any]:
 
 #: 门户首页。**这是作品的入口页**，不是决策演示页（那页在 /demo）。
 #: 第一屏要回答评委的三个问题：这是什么、凭什么可信、建在什么平台上。
-#: 所以顺序是：一句话定位 → 三条动线 → 平台归属事实（Agent/工具/验收/部署）。
+#: 所以顺序是：一句话定位 → 三条动线 → 在平台上交付了什么（Agent/工具/验收/部署）。
 #: 注意：整段是普通 Python 字符串，JS 里别写裸反斜杠转义（会被 Python 先吃掉）。
 _PORTAL_PAGE = """<!DOCTYPE html>
 <html lang=zh-CN><meta charset=utf-8>
@@ -7290,7 +7292,7 @@ main{padding:24px 34px 0;max-width:1360px}
   padding:0 4px;flex-shrink:0}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
 .chip{background:#f2f6fa;border:1px solid #e1eaf3;border-radius:6px;padding:2px 8px;font-size:11.5px;color:#3c5a78}
-.chip i{font-style:normal;color:var(--dim);margin-right:5px}
+.chip .en{font-family:ui-monospace,Consolas,monospace;font-size:10px;color:#9aa5b1;margin-left:5px}
 footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wrap:wrap;gap:16px}
 @media(max-width:1080px){.cards{grid-template-columns:1fr}.facts{grid-template-columns:1fr}
   header{flex-direction:column}.plat{text-align:left;margin-top:6px}}
@@ -7299,13 +7301,14 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
 <header>
   <div class=grow>
     <h1>城市内涝跨部门决策 · 可核查推演</h1>
-    <p class=lead>成都兴华路片区 A-03 暴雨内涝。从工单到处置顺序，每一步的结论都能回到台账的某一行；
-      平台负责调度 Agent 与工具，事实由本地规则引擎算出 —— 模型只负责把事实讲成人话。</p>
+    <p class=lead>成都兴华路片区（A-03）暴雨内涝。场景按成都真实路网简化，路名与设施编号为示意。
+      从工单到处置顺序，每一步的结论都能回到台账的某一行。三个智能体在平台内编排，
+      事实由本地规则引擎算出，模型只负责把事实讲成人话。</p>
   </div>
   <div class=plat>
     <span class=tag>Nexent v2.7.0</span><br>
-    Agent 与 MCP 工具发布在平台上<br>
-    支持离线部署
+    3 个智能体 · 3 个 MCP 工具<br>
+    配置可整包导出 · 离线可运行
   </div>
 </header>
 
@@ -7339,6 +7342,7 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
       <p>一屏看现场：积水范围与深度、封路、泵站状态、跨区调泵。七拍推演可播放。</p>
       <ul class=points>
         <li>台账尺寸按真实米数，平面布局为示意坐标</li>
+        <li>示意路贴合真实道路走向，偏差中位 42 米</li>
         <li>抽排资源分配按冻结案例</li>
       </ul>
       <div class=go><a href="/map2d">打开大屏 →</a></div>
@@ -7364,7 +7368,7 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
 
   <section class=facts>
     <div class=block>
-      <h3>平台归属 · 跑在 Nexent 上</h3>
+      <h3>在平台上交付了什么</h3>
       <div id=f-agents></div>
     </div>
     <div class=block>
@@ -7376,10 +7380,10 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
 </main>
 
 <footer>
-  <span>决策演示页 <a href="/demo">/demo</a></span>
+  <span>决策推理面板 <a href="/demo">/demo</a></span>
   <span>自检明细 <a href="/status">/status</a></span>
   <span>期望文件与台账：<span class=mono>samples/eval/</span></span>
-  <span style="margin-left:auto">示意图布局，非测绘坐标</span>
+  <span style="margin-left:auto">示意图布局，非测绘坐标；路名与设施编号为示意</span>
 </footer>
 
 <script>
@@ -7420,16 +7424,16 @@ function renderStatus(d){
   var state = document.getElementById('s-state');
   if(p.available){
     dot.className = 'dot on';
-    state.textContent = '平台快照可用 · ' + clockText(p.generated_at) + ' 抓取';
+    state.textContent = '平台快照可用 · ' + clockText(p.generated_at) + ' 生成';
   }else{
     dot.className = 'dot warn';
-    state.textContent = '暂无平台快照（Agent 版本读不到）';
+    state.textContent = '暂无平台快照（智能体版本读不到）';
   }
   var agents = d.agents || [];
   var found = agents.filter(function(a){ return a.found; }).length;
   document.getElementById('s-agents').textContent =
-    'Agent ' + found + '/' + agents.length + ' 可读' +
-    (agents.length ? '（主 Agent 第 ' + (agents[0].version==null?'?':agents[0].version) + ' 版）' : '');
+    '智能体 ' + found + '/' + agents.length + ' 已发布' +
+    (agents.length ? '（主智能体第 ' + (agents[0].version==null?'?':agents[0].version) + ' 版）' : '');
   var tools = d.tools || [];
   document.getElementById('s-tools').textContent = 'MCP 工具 ' + tools.length + ' 个';
   var a = d.audit || {};
@@ -7449,7 +7453,7 @@ function renderStatus(d){
     if(missing){
       var warn = document.createElement('span');
       warn.style.color = '#b45309';
-      warn.textContent = '（快照里没有这个 Agent）';
+      warn.textContent = '（快照里没有这个智能体）';
       a.appendChild(warn);
     }
     row.appendChild(a);
@@ -7481,18 +7485,19 @@ function renderStatus(d){
 
   var th = document.getElementById('f-tools');
   th.innerHTML = '';
-  factsRow(th, 'MCP 工具（主 Agent 全部挂载）',
-    (tools.length ? tools.length + ' 个' : '未读到'), '', false, false);
+  factsRow(th, 'MCP 工具',
+    (tools.length ? tools.length + ' 个，主智能体全挂载' : '未读到'), '', false, false);
   factsRow(th, '推理分工', '规则引擎算事实，模型只复述', '', false, false);
-  factsRow(th, '部署', '12 个容器 · 离线自检全过', '', false, false);
-  factsRow(th, '配置能力', '平台导出 agent.json + skills', '', false, false);
+  factsRow(th, '离线运行', '12 个容器，不依赖外网', '', false, false);
+  factsRow(th, '配置导出', 'agent.json + skills 整包', '', false, false);
 
   var chips = document.getElementById('f-chips');
   chips.innerHTML = '';
   tools.forEach(function(t){
     var c = document.createElement('span');
     c.className = 'chip';
-    c.innerHTML = '<i>' + esc(t.cn) + '</i>' + esc(t.name);
+    c.title = '平台上的工具名：' + t.name;
+    c.innerHTML = esc(t.cn) + '<span class="en">' + esc(t.name) + '</span>';
     chips.appendChild(c);
   });
 }

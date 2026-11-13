@@ -216,10 +216,10 @@ def status_checks() -> list[dict[str, Any]]:
     agents = platform.get("platform_agents") or []
     checks.append(
         {
-            "name": "平台 Agent 可读",
+            "name": "平台智能体可读",
             "state": "ok" if platform.get("available") and agents else "warn",
             "detail": (
-                f"{len(agents)} 个 Agent（取数来源 {platform.get('source') or '—'}）"
+                f"{len(agents)} 个智能体（取数来源 {platform.get('source') or '—'}）"
                 if platform.get("available")
                 else (platform.get("hint") or "快照缺失")
             ),
