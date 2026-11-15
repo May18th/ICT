@@ -100,11 +100,17 @@ powershell -ExecutionPolicy Bypass -File scripts\start_demo.ps1 -CheckOnly
 
 ## 快速开始
 
-要求：Python 3.12 和 [uv](https://docs.astral.sh/uv/)。
+要求：Python 3.12 和 [uv](https://docs.astral.sh/uv/)。不用自己装 Python —— uv 会按 `pyproject.toml` 自动取 3.12。
 
 ```powershell
 uv sync --locked
 uv run --locked pytest -q
+```
+
+起网页 —— 浏览器打开 http://127.0.0.1:18765/ ，六个页面都从首页进（首次访问 2.5D 大屏会自动生成，约 1 秒）：
+
+```powershell
+uv run --locked python -m decision_poc.web_demo --port 18765
 ```
 
 一条命令生成并核对全部对外材料（测试、数据集、数据门禁、布局、回放、实体表、推演、反事实、Skill 编排、P8 评测、MCP 契约、P9 进化、P11 消融与锚定、108 项自检）：
