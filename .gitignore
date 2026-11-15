@@ -66,3 +66,9 @@ dist/
 
 # 本地模型/引擎缓存（HF 权重与 pyswmm 输出，可重建）
 .cache/
+
+# 可读性/标签避让检查的临时产物（每跑一次新建一个目录，别入库）
+visual-check-*/
+vc-*/
+lp-profile-*/
+
