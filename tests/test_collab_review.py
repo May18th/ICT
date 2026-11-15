@@ -85,4 +85,4 @@ def test_review_does_not_touch_frozen_numbers(review: dict) -> None:
     assert conflicts == ["C1", "C2", "C3"], conflicts
     # 复核只报卡与交接，不携带任何可写回的字段
     assert "resource_gaps" not in review
-    assert review["source"].endswith("（只读复核，不改六跳与缺口）")
+    assert review["source"].endswith("（只读复核，不改六步与缺口）")

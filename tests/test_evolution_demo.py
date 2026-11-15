@@ -64,7 +64,7 @@ def test_payload_declares_honesty_boundaries(payload: dict) -> None:
     text = " ".join(payload["boundaries"])
     assert "受控评测环境" in text
     assert "角色扮演" in text
-    assert "未在真实 Nexent 平台真机验证" in text
+    assert "未在真实 Nexent 平台验证" in text
 
 
 def test_payload_is_deterministic() -> None:

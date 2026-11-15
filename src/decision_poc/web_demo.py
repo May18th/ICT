@@ -66,7 +66,7 @@ DEFAULT_SCENARIO_INFO = {
     "label": "合成情景 · 橙色预警（默认口径）",
     "weather_source": "合成（weather_alerts.csv WA-20261029-01）",
     "weather_provenance": "synthetic",
-    "note": "冻结口径：六跳/冲突/缺口以本情景为准",
+    "note": "本情景的口径：六个步骤、冲突、缺口以这里为准",
 }
 
 # P9 报告里进化后的最终策略（weight_closure=1 / weight_hazard=0.25 / transfer_penalty=0.1）。
@@ -274,7 +274,7 @@ def collab_review(*, event_id: str = EVENT_ID, as_of: str = AS_OF) -> dict[str, 
         "violations": list(result.constraint_violations),
         "kernel_fingerprint": result.kernel_fingerprint,
         "rules_version": result.rules_version,
-        "source": "deduction → collab.orchestrate（只读复核，不改六跳与缺口）",
+        "source": "deduction → collab.orchestrate（只读复核，不改六步与缺口）",
     }
 
 
@@ -521,7 +521,7 @@ def build_html() -> str:
 <style>#flood-scene{position:relative;border:1px solid #263a55;border-radius:12px;background:#0d1a2a;overflow:hidden;min-height:300px}#flood-map{display:block;width:100%;height:100%;min-height:300px;background:#0d1a2a}#flood-rain{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .5s;background-image:repeating-linear-gradient(115deg,rgba(125,211,252,.32) 0 1px,transparent 1px 30px);animation:fmRain .45s linear infinite}#flood-rain.on{opacity:1}@keyframes fmRain{to{background-position:30px 52px}}.fm-zone{fill:rgba(47,74,107,.20);stroke:#3f5a75;stroke-dasharray:6 5;stroke-width:1.5}.fm-road{stroke:#54708a;stroke-width:5;stroke-linecap:round;fill:none;transition:stroke .3s}.fm-road-closed{stroke:#8a6534}.fm-node{stroke:#f4f8fb;stroke-width:1.5;transition:fill .2s}.fm-node-in{fill:#d9a53a}.fm-node-ps{fill:#38bdf8}.fm-water{fill:#38bdf8;fill-opacity:.32;stroke:#7dd3fc;stroke-width:1.2;transition:fill-opacity .5s}.fm-lbl{fill:#c3d3e2;font-size:10.5px;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3px;stroke-linejoin:round}.fm-evlbl{fill:#e0f2fe;font-size:11.5px;font-weight:700;pointer-events:none;paint-order:stroke;stroke:#0d1a2a;stroke-width:3.5px;stroke-linejoin:round}.fx-event{animation:fmPulse 1.1s ease-in-out infinite}.fx-affected{stroke:#7dd3fc;stroke-width:2.5;filter:drop-shadow(0 0 5px rgba(125,211,252,.9))}.fx-owner{stroke:#34d399;stroke-width:3;filter:drop-shadow(0 0 4px rgba(52,211,153,.8))}.fx-conflict{stroke:#fbbf24;stroke-width:3;animation:fmPulse .85s ease-in-out infinite}.fx-fault{fill:#ef4444;stroke:#fecaca;animation:fmFault .65s steps(2,end) infinite}.fx-closed{stroke:#fb923c;stroke-width:7;stroke-dasharray:14 8;animation:fmPulse 1.2s ease-in-out infinite}@keyframes fmPulse{50%{opacity:.4}}@keyframes fmFault{50%{opacity:.25}}.flood-caption{position:absolute;left:12px;top:12px;z-index:3;max-width:76%;padding:9px 13px;border-radius:9px;background:rgba(7,18,28,.68);pointer-events:none}.flood-caption b{display:block;font-size:15px;color:#e0f2fe;line-height:1.35}.flood-caption span{display:block;margin-top:3px;font-size:12.5px;line-height:1.5;color:#b9cbd9}.flood-readout{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:#b8c7d9}.flood-readout b{color:#7dd3fc;font-size:18px}.flood-story{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 0}.flood-cause{padding:9px 10px;border:1px solid #29425d;border-radius:8px;background:#101d30;color:#b8c7d9;font-size:12px;line-height:1.45}.flood-cause b{display:block;color:#bae6fd;font-size:13px}.flood-cause.on{border-color:#38bdf8;background:#14334a;box-shadow:inset 3px 0 #38bdf8}@media(max-width:700px){.flood-story{grid-template-columns:1fr}}</style><main><header class=page-hero><div><div class=eyebrow>URBAN TWIN · 成都内涝推演</div><h1>城市内涝跨部门事件推演</h1><div class=sub>从一张积水工单，到一套可执行的跨部门调度方案。</div></div><a class=navlink href='/evolution'>查看决策进化对比 →</a><a class=navlink href='/feedback'>提交内涝反馈 →</a><a class=navlink href='/review'>参与方案评审 →</a><a class=navlink href='/limits'>同题对照 →</a><a class=navlink href='/workbench'>证据工作台 →</a></header>
 <div class=toolbar><button onclick="run()">运行演示</button><button class=ghost id=btn-proj onclick="toggleProjection()">投屏模式</button><span id=status>等待运行</span></div><section id=summary class='card outcome-card'><div class=summary-head><h2>事件结论</h2><span id=data-source class=src-chip>合成情景 · 合成气象</span></div><div id=metrics>点击“运行演示”加载推演结果</div></section>
 <section class='card process-card'><h2>推演主线 <span>事件输入 → 证据核验 → 协同复核 → 方案复算</span></h2><div class=toolbar style='margin:0 0 8px'><button onclick="runChain()">跑一遍链路</button><span id=chainstatus class=sub>未加载</span></div><div id=chain class=chain></div><div id=chainfoot class=sub style='margin-top:8px'></div></section>
-<section class='card' id='dynamic-scene-card'><h2>动态内涝推演 <span>画面为示意动画，节奏与文案由事件流 stage 事件驱动</span></h2><div class="toolbar flood-toolbar" style='margin:0 0 10px'><div class=tool-grp><button onclick="playFloodScenario()">播放推演</button><button class=ghost onclick="resetFloodScenario()">重置</button></div><div class=tool-grp><b class=grp-lbl>情景</b><button class='ghost scn on' id=btn-scn-syn onclick="switchScenario('')">合成（默认）</button><button class='ghost scn' id=btn-scn-real onclick="switchScenario('real_20260801')">真实暴雨 08-01</button></div><div class=tool-grp><button class=ghost onclick="playRealRain()">真实降雨回放</button></div><span id=flood-status class=sub>待播放</span></div><div class=flood-wrap><div id=flood-scene><div class=flood-caption><b id=flood-cap-title>点「播放推演」开始</b><span id=flood-cap-detail>六跳推演逐步驱动水位与设施状态</span></div><div id=flood-rain></div><svg id=flood-map viewBox='0 0 700 330' aria-label='内涝事件场景图：实体与坐标来自 scene.json 台账投影'></svg></div><div class=flood-side><div class=flood-story aria-label='推演因果链'><div class='flood-cause' id=flood-cause-input><b>① 输入</b><span>雨量进入排水系统</span></div><div class='flood-cause' id=flood-cause-impact><b>② 影响</b><span>积水扩散、设施受压</span></div><div class='flood-cause' id=flood-cause-action><b>③ 处置</b><span>封路、调泵、部门复核</span></div></div><div class=flood-readout><div class=fs><small>积水深度</small><b id=flood-depth>0 cm</b></div><div class=fs><small>当前阶段</small><span id=flood-phase>降雨尚未开始</span></div><div class=fs><small>协同状态</small><span id=flood-dept>协同：等待事件</span></div><div class=fs><small>移动泵缺口</small><b class=flood-gap-value id=flood-gap>—</b><span id=flood-gap-note>运行演示后由缺口核验给出</span></div></div></div></div></section><section class='card' id='quant-card'><h2>定量方法交叉参照 <span>与 EPA SWMM 同口径对拍：简化假设的偏差方向与幅度都已量化</span></h2><div id=quant-refs class=sub>加载中…</div></section><div class='grid primary-grid'><section class='card impact-card'><div class=impact-kicker>02 · 影响与处置</div><h2>受影响对象 <span class='impact-hint'>清单与上方推演图同源 · 点对象看台账关联</span></h2><div id=scene-summary class=scene-summary>正在读取影响范围…</div><div class=impact-flow aria-label='影响链路'><span>事件</span><b>→</b><span>受影响对象</span><b>→</b><span>处置动作</span></div><div id=scenemap class=entlist aria-label='事件对象清单（与上方动态推演图同源，不再重复画第二张地图）'></div><div id=scene-detail class="scene-detail scene-action"><div class=scene-empty>点击上方清单里的对象，查看它受到的影响、关联工单和所需资源。</div></div><div id=assets></div></section><section class='card coordination-card'><h2>跨部门协同</h2><div id=departments></div><h2>资源与风险</h2><div id=risks></div></section></div>
+<section class='card' id='dynamic-scene-card'><h2>动态内涝推演 <span>画面为示意动画，节奏与文案由事件流 stage 事件驱动</span></h2><div class="toolbar flood-toolbar" style='margin:0 0 10px'><div class=tool-grp><button onclick="playFloodScenario()">播放推演</button><button class=ghost onclick="resetFloodScenario()">重置</button></div><div class=tool-grp><b class=grp-lbl>情景</b><button class='ghost scn on' id=btn-scn-syn onclick="switchScenario('')">合成（默认）</button><button class='ghost scn' id=btn-scn-real onclick="switchScenario('real_20260801')">真实暴雨 08-01</button></div><div class=tool-grp><button class=ghost onclick="playRealRain()">真实降雨回放</button></div><span id=flood-status class=sub>待播放</span></div><div class=flood-wrap><div id=flood-scene><div class=flood-caption><b id=flood-cap-title>点「播放推演」开始</b><span id=flood-cap-detail>六步推演逐步驱动水位与设施状态</span></div><div id=flood-rain></div><svg id=flood-map viewBox='0 0 700 330' aria-label='内涝事件场景图：实体与坐标来自 scene.json 台账投影'></svg></div><div class=flood-side><div class=flood-story aria-label='推演因果链'><div class='flood-cause' id=flood-cause-input><b>① 输入</b><span>雨量进入排水系统</span></div><div class='flood-cause' id=flood-cause-impact><b>② 影响</b><span>积水扩散、设施受压</span></div><div class='flood-cause' id=flood-cause-action><b>③ 处置</b><span>封路、调泵、部门复核</span></div></div><div class=flood-readout><div class=fs><small>积水深度</small><b id=flood-depth>0 cm</b></div><div class=fs><small>当前阶段</small><span id=flood-phase>降雨尚未开始</span></div><div class=fs><small>协同状态</small><span id=flood-dept>协同：等待事件</span></div><div class=fs><small>移动泵缺口</small><b class=flood-gap-value id=flood-gap>—</b><span id=flood-gap-note>运行演示后由缺口核验给出</span></div></div></div></div></section><section class='card' id='quant-card'><h2>定量方法交叉参照 <span>与 EPA SWMM 同口径对拍：简化假设的偏差方向与幅度都已量化</span></h2><div id=quant-refs class=sub>加载中…</div></section><div class='grid primary-grid'><section class='card impact-card'><div class=impact-kicker>02 · 影响与处置</div><h2>受影响对象 <span class='impact-hint'>清单与上方推演图同源 · 点对象看台账关联</span></h2><div id=scene-summary class=scene-summary>正在读取影响范围…</div><div class=impact-flow aria-label='影响链路'><span>事件</span><b>→</b><span>受影响对象</span><b>→</b><span>处置动作</span></div><div id=scenemap class=entlist aria-label='事件对象清单（与上方动态推演图同源，不再重复画第二张地图）'></div><div id=scene-detail class="scene-detail scene-action"><div class=scene-empty>点击上方清单里的对象，查看它受到的影响、关联工单和所需资源。</div></div><div id=assets></div></section><section class='card coordination-card'><h2>跨部门协同</h2><div id=departments></div><h2>资源与风险</h2><div id=risks></div></section></div>
 <div class='grid data-grid'>
 <section class=card><h2>工单列表 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（台账全量，演示事件置顶）</span></h2><div id=orders class=sub>加载中</div></section>
 <section class=card><h2>资源状态 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（台账可用量 vs 本次缺口）</span></h2><div id=resboard class=sub>加载中</div></section>
@@ -534,8 +534,8 @@ def build_html() -> str:
 <section class=card style='margin-top:16px'><h2>协同复核 · 谁接哪张卡 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（1 总控 + 5 部门，只读复核、不改推演数字）</span></h2><div id=cvsum class=sub>未加载</div><div id=cvcards style='margin-top:10px'></div><div id=cvhand class=sub style='margin-top:10px'></div></section>
 <section class=card id=exec-section style='margin-top:16px'><h2>执行账本 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（计划 vs 实际 · 演示执行账本：无真实身份系统，actor 由服务端固定）</span></h2><div id=exec-summary class=sub>加载中</div><div id=exec-cards style='margin-top:10px'></div><div id=exec-close></div><div id=exec-msg class=exmsg></div><details style='margin-top:10px'><summary class=sub style='cursor:pointer'>最近事件（账本原始记录，只追加不改写）</summary><div id=exec-events class=sub style='margin-top:8px'></div></details></section>
 <style>.ghost{background:#1e3a55;color:#bae6fd}#log{max-height:360px;overflow:auto;font:12px ui-monospace,monospace}.logrow{padding:6px 8px;border-bottom:1px solid #1e3250;white-space:nowrap}.logrow .mcp{color:#86efac}.logrow .manual{color:#fbbf24}#panel{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}#comparebody{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}.tl{list-style:none;padding:0;margin:0}.tl li{border-left:2px solid #263a55;padding:8px 0 8px 14px;opacity:.2;transition:opacity .35s,border-color .35s}.tl li.on{opacity:1;border-left-color:#38bdf8}.tl .hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.tl .seq{color:#64748b;font:12px ui-monospace,monospace}.tl .ttl{font-weight:700;color:#bae6fd}.tl .dsc{color:#cfe3f7;font-size:13px;margin-top:3px}.tl .mt{color:#7f93ab;font:11px ui-monospace,monospace;margin-top:5px;word-break:break-all}.tl ul.basis{margin:7px 0 0;padding-left:16px;color:#b8c7d9;font-size:12px}.tl ul.basis li{margin:2px 0;border:0;padding:0;opacity:1}.tag{font-size:11px;padding:1px 6px;border-radius:4px;background:#20344d;color:#9fb1c8}.k-conflict{color:#fbbf24}.k-gap{color:#fca5a5}.k-audit{color:#86efac}.ivbtn{background:#1e3a55;color:#bae6fd;border:0;border-radius:6px;padding:10px 14px;font-weight:700;cursor:pointer;text-align:left;max-width:330px;min-width:0;white-space:normal;overflow-wrap:anywhere;flex:1 1 280px}.ivbtn small{display:block;font-weight:400;color:#8fa4bd;font-size:11px;margin-top:4px;line-height:1.4}.row{display:flex;gap:12px;padding:5px 0;border-bottom:1px dashed #1e3250;font-size:13px}.row>span:first-child{flex:1 1 auto;min-width:0}.row b{margin-left:auto;color:#7dd3fc;flex:0 0 auto;padding-left:12px;white-space:nowrap}.chain{display:flex;flex-direction:column;gap:0}.lnk{display:grid;grid-template-columns:26px 140px minmax(0,1fr) minmax(0,200px);gap:12px;padding:9px 0 9px 14px;border-left:2px solid #263a55;opacity:.32;transition:opacity .3s,border-color .3s}.lnk.on{opacity:1;border-left-color:#38bdf8}.lnk .no{color:#64748b;font:12px ui-monospace,monospace}.lnk .who{font:11px ui-monospace,monospace;color:#8fa4bd;line-height:1.55}.lnk .what{min-width:0}.lnk .what b{color:#bae6fd}.lnk .what div{font-size:12px;color:#b8c7d9;margin-top:3px}.lnk .tool{font:11px ui-monospace,monospace;color:#86efac;text-align:right;word-break:break-all}.ord{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:7px 0;border-bottom:1px dashed #1e3250;font-size:13px}.ord .id{font:11px ui-monospace,monospace;color:#8fa4bd}.ord .ds{grid-column:1/3;color:#b8c7d9;font-size:12px}.ord.ev{background:#14283d;border-left:2px solid #38bdf8;padding-left:8px}.ord .sev{padding:1px 6px;border-radius:4px;font-size:11px;background:#20344d}.sev.high{color:#fca5a5}.sev.medium{color:#fbbf24}.plan{display:grid;grid-template-columns:1fr 1fr;gap:14px}.plan .col{background:#101d30;border:1px solid #22344d;border-radius:8px;padding:12px}.plan .col h3{margin:0 0 8px;font-size:14px;color:#bae6fd}.plan .col.now{border-color:#2b6f8f}.plan .col.alt{border-color:#7c5a1f}.plan .kv{display:flex;font-size:13px;padding:3px 0}.plan .kv b{margin-left:auto;color:#7dd3fc}.ent{cursor:pointer}.ent:hover{filter:brightness(1.35)}.ent.selected{filter:brightness(1.45);stroke:#fff;stroke-width:3}.cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.cat{background:#1e3a55;color:#bae6fd;border:0;border-radius:99px;padding:5px 11px;font-size:12px;cursor:pointer}.cat.sel{background:#38bdf8;color:#0b1220;font-weight:700}@media(max-width:800px){.grid{grid-template-columns:1fr}.plan{grid-template-columns:1fr}.lnk{grid-template-columns:26px minmax(0,1fr);row-gap:3px}.lnk .who{grid-column:2}.lnk .what{grid-column:2}.lnk .tool{grid-column:2;text-align:left}}</style>
-<details class=tech><summary>技术附录（开发调试用：渲染快照、工具原始日志、模型对照）</summary><div>
-<div class=toolbar style='margin:0 0 12px'><button class=ghost onclick="renderScene('v1')">渲染方案一快照</button><button class=ghost onclick="renderScene('v4')">渲染方案二快照</button><button class=ghost onclick="diffScenes()">对比两版快照</button><button class=ghost onclick="runLLM()">大模型独立决策对照</button></div>
+<details class=tech><summary>技术附录（开发调试用：渲染记录、工具原始日志、模型对照）</summary><div>
+<div class=toolbar style='margin:0 0 12px'><button class=ghost onclick="renderScene('v1')">渲染方案一</button><button class=ghost onclick="renderScene('v4')">渲染方案二快照</button><button class=ghost onclick="diffScenes()">对比两版快照</button><button class=ghost onclick="runLLM()">大模型独立决策对照</button></div>
 <div class=grid>
 <section class=card><h2>当前渲染作业（UE 拉取的就是它）</h2><div id=panel>尚未渲染</div></section>
 <section class=card><h2>工具调用日志（谁触发了渲染）</h2><div id=log><span class=warn>暂无调用记录</span></div></section>
@@ -583,7 +583,7 @@ function fmSet(id,cls){const el=document.getElementById('fm-'+id);if(el)el.class
 function fmClearFx(){['fx-event','fx-affected','fx-owner','fx-conflict','fx-fault','fx-closed'].forEach(function(c){document.querySelectorAll('.'+c).forEach(function(el){el.classList.remove(c)})})}
 function rainLevel(v){const r=document.getElementById('flood-rain');if(!r)return;if(v>0){r.classList.add('on');r.style.opacity=String(0.3+0.55*v)}else{r.classList.remove('on');r.style.opacity='0'}}
 function hitIds(detail){const d=String(detail||'');return(((SCHED&&SCHED.scene&&SCHED.scene.entities)||[]).filter(function(e){return d.indexOf(e.id)>=0}).map(function(e){return e.id}))}
-let floodTimer=null,floodStep=0; function resetFloodScenario(){clearInterval(floodTimer);floodStep=0;['input','impact','action'].forEach(function(k){const el=document.getElementById('flood-cause-'+k);if(el)el.classList.remove('on')});rainLevel(0);fmClearFx();document.querySelectorAll('.fm-water').forEach(function(el){el.style.fillOpacity=''});document.getElementById('flood-depth').textContent='0 cm';document.getElementById('flood-phase').textContent='降雨尚未开始';document.getElementById('flood-dept').textContent='协同：等待事件';document.getElementById('flood-status').textContent='待播放';const ct=document.getElementById('flood-cap-title'),cd=document.getElementById('flood-cap-detail');if(ct)ct.textContent='点「播放推演」开始';if(cd)cd.textContent='六跳推演逐步驱动水位与设施状态'} async function playFloodScenario(){clearInterval(floodTimer);floodStep=0;const live=await Promise.all([fetch('/api/event-stream').then(r=>r.json()).catch(()=>null),fetch('/api/collab-review').then(r=>r.json()).catch(()=>null),fetch('/api/demo').then(r=>r.json()).catch(()=>null)]);const stream=live[0]||{},collab=live[1]||{},demo=live[2]||{};const statusEl=document.getElementById('flood-status');const stages=(stream.events||[]).filter(e=>e.kind==='stage');if(!stages.length){statusEl.textContent='事件流无 stage 事件，无法推演';return}if(!SCHED)await loadScheduler();drawFloodMap();const wEnt=((SCHED.scene||{}).entities||[]).find(x=>x.kind==='water'&&/A-03/.test(x.label||''));let maxDepth=NaN;const md=String((stages[0]||{}).detail||'').match(/积水\\s*([0-9.]+)\\s*cm/);if(md)maxDepth=parseFloat(md[1]);if(!isFinite(maxDepth))maxDepth=Number((demo.facts||{}).depth_cm)||0;if(!maxDepth)maxDepth=30;const phaseEl=document.getElementById('flood-phase'),deptEl=document.getElementById('flood-dept'),depthEl=document.getElementById('flood-depth');const visual={observed:function(){if(wEnt)fmSet(wEnt.id,'fx-event');fmSet('A-03','fx-affected');rainLevel(.7)},affected:function(e){((demo.impact||{}).affected||[]).forEach(function(o){fmSet(o.name,'fx-affected')});rainLevel(1)},owner:function(e){hitIds(e.detail).forEach(function(id){fmSet(id,'fx-owner')})},conflict:function(e){hitIds(e.detail).forEach(function(id){fmSet(id,'fx-conflict')});if(wEnt)fmSet(wEnt.id,'fx-conflict')},resource:function(e){hitIds(e.detail).forEach(function(id){fmSet(id,'fx-fault')})},action:function(e){((SCHED.scene||{}).entities||[]).filter(function(x){return x.kind==='road'&&/已封/.test(x.label||'')}).forEach(function(x){fmSet(x.id,'fx-closed')});rainLevel(.45)}};const total=stages.length;floodTimer=setInterval(function(){floodStep++;if(floodStep>total){clearInterval(floodTimer);statusEl.textContent='推演完成 · 事件流 '+((stream.counts||{}).events||'-')+' 条 · '+total+' 拍 stage 驱动';const dfc=(demo.deduction||{}).conflicts||[],dgp=((demo.deduction||{}).resource_gaps||[])[0]||{};document.getElementById('flood-cap-title').textContent='推演完成 · 结论可发布';document.getElementById('flood-cap-detail').textContent='三类冲突 '+dfc.length+' 类 · 移动泵缺口 '+(dgp.gap??'-')+' 台 · 动作卡 '+((collab.cards||[]).length)+' 张 → 部门复核';return}const e=stages[floodStep-1];const wEl=wEnt?document.getElementById('fm-'+wEnt.id):null;if(wEl)wEl.style.fillOpacity=String(0.18+0.5*floodStep/total);depthEl.textContent=Math.round(maxDepth*floodStep/total)+' cm';depthEl.title='终值取事件实测 '+maxDepth+' cm';phaseEl.textContent=e.title||e.phase;deptEl.textContent=String(e.detail||'').replace(/ORG-[A-Z0-9_-]+/g,function(m){return orgName(m)||m})+((collab.cards||[]).length&&e.phase==='action'?' · 动作卡 '+collab.cards.length+' 张':'');document.getElementById('flood-cap-title').textContent=floodStep+'/'+total+' · '+(e.title||e.phase||'');document.getElementById('flood-cap-detail').textContent=deptEl.textContent;const _fx=visual[e.phase];if(_fx)_fx(e);['input','impact','action'].forEach(function(k){const el=document.getElementById('flood-cause-'+k);if(el)el.classList.toggle('on',(k==='input'&&floodStep>=1)||(k==='impact'&&floodStep>=2)||(k==='action'&&floodStep>=total))});statusEl.textContent='推演 '+Math.round(floodStep/total*100)+'% · 第 '+floodStep+'/'+total+' 拍（stage 事件驱动）'},950)} let currentScenario=''; function switchScenario(s){currentScenario=s;const a=document.getElementById('btn-scn-syn'),b=document.getElementById('btn-scn-real');if(a)a.classList.toggle('on',!s);if(b)b.classList.toggle('on',!!s);run(true)} function toggleProjection(){const on=document.documentElement.classList.toggle('projection');const btn=document.getElementById('btn-proj');if(btn){btn.textContent=on?'退出投屏':'投屏模式';btn.classList.toggle('proj-btn-on',on)}try{localStorage.setItem('urban-proj',on?'1':'0')}catch(e){}} async function playRealRain(){clearInterval(floodTimer);resetFloodScenario();const statusEl=document.getElementById('flood-status');statusEl.textContent='读取真实降雨…';const r=await fetch('/api/weather-replay').then(x=>x.json()).catch(()=>null);if(!r||r.error){statusEl.textContent='真实降雨数据不可用';return}if(!SCHED)await loadScheduler();drawFloodMap();const wA=((SCHED.scene||{}).entities||[]).find(x=>x.kind==='water'&&/A-03/.test(x.label||''));const wAEl=wA?document.getElementById('fm-'+wA.id):null;const depthEl=document.getElementById('flood-depth'),phaseEl=document.getElementById('flood-phase'),deptEl=document.getElementById('flood-dept');const pts=r.points||[];if(!pts.length){statusEl.textContent='无 2026-08-01 数据';return}let i=0;floodTimer=setInterval(function(){if(i>=pts.length){clearInterval(floodTimer);statusEl.textContent='回放完成 · '+r.date+' 自然日累计 '+r.total_mm+' mm（峰值 '+r.peak_mm+' mm/h @ '+r.peak_time+'）· 77.7mm 为最大24h滑动窗口口径';return}const p=pts[i++];if(wAEl)wAEl.style.fillOpacity=String(0.15+0.55*(p.cum_frac||0));rainLevel(Math.min(1,(p.rain_mm||0)/(r.peak_mm||1)));depthEl.textContent='累计 '+p.cum_mm+' mm（非积水）';phaseEl.textContent=p.time+' · 时段降雨 '+p.rain_mm+' mm/h';deptEl.textContent='真实降雨回放 · '+r.source;statusEl.textContent='真实降雨回放 '+Math.round(i/pts.length*100)+'%（非推演输入）';const ct2=document.getElementById('flood-cap-title'),cd2=document.getElementById('flood-cap-detail');if(ct2)ct2.textContent='真实降雨回放 · '+r.date;if(cd2)cd2.textContent=p.time+' · 时段 '+p.rain_mm+' mm/h · 累计 '+p.cum_mm+' mm（非推演输入）'},420)} async function loadQuantRefs(){const el=document.getElementById('quant-refs');if(!el||el.dataset.loaded)return;const q=await fetch('/api/quant-references').then(x=>x.json()).catch(()=>null);if(!q||q.error){el.textContent='定量参照数据不可用';return}el.dataset.loaded='1';const rb=q.runoff||{},tk=q.trunk||{},fb=q.forebay||{},tw=fb.time_to_warning_h||{no_pump:{},pump_avail:{}};const qrow=(k,v,n)=>'<div class=qc-row><span class=qc-k>'+k+'</span><span class=qc-v>'+v+'</span><span class=qc-n>'+n+'</span></div>';el.innerHTML=qrow('干管是否约束',esc(tk.verdict||'-'),'Manning 满流 '+esc(tk.ours_capacity_m3h)+' m³/h vs SWMM 实测洪峰 '+esc(tk.swmm_peak_m3h)+' m³/h')+qrow('产流洪峰',esc(rb.ratio)+' 倍（SWMM / 我方）','推理公式 '+esc(rb.ours_m3s)+' m³/s vs SWMM '+esc(rb.swmm_m3s)+' m³/s；Horton 入渗衰减 vs 定值 ψ，属方法假设差异而非对拍误差')+qrow('前池到警 '+esc(fb.warning_stage_m)+' m','我方偏早（保守侧）','泵全停 '+esc(tw.no_pump.ours)+' h vs SWMM '+esc(tw.no_pump.swmm)+' h；泵可用 '+esc(tw.pump_avail.ours)+' h vs SWMM '+esc(tw.pump_avail.swmm)+' h；我方结果可作上界')} async function run(isSwitch){status.textContent=isSwitch?'切换情景推演中…':'推演中…';const r=await fetch('/api/demo'+(currentScenario?'?scenario='+encodeURIComponent(currentScenario):''));const p=await r.json();const f=p.facts||{},d=p.deduction||{};metrics.innerHTML='<span class=metric><b>'+esc(zh(LV,f.response_level))+'</b>预警等级</span><span class=metric><b>'+esc(f.depth_cm||'-')+' cm</b>积水深度</span><span class=metric><b>'+esc(String(p.knowledge_version||'-').replace(/^kb-/,'预案 '))+'</b>所用预案版本</span><span class=metric><b class=ok>'+esc(pct(p.audit?.citation_completeness))+'</b>引用完整率</span>';const scn=p.scenario||{};const dsEl=document.getElementById('data-source');if(dsEl){const real=scn.weather_provenance==='real';dsEl.textContent=real?'真实气象 · ERA5':'合成气象 · 设定值';dsEl.title=(scn.label||'')+' ｜ '+(scn.weather_source||'');dsEl.className='src-chip'+(real?' real':'');}const aff=(p.impact||{}).affected||[];const KIND_CN={drainage:'排水',gas:'燃气',incident:'事件',power:'供电',pump_station:'泵站',road:'道路',work_site:'工地'};assets.innerHTML='<div class=cap>对象台账（推演关联 '+aff.length+' 个；地图只画需点击的）</div><div class=afflist>'+aff.map(o=>'<span class=pill title="'+esc(o.twin_id||'')+'">'+esc(KIND_CN[o.kind]||o.kind)+' · '+esc(o.name||'')+'</span>').join('')+'</div>';renderDepartments();risks.innerHTML='<div>'+list((d.conflicts||[]).map(c=>String(c.conflict_id||'')+' '+(CFT[c.conflict_id]||'')+'（'+(c.subject||'')+'）'))+'</div><div class=cap>资源缺口（要多少 vs 有多少）</div><div>'+list((d.resource_gaps||[]).map(g=>String(g.resource_id||'')+' 缺 '+g.gap+' '+String(g.unit||'')))+'</div><div class=cap>需要人工盯住的风险</div><div class=warn>'+list(d.residual_risks||[])+'</div>';const acts=(p.evidence||[]).filter(c=>/^CL-S6-action/.test(String(c.claim_id||'')));trace.innerHTML=((p.evidence||[]).filter(c=>!/^CL-S6-action/.test(String(c.claim_id||''))).map(c=>{const rs=c.evidence_refs||[];return '<div class=trace><b>'+esc(c.text||claimName(c.claim_id))+'</b><div class=evidence>依据：'+esc(rs.slice(0,4).map(refCn).join(' · '))+(rs.length>4?' 等 '+rs.length+' 条':'')+'</div></div>'}).join('')||'<span class=warn>暂无可展示证据</span>')+(acts.length?'<div class=sub style="font-size:12px;margin-top:8px">另有 '+acts.length+' 条处置动作，逐条见下方「决策事件流」</div>':'');status.textContent=p.publishable?'可发布结论':'需要人工复核';loadLog();resetFloodScenario();loadQuantRefs();const gp=(d.resource_gaps||[])[0]||{};const gEl=document.getElementById('flood-gap');if(gEl){gEl.textContent=(gp.gap??'-')+' '+(gp.unit||'');const gn=document.getElementById('flood-gap-note');if(gn)gn.textContent='需 '+(gp.required??'-')+' · 可用 '+(gp.available??'-')+' · 核验规则 '+(gp.rule_ids||[]).length+' 条'}}
+let floodTimer=null,floodStep=0; function resetFloodScenario(){clearInterval(floodTimer);floodStep=0;['input','impact','action'].forEach(function(k){const el=document.getElementById('flood-cause-'+k);if(el)el.classList.remove('on')});rainLevel(0);fmClearFx();document.querySelectorAll('.fm-water').forEach(function(el){el.style.fillOpacity=''});document.getElementById('flood-depth').textContent='0 cm';document.getElementById('flood-phase').textContent='降雨尚未开始';document.getElementById('flood-dept').textContent='协同：等待事件';document.getElementById('flood-status').textContent='待播放';const ct=document.getElementById('flood-cap-title'),cd=document.getElementById('flood-cap-detail');if(ct)ct.textContent='点「播放推演」开始';if(cd)cd.textContent='六步推演逐步驱动水位与设施状态'} async function playFloodScenario(){clearInterval(floodTimer);floodStep=0;const live=await Promise.all([fetch('/api/event-stream').then(r=>r.json()).catch(()=>null),fetch('/api/collab-review').then(r=>r.json()).catch(()=>null),fetch('/api/demo').then(r=>r.json()).catch(()=>null)]);const stream=live[0]||{},collab=live[1]||{},demo=live[2]||{};const statusEl=document.getElementById('flood-status');const stages=(stream.events||[]).filter(e=>e.kind==='stage');if(!stages.length){statusEl.textContent='事件流无 stage 事件，无法推演';return}if(!SCHED)await loadScheduler();drawFloodMap();const wEnt=((SCHED.scene||{}).entities||[]).find(x=>x.kind==='water'&&/A-03/.test(x.label||''));let maxDepth=NaN;const md=String((stages[0]||{}).detail||'').match(/积水\\s*([0-9.]+)\\s*cm/);if(md)maxDepth=parseFloat(md[1]);if(!isFinite(maxDepth))maxDepth=Number((demo.facts||{}).depth_cm)||0;if(!maxDepth)maxDepth=30;const phaseEl=document.getElementById('flood-phase'),deptEl=document.getElementById('flood-dept'),depthEl=document.getElementById('flood-depth');const visual={observed:function(){if(wEnt)fmSet(wEnt.id,'fx-event');fmSet('A-03','fx-affected');rainLevel(.7)},affected:function(e){((demo.impact||{}).affected||[]).forEach(function(o){fmSet(o.name,'fx-affected')});rainLevel(1)},owner:function(e){hitIds(e.detail).forEach(function(id){fmSet(id,'fx-owner')})},conflict:function(e){hitIds(e.detail).forEach(function(id){fmSet(id,'fx-conflict')});if(wEnt)fmSet(wEnt.id,'fx-conflict')},resource:function(e){hitIds(e.detail).forEach(function(id){fmSet(id,'fx-fault')})},action:function(e){((SCHED.scene||{}).entities||[]).filter(function(x){return x.kind==='road'&&/已封/.test(x.label||'')}).forEach(function(x){fmSet(x.id,'fx-closed')});rainLevel(.45)}};const total=stages.length;floodTimer=setInterval(function(){floodStep++;if(floodStep>total){clearInterval(floodTimer);statusEl.textContent='推演完成 · 事件流 '+((stream.counts||{}).events||'-')+' 条 · '+total+' 拍 stage 驱动';const dfc=(demo.deduction||{}).conflicts||[],dgp=((demo.deduction||{}).resource_gaps||[])[0]||{};document.getElementById('flood-cap-title').textContent='推演完成 · 结论可发布';document.getElementById('flood-cap-detail').textContent='三类冲突 '+dfc.length+' 类 · 移动泵缺口 '+(dgp.gap??'-')+' 台 · 动作卡 '+((collab.cards||[]).length)+' 张 → 部门复核';return}const e=stages[floodStep-1];const wEl=wEnt?document.getElementById('fm-'+wEnt.id):null;if(wEl)wEl.style.fillOpacity=String(0.18+0.5*floodStep/total);depthEl.textContent=Math.round(maxDepth*floodStep/total)+' cm';depthEl.title='终值取事件实测 '+maxDepth+' cm';phaseEl.textContent=e.title||e.phase;deptEl.textContent=String(e.detail||'').replace(/ORG-[A-Z0-9_-]+/g,function(m){return orgName(m)||m})+((collab.cards||[]).length&&e.phase==='action'?' · 动作卡 '+collab.cards.length+' 张':'');document.getElementById('flood-cap-title').textContent=floodStep+'/'+total+' · '+(e.title||e.phase||'');document.getElementById('flood-cap-detail').textContent=deptEl.textContent;const _fx=visual[e.phase];if(_fx)_fx(e);['input','impact','action'].forEach(function(k){const el=document.getElementById('flood-cause-'+k);if(el)el.classList.toggle('on',(k==='input'&&floodStep>=1)||(k==='impact'&&floodStep>=2)||(k==='action'&&floodStep>=total))});statusEl.textContent='推演 '+Math.round(floodStep/total*100)+'% · 第 '+floodStep+'/'+total+' 拍（stage 事件驱动）'},950)} let currentScenario=''; function switchScenario(s){currentScenario=s;const a=document.getElementById('btn-scn-syn'),b=document.getElementById('btn-scn-real');if(a)a.classList.toggle('on',!s);if(b)b.classList.toggle('on',!!s);run(true)} function toggleProjection(){const on=document.documentElement.classList.toggle('projection');const btn=document.getElementById('btn-proj');if(btn){btn.textContent=on?'退出投屏':'投屏模式';btn.classList.toggle('proj-btn-on',on)}try{localStorage.setItem('urban-proj',on?'1':'0')}catch(e){}} async function playRealRain(){clearInterval(floodTimer);resetFloodScenario();const statusEl=document.getElementById('flood-status');statusEl.textContent='读取真实降雨…';const r=await fetch('/api/weather-replay').then(x=>x.json()).catch(()=>null);if(!r||r.error){statusEl.textContent='真实降雨数据不可用';return}if(!SCHED)await loadScheduler();drawFloodMap();const wA=((SCHED.scene||{}).entities||[]).find(x=>x.kind==='water'&&/A-03/.test(x.label||''));const wAEl=wA?document.getElementById('fm-'+wA.id):null;const depthEl=document.getElementById('flood-depth'),phaseEl=document.getElementById('flood-phase'),deptEl=document.getElementById('flood-dept');const pts=r.points||[];if(!pts.length){statusEl.textContent='无 2026-08-01 数据';return}let i=0;floodTimer=setInterval(function(){if(i>=pts.length){clearInterval(floodTimer);statusEl.textContent='回放完成 · '+r.date+' 自然日累计 '+r.total_mm+' mm（峰值 '+r.peak_mm+' mm/h @ '+r.peak_time+'）· 77.7mm 为最大24h滑动窗口口径';return}const p=pts[i++];if(wAEl)wAEl.style.fillOpacity=String(0.15+0.55*(p.cum_frac||0));rainLevel(Math.min(1,(p.rain_mm||0)/(r.peak_mm||1)));depthEl.textContent='累计 '+p.cum_mm+' mm（非积水）';phaseEl.textContent=p.time+' · 时段降雨 '+p.rain_mm+' mm/h';deptEl.textContent='真实降雨回放 · '+r.source;statusEl.textContent='真实降雨回放 '+Math.round(i/pts.length*100)+'%（非推演输入）';const ct2=document.getElementById('flood-cap-title'),cd2=document.getElementById('flood-cap-detail');if(ct2)ct2.textContent='真实降雨回放 · '+r.date;if(cd2)cd2.textContent=p.time+' · 时段 '+p.rain_mm+' mm/h · 累计 '+p.cum_mm+' mm（非推演输入）'},420)} async function loadQuantRefs(){const el=document.getElementById('quant-refs');if(!el||el.dataset.loaded)return;const q=await fetch('/api/quant-references').then(x=>x.json()).catch(()=>null);if(!q||q.error){el.textContent='定量参照数据不可用';return}el.dataset.loaded='1';const rb=q.runoff||{},tk=q.trunk||{},fb=q.forebay||{},tw=fb.time_to_warning_h||{no_pump:{},pump_avail:{}};const qrow=(k,v,n)=>'<div class=qc-row><span class=qc-k>'+k+'</span><span class=qc-v>'+v+'</span><span class=qc-n>'+n+'</span></div>';el.innerHTML=qrow('干管是否约束',esc(tk.verdict||'-'),'Manning 满流 '+esc(tk.ours_capacity_m3h)+' m³/h vs SWMM 实测洪峰 '+esc(tk.swmm_peak_m3h)+' m³/h')+qrow('产流洪峰',esc(rb.ratio)+' 倍（SWMM / 我方）','推理公式 '+esc(rb.ours_m3s)+' m³/s vs SWMM '+esc(rb.swmm_m3s)+' m³/s；Horton 入渗衰减 vs 定值 ψ，属方法假设差异而非对拍误差')+qrow('前池到警 '+esc(fb.warning_stage_m)+' m','我方偏早（保守侧）','泵全停 '+esc(tw.no_pump.ours)+' h vs SWMM '+esc(tw.no_pump.swmm)+' h；泵可用 '+esc(tw.pump_avail.ours)+' h vs SWMM '+esc(tw.pump_avail.swmm)+' h；我方结果可作上界')} async function run(isSwitch){status.textContent=isSwitch?'切换情景推演中…':'推演中…';const r=await fetch('/api/demo'+(currentScenario?'?scenario='+encodeURIComponent(currentScenario):''));const p=await r.json();const f=p.facts||{},d=p.deduction||{};metrics.innerHTML='<span class=metric><b>'+esc(zh(LV,f.response_level))+'</b>预警等级</span><span class=metric><b>'+esc(f.depth_cm||'-')+' cm</b>积水深度</span><span class=metric><b>'+esc(String(p.knowledge_version||'-').replace(/^kb-/,'预案 '))+'</b>所用预案版本</span><span class=metric><b class=ok>'+esc(pct(p.audit?.citation_completeness))+'</b>引用完整率</span>';const scn=p.scenario||{};const dsEl=document.getElementById('data-source');if(dsEl){const real=scn.weather_provenance==='real';dsEl.textContent=real?'真实气象 · ERA5':'合成气象 · 设定值';dsEl.title=(scn.label||'')+' ｜ '+(scn.weather_source||'');dsEl.className='src-chip'+(real?' real':'');}const aff=(p.impact||{}).affected||[];const KIND_CN={drainage:'排水',gas:'燃气',incident:'事件',power:'供电',pump_station:'泵站',road:'道路',work_site:'工地'};assets.innerHTML='<div class=cap>对象台账（推演关联 '+aff.length+' 个；地图只画需点击的）</div><div class=afflist>'+aff.map(o=>'<span class=pill title="'+esc(o.twin_id||'')+'">'+esc(KIND_CN[o.kind]||o.kind)+' · '+esc(o.name||'')+'</span>').join('')+'</div>';renderDepartments();risks.innerHTML='<div>'+list((d.conflicts||[]).map(c=>String(c.conflict_id||'')+' '+(CFT[c.conflict_id]||'')+'（'+(c.subject||'')+'）'))+'</div><div class=cap>资源缺口（要多少 vs 有多少）</div><div>'+list((d.resource_gaps||[]).map(g=>String(g.resource_id||'')+' 缺 '+g.gap+' '+String(g.unit||'')))+'</div><div class=cap>需要人工盯住的风险</div><div class=warn>'+list(d.residual_risks||[])+'</div>';const acts=(p.evidence||[]).filter(c=>/^CL-S6-action/.test(String(c.claim_id||'')));trace.innerHTML=((p.evidence||[]).filter(c=>!/^CL-S6-action/.test(String(c.claim_id||''))).map(c=>{const rs=c.evidence_refs||[];return '<div class=trace><b>'+esc(c.text||claimName(c.claim_id))+'</b><div class=evidence>依据：'+esc(rs.slice(0,4).map(refCn).join(' · '))+(rs.length>4?' 等 '+rs.length+' 条':'')+'</div></div>'}).join('')||'<span class=warn>暂无可展示证据</span>')+(acts.length?'<div class=sub style="font-size:12px;margin-top:8px">另有 '+acts.length+' 条处置动作，逐条见下方「决策事件流」</div>':'');status.textContent=p.publishable?'可发布结论':'需要人工复核';loadLog();resetFloodScenario();loadQuantRefs();const gp=(d.resource_gaps||[])[0]||{};const gEl=document.getElementById('flood-gap');if(gEl){gEl.textContent=(gp.gap??'-')+' '+(gp.unit||'');const gn=document.getElementById('flood-gap-note');if(gn)gn.textContent='需 '+(gp.required??'-')+' · 可用 '+(gp.available??'-')+' · 核验规则 '+(gp.rule_ids||[]).length+' 条'}}
 let lastV1=null,lastV4=null;
 async function renderScene(v){status.textContent='渲染 '+v+' …';
  const r=await fetch('/api/render?policy='+v);const j=await r.json();
@@ -611,9 +611,9 @@ async function runLLM(){status.textContent='LLM 决策中…（约 4-8 秒）';
 async function loadPlatform(){try{const r=await fetch('/api/platform-evidence');const d=await r.json();
  if(!d.available){return}
  const p=d.record;const NL=String.fromCharCode(10);
- const agree=p.selected_match?'<span class=ok>与参照一致</span>':'<span class=warn>与参照不一致（真机温度未钉 0 会漂移，印证推演定优先级）</span>';
+ const agree=p.selected_match?'<span class=ok>与参照一致</span>':'<span class=warn>与参照不一致（实际调用时温度未固定会漂移，说明优先级得靠推演定）</span>';
  llmcard.style.display='';
- llmbody.innerHTML='<b>Nexent 平台真机验证</b>（Agent '+esc(p.agent_name)+' · '+esc(p.case_id)+' · schema '+(p.schema_valid?'<span class=ok>合法</span>':'<span class=warn>失败</span>')+'）<br>选中 <b>'+esc(p.selected_option_id||'-')+'</b>（参照 '+esc(p.expected_option_id)+'）· '+agree+' · 时延 '+esc(p.latency_ms)+'ms<br><span class=evidence>'+esc(p.method||'')+'</span>';}catch(e){}}
+ llmbody.innerHTML='<b>Nexent 平台实测验证</b>（Agent '+esc(p.agent_name)+' · '+esc(p.case_id)+' · schema '+(p.schema_valid?'<span class=ok>合法</span>':'<span class=warn>失败</span>')+'）<br>选中 <b>'+esc(p.selected_option_id||'-')+'</b>（参照 '+esc(p.expected_option_id)+'）· '+agree+' · 时延 '+esc(p.latency_ms)+'ms<br><span class=evidence>'+esc(p.method||'')+'</span>';}catch(e){}}
 let STREAM=null,STREAMCAT='all';
 function streamEvents(){if(!STREAM)return[];return (STREAM.events||[]).filter(e=>STREAMCAT==='all'||e.category===STREAMCAT)}
 function renderCats(){if(!STREAM)return;cats.innerHTML='<button class="cat'+(STREAMCAT==='all'?' sel':'')+'" onclick="filterCat(\\'all\\')">全部 '+STREAM.counts.events+'</button>'+(STREAM.categories||[]).map(c=>'<button class="cat'+(STREAMCAT===c.id?' sel':'')+'" onclick="filterCat(\\''+c.id+'\\')">'+esc(c.label)+' '+c.count+'</button>').join('')}
@@ -1282,7 +1282,7 @@ f.addEventListener('submit',async ev=>{
     else if(k==='flooded_road_ids'){p[k]=String(v).split(',').map(s=>s.trim()).filter(Boolean);}
     else {p[k]=v;}
   }
-  out.textContent='计算中（演化会跑一遍 12 例门禁，约 1-2 秒）…';
+  out.textContent='计算中（演化会跑一遍 12 例校验，约 1-2 秒）…';
   try{
     const r=await fetch('/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
     const d=await r.json();
@@ -1885,7 +1885,7 @@ function searchRef(text){
 }
 
 var KIND_CN={overlap:'权限重叠',gap:'职责空白',contention:'资源争用'};
-// 六跳阶段名 -> 人话。英文阶段名是内核的字段名，不该直接摆在界面上给值班员看。
+// 六步阶段名 -> 人话。英文阶段名是引擎的字段名，不该直接摆在界面上给值班员看。
 var STAGE_CN={observed:'雨情与定级',affected:'受影响对象',owner:'责任部门',
   conflict:'跨部门冲突',resource:'资源缺口',action:'处置动作'};
 // 证据 ref 形如 AS-A-03-work_order-6a1282a1#A-03/work_order/v1#row:5，
@@ -1912,7 +1912,7 @@ var FILE_CN={'road_network.csv':'路网台账','pipeline_ledger.csv':'管线台�
   // 自检栏会报文件名（decision_memory.json 命中 1 条），这四个是自检用到的台账，
   // 名字同样要能读——"命中 1 条"对评委没有信息量，"决策依据台账"才有。
   'decision_memory.json':'决策依据台账','allocation_cases.json':'调拨评测集',
-  'decision_reviews.json':'专家评审样例','history.jsonl':'反馈闭环记录'};
+  'decision_reviews.json':'专家评审样例','history.jsonl':'反馈处理记录'};
 // MCP 工具名是给开发看的（event_deduce）。工具轨迹栏要能让人读，逐个给中文动作名。
 var TOOL_CN={semantic_query:'语义检索',twin_neighbors:'孪生邻接查询',doc_search:'知识检索',
   evidence_locate:'原文取证',claim_trace:'断言溯源',provenance_verify:'数据来源核验',
@@ -1946,7 +1946,7 @@ function humanWith(text, labels){
     out=out.split(V[n]+' '+V[n]).join(V[n]);
   }
   out=out.replace(/([一-龥])[ ]+(?=[一-龥])/g,'$1');
-  // 内核字段名转述：「（order 1）」-> 「第 1 步」
+  // 引擎字段名转述：「（order 1）」-> 「第 1 步」
   out=out.replace(/order[ ]*[=:]?[ ]*(\\d+)/g,'第 $1 步');
   // 与后端 _humanize 同一套收尾：先吃掉叠词（"兴华路雨水泵站泵站"），
   // 再把「区应急（区应急管理局）」这类"简称（全称）"折成全称。
@@ -2092,7 +2092,7 @@ function fold(host, title, lines){
 function renderEvent(d, target){
   var host=target||pane;
   var ob=d.observed||{};
-  // 台账里的「代号 -> 中文名」。内核产出的文本带 ORG-ROAD / DF-PS-01 / RES-PUMP-M 这类内部编号，
+  // 台账里的「代号 -> 中文名」。引擎产出的文本带 ORG-ROAD / DF-PS-01 / RES-PUMP-M 这类内部编号，
   // 展示前换成中文名，原文留在 title 里——给值班员看人话，给核对的人留原串。
   var LABELS=d.labels||{};
   // 统一走 humanWith：代号、文件名、叠词、括号全称、order 编号这一整套规则只在这里写一份。
@@ -2100,7 +2100,7 @@ function renderEvent(d, target){
   function H(s){ return humanWith(s, LABELS); }
   var line=el('div');
   line.style.fontSize='15px'; line.style.fontWeight='600';
-  // 已闭环事件引擎会直接拒推（conclusion.refused），不硬编结论——这一屏要把这件事说出来，
+  // 已办结事件引擎会直接拒推（conclusion.refused），不硬编结论——这一屏要把这件事说出来，
   // 而不是显示一排 0。判据就是 observed 里有没有 refused。
   if(ob.refused){
     line.textContent=d.event_id+' · 工单已结案，不给出处置方案';
@@ -2148,7 +2148,7 @@ function renderEvent(d, target){
   actions.forEach(function(a){
     var li=el('li',null,H(a.action||''));
     li.style.marginBottom='2px';
-    li.title=(a.action||'');  // 悬停看内核原文，代号与措辞都没丢
+    li.title=(a.action||'');  // 悬停看引擎原文，代号与措辞都没丢
     ol.appendChild(li);
   });
   host.appendChild(ol);
@@ -2351,8 +2351,8 @@ function renderStructured(s, host, labels){
   host.appendChild(wrap);
 }
 
-// 复跑表里的值来自内核：布尔、阶段名、冲突类型三种。三层都要翻，漏一层就会在
-// 「期望 / 实际」列里留下 contention 这种英文（复跑栏曾经整列都是英文冲突类型）。
+// 重跑表里的值来自引擎：布尔、阶段名、冲突类型三种。三层都要翻，漏一层就会在
+// 「期望 / 实际」列里留下 contention 这种英文（重跑栏曾经整列都是英文冲突类型）。
 function cnTerm(x){
   return KIND_CN[x]||STAGE_CN[x]||DOC_CN[x]||FILE_CN[x]||x;
 }
@@ -2382,13 +2382,13 @@ function renderReplay(d){
     '主智能体第 '+maybeNum(c.agent_version)+' 版 · 平台会话 #'+(c.conversation_id||'-')
     +' · 耗时 '+c.elapsed_s+' 秒 · 取到依据 '+(c.evidence_count||0)+' 条 · '+(c.ts||'').replace('T',' ').slice(0,19)));
 
-  var legend=el('div','empty','「期望」是本机规则引擎算出的结果（不经过大模型），「实际」这次真机跑出来的；两项对不上就是不符。');
+  var legend=el('div','empty','「期望」是本机规则引擎算出的结果（不经过大模型），「实际」这次实际调用跑出来的；两项对不上就是不符。');
   legend.style.cssText='font-size:11.5px;line-height:1.7;margin:8px 0 4px';
   box.appendChild(legend);
   var LB=d.labels||{};
   var t=el('table');
   // 固定列宽：不固定时「实际」列的长段落会把「期望」列挤成竖条（一个字一行），
-  // 复跑栏最该读的八项期望值反而看不清。
+  // 重跑栏最该读的八项期望值反而看不清。
   t.style.tableLayout='fixed';
   var cg=document.createElement('colgroup');
   // 只钉「判据」和「结果」两头，中间两列均分剩余宽度——给 31% 这种固定比例时，
@@ -2470,7 +2470,7 @@ function loadTools(){
       tr.appendChild(st);
       tr.appendChild(el('td','mono',(r.latency_ms!==null&&r.latency_ms!==undefined)?(r.latency_ms+' ms'):'-'));
       var snap=el('td','mono',(r.snapshot_hash||'').slice(0,10)||'-');
-      if(r.snapshot_hash){snap.title='完整快照哈希 '+r.snapshot_hash;}
+      if(r.snapshot_hash){snap.title='完整记录哈希 '+r.snapshot_hash;}
       tr.appendChild(snap);
       t.appendChild(tr);
     });
@@ -2484,8 +2484,8 @@ function loadTools(){
 
 function loadStatus(){
   pane.innerHTML=''; pane.appendChild(el('div','empty','读取中…'));
-  // 自检明细里的少量英文标识（PRODUCTION_LABEL、northbound）是内核常量与取数口径，
-  // 在展示层换成人话；这层不改 selfcheck 的输出，/status 页与自检指纹都不受影响。
+  // 自检明细里的少量英文标识（PRODUCTION_LABEL、northbound）是引擎常量与取数口径，
+  // 在展示层换成人话；这层不改 selfcheck 的输出，/status 页与自检校验值都不受影响。
   function humanStatus(text){
     var s=String(text==null?'':text);
     // 自检明细原本直接抛文件名（decision_memory.json）。文件名叫什么与"自洽不自洽"无关，
@@ -2500,10 +2500,10 @@ function loadStatus(){
         +'，平台上只发布这一份';
     }
     return s
-      // source 说的是"这份快照当初怎么来的"，不是"平台现在活着"。别翻成"实时取数"。
-      .replace('取数来源 northbound','快照原由平台接口抓取')
-      .replace('取数来源 snapshot','取自本地快照')
-      .replace('取数来源 db','快照取自平台数据库');
+      // source 说的是"这份记录当初怎么来的"，不是"平台现在活着"。别翻成"实时取数"。
+      .replace('取数来源 northbound','取自平台接口')
+      .replace('取数来源 snapshot','取自本地记录')
+      .replace('取数来源 db','取自平台数据库');
   }
   fetch('/api/workbench/status').then(function(r){return r.json();}).then(function(d){
     pane.innerHTML='';
@@ -2519,7 +2519,7 @@ function loadStatus(){
       pane.appendChild(row);
     });
     var okCount=checks.filter(function(c){return c.state==='ok';}).length;
-    var note=el('div','empty','共 '+checks.length+' 项，通过 '+okCount+' 项。这些检查只读本地台账与快照，'
+    var note=el('div','empty','共 '+checks.length+' 项，通过 '+okCount+' 项。这些检查只读本地台账与记录，'
       +'不发外部请求——平台挂不挂，这一栏都能打开。');
     note.style.cssText='font-size:11.5px;line-height:1.7;margin-top:10px';
     pane.appendChild(note);
@@ -2527,9 +2527,9 @@ function loadStatus(){
     var snap=d.platform_snapshot||{};
     if(snap.available){
       var when=humanClock(snap.generated_at);
-      // 不复述项名：项名「平台 Agent 可读」是 selfcheck.py 里的字面值，会进冻结
+      // 不复述项名：项名「平台 Agent 可读」是 selfcheck.py 里的字面值，会进固定
       // 期望文件，改名就破 108/108。改用「这一项」指代，读起来也不别扭。
-      var tip=el('div','empty','这一项读的是 '+when+' 生成的版本快照（'+snap.agents
+      var tip=el('div','empty','这一项读的是 '+when+' 生成的版本记录（'+snap.agents
         +' 个智能体），不是此刻探测。要看平台此刻在不在，去问一句或看左侧对话。');
       tip.style.cssText='font-size:11.5px;line-height:1.7;margin-top:6px;color:#9aa1aa';
       pane.appendChild(tip);
@@ -2543,7 +2543,7 @@ var sws=document.querySelectorAll('.sw[data-mode]'); for(var i=0;i<sws.length;i+
 // 首屏进站内对话：它不依赖平台前端，打开就能问；平台页要等点了才加载。
 switchMode('local');
 var tabs=document.querySelectorAll('.tab'); for(var j=0;j<tabs.length;j++){tabs[j].onclick=function(){setTab(this.dataset.tab);};}
-// 允许直接链接到某一栏（演示时把 #replay 发出去，打开就是复跑面板）
+// 允许直接链接到某一栏（演示时把 #replay 发出去，打开就是重跑面板）
 var __h=location.hash||'';
 if(__h.indexOf('#replay')===0){setTab('replay');}
 else if(__h.indexOf('#tools')===0){setTab('tools');}
@@ -2668,7 +2668,7 @@ def _replay_diff(current: dict[str, Any], previous: dict[str, Any] | None) -> di
     期望值来自同一份离线基线，实际值措辞会变，逐字比会把改写误判成结论变化。
     """
     if not previous:
-        return {"available": False, "reason": "这是第一次复跑，没有可比的上一轮"}
+        return {"available": False, "reason": "这是第一次重跑，没有可比的上一轮"}
     before = {item["name"]: item.get("passed") for item in previous.get("checks", [])}
     after = {item["name"]: item.get("passed") for item in current.get("checks", [])}
     return {
@@ -2699,7 +2699,7 @@ def workbench_replay(body: bytes | None) -> tuple[int, str, bytes]:
 
     key = os.getenv("NEXENT_API_KEY", "").strip()
     if not key:
-        return _error("未配置 NEXENT_API_KEY（北向访问凭据），无法复跑", 503)
+        return _error("未配置 NEXENT_API_KEY（北向访问凭据），无法重跑", 503)
 
     from .nexent_transport import NexentSettings
     from .nexent_urban import DEFAULT_LABELS
@@ -2722,7 +2722,7 @@ def workbench_replay(body: bytes | None) -> tuple[int, str, bytes]:
             out=io.StringIO(),
         )
     except Exception as exc:  # noqa: BLE001 - 平台不通要给可读原因，不能抛 500 堆栈
-        return _error(f"复跑失败：{type(exc).__name__}: {exc}"[:300], 502)
+        return _error(f"重跑失败：{type(exc).__name__}: {exc}"[:300], 502)
 
     answer = report.answer
     current: dict[str, Any] = {
@@ -2792,7 +2792,7 @@ def workbench_replay_history(limit: int = 10) -> tuple[int, str, bytes]:
         {
             "runs": [{key: run.get(key) for key in fields} for run in runs],
             "latest": latest,
-            "diff": _replay_diff(latest, previous) if latest else {"available": False, "reason": "还没有复跑记录"},
+            "diff": _replay_diff(latest, previous) if latest else {"available": False, "reason": "还没有重跑记录"},
             # 判据的「实际」值是模型原话，里面带 ORG-ROAD / DF-PS-01 这类台账代号。
             # 页面拿这张对照表换成人名，否则复跑栏会出现"街道中心与交警"以外的英文串。
             "labels": _label_maps(),
@@ -3934,7 +3934,7 @@ function esc(s){
     return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
   });
 }
-// 本机时区。快照里的时间是 UTC（+0000），直接截串会差 8 小时。
+// 本机时区。记录里的时间是 UTC（+0000），直接截串会差 8 小时。
 function clockText(iso){
   if(!iso){ return '—'; }
   var d = new Date(iso);
@@ -3978,7 +3978,7 @@ function renderStatus(d){
     if(missing){
       var warn = document.createElement('span');
       warn.style.color = '#b45309';
-      warn.textContent = '（快照里没有这个智能体）';
+      warn.textContent = '（记录里没有这个智能体）';
       a.appendChild(warn);
     }
     row.appendChild(a);
@@ -5431,7 +5431,7 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
             return _json(result, 201 if result.get("status") != "duplicate" else 200)
         if segments[2:3] == ["export"]:
             if method.upper() != "POST":
-                return _error("导出快照请用 POST", 405)
+                return _error("导出记录请用 POST", 405)
             path = execution_ledger.export_snapshot(cards=execution_cards())
             return _json({"status": "ok", "path": str(path)})
         if method.upper() != "GET":
@@ -5485,7 +5485,7 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return _json(web_llm.llm_decision_payload())
 
     if segments[:2] == ["api", "platform-evidence"]:
-        # Nexent 平台真机验证证据（发布时固化的 JSON，只读）。
+        # Nexent 平台实测验证证据（发布时固化的 JSON，只读）。
         evidence_path = (
             Path(__file__).resolve().parents[2]
             / "samples" / "nexent" / "live" / "llm_decision_platform.json"

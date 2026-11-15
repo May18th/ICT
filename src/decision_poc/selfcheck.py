@@ -42,14 +42,14 @@ def platform_versions_payload() -> dict[str, Any]:
     if not PLATFORM_SNAPSHOT.is_file():
         return {
             "available": False,
-            "hint": "尚未生成快照：python deploy/nexent/snapshot_platform_versions.py",
+            "hint": "尚未生成记录：python deploy/nexent/snapshot_platform_versions.py",
             "path": str(PLATFORM_SNAPSHOT),
         }
     data = read_json_file(PLATFORM_SNAPSHOT)
     if data is None:
         return {
             "available": False,
-            "hint": "快照读取失败（不是合法 JSON）",
+            "hint": "记录读取失败（不是合法 JSON）",
             "path": str(PLATFORM_SNAPSHOT),
         }
     return {"available": True, **data, "path": str(PLATFORM_SNAPSHOT)}
@@ -221,7 +221,7 @@ def status_checks() -> list[dict[str, Any]]:
             "detail": (
                 f"{len(agents)} 个智能体（取数来源 {platform.get('source') or '—'}）"
                 if platform.get("available")
-                else (platform.get("hint") or "快照缺失")
+                else (platform.get("hint") or "记录缺失")
             ),
         }
     )
@@ -248,9 +248,9 @@ def summary_line() -> str:
         names = "、".join(item["name"] for item in result["items"] if item["state"] != "ok")
         return (
             f"系统自洽：{result['total']} 项，通过 {result['ok']}，需注意 {result['attention']}"
-            f"（{names}）；不计入上方项数与指纹"
+            f"（{names}）；不计入上方项数与校验值"
         )
-    return f"系统自洽：{result['total']} 项全部通过；不计入上方项数与指纹"
+    return f"系统自洽：{result['total']} 项全部通过；不计入上方项数与校验值"
 
 
 __all__ = [

@@ -138,9 +138,9 @@ def build_evolution_payload(showcase: ShowcaseReport | None = None) -> dict[str,
             "evolved": _real_event_plan(first.real_event_evolved),
         },
         "boundaries": [
-            "反馈信号 = 冻结 ground truth + 人工评审结论（受控评测环境），不是真实市政数据回流",
+            "反馈信号 = 固定的 ground truth + 人工评审结论（受控评测环境），不是真实市政数据回流",
             "人工评审为角色扮演，用于演示第二反馈通道，不代表真实部门批复",
-            "分层记忆为离线同构契约（Tenant/User/Agent），未在真实 Nexent 平台真机验证",
+            "分层记忆为离线同构契约（Tenant/User/Agent），未在真实 Nexent 平台验证",
         ],
     }
 
@@ -209,20 +209,20 @@ def build_evolution_html() -> str:
 <section class="card evolution-card allocation-card"><h2>真实事件：资源分配变化 · WO-20261029-007</h2><div id=realEvent></div></section>
 <details class=secondary-details><summary>更多审计信息 <span>评分、版本与边界说明</span></summary><div class=details-body>
 <section class="card evolution-card comparison-card"><h2>第一会话：策略调整前后</h2><table id=firstTable></table></section>
-<section class="card evolution-card feedback-card"><h2>真实用户评分：收集意见并触发门禁</h2>
+<section class="card evolution-card feedback-card"><h2>真实用户评分：收集意见并触发校验</h2>
 <div id=reviewReal class=rvstat>加载中…</div>
 <form class=rv id=rvForm>
   <input id=rvId placeholder='你的名字或编号（必填）' required>
   <input id=rvRole placeholder='身份，如 环境专业教师 / 市政从业者'>
   <select id=rvPhase><option value=before>进化前方案</option><option value=after>进化后方案</option></select>
   <input id=rvScores placeholder='四维评分 1-5，如 4,3,5,4（准确/时效/安全/可解释）' required>
-  <input id=rvSuggest class=wide placeholder='可选：建议分配，如 A-03=5,B-01=1 —— 填了才会转成评审用例进进化门禁'>
+  <input id=rvSuggest class=wide placeholder='可选：建议分配，如 A-03=5,B-01=1 —— 填了才会转成评审用例进策略校验'>
   <input id=rvComment class=wide placeholder='意见（可选）'>
   <button type=submit>提交评分</button>
 </form>
 <div id=rvMsg class=dim></div>
 <div id=gateLatest class=rvstat></div>
-<p class=dim>口径：评分只做汇总（样本/均分/前后差值），<b>不参与门禁</b>；只有给出"建议分配"的提交才会转成评审用例，成为候选策略的硬约束。真实用户评分是个人意见，非部门批复。</p>
+<p class=dim>口径：评分只做汇总（样本/均分/前后差值），<b>不参与校验</b>；只有给出"建议分配"的提交才会转成评审用例，成为候选策略的硬约束。真实用户评分是个人意见，非部门批复。</p>
 </section>
 <section class="card evolution-card history-panel"><h2>策略版本：可审计、可回滚</h2><table id=releases></table></section>
 <section class="card evolution-card platform-card"><h2>平台运行版本：策略所在的 Agent</h2><div id=platformVersions></div></section>
@@ -242,7 +242,7 @@ async function main(){
   const a=first.initial_train, b=first.final_train, c=first.initial_holdout, d=first.final_holdout;
   metrics.innerHTML=
     '<div class=metric><span>演练场景：方案偏差</span><b>'+f4(a.deviation)+' → '+f4(b.deviation)+'</b><span class=dim>调整前 → 调整后</span></div>'+
-    '<div class=metric><span>新场景：方案偏差</span><b>'+f4(c.deviation)+' → '+f4(d.deviation)+'</b><span class=dim>通过不退化门禁</span></div>'+
+    '<div class=metric><span>新场景：方案偏差</span><b>'+f4(c.deviation)+' → '+f4(d.deviation)+'</b><span class=dim>通过不退化校验</span></div>'+
     '<div class=metric><span>复用经验后的起点</span><b class=ok>'+f4(second.initial_train.deviation)+'</b><span class=dim>第二次会话</span></div>'+
     '<div class=metric><span>人工建议修正幅度</span><b>'+(review?f4(review.deviation_before)+' → '+f4(review.deviation_after):'-')+'</b><span class=dim>第二反馈信号</span></div>';
   firstTable.innerHTML='<tr><th>指标</th><th>训练集 前</th><th>训练集 后</th><th>留出集 前</th><th>留出集 后</th></tr>'+
@@ -275,7 +275,7 @@ async function main(){
       '<p>这样做的目的，是先满足更紧急的片区，而不是平均分配。</p>'+
       '<p class=dim>需要额外上报增援：'+esc(real.evolved.escalation.join('；')||'无')+'</p>';
   } else { realEvent.innerHTML='<p class=warn>真实事件未跑通</p>'; }
-  boundaries.innerHTML='表述边界：'+p.boundaries.map(esc).join(' · ')+'。反馈指纹 <code>'+esc((p.case_digest||'').slice(0,16))+'</code>';
+  boundaries.innerHTML='表述边界：'+p.boundaries.map(esc).join(' · ')+'。反馈校验值 <code>'+esc((p.case_digest||'').slice(0,16))+'</code>';
   loadReviews();
   loadGate();
 }
@@ -285,19 +285,19 @@ async function loadReviews(){
     const ph=s.phases||{},before=ph.before||{},after=ph.after||{};
     reviewReal.innerHTML='<p>样本 <b>'+esc(s.total||0)+'</b> 条，评审人 <b>'+esc(s.reviewer_count||0)+'</b> 位；满足最低样本（≥3 人且进化前后各有）：<b class="'+(s.meets_min_reviewers?'ok':'warn')+'">'+(s.meets_min_reviewers?'是':'否')+'</b></p>'+
       '<p>进化前均分 <b>'+esc(before.overall??'-')+'</b>（'+esc(before.count||0)+' 条） · 进化后均分 <b>'+esc(after.overall??'-')+'</b>（'+esc(after.count||0)+' 条） · 差值 <b class=ok>'+esc(s.delta??'-')+'</b></p>'+
-      '<p class=dim>带修正建议（可进门禁）：'+esc(s.gate_candidates||0)+' 条；最近提交 '+esc(s.latest_at||'-')+'</p>';
+      '<p class=dim>带修正建议（可进校验）：'+esc(s.gate_candidates||0)+' 条；最近提交 '+esc(s.latest_at||'-')+'</p>';
   }catch(e){reviewReal.innerHTML='<span class=warn>评分汇总加载失败：'+esc(e)+'</span>';}
 }
 async function loadGate(){
   try{
     const g=await (await fetch('/api/evolution/gate?limit=3')).json();
     const l=g.latest;
-    if(!l){gateLatest.innerHTML='<p class=dim>还没有门禁记录：提交一条「进化后」评分即可触发。</p>';return;}
+    if(!l){gateLatest.innerHTML='<p class=dim>还没有校验记录：提交一条「进化后」评分即可触发。</p>';return;}
     const tr=Array.isArray(l.train_deviation)?l.train_deviation:[null,null];
     const ho=Array.isArray(l.holdout_deviation)?l.holdout_deviation:[null,null];
-    gateLatest.innerHTML='<p>最近门禁：最终标签 <b>'+esc(l.final_label)+'</b>，轮次 '+esc(l.rounds)+'（采纳 <b class=ok>'+esc(l.accepted)+'</b> / 拒绝 <b class=warn>'+esc(l.rejected)+'</b>）；训练 '+esc(f4(tr[0]))+' → <b class=ok>'+esc(f4(tr[1]))+'</b>，留出 '+esc(f4(ho[0]))+' → <b class=ok>'+esc(f4(ho[1]))+'</b></p>'+
-      '<p class=dim>累计门禁记录 '+esc(g.total_entries)+' 条；最近一次 '+esc(l.saved_at||'')+'；落盘 <code>'+esc(g.path||'')+'</code></p>';
-  }catch(e){gateLatest.innerHTML='<span class=warn>门禁历史加载失败：'+esc(e)+'</span>';}
+    gateLatest.innerHTML='<p>最近校验：最终标签 <b>'+esc(l.final_label)+'</b>，轮次 '+esc(l.rounds)+'（采纳 <b class=ok>'+esc(l.accepted)+'</b> / 拒绝 <b class=warn>'+esc(l.rejected)+'</b>）；训练 '+esc(f4(tr[0]))+' → <b class=ok>'+esc(f4(tr[1]))+'</b>，留出 '+esc(f4(ho[0]))+' → <b class=ok>'+esc(f4(ho[1]))+'</b></p>'+
+      '<p class=dim>累计校验记录 '+esc(g.total_entries)+' 条；最近一次 '+esc(l.saved_at||'')+'；落盘 <code>'+esc(g.path||'')+'</code></p>';
+  }catch(e){gateLatest.innerHTML='<span class=warn>校验历史加载失败：'+esc(e)+'</span>';}
 }
 function parseScores(t){
   const nums=String(t||'').replace(/，/g,',').split(',').map(x=>parseInt(x.trim(),10));
@@ -315,15 +315,15 @@ rvForm.addEventListener('submit',async e=>{
     let extra='';
     if(j.evolution&&j.evolution.eligible){
       const e=j.evolution;
-      extra='<div class=rvstat style="margin-top:6px">已触发进化门禁：最终标签 <b>'+esc(e.final_label)+'</b>，'+
+      extra='<div class=rvstat style="margin-top:6px">已触发策略校验：最终标签 <b>'+esc(e.final_label)+'</b>，'+
         '轮次 '+esc(e.rounds)+'（采纳 <b class=ok>'+esc(e.accepted)+'</b> / 拒绝 <b class=warn>'+esc(e.rejected)+'</b>）；'+
         '训练偏差 '+esc(f4(e.train_deviation&&e.train_deviation[0]))+' → <b class=ok>'+esc(f4(e.train_deviation&&e.train_deviation[1]))+'</b>，'+
         '留出偏差 '+esc(f4(e.holdout_deviation&&e.holdout_deviation[0]))+' → <b class=ok>'+esc(f4(e.holdout_deviation&&e.holdout_deviation[1]))+'</b>'+
         (e.review_ids&&e.review_ids.length?'；生效评审 <code>'+esc(e.review_ids.join('，'))+'</code>':'')+'</div>';
     } else if(j.evolution && !j.evolution.eligible){
-      extra='<div class=rvstat>进化门禁未跑通：'+esc(j.evolution.error||'未知原因')+'（评分已落盘）</div>';
+      extra='<div class=rvstat>策略校验未跑通：'+esc(j.evolution.error||'未知原因')+'（评分已落盘）</div>';
     }
-    rvMsg.innerHTML='<span class=ok>已记录 '+esc(j.submission_id)+'（综合 '+esc(j.overall)+'/5'+(j.gate_candidate?'，已转评审用例进进化门禁':'，仅计入评分汇总')+'）</span>'+extra;
+    rvMsg.innerHTML='<span class=ok>已记录 '+esc(j.submission_id)+'（综合 '+esc(j.overall)+'/5'+(j.gate_candidate?'，已转评审用例进策略校验':'，仅计入评分汇总')+'）</span>'+extra;
     rvComment.value='';rvSuggest.value='';loadReviews();loadGate();
   }catch(err){rvMsg.innerHTML='<span class=warn>提交失败：'+esc(err.message||err)+'</span>';}
 });
@@ -331,12 +331,12 @@ async function loadPlatform(){
   const box=document.getElementById('platformVersions');
   try{
     const d=await (await fetch('/api/platform/versions')).json();
-    if(!d.available){box.innerHTML='<p class=dim>'+esc(d.hint||'暂无平台版本快照')+'</p>';return;}
+    if(!d.available){box.innerHTML='<p class=dim>'+esc(d.hint||'暂无平台版本记录')+'</p>';return;}
     const lp=d.local_policy||{};
     let h='<p class=dim>本地生产策略 <b>'+esc(lp.production_label||'—')+'</b>；反馈流水 '+
       esc(lp.feedback_runs==null?0:lp.feedback_runs)+' 条，其中触发演化 '+
       esc(lp.triggered_runs==null?0:lp.triggered_runs)+' 条；取数 '+esc(d.source||'—')+
-      '；快照时间 '+esc(d.generated_at||'')+'</p>'+
+      '；记录时间 '+esc(d.generated_at||'')+'</p>'+
       '<table><tr><th>Agent</th><th>当前版本</th><th>版本名</th><th>模型</th><th>状态</th></tr>';
     for(const a of (d.platform_agents||[])){
       const avail=(a.available==null?a.enabled:a.available);

@@ -454,7 +454,7 @@ def to_markdown(report: EvidenceReport) -> str:
         "",
         "由 `python -m decision_poc.evidence_check --report <path>` 生成，**不要手改**。",
         "",
-        f"- 期望指纹：`{report.expectations_digest[:16]}`（期望文件被改动即换指纹）",
+        f"- 期望的校验值：`{report.expectations_digest[:16]}`（期望文件被改动即换值）",
         f"- 检查项：{report.total} 项，通过 {report.passed_count}，失败 {report.failed_count}",
         f"- 结论：{'全部一致' if report.passed else '存在漂移，禁止按旧文案陈述'}",
         "",
@@ -496,7 +496,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  ! {item.path}: 期望 {item.expected} 实际 {item.actual}")
     print(
         f"对外数字自检：{report.passed_count}/{report.total} 项一致"
-        f"（期望指纹 {report.expectations_digest[:16]}）"
+        f"（期望的校验值 {report.expectations_digest[:16]}）"
     )
     # 系统自洽摘要：与 /status 页共用 selfcheck 判据。刻意不并入 report.items——
     # 项数与指纹由期望文件定义，动它会把冻结基线带偏。
