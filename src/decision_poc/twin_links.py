@@ -685,7 +685,10 @@ def clamp_jump(value: Any) -> int:
 
 
 def resolve_deeplink(query: Mapping[str, Sequence[str]]) -> tuple[int, str]:
-    """解析 `/twin3d?jump=N&entity=<id>` 的两个参数。
+    """解析 `?jump=N&entity=<id>` 两个参数。
+
+    原用于 `/twin3d?jump=N&entity=` 深链；该页 2026-11-13 下线，现由
+    `/map2d?entity=` 沿用 `entity` 语义，`jump` 仅作数据侧兼容保留。
 
     `entity` 原样返回，存在性由调用方判定——不在这里静默换成别的对象：
     点错对象应该看到"未找到"，而不是莫名其妙跳到另一个设施上。

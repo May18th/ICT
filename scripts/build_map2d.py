@@ -15,7 +15,9 @@
 """
 from __future__ import annotations
 
+import importlib.util
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]  # scripts/ -> agent_poc/
@@ -40,13 +42,15 @@ def _read_csv(name: str) -> list[dict]:
 def build_payload() -> dict:
     d = load_layout()
     districts = [
-        {"id": x["district_id"], "center": x["center"], "radius_m": x.get("radius_m")}
+        {"id": x["district_id"], "center": x.get("center"), "radius_m": x.get("radius_m")}
         for x in d.get("districts", [])
     ]
     roads = [
         {
             "id": r["road_id"],
             "name": r["name"],
+            "district": r.get("district"),
+            "length_m": r.get("length_m"),
             "width_m": r.get("width_m", 0),
             "state": r.get("state", "normal"),
             "cls": r.get("road_class", ""),
@@ -54,6 +58,18 @@ def build_payload() -> dict:
         }
         for r in d.get("roads", [])
     ]
+    # 片区名：台账只有编号（A-03 / B-01），没名字。硬写「兴华路片区」等于凭空造。
+    # 但积水点自带 road_id —— 水淹在哪条路，片区就叫哪条路，这是可推导的依据。
+    _road_name = {r["id"]: r["name"] for r in roads}
+    district_names = {}
+    for w in d.get("water", []):
+        did, rid = w.get("district"), w.get("road_id")
+        if did and rid and rid in _road_name and did not in district_names:
+            district_names[did] = f"{_road_name[rid]}片区"
+    # 机组台账只在 CSV 里（scene_layout 的 pump_units/failed_units 是空）。
+    # 「3 座泵站都在跑」和「兴华路 3 台机组坏了 1 台」是两件事，
+    # 不补这个字段就只能在界面上写「待修」，看的人会以为它停机了。
+    _unit = {r.get("facility_id"): r for r in _read_csv("drainage_facilities.csv")}
     facilities = [
         {
             "id": f["facility_id"],
@@ -61,6 +77,8 @@ def build_payload() -> dict:
             "type": f["facility_type"],
             "state": f.get("state", "in_service"),
             "cap": f.get("capacity_m3h"),
+            "pump_units": (_unit.get(f["facility_id"]) or {}).get("pump_units"),
+            "failed_units": (_unit.get(f["facility_id"]) or {}).get("failed_units"),
             "xy": f.get("xy"),
         }
         for f in d.get("facilities", [])
@@ -149,9 +167,15 @@ def build_payload() -> dict:
     # 决策调拨：来自冻结 ground truth 案例 T1（samples/eval/allocation_cases.json），
     # 不是运行时现算，也不是编造。数据口径见 allocation.py 的 decide()。
     decision = {
-        "source": "调拨评测集 T1 号案例（冻结标准答案，逐字段与场景标准答案文档的第 5 跳、冲突 C2 对齐）",
+        "source": "调拨评测集第 1 号案例的冻结标准答案（与场景台账的第 5 步、冲突 2 逐字段对齐）",
         "priority_order": ["A-03", "B-01"],
         "critical": ["A-03"],
+        # 决策依据（可溯源核心）：为什么这么决策，依据哪条条款
+        "basis": [
+            "第 5 步实测：兴华路要 5 台、本区只有 4 台，差 1 台；滨河路要 2 台、本区正好 2 台",
+            "冲突 2：只能保一处时，优先保兴华路（积水已过封路阈值，且地下有燃气基坑）",
+            "跨区调泵路上要走 40 分钟，峰值前赶不到",
+        ],
         "signals": {
             "A-03": {"demand": 5, "local": 4, "depth_cm": 30, "closure_required": True, "has_hazard": True},
             "B-01": {"demand": 2, "local": 2, "depth_cm": 18, "closure_required": False, "has_hazard": False},
@@ -191,10 +215,97 @@ def build_payload() -> dict:
                 r["real_road"] = a.get("real_name")
                 r["real_median_m"] = a.get("median_m")
                 r["real_p90_m"] = a.get("p90_m")
+    # 水位过程线：优先用定量层算出的（scripts/build_hydro_curve.py）。
+    # 缺失或长度不符时 payload 不带 hydro，前端退回 JUMP_VISUAL 里的手写系数——
+    # 刻意保留这条降级路径：算不出来也要能出图，但图注会写明是示意节奏。
+    hydro = None
+    hydro_path = ROOT / "out" / "map2d" / "hydro_curve.json"
+    if hydro_path.exists():
+        try:
+            h = json.loads(hydro_path.read_text(encoding="utf-8"))
+            s = h.get("samples") or []
+            if len(s) == 7:
+                der = h.get("derived") or {}
+                inp = h.get("inputs") or {}
+                hydro = {
+                    "samples": [float(v) for v in s],
+                    "rain_samples": [float(v) for v in (h.get("rain_samples") or [])],
+                    "sample_minutes": h.get("sample_minutes"),
+                    "catchment_ha": inp.get("catchment_ha"),
+                    "runoff_m3h": der.get("runoff_m3h"),
+                    "peak_depth_m": der.get("peak_depth_m"),
+                    "intensity_lps_ha": der.get("intensity_lps_ha"),
+                    "formula_runoff": h.get("formula_runoff"),
+                    "formula_routing": h.get("formula_routing"),
+                    "calibration": h.get("calibration"),
+                }
+        except (ValueError, KeyError, TypeError):
+            hydro = None
+
+    # 事件时标：由台账反推的 7 跳时刻与开关（scripts/build_event_timeline.py）。
+    # 缺失时前端保留手写开关——但页头会写明「开关为示意」，两种状态必须可分辨。
+    #
+    # 这里顺手重算一次时标：`/map2d` 路由只会调本脚本，不会去调时标生成器；
+    # 若台账改过而 json 没跟着更新，页面上就会静默退回手写开关。纯 CSV 解析，
+    # 开销可忽略。失败不影响出图（退回手写 + 琥珀色提示），只打一行 stderr。
+    timeline = None
+    tl_path = ROOT / "out" / "map2d" / "event_timeline.json"
+    _tl_script = ROOT / "scripts" / "build_event_timeline.py"
+    _tl_sources = ("work_orders.csv", "weather_alerts.csv", "notice_road_closure.md")
+    _scene_dir = ROOT / "samples" / "assets" / "urban"
+    try:
+        _need = (not tl_path.exists()) or any(
+            (_scene_dir / f).exists()
+            and (not tl_path.exists() or (_scene_dir / f).stat().st_mtime > tl_path.stat().st_mtime)
+            for f in _tl_sources
+        )
+        if _need and _tl_script.is_file():
+            _spec = importlib.util.spec_from_file_location("_build_event_timeline", _tl_script)
+            if _spec is not None and _spec.loader is not None:
+                _mod = importlib.util.module_from_spec(_spec)
+                _spec.loader.exec_module(_mod)
+                _mod.main()
+    except Exception as exc:  # noqa: BLE001 - 时标不是必需件，失败要能继续出图
+        print(f"  [timeline] 重算失败，退回手写开关：{type(exc).__name__}: {exc}", file=sys.stderr)
+    if tl_path.exists():
+        try:
+            t = json.loads(tl_path.read_text(encoding="utf-8"))
+            jumps = t.get("jumps") or []
+            if len(jumps) == 7:
+                timeline = {
+                    "event_date": t.get("event_date"),
+                    "event_start": t.get("event_start"),
+                    "alert_id": t.get("alert_id"),
+                    "alert_level": t.get("alert_level"),
+                    "alert_level_cn": t.get("alert_level_cn"),
+                    "closure_notice": t.get("closure_notice"),
+                    "ledger_flags": (t.get("flag_stats") or {}).get("ledger_flags") or [],
+                    "mixed_flags": (t.get("flag_stats") or {}).get("mixed_flags") or [],
+                    "derived_flags": (t.get("flag_stats") or {}).get("derived_flags") or [],
+                    "derivation": t.get("derivation") or {},
+                    "data_gaps": t.get("data_gaps") or [],
+                    "limits": t.get("limits") or {},
+                    "cross_checks": t.get("cross_checks") or {},
+                    "crew_at_clock": t.get("crew_at_clock"),
+                    "transfer_delay_min": t.get("transfer_delay_min"),
+                    "jumps": [
+                        {
+                            "clock": j.get("clock"),
+                            "title": j.get("title"),
+                            "flags": j.get("flags") or {},
+                        }
+                        for j in jumps
+                    ],
+                    "events": t.get("events") or [],
+                }
+        except (ValueError, KeyError, TypeError):
+            timeline = None
+
     return {
         "bounds": d.get("bounds"),
         "nodes": d.get("nodes"),
         "districts": districts,
+        "district_names": district_names,
         "roads": roads,
         "facilities": facilities,
         "water": water,
@@ -207,6 +318,8 @@ def build_payload() -> dict:
         "underpasses": underpasses,
         "states": d.get("states", {}),
         "decision": decision,
+        "hydro": hydro,
+        "timeline": timeline,
     }
 
 
@@ -230,7 +343,7 @@ def build_html(data_json: str) -> str:
 
 HTML_TEMPLATE = r"""<!doctype html><html lang=zh-CN><meta charset=utf-8>
 <meta name=viewport content='width=device-width,initial-scale=1'>
-<title>城市内涝数字孪生 · 排水防涝决策推演</title>
+<title>城市内涝可进化决策智能体 · 排水防涝推演</title>
 <style>
 :root{
   --bg:#f2f4f7; --bg2:#fafbfc; --panel:#ffffff; --panel2:#f5f7f9; --line:#e4e8ee; --line2:#d4dae2;
@@ -244,9 +357,17 @@ html,body{margin:0;height:100%;font:14px/1.55 "Segoe UI","Microsoft YaHei",syste
 body{display:flex;flex-direction:column}
 /* 顶部标题栏 */
 header{height:56px;padding:0 22px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-shrink:0}
-header h1{margin:0;font-size:16px;letter-spacing:.3px;color:var(--ink);font-weight:600}
-header .sub{margin-left:auto;color:var(--sub);font-size:12px}
-header .clock{font-family:ui-monospace,monospace;font-size:12px;color:var(--dim)}
+header h1{margin:0;font-size:16px;letter-spacing:.3px;color:var(--ink);font-weight:600;white-space:nowrap;flex-shrink:0}
+/* 右侧来源行只占剩余宽度：标题、边界声明、时钟都是固定宽度不压缩，
+   剩下的交给来源文字，放不下就省略号——不允许换行（换行会把 56px 的页头撑破，
+   实测副标被裁成半截）。 */
+header .sub{margin-left:auto;color:var(--sub);font-size:12px;flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+header .clock{font-family:ui-monospace,monospace;font-size:12px;color:var(--dim);flex-shrink:0}
+/* 边界声明：标题里保留「孪生」，但孪生的对象是决策语义，不是实时水体。
+   这行字是主动标的——评委并排看 PPT 与页面时，不会抓到「说不是孪生、页面却写孪生」的矛盾。 */
+header .scope{font-size:11px;color:#5f6f83;border:1px solid var(--line);border-radius:99px;
+  padding:2px 9px;background:#f3f7fa;letter-spacing:.2px;white-space:nowrap;flex-shrink:0}
 /* 主体 */
 #wrap{flex:1;display:flex;min-height:0}
 /* 顶部指标条 */
@@ -271,6 +392,16 @@ header .clock{font-family:ui-monospace,monospace;font-size:12px;color:var(--dim)
 #legend .pipe-legend[open] summary::before{content:'▾ '}
 /* 中间地图 */
 #stage{flex:1;position:relative;overflow:hidden;background:#eef1f5}
+/* 雨层：rain 系数原来的唯一去处是 lerpJump 的插值结果，插完没人用——
+   雨强在画面上完全不可见。这层让它落到视觉上，透明度上限压在 0.20，
+   只给「体感」，不能盖住地图内容。 */
+#rain-layer{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:0;
+  background-image:repeating-linear-gradient(102deg,
+    rgba(86,124,164,.78) 0 1.6px, transparent 1.6px 9px,
+    rgba(86,124,164,.42) 9px 10.6px, transparent 10.6px 19px);
+  animation:rainShift .85s linear infinite;
+  transition:opacity .35s linear}
+@keyframes rainShift{from{background-position:0 0}to{background-position:-140px 72px}}
 #stage svg{width:100%;height:100%;display:block}
 /* 右侧事件面板 */
 #side{width:280px;border-left:1px solid var(--line);background:var(--bg2);display:flex;flex-direction:column;padding:16px;gap:12px;overflow:auto;flex-shrink:0}
@@ -299,6 +430,18 @@ header .clock{font-family:ui-monospace,monospace;font-size:12px;color:var(--dim)
 .dc-trans{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line2);color:var(--ink);font-size:11.5px}
 .dc-trans b{color:#2b6cb0}
 .dc-src{margin-top:8px;font-size:10.5px;color:var(--dim);line-height:1.5;border-top:1px solid var(--line);padding-top:6px}
+/* 决策依据（可溯源） */
+.dc-basis{margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
+.dc-basis summary{cursor:pointer;font-size:11px;font-weight:600;color:var(--ink);user-select:none}
+.dc-basis summary:hover{color:var(--blue)}
+.dc-basis-item{display:flex;gap:6px;padding:3px 0;font-size:10.5px;color:var(--sub);line-height:1.5}
+.dc-basis-item .no{flex-shrink:0;width:14px;height:14px;border-radius:50%;background:var(--blue);color:#fff;font-size:9px;text-align:center;line-height:14px;margin-top:1px}
+/* 三段式推理链标题 */
+.dc-chain-h{margin:8px 0 3px;font-size:11px;font-weight:700;color:var(--ink);padding-top:6px;border-top:1px solid var(--line)}
+.dc-chain-h:first-child{border-top:none;padding-top:0;margin-top:0}
+.dc-sig{font-size:10.5px;color:var(--sub);padding:2px 0;line-height:1.5}
+.dc-sig.crit{color:#c0392b;font-weight:500}
+.dc-sig b{color:var(--ink)}
 /* 部门协作泳道图 */
 #dept-lanes{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:11px;overflow-x:auto}
 #dept-lanes .lane{display:flex;align-items:center;gap:6px;padding:3px 0;white-space:nowrap}
@@ -320,35 +463,66 @@ header .clock{font-family:ui-monospace,monospace;font-size:12px;color:var(--dim)
 #dock input[type=range]{width:220px;accent-color:var(--blue);cursor:pointer}
 #dock .t{font-family:ui-monospace,monospace;font-size:13px;color:var(--ink);min-width:44px;text-align:center}
 #dock .hint{font-size:11px;color:var(--dim);border-left:1px solid var(--line);padding-left:10px}
-/* 示意路悬停提示：说明这条示意路贴近哪条真实道路。
-   路名是示意编号，底图是真实成都路网，看图的人第一反应是「这条路在成都哪儿」，
-   鼠标放上去就能答，比在图上堆更多标注干净。 */
-#road-tip{position:fixed;z-index:60;display:none;max-width:290px;background:rgba(31,41,55,.94);
-  color:#fff;border-radius:6px;padding:7px 10px;font-size:11.5px;line-height:1.65;
+/* 解说字幕：地图底部大字，像纪录片字幕，讲清"谁、做了什么" */
+#narration{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);max-width:86%;
+  background:rgba(20,28,40,.82);color:#eef4fb;padding:9px 18px;border-radius:8px;
+  font-size:15px;font-weight:500;letter-spacing:.3px;text-align:center;z-index:4;
+  box-shadow:0 2px 12px rgba(15,23,42,.25);transition:opacity .3s;pointer-events:none}
+/* 解说的时刻前缀：台账推出来的钟点，和正文拉开一档，扫一眼就能对上时间轴 */
+#narration .nclock{display:inline-block;margin-right:9px;padding:1px 7px;border-radius:4px;
+  background:rgba(255,255,255,.14);color:#f6d68a;font-weight:700;font-variant-numeric:tabular-nums;
+  font-size:13px;letter-spacing:.6px}
+/* 焦点事件卡：讲「当前这一步是什么」，像新闻标题。
+   原来钉在正中上方，实测压下「兴华路片区」片区名和燃气/供电两个部门圆点——
+   这三个恰恰是那一步的主角，被标题盖掉最冤。挪到右上角：那一段是两片区之间的
+   滨河路，没有业务标注，卡片再长也只往左伸，不压人。 */
+#focuscard{position:absolute;right:14px;top:10px;z-index:6;
+  background:rgba(20,28,40,.88);color:#fff;padding:10px 18px;border-radius:10px;
+  text-align:center;pointer-events:none;max-width:54%;transition:opacity .35s;
+  border-left:4px solid var(--blue);box-shadow:0 4px 20px rgba(10,18,32,.35)}
+#focuscard .fc-stage{font-size:11.5px;color:#9fc3e8;letter-spacing:1px;margin-bottom:3px}
+#focuscard .fc-main{font-size:19px;font-weight:600;letter-spacing:.3px;line-height:1.3}
+#focuscard .fc-org{display:inline-block;margin-top:5px;font-size:12px;padding:2px 10px;
+  border-radius:99px;background:rgba(255,255,255,.14);color:#e8f1fa}
+/* 图上的文字标签全部不吃鼠标事件：SVG 的 text 默认参与命中，路名、深度数字、
+   单位图标压在业务对象上，光标挪到字上就弹不出「这是哪儿」。没有任何标签绑过
+   点击（21 个监听器逐个查过），关掉不损失交互。用 CSS 而不是逐个 setAttribute：
+   深度标签、封路标签是运行时才创建的，写在样式里才能一次覆盖。 */
+#map text{pointer-events:none}
+/* 地图悬停提示：道路 / 地块 / 建筑共用一块浮层。
+   三者要答的是同一个问题——「图上这个东西是什么」。道路答的是「示意路贴近哪条
+   真实路」，地块与建筑答的是 OSM 里的真实名称、用途、面积。 */
+#map-tip{position:fixed;z-index:60;display:none;max-width:330px;background:rgba(31,41,55,.94);
+  color:#fff;border-radius:6px;padding:8px 11px;font-size:12px;line-height:1.7;
   pointer-events:none;box-shadow:0 3px 14px rgba(15,23,42,.24)}
-#road-tip .rt-name{font-weight:600;font-size:12.5px;margin-bottom:1px}
-#road-tip .rt-dim{color:#aeb8c6}
-#road-tip .rt-real{color:#8fd0ff;font-weight:600}
+#map-tip .mt-name{font-weight:600;font-size:13.5px;margin-bottom:1px}
+#map-tip .mt-sub{color:#aeb8c6;font-size:11.5px}
+#map-tip .mt-dim{color:#aeb8c6}
+#map-tip .mt-real{color:#8fd0ff;font-weight:600}
+#map-tip .mt-src{color:#93a2b5;font-size:10.5px;margin-top:4px;padding-top:3px;
+  border-top:1px solid rgba(255,255,255,.12)}
 /* 滚动条 */
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:#cdd3db;border-radius:3px}
 </style>
 <body>
-<div id=road-tip></div>
+<div id=map-tip></div>
 <header>
-  <h1>城市内涝数字孪生 · 排水防涝决策推演</h1>
+  <h1>城市内涝可进化决策智能体</h1>
+  <span class=scope>语义孪生层 · 情景推演，非实时物联</span>
   <span class=clock id=clock>--:--:--</span>
-  <span class=sub>兴华路片区 A-03 · 滨河路片区 B-01 · 底图参考 © OpenStreetMap 贡献者（ODbL 1.0，衍生数据同许可）</span>
+  <span class=sub>底图 © OpenStreetMap 贡献者（ODbL 1.0）· 路名与工单为评测场景代号，非真实路名<span id=hydro-src></span><span id=tl-src></span></span>
 </header>
 <div id=kpibar>
   <div class=kpi-card style="--kpi:var(--blue)"><div class=k>当前积水深度</div><div class=v><span id=k-depth>0</span><span class=u>cm</span></div><div class=n id=k-depth-note>峰值 30 cm</div></div>
   <div class=kpi-card style="--kpi:var(--red)"><div class=k>封路路段</div><div class=v><span id=k-block>0</span><span class=u>条</span></div><div class=n id=k-block-note>—</div></div>
   <div class=kpi-card style="--kpi:var(--amber)"><div class=k>堵塞雨水口</div><div class=v><span id=k-clog>0</span><span class=u>处</span></div><div class=n id=k-clog-note>—</div></div>
   <div class=kpi-card style="--kpi:var(--green)"><div class=k>泵站运行</div><div class=v><span id=k-pump>0</span><span class=u id=k-pump-total>/ 3</span></div><div class=n id=k-pump-note>—</div></div>
-  <div class=kpi-card style="--kpi:var(--cyan)"><div class=k>处置进度</div><div class=v><span id=k-prog>0</span><span class=u>%</span></div><div class=n id=k-phase>降雨前奏</div></div>
+  <div class=kpi-card style="--kpi:var(--cyan)"><div class=k>推演进度</div><div class=v><span id=k-prog>0</span><span class=u>%</span></div><div class=n id=k-phase>降雨前奏</div></div>
 </div>
 <div id=wrap>
   <div id=stage>
     <svg id=map viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="rain-layer"></div>
     <div id=legend>
       <h3>图例</h3>
       <span class=sw><i style=background:linear-gradient(135deg,var(--water-lo),var(--water-hi))></i>积水</span>
@@ -356,7 +530,15 @@ header .clock{font-family:ui-monospace,monospace;font-size:12px;color:var(--dim)
       <span class=sw><i style=background:var(--green)></i>泵站</span>
       <span class=sw><i style=background:var(--amber)></i>雨水口堵塞</span>
       <span class=sw><i style=background:var(--blue)></i>雨水口</span>
-      <span class=sw><i style=background:#c8cfd8></i>道路 / 建筑</span>
+      <span class=sw><i style=background:#c8cfd8></i>道路</span>
+      <details class=pipe-legend>
+        <summary>建筑用途</summary>
+        <span class=sw><i style="background:#e4e8ef;border:1px solid #cdd4df"></i>住宅</span>
+        <span class=sw><i style="background:#d3daf0;border:1px solid #cdd4df"></i>商业办公</span>
+        <span class=sw><i style="background:#e2d9ee;border:1px solid #cdd4df"></i>公共服务</span>
+        <span class=sw><i style="background:#ecdfc6;border:1px solid #cdd4df"></i>工业仓储</span>
+        <span class=sw><i style="background:#e9ecf1;border:1px solid #cdd4df"></i>未标注/其他</span>
+      </details>
       <details class=pipe-legend>
         <summary>地下管线</summary>
         <span class="sw line"><i style="border-top:2px solid #1d6fa8"></i>雨水/供水</span>
@@ -372,18 +554,34 @@ header .clock{font-family:ui-monospace,monospace;font-size:12px;color:var(--dim)
       <span class=t id=ptime>00:00</span>
       <span class=hint>滚轮缩放 · 拖拽平移 · 双击复位</span>
     </div>
+    <div id=narration></div>
+    <div id=focuscard></div>
   </div>
   <div id=side>
     <h3>决策调拨 · 抽排资源分配</h3>
     <div id=decision-card></div>
     <h3 style="margin-top:6px">跨部门协作 · 8 部门时序</h3>
     <div id=dept-lanes></div>
-    <h3 style="margin-top:6px">事件推演 · 7 跳</h3>
+    <h3 style="margin-top:6px">事件推演 · 7 步</h3>
     <div id=eventline></div>
   </div>
 </div>
 <script>
 const D = __DATA__;
+// 片区名：台账只有编号 A-03 / B-01，直接摆编号等于让人看天书。
+// 名字由「积水所在道路」推导（见 build_payload），编号留在 title 里可核对。
+const DN = D.district_names || {};
+const dn = (id)=> (DN[id] || id);
+// 需要同时给出「名字 + 编号」的地方用它：可核对，但先让人看懂
+const dnFull = (id)=> (DN[id] ? `${DN[id]}（${id}）` : id);
+// 台账原文里夹着片区编号（「B-01 施工区燃气探测」）——原文不能改，
+// 但摆到人眼前时要把编号换成能读的名字。编号跟着括号保留，不影响核对。
+const humanDistrict = (text)=>{
+  if(!text) return text || '';
+  let out = String(text);
+  Object.keys(DN).forEach(id=>{ out = out.split(id).join(DN[id]); });
+  return out;
+};
 const NS = 'http://www.w3.org/2000/svg';
 const svg = document.getElementById('map');
 const svgNS = (t)=>document.createElementNS(NS, t);
@@ -396,19 +594,184 @@ svg.setAttribute('viewBox', `0 0 ${VW} ${VH}`);
 svg.setAttribute('preserveAspectRatio','xMidYMid meet');
 const sx = (VW - 2*PAD) / W, sy = (VH - 2*PAD) / H;
 const scale = Math.min(sx, sy);
+function rectHit(a,b){ return a.x < b.x+b.w && b.x < a.x+a.w && a.y < b.y+b.h && b.y < a.y+a.h; }
+// 下穿隧道没有独立坐标，按 road_id 落在路段 30% 处。
+// 原来落中点，正好和路名同位——「兴华路」与「下穿隧道」实测 55% 叠印。
+const UNDERPASS_AT = 0.30;
 const cx = (x)=>(VW - W*scale)/2 + (x - minX)*scale;
 const cy = (y)=>(VH - H*scale)/2 + (maxY - y)*scale;
+// 折线上按比例取点（0=起点，1=终点）。示意路每条都是两点折线，
+// 但别写死两点——取点逻辑按段长累加，将来补节点也不用改。
+function pointAt(poly, f){
+  const segs = [];
+  let total = 0;
+  for(let i=1;i<poly.length;i++){
+    const L = Math.hypot(poly[i].x-poly[i-1].x, poly[i].y-poly[i-1].y);
+    segs.push(L); total += L;
+  }
+  if(!total) return poly[0] || {x:0,y:0};
+  let want = total * Math.max(0, Math.min(1, f));
+  for(let i=0;i<segs.length;i++){
+    if(want <= segs[i]){
+      const t = segs[i] ? want/segs[i] : 0;
+      return {x: poly[i].x + (poly[i+1].x-poly[i].x)*t,
+              y: poly[i].y + (poly[i+1].y-poly[i].y)*t};
+    }
+    want -= segs[i];
+  }
+  return poly[poly.length-1];
+}
 
 // 跳次语义（与 web_demo.py 的 JUMP_VISUAL 对齐）
+// blockLevel：0=未封闭 1=半幅（施工占道）2=全幅（积水研判扩大）
+// 「半幅→全幅」不是美化，是封路通告 GG-JT-2026-1029-01 里写明的两个阶段。
 const JUMPS = [0.12,0.22,0.33,0.44,0.56,0.76,1.00];
 const JUMP_VISUAL = [
-  {water:0.18,rain:0.55,alarm:false,block:false,crew:false,dispatch:false,clog:false,title:'降雨持续：兴华路低洼段开始积水'},
-  {water:0.42,rain:0.72,alarm:false,block:false,crew:false,dispatch:false,clog:true ,title:'雨水口堵塞：排水受阻，积水加速上涨'},
-  {water:0.60,rain:0.82,alarm:false,block:false,crew:false,dispatch:true ,clog:true ,title:'部门落位：排水中心向两片区派发工单'},
-  {water:0.76,rain:0.90,alarm:true ,block:false,crew:false,dispatch:true ,clog:true ,title:'资源缺口：A-03 泵力不足，触发告警'},
-  {water:1.00,rain:0.95,alarm:true ,block:false,crew:true ,dispatch:true ,clog:true ,title:'积水峰值：施工队到场，B-01 调泵增援'},
-  {water:0.80,rain:0.60,alarm:false,block:true ,crew:true ,dispatch:true ,clog:false,title:'疏通见效：封路管制，积水开始回落'},
-  {water:0.08,rain:0.12,alarm:false,block:true ,crew:true ,dispatch:false,clog:false,title:'处置完成：退水回落，道路恢复通行'},
+  {water:0.18,rain:0.55,alarm:false,blockLevel:0,crew:false,dispatch:false,clog:false,clock:'',title:'降雨持续：兴华路低洼段开始积水'},
+  {water:0.42,rain:0.72,alarm:false,blockLevel:0,crew:false,dispatch:false,clog:true ,clock:'',title:'雨水口堵塞：排水受阻，积水加速上涨'},
+  {water:0.60,rain:0.82,alarm:false,blockLevel:0,crew:false,dispatch:true ,clog:true ,clock:'',title:'部门落位：排水中心向两片区派发工单'},
+  {water:0.76,rain:0.90,alarm:true ,blockLevel:0,crew:false,dispatch:true ,clog:true ,clock:'',title:'资源缺口：A-03 泵力不足，触发告警'},
+  {water:1.00,rain:0.95,alarm:true ,blockLevel:0,crew:true ,dispatch:true ,clog:true ,clock:'',title:'积水峰值：施工队到场，B-01 调泵增援'},
+  {water:0.80,rain:0.60,alarm:false,blockLevel:2,crew:true ,dispatch:true ,clog:false,clock:'',title:'疏通见效：封路管制，积水开始回落'},
+  {water:0.08,rain:0.12,alarm:false,blockLevel:2,crew:true ,dispatch:false,clog:false,clock:'',title:'处置完成：退水回落，道路恢复通行'},
+];
+
+// 水位系数改用定量层算出的过程线（scripts/build_hydro_curve.py：推理公式产流 +
+// 修正 Puls 调蓄演进）。没有这份数据就保留上面的手写值——图必须能出，
+// 但页面底部会标注「水位为示意节奏」，不能让人以为两种情况下都是算出来的。
+if(D.hydro && D.hydro.samples && D.hydro.samples.length === JUMP_VISUAL.length){
+  JUMP_VISUAL.forEach((j,i)=>{ j.water = D.hydro.samples[i]; });
+}
+// 雨强同样换成计算值。原来的手写值是「渐强」的（0.55→0.95），会让人误读成
+// 「雨小了水才退」；真实过程是 60mm/3h 均匀降雨一直在下，退水靠的是疏通+泵站。
+// 这条叙事差别很关键——它是「决策起作用」而不是「天晴了」。
+if(D.hydro && D.hydro.rain_samples && D.hydro.rain_samples.length === JUMP_VISUAL.length){
+  JUMP_VISUAL.forEach((j,i)=>{ j.rain = D.hydro.rain_samples[i]; });
+}
+// 开关与时刻改用台账反推值（scripts/build_event_timeline.py）。
+// 原来的 clog/dispatch/block/alarm/crew 是手写的：堵塞从第 2 跳才出现、封路
+// 到第 6 跳才发生——都与台账对不上（雨水口 09-30 巡检即在册堵塞；封路通告
+// 08:30 已生效为半幅）。这里换成有出处的值，同时把 clock 打上，让每一跳
+// 都能回答「这是几点的事」。
+if(D.timeline && D.timeline.jumps && D.timeline.jumps.length === JUMP_VISUAL.length){
+  D.timeline.jumps.forEach((src,i)=>{
+    const j = JUMP_VISUAL[i];
+    const f = src.flags || {};
+    if(typeof f.clog === 'boolean')        j.clog = f.clog;
+    if(typeof f.dispatch === 'boolean')    j.dispatch = f.dispatch;
+    if(typeof f.alarm === 'boolean')       j.alarm = f.alarm;
+    if(typeof f.crew === 'boolean')        j.crew = f.crew;
+    if(typeof f.blockLevel === 'number')   j.blockLevel = f.blockLevel;
+    if(src.title) j.title = src.title;
+    if(src.clock) j.clock = src.clock;
+  });
+  // 动画进度按「真实分钟 / 总时长」分配，跳次间隔才和过程线一致。
+  // 原来固定的 0.12/0.22/… 是照手写剧本拍的，和后 3 跳挤在一起的物理过程不匹配。
+  if(D.hydro && D.hydro.sample_minutes && D.hydro.sample_minutes.length === JUMP_VISUAL.length){
+    const mm = D.hydro.sample_minutes;
+    const total = Math.max(1, mm[mm.length-1]);
+    JUMP_VISUAL.forEach((j,i)=>{ JUMPS[i] = Math.min(1, mm[i]/total); });
+  }
+}
+
+// 页头必须能区分「算出来的曲线」和「示意节奏」——否则看图的人无从判断这条
+// 水位线到底有没有依据，这正是之前那个断层的症结。
+(function(){
+  const apply = ()=>{
+    const el = document.getElementById('hydro-src');
+    if(!el) return;
+    const h = D.hydro;
+    if(h){
+      const peak = h.peak_depth_m ? Math.round(h.peak_depth_m*100) : 30;
+      el.textContent = ` · 水位：按雨量算出来的（产流 ${Math.round(h.runoff_m3h||0)} m³/h，峰值 ${peak} cm）`;
+      const c = h.calibration || {};
+      // 标定口径一起写进 tooltip：只说「算出来的」不够，要能回答「参数哪来的」。
+      const calLine = c.psi
+        ? `标定：ψ=${Number(c.psi).toFixed(2)}（GB 50014 城市建成区）· `
+          + `汇水面积 ${Number(c.geometric_ha ? c.geometric_ha['基准'] : 0).toFixed(2)} ha`
+          + `（路长 ${c.road_length_m} m × 54 m 服务带）→ `
+          + `预测峰值 ${(c.predicted_peak_at_geo_m*100).toFixed(1)} cm，对台账 30 cm 偏差 `
+          + `${c.deviation_cm > 0 ? '+' : ''}${Number(c.deviation_cm).toFixed(1)} cm`
+          + `（${Number(c.deviation_pct).toFixed(1)}%）· `
+          + `实际施加雨量 ${c.applied_rain_mm} mm（预警 ${c.forecast_rain_mm} mm 是上限，不是实测）`
+        : '';
+      el.title = [
+        `汇水面积 ${h.catchment_ha} 公顷（按峰值倒推的等效值，不是实测）`,
+        `雨强 ${h.intensity_lps_ha} 升/（秒·公顷）`,
+        calLine,
+        `算法：推理公式产流 + 修正 Puls 法调蓄演进（出处 ${h.formula_runoff} / ${h.formula_routing}）`,
+      ].filter(Boolean).join(String.fromCharCode(10));
+      el.style.color = 'var(--green)';
+    }else{
+      el.textContent = ' · 水位：示意节奏（未接入定量层）';
+      el.style.color = 'var(--amber)';
+    }
+  };
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+  else apply();
+})();
+
+// 开关的中文名：tooltip 里不能出现 clog/dispatch 这种内部代号
+const FLAG_CN = {clog:'雨水口淤积', dispatch:'车辆出动', blockLevel:'封路阶段', alarm:'资源缺口告警', crew:'增援泵到场'};
+// 换行符不能写字面量 '\n'：这段 JS 是 Python 普通字符串生成的，反斜杠会被
+// Python 先转义成真换行，单引号字符串里出现裸换行就是 SyntaxError。
+const NL = String.fromCharCode(10);
+
+// 时序同样要能分辨「台账反推」和「手写剧本」。开关里有推演项时，tooltip 逐条列出
+// 哪些是台账、哪些是推演——这是被动交代，比被评委追问强。
+(function(){
+  const apply = ()=>{
+    const el = document.getElementById('tl-src');
+    if(!el) return;
+    const tl = D.timeline;
+    if(tl){
+      el.textContent = ` · 时序：台账反推（${tl.event_date||''} ${tl.alert_level_cn||''}预警）`;
+      const cn = (arr)=>(arr||[]).map(f=>FLAG_CN[f]||f).join('、');
+      const der = tl.derivation || {};
+      const derLines = Object.keys(der).map(k=>`· ${FLAG_CN[k]||k}：${der[k]}`);
+      const gapLines = (tl.data_gaps||[]).map(g=>`· ${g.field}｜缺：${g.missing}｜替代：${g.workaround}`);
+      const cc = tl.cross_checks || {};
+      const lim = tl.limits || {};
+      const ccLine = (cc.crew_resolved_clock)
+        ? `· 指引时限 ${cc.crew_by_rule_clock} ／ 跨区时延 ${cc.crew_by_transfer_clock} → `
+          + `${cc.agree ? '两条依据一致' : '取较晚者'} ${cc.crew_resolved_clock}`
+        : '';
+      const limLine = lim.restore_by_clock
+        ? `· 恢复通行上界 ${lim.restore_by_clock}（指引 §4.1：积水消退后 ${lim.restore_after_h} 小时内）`
+        : '';
+      el.title = [
+        `台账有据：${cn(tl.ledger_flags)||'—'}`,
+        `部分推演：${cn(tl.mixed_flags)||'无'}（状态有出处，解除时刻推演）`,
+        `全为推演：${cn(tl.derived_flags)||'无'}`,
+        '',
+        '锚点：事件零点＝预警生效；半幅＝封路通告生效；全幅＝首条积水工单上报',
+        '',
+        '推演口径：',
+        ...derLines,
+        ...(ccLine ? ['', '交叉校验：', ccLine, limLine].filter(Boolean) : []),
+        '',
+        '台账缺口（不补编，显式列出）：',
+        ...gapLines,
+      ].join(NL);
+      el.style.color = 'var(--green)';
+    }else{
+      el.textContent = ' · 时序：示意节奏（未接入台账时标）';
+      el.style.color = 'var(--amber)';
+    }
+  };
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+  else apply();
+})();
+// 每个跳次的一句解说（谁、做了什么、结果）。时刻与工单/通告对齐，
+// 顺序也按台账时间排：08:30 半幅封控 → 09:20 积水上报 → 09:35 燃气沉陷。
+const JUMP_NARRATION = [
+  '市气象台 07:30 发布暴雨橙色预警、08:00 生效；兴华路低洼段开始积水，雨水口淤积已于 09-30 巡检登记',
+  '08:30 区道路管理中心与交警支队联合发布半幅封闭，燃气施工占用段提前管控',
+  '半幅封闭维持；淤积雨水口过水能力不足，积水继续上涨',
+  '1# 泵组电机故障未修复，兴华路抽排能力降到 800 m³/h（设计 1200），触发资源缺口告警',
+  '09:20 现场核实积水 30 cm 并上报，09:30 滨河路 18 cm 同步上报；研判扩大为全幅封闭，调移动泵增援',
+  '清理淤积雨水口、泵站全开，积水开始回落；09:35 燃气上报基坑沉陷、09:50 增援移动泵到位（跨区 40 分钟）',
+  '积水退至阈值以下；按作业指引应在 12:30 前恢复通行（封路通告有效期至 18:00）',
 ];
 // 部门落点：从台账 scope + 工单反推每个部门在地图上的位置（世界坐标）。
 // 排水→泵站/雨水口、道路→施工路段、交警→封路段、燃气→燃气管线、供电→电力管线、
@@ -419,8 +782,14 @@ function deptPosition(orgId){
     return ps ? ps.xy : {x:-300,y:60};
   }
   if(orgId==='ORG-ROAD'){
+    // 道路中心在本事件里做的是「联合发布封路通告」——它站的地方就是被封的那条路。
+    // 原来按「在建路段」定位，落到民生街：那是另一条施工路，离事发地两公里，
+    // 自动镜头跟过去只剩一条空街（第 3 步实测）。优先封路路段，没有才退回在建路段。
+    // 取 0.62 而不是中点：中点是交警的位置，两个图标会挤在一起。
+    const rc = D.roads.find(x=>x.state==='closed');
+    if(rc) return pointAt(rc.polyline, 0.62);
     const r = D.roads.find(x=>x.state==='under_construction');
-    if(r) return r.polyline[Math.floor(r.polyline.length/2)];
+    if(r) return pointAt(r.polyline, 0.5);
     return {x:-800,y:0};
   }
   if(orgId==='ORG-TRAFFIC'){
@@ -445,12 +814,39 @@ function deptPosition(orgId){
   }
   if(orgId==='ORG-EMERG'){
     const d = D.districts.find(x=>x.id==='A-03');
-    return d ? d.center : {x:-635,y:11};
+    // 不能直接落片区中心：中心右下方就是建设大道泵站，而「资源缺口统筹」这个
+    // 动作气泡是往圆点下方画的，必然压在泵站名上（第 5 步实测）。
+    // 往左下让开，仍在 A-03 范围内，语义还是「片区统筹」。
+    return d ? {x: d.center.x - 200, y: d.center.y - 160} : {x:-835,y:-148};
   }
   if(orgId==='ORG-METEO'){
     return {x:-635, y: 380};   // 全局顶部，气象是全局角色
   }
   return {x:0,y:0};
+}
+// 部门图标不能叠在设施上。供电按电力管线中点定位，而电力管线正沿兴华路，
+// 兴华路泵站也在兴华路上 —— 两个图标必然撞，实测「供电」的大圆把泵站和
+// 告警环压掉一半。这里按最小间距把非本设施的部门图标推开。
+// 排水公司除外：它本来就是泵站运维方，站在泵站上是正确的语义。
+function avoidFacilities(orgId, pos){
+  if(orgId==='ORG-DRAIN') return pos;
+  // 180 世界单位 ≈ 60 viewBox 像素。泵站名字本身就有 6 个字宽，
+  // 62 / 110 都不够，「资源缺口统筹」照样压在「建设大道泵站」上（第 5 步实测）。
+  const minDist = 180;
+  let x = pos.x, y = pos.y;
+  (D.facilities||[]).forEach(f=>{
+    if(!f.xy) return;
+    const dx = x - f.xy.x, dy = y - f.xy.y;
+    const d = Math.hypot(dx, dy);
+    if(d < minDist){
+      // 正撞在圆心上时给一个确定的落点方向，别用随机
+      const ux = d > 1e-6 ? dx/d : -0.7;
+      const uy = d > 1e-6 ? dy/d : -0.7;
+      x = f.xy.x + ux*minDist;
+      y = f.xy.y + uy*minDist;
+    }
+  });
+  return {x, y};
 }
 
 // ---- 跨部门协作：部门 → 位置 → 动作的映射（数据来自 department_duties.csv + work_orders.csv）----
@@ -462,18 +858,43 @@ const DEPT_COLOR = {
   'ORG-GAS':'#8e44ad', 'ORG-POWER':'#b58900', 'ORG-WATER':'#2e7d8f',
   'ORG-EMERG':'#d35400', 'ORG-METEO':'#5b8db8',
 };
+// 部门简称：台账全称是「市燃气公司」「市气象台」。按后缀剥词会剩下「市燃气」，
+// 再剥一层就只剩一个「市」字——图上出现一个只写「市」的圆点，等于没标（实测）。
+// 简写只在这里定义一次：地图圆点、动作气泡、下方泳道全用它，避免三处各写一套。
+const DEPT_SHORT = {
+  'ORG-DRAIN':'排水', 'ORG-ROAD':'道路', 'ORG-TRAFFIC':'交警', 'ORG-GAS':'燃气',
+  'ORG-POWER':'供电', 'ORG-WATER':'供水', 'ORG-EMERG':'应急', 'ORG-METEO':'气象',
+};
+function deptShort(id){
+  if(DEPT_SHORT[id]) return DEPT_SHORT[id];
+  const n = ((D.departments||[]).find(x=>x.id===id)||{}).name || id;
+  return n.replace(/公司|支队一大队|管理局|管理所|管理中心|气象台/g,'').replace(/^[市区]/,'');
+}
+// 部门此刻在做什么（4 个字）。取的是职责台账的动作、或那一步事件原文的短语，
+// 不新造说法：气象=发布预警、道路=封路通告（封闭道路实施）、交警=交通管制、
+// 排水=雨水口清掏、供电=泵站保电、应急=资源统筹、燃气=基坑处置、供水=管线避让。
+// 每个部门在 7 跳里只介入一次，所以按部门给一条就够，不必按时序再分。
+const DEPT_DOING = {
+  'ORG-METEO':'发布预警', 'ORG-ROAD':'封路通告', 'ORG-TRAFFIC':'交通管制',
+  'ORG-DRAIN':'雨水口清掏', 'ORG-POWER':'泵站保电', 'ORG-EMERG':'资源统筹',
+  'ORG-GAS':'基坑处置', 'ORG-WATER':'管线避让',
+};
 // 部门介入时序：index 对应 JUMP_VISUAL 的跳次（0-6），标注该跳次新介入的部门
-// 及动作。全部基于台账真实语义，不编造。
+// 及动作。时序按台账重排——交警不是第 6 跳才出现：封路通告 08:30 就是
+// 道路中心 + 交警联合发布的半幅封闭，交警必须从第 2 跳起在泳道里。
+// acts：同一步里两个部门做的是两件事。原来共用一句 act，第 6 步燃气和供水
+// 的圆点下面会各印一遍「基坑沉陷处置」——同一个短语出现两次，看的人会以为画重了。
+// 各自取职责台账里的动作（燃气管道抢修 / 供水管网抢修）后，两句话都能对上部门。
 const DEPT_TIMELINE = [
-  { t:0.00, orgs:['ORG-METEO'],  act:'发布暴雨预警' },
-  { t:0.22, orgs:['ORG-DRAIN'],  act:'雨水口清掏 · 泵车待命' },
-  { t:0.33, orgs:['ORG-ROAD'],   act:'占道施工审批 · 路面养护' },
-  { t:0.44, orgs:['ORG-GAS','ORG-POWER'], act:'燃气保护 · 泵站保电' },
-  { t:0.56, orgs:['ORG-EMERG'],  act:'应急统筹 · 物资调配' },
-  { t:0.76, orgs:['ORG-TRAFFIC'],act:'封路管制（与道路联合）' },
-  { t:1.00, orgs:[],             act:'退水验收 · 解除管制' },
+  { t:0.00, orgs:['ORG-METEO'],              act:'07:30 发布橙色预警' },
+  { t:0.08, orgs:['ORG-ROAD','ORG-TRAFFIC'], act:'联合发布封路通告' },
+  { t:0.21, orgs:['ORG-DRAIN'],              act:'淤积雨水口清掏' },
+  { t:0.35, orgs:['ORG-POWER'],              act:'泵站保电 · 抢修配合' },
+  { t:0.47, orgs:['ORG-EMERG'],              act:'资源缺口统筹 · 调移动泵' },
+  { t:0.60, orgs:['ORG-GAS','ORG-WATER'],    act:'基坑沉陷处置 · 供水管线避让' },
+  { t:0.77, orgs:[],                         act:'退水复核 · 待解封' },
 ];
-const DURATION = 50;
+const DURATION = 90;   // 7 跳总时长 90 秒（每跳约 13 秒），动作看得清、镜头跟得上
 
 // ---- 真实 OSM 底图：只作「参考纹理」，不是语义载体 ----
 // 定位（用户 2026-11-13 拍板）：示意路名（R-101 兴华路等）在 OSM 里不存在，
@@ -527,11 +948,13 @@ function buildOsmAreas(){
     poly.setAttribute('fill', areaFill(a));
     poly.setAttribute('stroke', '#d8dee4');
     poly.setAttribute('stroke-width','0.4');
-    if(a.name){
-      const tt = svgNS('title');
-      tt.textContent = a.label ? `${a.name}（${a.label}）` : a.name;
-      poly.appendChild(tt);
-    }
+    // 悬停给「名称 · 用途 · 面积」。123 个地块里 68 个在 OSM 里没有名字
+    // （停车场、草地、球场最常见），也不能什么都不弹——静悄悄会让人以为这片没数据。
+    poly.dataset.area = a.id;
+    poly.style.cursor = 'help';
+    poly.addEventListener('mouseenter', e=>mapTipShow(e, tipAreaHtml(a)));
+    poly.addEventListener('mousemove', mapTipMove);
+    poly.addEventListener('mouseleave', mapTipHide);
     g.appendChild(poly);
   });
   // 线（铁路/地铁/河道）：淡色虚线
@@ -601,6 +1024,27 @@ function buildBlocks(){
 }
 
 // ---- 构建底图 ----
+// 建筑用途分类：渲染着色和悬停提示都要用同一套口径，放模块级只留一份。
+const BLD_TONE = {
+  res:'#e4e8ef', com:'#d3daf0', pub:'#e2d9ee', ind:'#ecdfc6', oth:'#e9ecf1'
+};
+const BLD_CN = {res:'住宅', com:'商业办公', pub:'公共服务', ind:'工业仓储', oth:'未标注/其他'};
+// OSM 的 height 是贡献者填的，不是实测。叫「实测高度」是overclaim——
+// 1316 栋里只有 61 栋有这个字段，其余 318 栋按层数换算、937 栋按类型推定。
+const HSRC_CN = {osm_height:'OSM 标注高度', osm_levels:'按 OSM 层数换算', inferred_type:'按建筑类型推定'};
+const BLD_RES = ['apartments','residential','house','detached','dormitory','terrace','semidetached_house','bungalow'];
+const BLD_COM = ['commercial','retail','office','hotel','supermarket','kiosk','mall','department_store'];
+const BLD_PUB = ['school','hospital','university','college','public','civic','government','kindergarten','museum','library','theatre'];
+const BLD_IND = ['industrial','warehouse','manufacture','factory','garage','garages','hangar'];
+function toneOf(b){
+  const t = String(b.building||'').toLowerCase();
+  if(BLD_RES.indexOf(t)>=0) return 'res';
+  if(BLD_COM.indexOf(t)>=0) return 'com';
+  if(BLD_PUB.indexOf(t)>=0) return 'pub';
+  if(BLD_IND.indexOf(t)>=0) return 'ind';
+  return 'oth';
+}
+
 function buildBase(){
   const defs = svgNS('defs');
   // 积水径向渐变（中心深青、边缘浅青）
@@ -631,7 +1075,11 @@ function buildBase(){
   const osmBlds = (D.basemap && D.basemap.buildings && D.basemap.buildings.length)
     ? D.basemap.buildings : null;
   if(osmBlds){
-    // 真实建筑：不规则轮廓 + 右下投影，有名的加 tooltip
+    // 真实建筑：按 OSM 用途着色 + 右下投影 + 悬停详情。
+    // 底图是背景，色相只做小幅偏移（低饱和），不能抢业务层（积水/封路/调拨）
+    // 的视觉优先级——这是这张图的第一原则。
+    // 色相分配：绿地是绿、水体是青，所以公共服务避开绿、改用淡紫，
+    // 商业用靛蓝（比水体的青蓝更紫），三个色系互不打架。
     osmBlds.forEach(b=>{
       const pts = b.footprint.map(p=>`${cx(p.x).toFixed(1)},${cy(p.y).toFixed(1)}`).join(' ');
       const sh = svgNS('polygon');
@@ -642,15 +1090,19 @@ function buildBase(){
       bg.appendChild(sh);
       const poly = svgNS('polygon');
       poly.setAttribute('points', pts);
-      poly.setAttribute('fill', '#edf0f4');
+      poly.setAttribute('fill', BLD_TONE[toneOf(b)]);
       poly.setAttribute('stroke', '#d3dae2');
       poly.setAttribute('stroke-width','0.5');
       bg.appendChild(poly);
-      if(b.name){
-        const tt = svgNS('title');
-        tt.textContent = b.levels ? `${b.name}（${b.levels}层）` : b.name;
-        poly.appendChild(tt);
-      }
+      // 悬停给「名称 · 用途 · 高度（来源）」。高度是推定值时必须标出来：
+      // 图上推定值和实测值长得一模一样，不标等于把推断当实测用。
+      // 用统一浮层而不是 <title>：原生提示要等一秒才出、没有样式，和道路的提示框
+      // 是两套观感，还得靠浏览器；1316 个元素逐个挂事件在现代浏览器上没压力。
+      poly.dataset.bld = b.id;
+      poly.style.cursor = 'help';
+      poly.addEventListener('mouseenter', e=>mapTipShow(e, tipBuildingHtml(b)));
+      poly.addEventListener('mousemove', mapTipMove);
+      poly.addEventListener('mouseleave', mapTipHide);
     });
   } else {
     D.buildings.forEach(bl=>{
@@ -673,6 +1125,19 @@ function buildBase(){
 
   // 道路：白底 + 深灰边（业务示意路要比 OSM 背景路网更醒目，一眼能分清「业务路 vs 背景路」）
   const roadLayer = svgNS('g'); roadLayer.id='road-layer';
+  // 路名要避让，否则会叠印：R-103 民生街 与 R-104 环城北路的折线中点投影后几乎重合，
+  // 实测两个字 100% 重叠，远看就是一团重影（比不标还糟）。
+  // 规则：沿折线依次试几个位置，第一个不撞的路名框就落下去；全撞就不标，
+  // 名字仍留在道路的悬停提示里（不是丢信息，是换了个入口）。
+  const _roadLabelBoxes = [];
+  const _tunnelBoxes = [];
+  (D.underpasses||[]).forEach(u=>{
+    const rr = D.roads.find(x=>x.id===u.road_id);
+    if(!rr) return;
+    const p = pointAt(rr.polyline, UNDERPASS_AT);
+    _tunnelBoxes.push({x:cx(p.x)-20, y:cy(p.y)-24, w:40, h:32});
+  });
+  const ROAD_LABEL_AT = [0.5, 0.36, 0.64, 0.28, 0.72, 0.2, 0.8];
   D.roads.forEach(r=>{
     const d = r.polyline.map((p,i)=>`${i?'L':'M'}${cx(p.x).toFixed(1)},${cy(p.y).toFixed(1)}`).join(' ');
     const w = Math.max(4, r.width_m * scale);
@@ -718,22 +1183,48 @@ function buildBase(){
     hit.setAttribute('pointer-events','stroke');
     hit.style.cursor = 'help';
     hit.dataset.hoverRoad = r.id;
-    hit.addEventListener('mouseenter', e=>roadTipShow(e, r));
-    hit.addEventListener('mousemove', roadTipMove);
-    hit.addEventListener('mouseleave', roadTipHide);
+    hit.addEventListener('mouseenter', e=>mapTipShow(e, tipRoadHtml(r)));
+    hit.addEventListener('mousemove', mapTipMove);
+    hit.addEventListener('mouseleave', mapTipHide);
     roadLayer.appendChild(hit);
-    // 路名
-    const mp = r.polyline[Math.floor(r.polyline.length/2)];
+    // 路名：沿折线找一个没被占的位置（见上方 ROAD_LABEL_AT 的说明）。
+    // 先落到 0.5 处量出真实字宽，再逐个候选点试位，避免用「字数×字号」估算误差。
     const t = svgNS('text');
-    t.setAttribute('x', cx(mp.x).toFixed(1));
-    t.setAttribute('y', (cy(mp.y)-4).toFixed(1));
+    t.dataset.lp = '40';
     t.setAttribute('font-size','9');
     t.setAttribute('fill','#8a93a1');
     t.setAttribute('text-anchor','middle');
     t.setAttribute('paint-order','stroke'); t.setAttribute('stroke','#ffffff'); t.setAttribute('stroke-width','2');
     t.textContent = r.name;
     roadLayer.appendChild(t);
+    const bb = t.getBBox();
+    let placedRoadLabel = false;
+    for(const f of ROAD_LABEL_AT){
+      const p = pointAt(r.polyline, f);
+      const px = cx(p.x), py = cy(p.y);
+      const box = {x: px - bb.width/2 - 3, y: py - 4 - bb.height - 2, w: bb.width + 6, h: bb.height + 4};
+      if(_roadLabelBoxes.some(o=>rectHit(o,box))) continue;
+      if(_tunnelBoxes.some(o=>rectHit(o,box))) continue;
+      t.setAttribute('x', px.toFixed(1));
+      t.setAttribute('y', (py-4).toFixed(1));
+      _roadLabelBoxes.push(box);
+      placedRoadLabel = true;
+      break;
+    }
+    if(!placedRoadLabel) t.remove();   // 七个位置全撞：不标，名字留在悬停提示里
   });
+  // 封路标注只建一次，之后每帧改文字与坐标。原来每帧删了重建，
+  // 标签避让算出的位移下一帧就被抹掉（新建的元素身上没有 transform）。
+  const blk = svgNS('text');
+  blk.id = 'block-label';
+  blk.dataset.lp = '58';
+  blk.setAttribute('font-size','11');
+  blk.setAttribute('font-weight','700');
+  blk.setAttribute('text-anchor','middle');
+  blk.setAttribute('paint-order','stroke');
+  blk.setAttribute('stroke','#ffffff'); blk.setAttribute('stroke-width','3');
+  blk.style.display = 'none';
+  roadLayer.appendChild(blk);
   svg.appendChild(roadLayer);
 
   // 管网层：地下管线用虚线沿道路画（俯视示意图），5 类管线不同颜色
@@ -749,11 +1240,22 @@ function buildBase(){
     line.setAttribute('opacity','0.5');
     line.setAttribute('stroke-linecap','round');
     const tt = svgNS('title');
-    tt.textContent = `${p.id}（${pipeName(p.kind)}管，DN${p.diameter_mm}，${p.layer==='lower'?'深层':'浅层'}）`;
+    // 台账没有管线名，只有编号 —— 按「路名 + 口径 + 管种」拼一个能读懂的说法，
+    // 编号留在末尾供核对。纯 PL-DRN-101 摆出来，看的人不知道那是什么。
+    const _rn = (D.roads.find(r=>r.id===p.road_id)||{}).name;
+    const _desc = `${_rn ? _rn + ' ' : ''}DN${p.diameter_mm} ${pipeName(p.kind)}管（${p.layer==='lower'?'深层':'浅层'}）`;
+    tt.textContent = `${_desc} · 台账编号 ${p.id}`;
     line.appendChild(tt);
     pipeLayer.appendChild(line);
   });
   svg.appendChild(pipeLayer);
+
+  // 资源缺口告警层：alarm 这个开关原来只算不用，画面上看不到任何告警——
+  // 和之前 rain 的情况一样（算了没接渲染）。这里把它接到缺泵的泵站上。
+  // **必须画在设施层之前**：环是 r=26 的虚线圆，泵站名就贴在圆心正上方 13px 处，
+  // 环压在上面时虚线直接从「兴华路泵站」五个字中间穿过去（实测整条字被切碎）。
+  // 放到设施层下面，名字自带的白色描边会把环裁断，字就干净了。
+  buildAlarmLayer();
 
   // 设施点位：实体色 + 白描边，不做发光
   const facLayer = svgNS('g'); facLayer.id='fac-layer';
@@ -766,6 +1268,9 @@ function buildBase(){
       c.setAttribute('fill', facColor(f)); c.setAttribute('stroke','#ffffff'); c.setAttribute('stroke-width','2');
       g.appendChild(c);
       const t = svgNS('text');
+      t.dataset.lp = '80';   // 泵站名优先级最高：剩下的标签都绕着它排
+      t.dataset.lpFar = '0';  // 泵站名不许挪——挪了就对不上是哪个圆点
+      t.dataset.lpSkipIcon = '1';   // 贴着泵站圆点，不参与「避圆点」这一档
       t.setAttribute('x',px); t.setAttribute('y',(py-13).toFixed(1));
       t.setAttribute('font-size','11'); t.setAttribute('fill','#2b3542');
       t.setAttribute('text-anchor','middle'); t.setAttribute('font-weight','600');
@@ -796,11 +1301,33 @@ function buildBase(){
 
   // 积水层（动态）
   const waterLayer = svgNS('g'); waterLayer.id='water-layer';
+  // 积水是实心面、又画在最上层，不关命中就会把底下地块/建筑的悬停整片吃掉，
+  // 而积水那块恰恰是最想问「这是哪儿」的地方。深度信息在上方指标与事件卡里，不缺。
+  waterLayer.setAttribute('pointer-events','none');
   D.water.forEach(w=>{
     const poly = svgNS('polygon');
     poly.dataset.water = w.id;
     poly.dataset.depth = w.depth_cm;
     waterLayer.appendChild(poly);
+    // 深度数字只建一次（文字随水位改，位置不变）。原来每帧重建，
+    // 标签避让给的位移下一帧就没了；而且每帧都新建 8 个 <text> 也没必要。
+    let lx=0, ly=1e9;
+    w.polygon.forEach(p=>{ lx+=p.x; ly=Math.min(ly,p.y); });
+    lx/=w.polygon.length;
+    const lab = svgNS('text');
+    lab.setAttribute('class','depth-lab');
+    lab.dataset.water = w.id;
+    lab.dataset.lp = '52';
+    lab.setAttribute('x', cx(lx).toFixed(1));
+    lab.setAttribute('y', (cy(ly)+13).toFixed(1));
+    lab.setAttribute('font-size','11.5');
+    lab.setAttribute('font-weight','600');
+    lab.setAttribute('fill','#0b5d63');
+    lab.setAttribute('text-anchor','middle');
+    lab.setAttribute('paint-order','stroke');
+    lab.setAttribute('stroke','#ffffff'); lab.setAttribute('stroke-width','2.6');
+    lab.style.display = 'none';
+    waterLayer.appendChild(lab);
   });
   svg.appendChild(waterLayer);
 
@@ -811,12 +1338,74 @@ function buildBase(){
   buildDeptLayer();
 }
 
+// 部门图标统一排布：一次算完，后面的避开前面已经占位的。
+// 台账里交警（封路路段中点）、燃气（燃气管线中点）、供电（电力管线中点）
+// 三者在示意布局中恰好落在兴华路同一个点，实测三个图标叠成一个 ——
+// 屏幕上只能看见最后画的那个「供电」，交警和燃气等于没画。
+// 规则：先保语义位置，撞了才按固定方向推开（顺序固定 → 每次刷新结果一致）。
+const DEPT_MIN_GAP = 115;   // 世界单位：够放下「供电 / 泵站保电」两行标签
+// 已经画好的文字也是「占位」。供电部门按电力管线中点定位，而那个中点正好压在
+// 「兴华路片区」的片区名上（实测 79% 重叠，大圆直接压掉三个字）。
+// 这里把片区层已存在的文字量成矩形，当作禁区一起查。
+function textZones(layerId, padX, padY){
+  const out = [];
+  const g = document.getElementById(layerId);
+  if(!g || !g.getBBox) return out;
+  [...g.querySelectorAll('text')].forEach(t=>{
+    let b; try { b = t.getBBox(); } catch(e) { return; }
+    if(b.width < 2) return;
+    out.push({x:b.x-padX, y:b.y-padY, w:b.width+padX*2, h:b.height+padY*2});
+  });
+  return out;
+}
+function layoutDepartments(){
+  const placed = [];
+  const DIRS = [[1,-1],[-1,-1],[1,1],[-1,1],[1,0],[-1,0],[0,-1],[0,1]];
+  // padX/padY 已经把「图标 + 两行标签」的占地算进去（图标 r=10、标签各 10px 高）
+  const zones = textZones('decision-layer', 62, 34);
+  return (D.departments||[]).map(d=>{
+    const base = avoidFacilities(d.id, deptPosition(d.id));
+    let pos = base;
+    if(d.id === 'ORG-DRAIN'){
+      // 排水公司就该站在泵站上（它是泵站运维方），不参与推开
+      placed.push(pos);
+      return {id: d.id, pos};
+    }
+    // 一圈一圈往外找空位：8 个方向 × 3 圈。只用一圈时，如果 8 个落点都撞，
+    // 就会退回原位——而原位可能正好压在设施上（应急局就踩过这个坑）。
+    let ok = false;
+    for(let ring=1; ring<=3 && !ok; ring++){
+      for(const [ux,uy] of DIRS){
+        const cand = {x: base.x + ux*DEPT_MIN_GAP*ring, y: base.y + uy*DEPT_MIN_GAP*ring};
+        // 候选点要同时躲开「已放置的部门」和「设施」——只查部门的话，
+        // 会把人推到泵站正上方，两个标签叠在一起。
+        const clashDept = placed.some(p=>Math.hypot(cand.x-p.x, cand.y-p.y) < DEPT_MIN_GAP);
+        const clashFac  = (D.facilities||[]).some(f=>f.xy && Math.hypot(cand.x-f.xy.x, cand.y-f.xy.y) < 165);
+        const clashText = zones.some(z=>cand.x>z.x && cand.x<z.x+z.w && cand.y>z.y && cand.y<z.y+z.h);
+        if(!clashDept && !clashFac && !clashText){ pos = cand; ok = true; break; }
+      }
+    }
+    placed.push(pos);
+    return {id: d.id, pos};
+  });
+}
+// 部门位置缓存：图层绘制和镜头聚焦必须用同一套坐标，
+// 否则镜头会对着「台账位置」，而图标已经被推到别处。
+let _deptLayout = null;
+function deptLayoutMap(){
+  if(!_deptLayout){
+    _deptLayout = {};
+    layoutDepartments().forEach(x=>{ _deptLayout[x.id] = x.pos; });
+  }
+  return _deptLayout;
+}
 // 部门协作图层：每个部门一个彩色圆点 + 部门名，落在职责关联的事发地。
 // 默认隐藏，renderDepts 按当前跳次显隐（该跳次新介入的部门显示为高亮，已介入的淡化保留）。
 function buildDeptLayer(){
   const g = svgNS('g'); g.id='dept-layer';
+  const posOf = deptLayoutMap();
   D.departments.forEach(d=>{
-    const pos = deptPosition(d.id);
+    const pos = posOf[d.id] || deptPosition(d.id);
     const px = cx(pos.x), py = cy(pos.y);
     const col = DEPT_COLOR[d.id] || '#5b6472';
     const grp = svgNS('g');
@@ -833,14 +1422,24 @@ function buildDeptLayer(){
     c.setAttribute('cx', px.toFixed(1)); c.setAttribute('cy', py.toFixed(1)); c.setAttribute('r','7');
     c.setAttribute('fill', col); c.setAttribute('stroke','#ffffff'); c.setAttribute('stroke-width','2');
     grp.appendChild(c);
-    // 部门名（短）
+    // 部门名（短）。排水公司站在泵站上是对的（它是运维主体），但名字也放正上方
+    // 就会把泵站名整个盖住——实测两个字条 100% 重叠，泵站名直接消失。
+    // 改成贴右侧，读作「兴华路泵站 ● 排水」，两个名字都在。
+    const side = (d.id === 'ORG-DRAIN');
     const t = svgNS('text');
-    t.setAttribute('x', px.toFixed(1)); t.setAttribute('y', (py-13).toFixed(1));
+    t.dataset.lp = '55';
+    t.dataset.lpFar = '2';   // 部门名贴着圆点，最多让两格
+    t.dataset.lpSkipIcon = '1';   // 避开别的标签可以，避自己的圆点就错位了
+    t.setAttribute('x', (side ? px+13 : px).toFixed(1));
+    t.setAttribute('y', (side ? py+4 : py-13).toFixed(1));
     t.setAttribute('font-size','10'); t.setAttribute('fill', col);
-    t.setAttribute('text-anchor','middle'); t.setAttribute('font-weight','700');
+    t.setAttribute('text-anchor', side ? 'start' : 'middle'); t.setAttribute('font-weight','700');
     t.setAttribute('paint-order','stroke'); t.setAttribute('stroke','#ffffff'); t.setAttribute('stroke-width','2.5');
-    t.textContent = (d.name||d.id).replace(/公司|支队一大队|管理局|管理所|管理中心|气象台|公司/g,'').replace(/区/,'');
+    t.textContent = deptShort(d.id);
     grp.appendChild(t);
+    // 动作不再单独一行：原来在圆点下方另起一个 <text>，它是图上唯一「宽度会变」的
+    // 标签（每步文字不同），避让算出的位置下一帧就失效，实测被挤到解说条底下只剩
+    // 半截。改成并进名字同一行（「应急·资源统筹」），一个元素、固定宽度、跟着圆点走。
     // tooltip
     const tt = svgNS('title');
     tt.textContent = `${d.name}（${d.authority||''}）`;
@@ -852,7 +1451,7 @@ function buildDeptLayer(){
 }
 // 按当前跳次显隐部门图标：该跳次新介入的部门高亮（r=10+脉冲环），已介入的淡化（opacity 0.45），未介入隐藏。
 function renderDepts(t){
-  const {i} = jumpAt(t);
+  const i = jumpIdx(t);
   const g = document.getElementById('dept-layer');
   if(!g) return;
   // 累计到当前跳次已介入的部门
@@ -862,6 +1461,7 @@ function renderDepts(t){
   const now = new Set(DEPT_TIMELINE[Math.min(i,6)].orgs);
   [...g.children].forEach(grp=>{
     const oid = grp.dataset.dept;
+    const nameEl = grp.querySelector('text');
     if(active.has(oid)){
       grp.style.display = '';
       const c = grp.querySelector('circle:not(.dept-ring)');
@@ -871,16 +1471,173 @@ function renderDepts(t){
         c.classList.add('dept-now');
         grp.setAttribute('opacity','1');
         if(ring){ ring.style.display=''; ring.style.animation='dept-ring 1.4s ease-out infinite'; }
+        // 名字后面接动作：「应急·资源统筹」。已介入的老部门只留名字，
+        // 免得整张图每行都是「某某·某事」，越到后面越挤。
+        if(nameEl) nameEl.textContent = `${deptShort(oid)}·${DEPT_DOING[oid] || ''}`.replace(/·$/,'');
       }else{
         c.setAttribute('r','7');
         c.classList.remove('dept-now');
         grp.setAttribute('opacity','0.45');
         if(ring){ ring.style.display='none'; ring.style.animation=''; }
+        if(nameEl) nameEl.textContent = deptShort(oid);
       }
     }else{
       grp.style.display = 'none';
     }
   });
+}
+
+// ---- 全图标签避让 ----
+// 逐个硬挪偏移量只能治一次：片区名被事件卡压住、供电圆点落在片区名上、
+// 路名和隧道标注叠印、部门名与泵站名挤在同一点——每加一个标签就要再来一遍。
+// 改成一条统一规则：每个标签自带优先级（data-lp），建好后按优先级从高到低占位，
+// 撞了就按固定方向让位，实在让不开就淡化（不删，删了图上就少一个地名）。
+// 触发时机：首帧 + 每次跳到新的一步（部门动作条、封路条的文字会变宽变窄）。
+// 坐标全在 SVG 用户坐标系里算：浮层是 HTML 像素，用 CTM 反变换换过来，
+// 这样缩放/切视野都不会让避让结果失效。
+// 让位候选：按「离原位多远」排序，一格一格往外试。
+// 部门和设施的名字必须贴着它们的圆点，挪太远就成了无主标签——
+// 这两类用 data-lp-far="1" 限制成最多挪一格，挪不开宁可淡化也不远走。
+const LP_DIRS = [[0,0],
+  [0,1],[0,-1],[1,0],[-1,0],[1,1],[-1,1],[1,-1],[-1,-1],
+  [0,2],[2,0],[-2,0],[0,-2],[0,3]];
+let _lpStep = -1, _lpSig = '', _lpFrame = 0;
+function declutterLabels(){
+  const map = document.getElementById('map');
+  if(!map || !map.getScreenCTM || !map.createSVGPoint) return;
+  const inv = map.getScreenCTM().inverse();
+  const toVb = (x,y)=>{ const p = map.createSVGPoint(); p.x=x; p.y=y; return p.matrixTransform(inv); };
+  const rectOf = (el)=>{
+    const r = el.getBoundingClientRect();
+    if(r.width < 2 || r.height < 2) return null;
+    const a = toVb(r.left, r.top), b = toVb(r.right, r.bottom);
+    return {x:a.x, y:a.y, w:b.x-a.x, h:b.y-a.y};
+  };
+  // 祖先 display:none 不会反映到子元素的 computedStyle，得自己往上走
+  const shown = (el)=>{
+    let n = el;
+    while(n && n.nodeType === 1){
+      if(getComputedStyle(n).display === 'none') return false;
+      if(n === map) break;
+      n = n.parentNode;
+    }
+    return true;
+  };
+  // 浮层是禁区：事件卡在正中上方、图例在左下、解说条在底部。
+  // 它们是 HTML，不在 SVG 的排版里，标签不会自动躲开。
+  const blocked = [];
+  ['focuscard','legend','narration'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el || !el.getBoundingClientRect) return;
+    const b = rectOf(el);
+    if(b) blocked.push({x:b.x-3, y:b.y-3, w:b.w+6, h:b.h+6});
+  });
+  const items = [];
+  [...map.querySelectorAll('[data-lp]')].forEach(el=>{
+    if(!shown(el)) return;
+    el.removeAttribute('transform');   // 每轮从原位置重算，位移不累积
+    el.style.opacity = '';             // 上一轮淡化过就恢复，否则会越淡越死
+    const b = rectOf(el);
+    if(b) items.push({el, prio: +el.dataset.lp || 0, far: +el.dataset.lpFar || 3,
+                      skipIcon: !!el.dataset.lpSkipIcon, box: b});
+  });
+  items.sort((p,q)=> q.prio - p.prio);
+  // 固定占位（告警徽标这类钉死不能动的图标）先占位，标签绕开它们
+  const kept = [];
+  [...map.querySelectorAll('[data-lp-fixed]')].forEach(el=>{
+    if(!shown(el)) return;
+    const b = rectOf(el);
+    if(b) kept.push({x:b.x-2, y:b.y-2, w:b.w+4, h:b.h+4});
+  });
+  // 图标圆点单独一类禁区：只拦「本来就不属于某个图标」的标签（路名、深度、片区名）。
+  // 贴着图标走的标签（泵站名、部门名）必须豁免，否则会被推离自己的圆点——
+  // 泵站名 far=0 无处可退，只会淡化并继续压着，比不改更糟（实测过）。
+  const keptIcons = [];
+  [...map.querySelectorAll('circle')].forEach(c=>{
+    if(!shown(c)) return;
+    const par = c.parentElement;
+    if(par && par.dataset && par.dataset.dept) return;   // 部门圆点：部门名本就贴着它
+    const rr = parseFloat(c.getAttribute('r') || '0');
+    if(rr < 3 || rr > 16) return;                        // 只要图标级：排除告警环(26)与大范围圈
+    const st = getComputedStyle(c);
+    if(st.fill === 'none' || st.opacity === '0') return;
+    const b = rectOf(c);
+    if(b) keptIcons.push({x:b.x-3, y:b.y-3, w:b.w+6, h:b.h+6});
+  });
+  items.forEach(it=>{
+    const w = it.box.w, h = it.box.h;
+    let put = null;
+    for(const [dx,dy] of LP_DIRS){
+      if(Math.max(Math.abs(dx), Math.abs(dy)) > it.far) continue;
+      const box = {x: it.box.x + dx*(w*0.62), y: it.box.y + dy*(h+3), w, h};
+      if(box.x < 2 || box.y < 2) continue;
+      if(blocked.some(o=>rectHit(o,box))) continue;
+      if(kept.some(o=>rectHit(o,box))) continue;
+      if(!it.skipIcon && keptIcons.some(o=>rectHit(o,box))) continue;
+      put = box; break;
+    }
+    if(!put){
+      it.el.style.opacity = '0.55';
+      kept.push(it.box);
+      return;
+    }
+    const ox = put.x - it.box.x, oy = put.y - it.box.y;
+    if(Math.abs(ox) > 0.5 || Math.abs(oy) > 0.5){
+      it.el.setAttribute('transform', `translate(${ox.toFixed(1)},${oy.toFixed(1)})`);
+    }
+    kept.push(put);
+  });
+  // 调试钩子：控制台看 window.__lp 就知道这一轮把哪些浮层当成了禁区、
+  // 有没有标签因为撞满而淡化。排查「字怎么跑到卡片下面去了」用它，别靠截图猜。
+  window.__lp = {blocked, items: items.length, kept: kept.length};
+  window.__lpRun = declutterLabels;   // 手动重排一次（截图核对/调试用）
+}
+
+// 资源缺口告警：缺泵的泵站套红色虚线环 + 右上角感叹号徽标。
+// 只圈「故障未修复」的泵站，不是所有泵站——把正常的也圈上就成了装饰。
+function buildAlarmLayer(){
+  const g = svgNS('g'); g.id='alarm-layer';
+  g.setAttribute('pointer-events','none');
+  g.style.opacity='0'; g.style.transition='opacity .3s';
+  const bad = D.facilities.filter(f=>f.type==='pump_station' && f.state!=='in_service');
+  bad.forEach(f=>{
+    const px = cx(f.xy.x), py = cy(f.xy.y);
+    // 白底衬：泵站周围挤着部门图标和路名，纯虚线环在花背景上会「看漏」。
+    // 先铺一层很淡的白，再把环画上去，任何背景下都能认出来。
+    const halo = svgNS('circle');
+    halo.setAttribute('cx',px.toFixed(1)); halo.setAttribute('cy',py.toFixed(1)); halo.setAttribute('r','30');
+    halo.setAttribute('fill','#ffffff'); halo.setAttribute('fill-opacity','0.55');
+    halo.setAttribute('stroke','none');
+    g.appendChild(halo);
+    const ring = svgNS('circle');
+    // 半径 26 而不是 18：部门图标就在泵站旁边，环太小会被整个压掉。
+    ring.setAttribute('cx',px.toFixed(1)); ring.setAttribute('cy',py.toFixed(1)); ring.setAttribute('r','26');
+    ring.setAttribute('fill','none'); ring.setAttribute('stroke','#d94a3d');
+    ring.setAttribute('stroke-width','2.4'); ring.setAttribute('stroke-dasharray','5 3.5');
+    g.appendChild(ring);
+    const badge = svgNS('g');
+    // 徽标是「固定占位」：它必须钉在圈上，但别的标签要绕开它——
+    // 实测「全幅封闭」正好落在感叹号上，两个字被遮住一半。
+    badge.dataset.lpFixed = '1';
+    const c = svgNS('circle');
+    // 感叹号放环的左下：右上角是「兴华路泵站」的设施标签，会被压住
+    c.setAttribute('cx',(px-24).toFixed(1)); c.setAttribute('cy',(py+24).toFixed(1)); c.setAttribute('r','7.5');
+    c.setAttribute('fill','#d94a3d'); c.setAttribute('stroke','#ffffff'); c.setAttribute('stroke-width','1.8');
+    badge.appendChild(c);
+    const t = svgNS('text');
+    t.setAttribute('x',(px-24).toFixed(1)); t.setAttribute('y',(py+27.4).toFixed(1));
+    t.setAttribute('font-size','10.5'); t.setAttribute('fill','#ffffff'); t.setAttribute('font-weight','800');
+    t.setAttribute('text-anchor','middle');
+    t.textContent = '!';
+    badge.appendChild(t);
+    g.appendChild(badge);
+  });
+  svg.appendChild(g);
+}
+function renderAlarm(t){
+  const g = document.getElementById('alarm-layer');
+  if(!g) return;
+  g.style.opacity = lerpJump(t).alarm ? '1' : '0';
 }
 
 // 工单事件标记：落到地图空间。定位优先级 facility 坐标 > pipeline 中点 > road 中点。
@@ -911,7 +1668,7 @@ function buildWorkOrderLayer(){
     c.setAttribute('fill','#ffffff'); c.setAttribute('stroke', col); c.setAttribute('stroke-width','2');
     g.appendChild(c);
     const tt = svgNS('title');
-    tt.textContent = `${w.id} · ${woTypeName(w.type)}（${w.severity==='high'?'高':'中'}）${closed?'·已关闭':''}：${w.desc}`;
+    tt.textContent = `${w.id} · ${woTypeName(w.type)}（${w.severity==='high'?'高':'中'}）${closed?'·已关闭':''}：${humanDistrict(w.desc)}`;
     c.appendChild(tt);
   });
   svg.appendChild(g);
@@ -925,7 +1682,7 @@ function woTypeName(t){
 function buildUnderpassLayer(){
   const g = svgNS('g'); g.id='up-layer';
   const roadPt = {};
-  D.roads.forEach(r=>{ const m=r.polyline[Math.floor(r.polyline.length/2)]; roadPt[r.id]=m; });
+  D.roads.forEach(r=>{ roadPt[r.id] = pointAt(r.polyline, UNDERPASS_AT); });
   D.underpasses.forEach(u=>{
     const pt = roadPt[u.road_id];
     if(!pt) return;
@@ -936,11 +1693,15 @@ function buildUnderpassLayer(){
     tri.setAttribute('fill','#d9534f');
     tri.setAttribute('stroke','#ffffff'); tri.setAttribute('stroke-width','1.2');
     g.appendChild(tri);
+    // 标注放三角形右侧而不是正上方：隧道点离兴华路泵站只有二十来个像素，
+    // 正上方正好压在泵站名下面一层，再叠上告警环和水面带，红字彻底糊掉。
+    // 右移一个三角宽度，落回浅色路面上，红字才立得住。
     const t = svgNS('text');
-    t.setAttribute('x',px); t.setAttribute('y',(py-10).toFixed(1));
-    t.setAttribute('font-size','7'); t.setAttribute('fill','#c0392b'); t.setAttribute('font-weight','600');
-    t.setAttribute('text-anchor','middle');
-    t.setAttribute('paint-order','stroke'); t.setAttribute('stroke','#ffffff'); t.setAttribute('stroke-width','2');
+    t.dataset.lp = '60';
+    t.setAttribute('x',(px+9).toFixed(1)); t.setAttribute('y',(py+4).toFixed(1));
+    t.setAttribute('font-size','7.5'); t.setAttribute('fill','#c0392b'); t.setAttribute('font-weight','700');
+    t.setAttribute('text-anchor','start');
+    t.setAttribute('paint-order','stroke'); t.setAttribute('stroke','#ffffff'); t.setAttribute('stroke-width','3');
     t.textContent = '下穿隧道';
     g.appendChild(t);
     const tt = svgNS('title');
@@ -971,7 +1732,10 @@ function buildDecisionLayer(){
     c.setAttribute('stroke-dasharray','3 5');
     c.setAttribute('opacity','0.5');
     g.appendChild(c);
-    // 片区名
+    // 片区名 + 「关键片区」两行装进一个 <g>：标签避让时整块挪，不能只挪上面那行，
+    // 否则「兴华路片区」和「关键片区 · 优先保障」会被拆到两个地方。
+    const lg = svgNS('g');
+    lg.dataset.lp = '72';
     const t = svgNS('text');
     t.setAttribute('x', cx(d.center.x).toFixed(1));
     t.setAttribute('y', (cy(d.center.y)-d.radius_m*scale*0.5-4).toFixed(1));
@@ -980,8 +1744,27 @@ function buildDecisionLayer(){
     t.setAttribute('fill', dec.critical.includes(d.id) ? '#c0392b' : '#5b6472');
     t.setAttribute('text-anchor','middle');
     t.setAttribute('paint-order','stroke'); t.setAttribute('stroke','#ffffff'); t.setAttribute('stroke-width','3');
-    t.textContent = d.id + (dec.critical.includes(d.id) ? ' · 关键片区' : '');
-    g.appendChild(t);
+    // 地图上先给名字，编号放 tooltip —— 看图的人不需要先学会台账编号
+    // 「关键片区」不跟在名字后面同一行：一行 9 个字会横向压到旁边的部门图标，
+    // 拆成第二行小字，宽度减半，也不丢信息。
+    t.textContent = dn(d.id);
+    const ttl = svgNS('title');
+    ttl.textContent = `${dnFull(d.id)}${dec.critical.includes(d.id) ? ' · 关键片区（优先保障）' : ''}`;
+    t.appendChild(ttl);
+    lg.appendChild(t);
+    if(dec.critical.includes(d.id)){
+      const t2 = svgNS('text');
+      t2.setAttribute('x', cx(d.center.x).toFixed(1));
+      t2.setAttribute('y', (cy(d.center.y)-d.radius_m*scale*0.5+9).toFixed(1));
+      t2.setAttribute('font-size','9');
+      t2.setAttribute('font-weight','600');
+      t2.setAttribute('fill','#c0392b');
+      t2.setAttribute('text-anchor','middle');
+      t2.setAttribute('paint-order','stroke'); t2.setAttribute('stroke','#ffffff'); t2.setAttribute('stroke-width','2.5');
+      t2.textContent = '关键片区 · 优先保障';
+      lg.appendChild(t2);
+    }
+    g.appendChild(lg);
   });
 
   // 跨区调拨箭头
@@ -997,6 +1780,7 @@ function buildDecisionLayer(){
     // 弧形路径，避免直线太死板
     const mx = (sx0+ex0)/2, my = (sy0+ey0)/2 - len*0.12;
     const p = svgNS('path');
+    p.dataset.tf = 'path';
     p.setAttribute('d', `M${cx(sx0).toFixed(1)},${cy(sy0).toFixed(1)} Q${cx(mx).toFixed(1)},${cy(my).toFixed(1)} ${cx(ex0).toFixed(1)},${cy(ey0).toFixed(1)}`);
     p.setAttribute('fill','none');
     p.setAttribute('stroke','#2b7cc4');
@@ -1004,11 +1788,16 @@ function buildDecisionLayer(){
     p.setAttribute('marker-end','url(#arr)');
     p.setAttribute('stroke-dasharray','6 4');
     g.appendChild(p);
-    // 中点标签：调拨内容
-    const midX = (sx0+ex0)/2, midY = (sy0+ey0)/2 - len*0.12;
+    // 标签不放在弧线中点：中点正好落在兴华路一带，会和「全幅封闭」红字叠在一起
+    // （实测两行字压成一坨）。沿弧线取 35% 处，靠近滨河路一侧，避开封控标注。
+    const lp = 0.35;
+    const midX = (1-lp)*(1-lp)*sx0 + 2*(1-lp)*lp*mx + lp*lp*ex0;
+    const midY = (1-lp)*(1-lp)*sy0 + 2*(1-lp)*lp*my + lp*lp*ey0;
     const t = svgNS('text');
+    t.dataset.tf = 'label';
+    t.dataset.lp = '66';   // 调拨标签：比片区名低、比路名高
     t.setAttribute('x', cx(midX).toFixed(1));
-    t.setAttribute('y', cy(midY).toFixed(1));
+    t.setAttribute('y', (cy(midY)-7).toFixed(1));
     t.setAttribute('font-size','10');
     t.setAttribute('font-weight','600');
     t.setAttribute('fill','#2b6cb0');
@@ -1018,10 +1807,11 @@ function buildDecisionLayer(){
     t.setAttribute('stroke','#ffffff');
     t.setAttribute('stroke-width','3');
     t.setAttribute('paint-order','stroke'); t.setAttribute('stroke','#ffffff'); t.setAttribute('stroke-width','3');
-    t.textContent = `调 ${tr.qty} 台移动泵 · ${tr.delay_min} 分钟`;
+    t.textContent = `调 ${tr.qty} 台移动泵 · 路上 ${tr.delay_min} 分钟`;
     g.appendChild(t);
     // "示意图"注记
     const note = svgNS('text');
+    note.dataset.tf = 'note';
     note.setAttribute('x', cx(midX).toFixed(1));
     note.setAttribute('y', (cy(midY)+11).toFixed(1));
     note.setAttribute('font-size','8');
@@ -1090,6 +1880,12 @@ function jumpAt(t){
   }
   return {i:6, f:1};
 }
+// 「当前第几步」必须和开关用同一个阈值。原来文字按 jumpAt 的 i 走、开关按
+// f>=0.5 走，导致后半个区间里画面已经封路解除、解说还在说「已封路」。
+function jumpIdx(t){
+  const {i,f} = jumpAt(t);
+  return Math.min(JUMP_VISUAL.length-1, i + (f>=0.5?1:0));
+}
 function lerpJump(t){
   const {i,f} = jumpAt(t);
   if(f<=0) return JUMP_VISUAL[i];
@@ -1097,7 +1893,7 @@ function lerpJump(t){
   const a=JUMP_VISUAL[i], c=JUMP_VISUAL[Math.min(i+1,6)];
   return {
     water:a.water+(c.water-a.water)*f, rain:a.rain+(c.rain-a.rain)*f,
-    alarm:f<0.5?a.alarm:c.alarm, block:f<0.5?a.block:c.block,
+    alarm:f<0.5?a.alarm:c.alarm, blockLevel:f<0.5?a.blockLevel:c.blockLevel,
     crew:f<0.5?a.crew:c.crew, dispatch:f<0.5?a.dispatch:c.dispatch,
     clog:f<0.5?a.clog:c.clog, title:a.title,
   };
@@ -1113,12 +1909,21 @@ function waterColor(depthCm){
   return `rgb(${r},${g},${b2})`;
 }
 
+function renderRain(t){
+  const el = document.getElementById('rain-layer');
+  if(!el) return;
+  const v = lerpJump(t);
+  // 上限 0.26：雨只做体感。再高就会盖住积水与业务标注，那是本末倒置。
+  el.style.opacity = (0.26 * Math.max(0, Math.min(1, v.rain || 0))).toFixed(3);
+}
+
 function renderWater(t){
   const v = lerpJump(t);
   const wl = document.getElementById('water-layer');
   [...wl.children].forEach(c=>{ if(c.dataset.halo) c.remove(); });
   [...wl.children].forEach(poly=>{
-    if(poly.dataset.halo) return;
+    // 只处理水洼多边形。深度数字也是 water-layer 的子节点，放过会被当成水洼改属性。
+    if(poly.tagName !== 'polygon') return;
     const depth = Number(poly.dataset.depth);
     const dNow = depth * v.water;
     const w = D.water.find(x=>x.id===poly.dataset.water);
@@ -1129,29 +1934,30 @@ function renderWater(t){
     const pp = w.polygon.map(p=>`${cx(gx+(p.x-gx)*k).toFixed(1)},${cy(gy+(p.y-gy)*k).toFixed(1)}`).join(' ');
     poly.setAttribute('points', pp);
     poly.setAttribute('fill', waterColor(dNow));
-    poly.setAttribute('fill-opacity', (0.30 + 0.55*v.water).toFixed(2));
+    // 下限从 0.30 提到 0.46：真实积水只有 94×167 米，在 2939 米宽的图上就是一小块。
+    // 透明度给到 0.30 时，浅水期（3~5cm）那块淡青和底图的绿地几乎分不开，
+    // 观众第一眼看不出「这里在积水」。宁可颜色重一点，也要让人认出是水。
+    poly.setAttribute('fill-opacity', (0.46 + 0.40*v.water).toFixed(2));
+    // 真实积水是「沿路的一条窄带」（A-03 那块约 56 米长、4 米宽），在这个比例下
+    // 只有 2 个像素宽 —— 对着原多边形描边，画出来就是一根线，读者不认为那是水面。
+    // 用「粗半透明描边」当水面外扩，视觉上有体量，但落点与范围仍然来自台账多边形。
     poly.setAttribute('stroke','#0e7d85');
-    poly.setAttribute('stroke-width','2.4');
-    poly.setAttribute('stroke-opacity','0.95');
+    poly.setAttribute('stroke-width','11');
+    poly.setAttribute('stroke-opacity','0.42');
+    poly.setAttribute('stroke-linejoin','round');
+    poly.setAttribute('stroke-linecap','round');
     poly.style.display = v.water>0.02 ? '' : 'none';
     // 颜色深浅读不出厘米数：真实积水范围只有 94×167 米，在 2939 米宽的图上就是一小块，
-    // 光靠蓝色深浅既看不清也不知道多深。直接在水体中心标数字。
-    if(v.water>0.05){
-      // 标注放在水体下沿外侧：水体中心往往正好是泵站点位，两个标签会叠在一条竖线上。
-      let lx=0, ly=1e9; w.polygon.forEach(p=>{lx+=p.x; ly=Math.min(ly,p.y);});
-      lx/=w.polygon.length;
-      const lab = svgNS('text');
-      lab.dataset.halo='1';
-      lab.setAttribute('x', cx(lx).toFixed(1));
-      lab.setAttribute('y', (cy(ly)+13).toFixed(1));
-      lab.setAttribute('font-size','11.5');
-      lab.setAttribute('font-weight','600');
-      lab.setAttribute('fill','#0b5d63');
-      lab.setAttribute('text-anchor','middle');
-      lab.setAttribute('paint-order','stroke');
-      lab.setAttribute('stroke','#ffffff'); lab.setAttribute('stroke-width','2.6');
-      lab.textContent = (dNow>=1 ? Math.round(dNow) : Math.round(dNow*10)/10)+' cm';
-      wl.appendChild(lab);
+    // 光靠蓝色深浅既看不清也不知道多深。直接在积水下沿标数字（元素建在 buildScene，这里只改值）。
+    // 标注放下沿外侧：水体中心往往正好是泵站点位，两个标签会叠在一条竖线上。
+    const lab = wl.querySelector(`text.depth-lab[data-water="${w.id}"]`);
+    if(lab){
+      if(v.water>0.05){
+        lab.textContent = (dNow>=1 ? Math.round(dNow) : Math.round(dNow*10)/10)+' cm';
+        lab.style.display = '';
+      }else{
+        lab.style.display = 'none';
+      }
     }
     // 外圈扩散：积水影响范围（浅青虚线），随水位扩大
     if(v.water>0.1){
@@ -1168,46 +1974,113 @@ function renderWater(t){
     }
   });
 }
-// 泵车移动：dispatch 阶段（第3跳起）泵车沿调拨箭头从 B-01 滑向 A-03。
-// 40 分钟延迟用移动时长表达（dispatch 持续的整个区间走完这段弧线）。
-function renderTrucks(t){
-  const v = lerpJump(t);
+// 跨区调拨：整条链路（箭头 + 标签 + 泵车）都受「调拨决策是否已经做出」控制。
+// 之前用 dispatch 控制泵车 —— 而 dispatch 从第 3 跳就为真，结果第 1 帧画面上
+// 就已经躺着一条「调 1 台移动泵」的箭头，那时指挥还没开会。看的人会问：
+// 「一上来就在调泵，那后面还决策什么？」
+// 现在按台账：第 5 步（09:30 峰值上报）才下决策，第 6 步（09:55）到位。
+const TF_DECIDE_IDX = 4;   // 第 5 步：做出调拨决定
+const TF_ARRIVE_IDX = 5;   // 第 6 步：增援泵到位
+function renderTransfer(t){
+  const i = jumpIdx(t);
+  const decided = i >= TF_DECIDE_IDX;
+  const arrived = i >= TF_ARRIVE_IDX;
+  document.querySelectorAll('#decision-layer [data-tf], #decision-layer [data-truck]')
+    .forEach(el=>{ el.style.display = decided ? '' : 'none'; });
+  if(!decided) return;
+
+  // 决策中=蓝色虚线「正在调」；已到位=绿色实线「到了」
+  const path = document.querySelector('#decision-layer path[data-tf="path"]');
+  if(path){
+    path.setAttribute('stroke', arrived ? '#2e7d4f' : '#2b7cc4');
+    path.setAttribute('stroke-dasharray', arrived ? 'none' : '6 4');
+  }
+  const lab = document.querySelector('#decision-layer text[data-tf="label"]');
+  if(lab){
+    lab.setAttribute('fill', arrived ? '#2e7d4f' : '#2b6cb0');
+    lab.textContent = arrived
+      ? '增援泵已到位 · 补足 400 m³/h'
+      : '正在调 1 台移动泵 · 路上 40 分钟';
+  }
+  const note = document.querySelector('#decision-layer text[data-tf="note"]');
+  if(note) note.style.display = arrived ? 'none' : '';
+
+  // 泵车：只在「决策 → 到位」这一段区间里走，走完就停在终点。
+  // 原来从第 3 跳就开始滑，等于车先于决定出发。
+  const spanA = JUMPS[TF_DECIDE_IDX], spanB = JUMPS[TF_ARRIVE_IDX];
+  const p = Math.min(1, Math.max(0, (t - spanA) / Math.max(1e-6, spanB - spanA)));
   document.querySelectorAll('#decision-layer [data-truck]').forEach(trk=>{
-    if(!v.dispatch){ trk.style.display='none'; return; }
-    trk.style.display='';
-    // 弧线起终点（世界坐标），沿二次贝塞尔插值
     const arc = trk.dataset.arc.split(',').map(Number);
     const sx0=arc[0], sy0=arc[1], ex0=arc[2], ey0=arc[3], len=arc[4];
-    // dispatch 从第3跳(t=0.33)持续到第7跳(t=1.0)，映射到 0~1 的移动进度
-    const p = Math.min(1, Math.max(0, (t - 0.33) / (1.0 - 0.33)));
-    // 二次贝塞尔插值（控制点在弧线中点上方 len*0.12）
     const mx=(sx0+ex0)/2, my=(sy0+ey0)/2 - len*0.12;
     const x = (1-p)*(1-p)*sx0 + 2*(1-p)*p*mx + p*p*ex0;
     const y = (1-p)*(1-p)*sy0 + 2*(1-p)*p*my + p*p*ey0;
     trk.setAttribute('cx', cx(x).toFixed(1));
     trk.setAttribute('cy', cy(y).toFixed(1));
+    trk.setAttribute('fill', arrived ? '#2e7d4f' : '#2b7cc4');
   });
 }
-// 示意路悬停提示：这条路对应哪条真实道路。
-// 数据来自 out/osm/road_alias.json（scripts/match_road_alias.py 生成），构建时
-// 已并进 D.roads[].real_road / real_median_m / real_p90_m。
-function roadTipShow(e, r){
-  const tip = document.getElementById('road-tip');
-  if(!tip){ return; }
-  let html = '<div class="rt-name">' + r.name + ' <span class="rt-dim">· 示意路</span></div>';
+function renderTrucks(t){
+  renderTransfer(t);
+}
+// 地图悬停提示：道路 / 地块 / 建筑共用一块浮层，答案分别是「这条路贴近哪条真实路」
+// 「这块地原本叫什么」。
+// 数据来源：道路对照取自 out/osm/road_alias.json（scripts/match_road_alias.py 生成），
+// 地块与建筑取自 out/osm/base_areas.json / base_buildings_full.json（OSM PBF 抽取）。
+const TIP_SRC_OSM = '© OpenStreetMap 贡献者 · ODbL';
+// OSM 的 name 是用户填的，理论上可能带尖括号；直接拼进 innerHTML 会拆坏结构。
+function escTip(v){
+  return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function fmtAreaM2(m2){
+  if(!m2){ return ''; }
+  return m2 >= 10000 ? (m2/10000).toFixed(1) + ' 公顷' : Math.round(m2) + ' 平方米';
+}
+function tipRoadHtml(r){
+  let html = '<div class="mt-name">' + escTip(r.name) + ' <span class="mt-dim">· 示意路</span></div>';
   if(r.real_road){
-    html += '<div>贴近真实道路 <span class="rt-real">' + r.real_road + '</span></div>'
-          + '<div class="rt-dim">沿路取点比对，距该路中位 ' + r.real_median_m + ' 米'
+    html += '<div>贴近真实道路 <span class="mt-real">' + escTip(r.real_road) + '</span></div>'
+          + '<div class="mt-dim">沿路取点比对，距该路中位 ' + r.real_median_m + ' 米'
           + (r.real_p90_m ? '，九成在 ' + r.real_p90_m + ' 米内' : '') + '</div>';
   }else{
-    html += '<div class="rt-dim">路名与设施编号为示意，不对应真实路名</div>';
+    html += '<div class="mt-dim">路名与设施编号为示意，不对应真实路名</div>';
   }
+  return html;
+}
+function tipAreaHtml(a){
+  const label = a.label || '地块';
+  const named = !!a.name;
+  let html = '<div class="mt-name">' + escTip(named ? a.name : label) + '</div>';
+  html += '<div class="mt-sub">'
+        + (named ? escTip(label) + ' · 真实地块' : '真实地块 · 名称未标注') + '</div>';
+  const sz = fmtAreaM2(a.area);
+  if(sz){ html += '<div>面积 ' + sz + '</div>'; }
+  html += '<div class="mt-src">' + TIP_SRC_OSM + '</div>';
+  return html;
+}
+function tipBuildingHtml(b){
+  const use = BLD_CN[toneOf(b)];
+  const named = !!b.name;
+  let html = '<div class="mt-name">' + escTip(named ? b.name : use) + '</div>';
+  html += '<div class="mt-sub">'
+        + (named ? escTip(use) + ' · 真实建筑' : '真实建筑 · 名称未标注') + '</div>';
+  if(b.height_m){
+    const src = (b.height_source && HSRC_CN[b.height_source])
+      ? '（' + HSRC_CN[b.height_source] + '）' : '';
+    html += '<div>高度 约 ' + Math.round(b.height_m) + ' 米' + src + '</div>';
+  }
+  html += '<div class="mt-src">' + TIP_SRC_OSM + '</div>';
+  return html;
+}
+function mapTipShow(e, html){
+  const tip = document.getElementById('map-tip');
+  if(!tip){ return; }
   tip.innerHTML = html;
   tip.style.display = 'block';
-  roadTipMove(e);
+  mapTipMove(e);
 }
-function roadTipMove(e){
-  const tip = document.getElementById('road-tip');
+function mapTipMove(e){
+  const tip = document.getElementById('map-tip');
   if(!tip || tip.style.display === 'none'){ return; }
   const pad = 16, gap = 10;
   const w = tip.offsetWidth, h = tip.offsetHeight;
@@ -1217,52 +2090,55 @@ function roadTipMove(e){
   tip.style.left = Math.max(6, x) + 'px';
   tip.style.top  = Math.max(6, y) + 'px';
 }
-function roadTipHide(){
-  const tip = document.getElementById('road-tip');
+function mapTipHide(){
+  const tip = document.getElementById('map-tip');
   if(tip){ tip.style.display = 'none'; }
 }
 
 function renderRoads(t){
   const v = lerpJump(t);
   const st = D.states || {};
+  const lvl = v.blockLevel || 0;
   document.querySelectorAll('#road-layer path[data-road]').forEach(p=>{
     const rid = p.dataset.road;
     const closed = st.closed_roads && st.closed_roads.includes(rid);
     let color = '#c3ccd6';
-    if(closed && v.block) color = '#d94a3d';
+    if(closed && lvl>=2) color = '#d94a3d';
+    else if(closed && lvl===1) color = '#c9781f';
     else if(st.under_construction && st.under_construction.includes(rid)) color = '#e08a2e';
     p.setAttribute('stroke', color);
-    // 封路：加粗 + 虚线抖动强调（业务关键动作，要在真实底图上跳出来）
-    if(closed && v.block){
+    // 封路：加粗 + 虚线强调（业务关键动作，要在真实底图上跳出来）。
+    // 半幅比全幅细一档：施工占道只占半幅，画成全幅是夸大。
+    if(closed && lvl>=2){
       p.setAttribute('stroke-width','3');
       p.setAttribute('stroke-dasharray','7 4');
+    } else if(closed && lvl===1){
+      p.setAttribute('stroke-width','2.4');
+      p.setAttribute('stroke-dasharray','4 3');
     } else {
       p.setAttribute('stroke-width','');
       p.setAttribute('stroke-dasharray','');
     }
   });
-  // 封路标注：封路发生时，在封路路段中点显示「已封路」结果标注
-  const gl = document.getElementById('road-layer');
-  [...gl.querySelectorAll('text[data-blocklabel]')].forEach(t=>t.remove());
-  const closedNow = (st.closed_roads||[]).filter(rid=>v.block);
-  if(closedNow.length){
-    const r = D.roads.find(x=>x.id===closedNow[0]);
-    if(r){
-      const mp = r.polyline[Math.floor(r.polyline.length/2)];
-      const lab = svgNS('text');
-      lab.dataset.blocklabel='1';
-      lab.setAttribute('x', cx(mp.x).toFixed(1));
-      lab.setAttribute('y', (cy(mp.y)-6).toFixed(1));
-      lab.setAttribute('font-size','11');
-      lab.setAttribute('font-weight','700');
-      lab.setAttribute('fill','#c0392b');
-      lab.setAttribute('text-anchor','middle');
-      lab.setAttribute('paint-order','stroke');
-      lab.setAttribute('stroke','#ffffff'); lab.setAttribute('stroke-width','3');
-      lab.textContent = '已封路';
-      gl.appendChild(lab);
-    }
-  }
+  // 封路标注：在封路路段上显示结果标注（元素见 buildRoads，这里只更新）。
+  // 半幅/全幅分开写——通告里这是两个阶段（08:30 施工占道半幅 → 09:20 积水研判扩大全幅）。
+  const blk = document.getElementById('block-label');
+  if(!blk) return;
+  const closedNow = lvl>0 ? (st.closed_roads||[]) : [];
+  const cr = closedNow.length ? D.roads.find(x=>x.id===closedNow[0]) : null;
+  if(!cr){ blk.style.display = 'none'; return; }
+  // 标注点不取中点：兴华路中点正好落在供电/气象图标一带，会压字。
+  // 取 30% 处，仍在封控区间内，且避开部门图标。
+  const mp = pointAt(cr.polyline, 0.30);
+  blk.setAttribute('x', cx(mp.x).toFixed(1));
+  blk.setAttribute('y', (cy(mp.y)-6).toFixed(1));
+  // 退水完成 ≠ 封路解除：通告有效期到 18:00，路面仍封着。
+  // 但最后一步的主线是「水退了」，红色最醒目的字会把这个结论盖掉。
+  // 所以末段把封控降级成灰橙、并写明「待解封」——状态没变，只是不再抢戏。
+  const drained = jumpIdx(t) >= 6;
+  blk.setAttribute('fill', drained ? '#7a8494' : (lvl>=2 ? '#c0392b' : '#b26a12'));
+  blk.textContent = (lvl>=2 ? '全幅封闭' : '半幅封闭') + (drained ? ' · 待解封' : '');
+  blk.style.display = '';
 }
 // KPI 副标题原来写死「DF-IN-101」「兴华路泵站待修」：界面上不该出现代号，
 // 换事件后也不该还显示上一个事件的设施。台账里有名字，一律按数据填。
@@ -1271,16 +2147,35 @@ function initNotes(){
   const closed = (D.states&&D.states.closed_roads)||[];
   document.getElementById('k-block-note').textContent =
     closed.length ? (roadName(closed[0]) + (closed.length>1 ? (' 等 '+closed.length+' 段') : '')) : '无封路';
+  // 记下「封的是哪条路」，renderKPI 每帧在前面拼阶段（半幅/全幅），
+  // 不要直接把阶段写死进这里——静止时就分不出两个阶段了。
+  document.getElementById('k-block-note').dataset.base =
+    document.getElementById('k-block-note').textContent;
   const clogged = D.facilities.filter(f=>f.state==='clogged');
-  // 台账里标了堵塞，但动画到某一拍可能是通的：说清是「台账状态」，不要让人以为
-  // 数字 0 和下面的名字自相矛盾。
-  document.getElementById('k-clog-note').textContent =
-    clogged.length ? ('台账：'+clogged.map(f=>f.name).join('、')) : '台账：无堵塞';
+  // 「0 处」下面写着「兴华路雨水口组」，读起来像自相矛盾。要让两件事都成立：
+  // 台账登记过这处淤积（事实），此刻它已经通了（动画状态）。分开说。
+  const clogEl = document.getElementById('k-clog-note');
+  clogEl.dataset.base = clogged.map(f=>f.name).join('、');
   const pumps = D.facilities.filter(f=>f.type==='pump_station');
   if(pumps.length){ document.getElementById('k-pump-total').textContent = '/ '+pumps.length; }
+  // 「待修」两个字会被读成停机。实际是：泵站还在跑，只是坏了一台机组、抽排能力打折。
+  // 把能力写出来，后面「为什么要调移动泵」才成立 —— 800/1200 这个缺口是全片的因。
   const bad = pumps.filter(f=>f.state!=='in_service');
-  document.getElementById('k-pump-note').textContent =
-    bad.length ? bad.map(f=>f.name+' '+facState(f)).join('、') : '全部正常';
+  const badNote = bad.map(f=>{
+    const u = Number(f.pump_units)||0, x = Number(f.failed_units)||0;
+    const short = f.name.replace('雨水泵站','').replace('泵站','');
+    if(u && x){
+      const full = Math.round(Number(f.cap)||0);
+      const now = Math.round(full*(u-x)/u);
+      // 一行写不下就截断（CSS 是 nowrap+ellipsis），所以只留「谁坏了、还剩多少」。
+      // 「已调移动泵」交给焦点卡和解说条说，KPI 里再重复只会撑爆这一行。
+      return `${short} ${x} 台机组故障 · ${now}/${full} m³/h`;
+    }
+    return f.name+' '+facState(f);
+  }).join('、');
+  document.getElementById('k-pump-note').textContent = bad.length ? badNote : '全部正常';
+  document.getElementById('k-pump-note').dataset.base =
+    document.getElementById('k-pump-note').textContent;
   const maxDepth = D.water.reduce((m,w)=>Math.max(m, Number(w.depth_cm)||0), 0);
   if(maxDepth){ document.getElementById('k-depth-note').textContent = '峰值 '+maxDepth+' cm'; }
 }
@@ -1289,39 +2184,80 @@ function renderDecision(){
   const box = document.getElementById('decision-card');
   if(!dec){ box.innerHTML=''; return; }
   let html = '';
+  // 三段式推理链：输入信号 → 决策依据 → 决策输出（赛题第4条"决策链路可溯源"）
+  // ① 输入信号（观测到的事实，来自台账）
+  html += `<div class="dc-chain-h">① 输入信号（观测）</div>`;
   const order = dec.priority_order || [];
-  order.forEach((d,i)=>{
+  order.forEach(d=>{
     const sig = dec.signals[d] || {};
-    const alloc = (dec.allocation||{})[d];
     const crit = (dec.critical||[]).includes(d);
-    const short = sig.demand > alloc;
-    html += `<div class="dc-district">
-      <div class="dc-head"><span>${d}</span><span class="dc-badge ${crit?'crit':'norm'}">${crit?'关键片区':'普通片区'}</span><span style="margin-left:auto;color:var(--dim);font-weight:400">优先序 ${i+1}</span></div>
-      <div class="dc-row"><span>积水深度</span><b>${sig.depth_cm} cm</b></div>
-      <div class="dc-row"><span>需求抽排泵</span><b>${sig.demand} 台</b></div>
-      <div class="dc-row"><span>本区库存</span><b>${sig.local} 台</b></div>
-      <div class="dc-row"><span>最终分配</span><b class="${short?'short':'ok'}">${alloc} 台${short?'（缺口 '+(sig.demand-alloc)+'）':''}</b></div>
+    html += `<div class="dc-sig ${crit?'crit':''}">
+      <b>${dn(d)}</b>${crit?' · 关键片区':''}：积水 ${sig.depth_cm} cm、需 ${sig.demand} 台、本区 ${sig.local} 台${sig.closure_required?'、超封路阈值':''}${sig.has_hazard?'、有燃气基坑':''}
     </div>`;
   });
+  // ② 决策依据（为什么这么调）
+  if(dec.basis && dec.basis.length){
+    html += `<div class="dc-chain-h">② 决策依据（条款）</div>`;
+    html += dec.basis.map((b,i)=>`<div class="dc-basis-item"><span class="no">${i+1}</span>${b}</div>`).join('');
+  }
+  // ③ 决策输出（结果）
+  html += `<div class="dc-chain-h">③ 决策输出（结果）</div>`;
+  order.forEach((d,i)=>{
+    const alloc = (dec.allocation||{})[d];
+    const sig = dec.signals[d] || {};
+    const short = sig.demand > alloc;
+    html += `<div class="dc-row"><span>${dn(d)} 分配</span><b class="${short?'short':'ok'}">${alloc} 台${short?'（还差 '+(sig.demand-alloc)+' 台）':''}</b><span style="margin-left:auto;color:var(--dim)">优先 ${i+1}</span></div>`;
+  });
   dec.transfers.forEach(tr=>{
-    html += `<div class="dc-trans">跨区调拨：<b>${tr.from_district} → ${tr.to_district}</b>，调 <b>${tr.qty}</b> 台移动泵，时延 <b>${tr.delay_min}</b> 分钟</div>`;
+    html += `<div class="dc-trans">跨区调拨：<b>${dn(tr.from_district)} → ${dn(tr.to_district)}</b>，调 <b>${tr.qty}</b> 台，路上要走 <b>${tr.delay_min}</b> 分钟</div>`;
   });
   html += `<div class="dc-src">数据：${dec.source}</div>`;
   box.innerHTML = html;
 }
 function renderKPI(t){
   const v = lerpJump(t);
+  const lvl = v.blockLevel || 0;
   document.getElementById('k-depth').textContent = Math.round(v.water*30);
-  document.getElementById('k-block').textContent = v.block ? 1 : 0;
+  // 「封路路段」数按「正在管制的路段数」算：地图上有半幅封闭的橙线，
+  // KPI 却写 0 条，第一眼就是自相矛盾。数字对齐地图，程度写在副标题里。
+  document.getElementById('k-block').textContent = lvl>=1 ? 1 : 0;
+  const bn = document.getElementById('k-block-note');
+  if(bn && bn.dataset.base){
+    const stage = lvl>=2 ? ' · 全幅（积水研判，禁止通行）'
+                : (lvl===1 ? ' · 半幅（施工占道，另半幅可通行）' : ' · 未管制');
+    bn.textContent = bn.dataset.base + stage;
+  }
+  // KPI 颜色跟着程度走：半幅是橙（管制），全幅才红（禁行）
+  const bcard = document.getElementById('k-block') && document.getElementById('k-block').closest('.kpi-card');
+  if(bcard) bcard.style.setProperty('--kpi', lvl>=2 ? 'var(--red)' : (lvl===1 ? 'var(--amber)' : 'var(--dim)'));
   document.getElementById('k-clog').textContent = v.clog ? 1 : 0;
-  document.getElementById('k-pump').textContent = v.crew ? 1 : 0;
+  const cn2 = document.getElementById('k-clog-note');
+  if(cn2){
+    const nm = cn2.dataset.base || '';
+    cn2.textContent = !nm
+      ? '无堵塞记录'
+      : (v.clog ? `${nm}（台账登记）` : `已疏通（原登记 ${nm}）`);
+    cn2.style.color = (!nm || v.clog) ? '' : 'var(--green)';
+  }
+  // 泵站运行台数按台账设施数算，不能拿「抢险队到场」当运行数——
+  // 泵站从事件开始就在运行（3 台机组坏 1 台仍降容运行），到场的是人不是泵。
+  const pumps = D.facilities.filter(f=>f.type==='pump_station');
+  document.getElementById('k-pump').textContent = pumps.length;
+  const pn = document.getElementById('k-pump-note');
+  if(pn && pn.dataset.base){
+    // 只加最短的标记：这一行是 nowrap，写全「已调 1 台移动泵（400 m³/h）补位」
+    // 会被省略号吞掉，反而看不出调了。细节在焦点卡与解说条里。
+    pn.textContent = pn.dataset.base + (v.crew ? ' ＋1 台移动泵' : '');
+  }
   document.getElementById('k-prog').textContent = Math.round(t*100);
-  const phases = ['降雨前奏','积水上涨','事件识别','影响扩散','部门落位','资源缺口','处置执行','退水回落'];
-  const idx = Math.min(phases.length-1, Math.floor(t*phases.length));
-  document.getElementById('k-phase').textContent = phases[idx];
+  // 阶段名直接取当前跳次的标题前缀，和焦点卡同一个来源。
+  // 原来另写一份 8 等分的阶段表，和 7 跳对不齐：焦点卡说「第 5 步 峰值上报」，
+  // KPI 却写「部门落位」，同一个画面上两个阶段名。
+  const stageNow = (JUMP_VISUAL[Math.min(jumpIdx(t), JUMP_VISUAL.length-1)].title||'').split('：')[0];
+  document.getElementById('k-phase').textContent = stageNow;
 }
 function renderEventline(t){
-  const {i} = jumpAt(t);
+  const i = jumpIdx(t);
   const box = document.getElementById('eventline');
   box.innerHTML = JUMP_VISUAL.map((j,k)=>{
     let cls = '';
@@ -1332,6 +2268,49 @@ function renderEventline(t){
     return `<div class="step ${cls}"><span class=no>${k+1}</span><span><b style="font-weight:600">${pre}</b> · ${sub}</span></div>`;
   }).join('');
 }
+// 解说字幕：当前跳次的一句解说（谁、做了什么、结果），像纪录片字幕。
+function renderNarration(t){
+  const el = document.getElementById('narration');
+  if(!el) return;
+  const i = jumpIdx(t);
+  const text = JUMP_NARRATION[Math.min(i, JUMP_NARRATION.length-1)] || '';
+  // 时刻用台账反推的时钟。徽标前缀必须写「此刻」——
+  // 正文里本来就有事件时刻（「09:20 现场核实…」），两个时间紧挨着不加限定，
+  // 读出来就是「09:30 09:20 现场核实」，人会以为打错了。
+  const clock = (JUMP_VISUAL[Math.min(i, JUMP_VISUAL.length-1)]||{}).clock || '';
+  el.innerHTML = (clock ? `<b class="nclock">此刻 ${clock}</b> ` : '') + text;
+}
+// 焦点事件卡：画面中央大字，讲"当前：谁 + 做什么"，像新闻标题一样醒目。
+function renderFocusCard(t){
+  const el = document.getElementById('focuscard');
+  if(!el) return;
+  const i = jumpIdx(t);
+  const tl = DEPT_TIMELINE[Math.min(i,6)];
+  const v = JUMP_VISUAL[Math.min(i,6)];
+  // 当前介入部门名（多个用「、」连接）
+  const orgNames = tl.orgs.map(id=>{
+    const d = D.departments.find(x=>x.id===id);
+    return d ? (d.name||id) : id;
+  });
+  const orgStr = orgNames.length ? orgNames.join('、') : '';
+  // 副行的部门往往是「本步同时发生的另一条线」，和主标题不是同一件事。
+  // 例如第 6 步主线是排水公司疏通见效，副行却是燃气上报基坑沉陷。
+  // 不加限定直接拼，人会读成「燃气公司在疏通」。
+  // 用「同一步」而不是「同时到场」——气象台是发预警，它不到场。
+  const subline = orgStr
+    ? `同一步：${orgStr}｜${tl.act || ''}`
+    : (tl.act || '');
+  // 阶段名 + 主事件。
+  // 大字必须放「事件本身」（标题冒号后的部分），不能放部门动作——否则
+  // 「峰值上报：核实积水 30cm、扩大全幅封闭」这种关键结论会被「资源缺口统筹」
+  // 盖掉，焦点卡就白叫焦点卡了。部门动作降为副行。
+  const parts = v.title.split('：');
+  const stage = parts[0];
+  const main = parts.length > 1 ? parts.slice(1).join('：') : (tl.act || v.title);
+  el.innerHTML = `<div class="fc-stage">第 ${i+1} / 7 步 · ${stage}${v.clock?` · ${v.clock}`:''}</div>
+    <div class="fc-main">${main}</div>
+    <div class="fc-org">${subline}</div>`;
+}
 
 // 部门协作泳道图：8 部门各一条泳道，横向 7 跳时间轴。
 // 每个部门在其介入的跳次画彩色条 + 动作；当前跳次高亮，已介入淡化。
@@ -1339,17 +2318,11 @@ function renderEventline(t){
 function renderDeptLanes(t){
   const box = document.getElementById('dept-lanes');
   if(!box) return;
-  const {i} = jumpAt(t);
+  const i = jumpIdx(t);
   // 每条泳道：部门名 + 从介入跳次到结束的彩色条
-  const deptNames = {};
-  D.departments.forEach(d=>{ deptNames[d.id] = d.name; });
-  const shortName = (id)=>{
-    const n = deptNames[id] || id;
-    return n.replace('区排水公司','排水').replace('区道路管理中心','道路')
-            .replace('交警支队一大队','交警').replace('市燃气公司','燃气')
-            .replace('供电公司','供电').replace('自来水公司','供水')
-            .replace('区应急管理局','应急').replace('市气象台','气象');
-  };
+  // 简写走 deptShort：之前这里自己写了一套 replace，地图圆点又是另一套，
+  // 结果同一家公司在图上叫「自来水」、在泳道里叫「供水」。
+  const shortName = (id)=>deptShort(id);
   // 计算每个部门介入的起始跳次和动作
   const deptSpan = {};  // orgId -> {start: 跳次index, act: 动作}
   DEPT_TIMELINE.forEach((tl, k)=>{
@@ -1397,7 +2370,23 @@ function tick(){
 }
 function apply(t){
   t=Math.max(0,Math.min(1,t));
-  renderWater(t); renderRoads(t); renderTrucks(t); renderDepts(t); renderKPI(t); renderEventline(t); renderDeptLanes(t);
+  renderRain(t);
+  renderWater(t); renderRoads(t); renderTrucks(t); renderDepts(t); renderKPI(t); renderEventline(t); renderDeptLanes(t); renderNarration(t); renderFocusCard(t); renderAlarm(t); clock();
+  // 标签避让跟着跳次走：一步之内标签文字不变，没必要每帧重排。
+  // 必须放在 renderFocusCard 之后——事件卡高度变了，禁区也跟着变。
+  // 另外每 10 帧量一次舞台与卡片尺寸：首帧的布局还没稳定（滚动条出现/消失、
+  // 字体落位都会让解说条上下跳 20 多像素），只按跳次跑会用到过期的禁区。
+  const _i = jumpIdx(t);
+  if((_lpFrame++ % 10) === 0){
+    // 量这几个盒子的实际位置：舞台尺寸没变，但解说条的行数一变，
+    // 它的上边缘就会上下跳 20 多像素（底边锚定，越高越往上）。只比舞台尺寸会漏。
+    const box = (id)=>{ const e = document.getElementById(id); if(!e) return '0';
+      const r = e.getBoundingClientRect();
+      return `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)},${Math.round(r.height)}`; };
+    const sig = ['stage','focuscard','narration','legend'].map(box).join('|');
+    if(sig !== _lpSig){ _lpSig = sig; _lpStep = -1; }
+  }
+  if(_i !== _lpStep){ _lpStep = _i; declutterLabels(); }
   document.getElementById('prog').value = Math.round(t*1000);
   const s=Math.floor(t*DURATION);
   document.getElementById('ptime').textContent = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
@@ -1411,7 +2400,7 @@ let vb = { x:0, y:0, w:VW, h:VH };
 function commitView(){ svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); }
 const stage = document.getElementById('stage');
 stage.addEventListener('wheel', (e)=>{
-  roadTipHide();   // 缩放时鼠标没动，提示框会留在原地挡住图
+  mapTipHide();   // 缩放时鼠标没动，提示框会留在原地挡住图
   e.preventDefault();
   const rect = svg.getBoundingClientRect();
   const px = (e.clientX-rect.left)/rect.width * vb.w;
@@ -1424,7 +2413,7 @@ stage.addEventListener('wheel', (e)=>{
   commitView();
 }, {passive:false});
 let dragging=false, sx0=0, sy0=0, vx0=0, vy0=0;
-stage.addEventListener('mousedown', (e)=>{ dragging=true; sx0=e.clientX; sy0=e.clientY; vx0=vb.x; vy0=vb.y; roadTipHide(); });
+stage.addEventListener('mousedown', (e)=>{ dragging=true; sx0=e.clientX; sy0=e.clientY; vx0=vb.x; vy0=vb.y; mapTipHide(); });
 window.addEventListener('mousemove', (e)=>{
   if(!dragging) return;
   const rect = svg.getBoundingClientRect();
@@ -1463,7 +2452,7 @@ function fitView(zoom){
 }
 stage.addEventListener('dblclick', ()=>{ fitView(1); });
 let _rz=null;
-window.addEventListener('resize', ()=>{ clearTimeout(_rz); _rz=setTimeout(()=>fitView(1.0), 160); });
+window.addEventListener('resize', ()=>{ clearTimeout(_rz); _rz=setTimeout(()=>{ fitView(1.0); _lpStep = -1; }, 160); });
 
 // ---- 镜头调度：聚焦到世界坐标点（用于自动播放时的关键帧镜头）----
 // focusOn(wx, wy, zoomW)：把世界坐标点居中，视野宽度设为 zoomW（世界单位）。
@@ -1480,13 +2469,18 @@ function focusOn(wx, wy, zoomW){
 // 焦点跟随「该跳次新介入的部门」位置，让镜头和部门动作联动——
 // 观众能看清"这个部门此刻在哪行动"。无部门介入的跳次聚焦积水/全景。
 // 用世界单位，避免写死屏幕像素。zoomW=世界宽度，越小越近。
+// 镜头帧：w 是「视野宽度（世界单位）」。
+// 原来最紧给到 700，实测字全部炸开——标签字号是按 viewBox 单位定的，
+// 视野缩到 700 时 11px 的字在屏上接近 40px，「建设大道泵站」被卡片截掉一半、
+// 「应急·资源统筹」占掉整条画面，地图本身反而看不见了。
+// 统一压到 1500 以上（约 2 倍特写）：字仍然比全景大一档，但不再盖住图。
 const CAM_FRAMES = [
   { t:0.00, w:3000, focus:'global' },       // 开场：全景（气象预警）
-  { t:0.22, w:1200, focus:'ORG-DRAIN' },    // 排水介入：聚焦泵站/雨水口
-  { t:0.33, w:900,  focus:'ORG-ROAD' },     // 道路介入：聚焦施工路段
-  { t:0.44, w:1000, focus:'ORG-GAS' },      // 燃气介入：聚焦燃气管线
-  { t:0.56, w:700,  focus:'ORG-EMERG' },    // 应急统筹：聚焦 A-03 积水点
-  { t:0.76, w:1000, focus:'ORG-TRAFFIC' },  // 交警封路：聚焦封路段
+  { t:0.22, w:1700, focus:'ORG-DRAIN' },    // 排水介入：聚焦泵站/雨水口
+  { t:0.33, w:1600, focus:'ORG-ROAD' },     // 道路介入：聚焦封路路段
+  { t:0.44, w:1600, focus:'ORG-GAS' },      // 燃气介入：聚焦燃气管线
+  { t:0.56, w:1500, focus:'ORG-EMERG' },    // 应急统筹：聚焦 A-03 积水点
+  { t:0.76, w:1600, focus:'ORG-TRAFFIC' },  // 交警封路：聚焦封路段
   { t:1.00, w:3000, focus:'global' },       // 退水：全景收尾
 ];
 // 用户手动缩放/拖拽后暂停自动镜头（不抢用户操作）
@@ -1499,7 +2493,8 @@ function camFocus(fr){
   if(fr.focus === 'global'){
     return { x:-635, y:11 };   // 全景中心（两片区之间）
   }
-  const pos = deptPosition(fr.focus);
+  // 和图标用同一套坐标（含避让结果），否则镜头会对着「本该在的位置」而图标已被推开
+  const pos = deptLayoutMap()[fr.focus] || deptPosition(fr.focus);
   return pos;
 }
 // 根据 t 插值出当前镜头并应用
@@ -1528,8 +2523,18 @@ function applyCam(t){
 }
 
 // 时钟
-function clock(){ const d=new Date(); document.getElementById('clock').textContent=d.toTimeString().slice(0,8); }
-setInterval(clock,1000); clock();
+// 右上角原来挂的是本机真实时间。这是回放页面，页面里所有时刻都是 2026-10-29
+// 那场雨的时刻，再挂一个「现在几点」只会让人分不清哪个是推演时间。
+// 改成显示「回放演到几点」，并在前面标「回放」，与真实时间彻底区分。
+function clock(){
+  const el = document.getElementById('clock');
+  if(!el) return;
+  const i = jumpIdx(t);
+  const c = (JUMP_VISUAL[Math.min(i, JUMP_VISUAL.length-1)]||{}).clock;
+  el.textContent = c ? `回放 ${c}` : '回放';
+}
+// 不再用 setInterval 每秒刷新：右上角要跟动画同步，秒级定时会和跳次不同步。
+// 由 apply() 每帧调用。
 
 buildBase();
 initNotes();
@@ -1539,22 +2544,61 @@ fitView(1.0);
 // 自动演示：打开即从降雨前开始播放，镜头随关键帧自动调度（全景→聚焦积水→拉远看封路→收尾）。
 // 用户滚轮/拖拽后自动镜头暂停，双击地图恢复自动镜头。
 // 调试：URL 参数 ?t=0.56&static=1 停在指定时间（静帧，不自动播放），供截图核对动画。
+// 加 &cam=1 则保留自动镜头：核对「这一刻镜头对着哪儿」，不加就看全景。
 const qp = new URLSearchParams(location.search);
 const qT = parseFloat(qp.get('t'));
 const qStatic = qp.get('static');
 if(!isNaN(qT)){
   t = qT;
   playing = false;
-  autoCam = false;
+  autoCam = qp.get('cam') === '1';
   document.getElementById('play').textContent = '▶ 播放';
   fitView(1.0);           // static 模式用全景，方便看整体状态
   apply(qT);
+  if(autoCam) applyCam(qT);
 }else{
   playing = true;
   document.getElementById('play').textContent = '⏸ 暂停';
   autoCam = true;
   apply(0);
   applyCam(0);
+}
+// 从数据来源页点「在大屏上定位兴华路」会带 ?entity=R-101 过来。
+// 2026-11-14 之前这个参数没有任何代码处理：链接能打开页面，但既不定位也不标注，
+// 等于一次假跳转。这里补上——按道路取折线中点，定格、对准、画环、标路名。
+const qEnt = qp.get('entity');
+if(qEnt){
+  const er = (D.roads || []).filter(function(x){ return x.id === qEnt; })[0];
+  if(er && er.polyline && er.polyline.length){
+    playing = false;
+    autoCam = false;
+    document.getElementById('play').textContent = '▶ 播放';
+    const mp = pointAt(er.polyline, 0.5);
+    // 视野宽度是 viewBox 单位（不是米）。给 620 太近：地图自带的标签按 viewBox 定字号，
+    // 放大后「建设大道」和泵站名会叠在一起。1150 ≈ 1.15 倍特写，线看得清、字不打架。
+    focusOn(mp.x, mp.y, 850);
+    const mk = svgNS('g');
+    mk.setAttribute('id', 'entity-mark');
+    mk.setAttribute('pointer-events', 'none');
+    // 圈一个点看不出「是哪条路」，直接把整条折线描一遍：
+    // 先铺一条白底遮住底图线条，再压一条红色粗线，路口处也断不开。
+    const pathD = er.polyline
+      .map(function(pt, i){ return (i ? 'L' : 'M') + cx(pt.x).toFixed(1) + ',' + cy(pt.y).toFixed(1); })
+      .join(' ');
+    const base0 = svgNS('path');
+    base0.setAttribute('d', pathD); base0.setAttribute('fill', 'none');
+    base0.setAttribute('stroke', '#fff'); base0.setAttribute('stroke-width', '9');
+    base0.setAttribute('stroke-linecap', 'round'); base0.setAttribute('stroke-linejoin', 'round');
+    base0.setAttribute('opacity', '0.9');
+    mk.appendChild(base0);
+    const hi = svgNS('path');
+    hi.setAttribute('d', pathD); hi.setAttribute('fill', 'none');
+    hi.setAttribute('stroke', '#b91c1c'); hi.setAttribute('stroke-width', '4.5');
+    hi.setAttribute('stroke-linecap', 'round'); hi.setAttribute('stroke-linejoin', 'round');
+    mk.appendChild(hi);
+    // 不再另写一个路名：地图自己的路名标签已经在那条路上，叠两个只会打架。
+    svg.appendChild(mk);
+  }
 }
 tick();
 </script>
