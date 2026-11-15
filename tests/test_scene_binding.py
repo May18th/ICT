@@ -150,6 +150,7 @@ def test_actor_tags_match_level_builder_contract(projection) -> None:
     assert not any(tag.startswith("state:") for tag in gas.geometry.actor_tags), "布局管线没有事件状态"
 
 
+@pytest.mark.skipif(not UE_PYTHON.is_dir(), reason="Unreal 工程已停用且不入仓库")
 def test_unreal_scripts_still_read_these_tags() -> None:
     """UE 侧取数契约没漂：按 `twin:` 找 Actor、按 `kind:water` 显隐水面。"""
     level = (UE_PYTHON / "build_urban_level.py").read_text(encoding="utf-8")

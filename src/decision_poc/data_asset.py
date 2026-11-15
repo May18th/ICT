@@ -46,6 +46,11 @@ MODALITY_BY_SUFFIX = {
 }
 
 PARSED_SUFFIXES = {".csv", ".tsv", ".md", ".txt", ".log", ".png"}
+
+#: 算哈希前把行尾统一成 LF。git 在不同平台、以及 clone 与「下载 zip」之间给出的
+#: 行尾可能不同；直接按字节算会让同一份文件在别人机器上得到不同 asset_id，
+#: manifest 与提交版对不上（测试 test_committed_manifest_is_current 会红）。
+TEXT_SUFFIXES = {".csv", ".tsv", ".md", ".txt", ".log", ".json", ".yaml", ".yml"}
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 SUMMARY_CHARS = 160
 ENCODINGS = ("utf-8-sig", "gb18030", "latin-1")
@@ -209,9 +214,11 @@ def identify_asset(
         raise FileNotFoundError(f"asset file not found: {target}")
 
     data = target.read_bytes()
-    checksum = hashlib.sha256(data).hexdigest()
-    modality = detect_modality(target)
     suffix = target.suffix.lower()
+    # 文本按 LF 规范化后再算哈希，使 asset_id 与行尾无关（见 TEXT_SUFFIXES 注释）。
+    payload = data.replace(b"\r\n", b"\n") if suffix in TEXT_SUFFIXES else data
+    checksum = hashlib.sha256(payload).hexdigest()
+    modality = detect_modality(target)
 
     structure: dict[str, Any] = {}
     if suffix in {".csv", ".tsv"}:

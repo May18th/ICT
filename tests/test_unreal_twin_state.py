@@ -23,6 +23,13 @@ from pathlib import Path
 
 import pytest
 
+#: UE 侧脚本在 visualization/unreal 里，该工具链已停用、工程不入仓库（2026-11-15）。
+#: 工程不在时这些契约无从执行：跳过，而不是让 clone 之后凭空多出 9 个红。
+_UE_PYTHON = Path(__file__).resolve().parents[1] / "visualization" / "unreal" / "Content" / "Python"
+pytestmark = pytest.mark.skipif(
+    not _UE_PYTHON.is_dir(), reason="Unreal 工程已停用且不入仓库"
+)
+
 REPO = Path(__file__).resolve().parents[1]
 SCRIPT = REPO / "visualization" / "unreal" / "Content" / "Python" / "urban_twin_state.py"
 
