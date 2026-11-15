@@ -502,11 +502,11 @@ uv run --locked python -m decision_poc.web_demo --port 8787
 `flood-response-v1.0→v1.1→v1.2`、真实事件分配（`A-03 4→5 台 / B-01 2→1 台`）。
 页面数据直接取 `run_showcase()`，展示层不重算任何指标；页脚固定印三条表述边界（受控反馈 / 评审角色扮演 / 记忆离线同构）。
 
-生成可供 Blender/Unreal 导入的引擎无关场景数据：
+导出场景数据（格式与渲染引擎无关，下游工具可直接读取）：
 
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.scene_export --out samples/assets/urban/scene.json
 ```
 
-场景文件只负责稳定的 `twin_id`、类型、状态、`geometry_ref` 和溯源信息；Blender/Unreal 的模型资产和坐标解析属于展示层，不参与推理结论生成。
+场景文件只负责稳定的 `twin_id`、类型、状态、`geometry_ref` 和溯源信息；模型资产与坐标解析属于展示层，不参与推理结论生成。
