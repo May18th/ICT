@@ -66,7 +66,9 @@ DEFAULT_OUT = REPO_ROOT / "samples" / "assets" / "urban" / "semantic_entities.js
 
 # 3D 生产侧（另一仓库目录）：OSM 底图与其历史实体表，缺失时整段降级为空，不报错。
 THREE_D_SCENE_DIR = REPO_ROOT.parent / "blender-ue-scene" / "scenes" / "WO-20261029-007"
-OSM_BACKDROP_PATH = REPO_ROOT.parent / "blender-ue-scene" / "out" / "osm_chengdu_centre.json"
+#: OSM 底图原件。曾经指向仓库外的 `../blender-ue-scene/out/`，只有本机能跑到；
+#: 现已纳入仓库（samples/assets/osm/），clone 后 `base_layer.osm_sha256` 才算得出来。
+OSM_BACKDROP_PATH = REPO_ROOT / "samples" / "assets" / "osm" / "osm_chengdu_centre.json"
 
 # 布局里能落成 Actor 的四段；districts 落成地面 Actor（只有 district: 标签，没有 twin:）。
 GEOMETRY_SECTIONS: tuple[str, ...] = ("roads", "pipelines", "facilities", "water")
