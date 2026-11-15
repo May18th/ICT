@@ -5,7 +5,7 @@
 这一份补的是**地块底色**：居住区、绿地、商业、在建工地、水体、公园，以及
 地铁线。这三类合起来，底图才有「城区 / 绿地 / 水系」的层次，而不是一片灰。
 
-产物 out/osm/base_areas.json：
+产物 samples/assets/osm/base_areas.json：
   areas[]  面要素（有闭合轮廓、面积可算）
   lines[]  线要素（河道、地铁）
 
@@ -21,8 +21,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "out" / "osm" / "chengdu_bbox_raw.json"
-OUT = ROOT / "out" / "osm" / "base_areas.json"
+SRC = ROOT / "samples" / "assets" / "osm" / "chengdu_bbox_raw.json"
+OUT = ROOT / "samples" / "assets" / "osm" / "base_areas.json"
 
 LAT0, LON0 = 30.657, 104.066
 K_LAT, K_LON = 110540.0, 95761.381

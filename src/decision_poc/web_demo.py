@@ -4090,7 +4090,7 @@ def data_payload() -> dict[str, Any]:
     假装成 0 条比留白更糟——0 条看着像「这片本来就没数据」。
     """
     root = Path(__file__).resolve().parents[2]
-    osm_dir = root / "out" / "osm"
+    osm_dir = root / "samples" / "assets" / "osm"
 
     osm_items: list[dict[str, Any]] = []
     lines_count = 0
@@ -4456,7 +4456,7 @@ def _osm_preview_svg(width: int = 1000) -> str:
     「这是成都的真实路网」就不用解释了。只画要素，不带任何推演图层。
     """
     root = Path(__file__).resolve().parents[2]
-    folder = root / "out" / "osm"
+    folder = root / "samples" / "assets" / "osm"
     names = ("base_areas.json", "base_buildings_full.json", "base_roads.json")
     try:
         stamp = "|".join(f"{n}:{int((folder / n).stat().st_mtime)}" for n in names)

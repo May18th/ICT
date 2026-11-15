@@ -5,7 +5,7 @@
   lat = lat0 + y/k_lat   ->   y = (lat - lat0)*k_lat
   lon = lon0 + x/k_lon   ->   x = (lon - lon0)*k_lon
 
-产物：out/osm/base_buildings.json —— 精简的建筑轮廓（footprint 多边形）。
+产物：samples/assets/osm/base_buildings.json —— 精简的建筑轮廓（footprint 多边形）。
 
 2026-11-14 补三样东西（3D 化必需）：
   height_m       推定建筑高度（米）
@@ -27,9 +27,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 # 默认仍是原来那份（只覆盖中心 1618×1777m）。要出全业务范围（x ±1469.5m）的
-# 建筑，用 --src out/osm/chengdu_bbox_raw.json（见 scripts/osm_pbf_extract.py）。
+# 建筑，用 --src samples/assets/osm/chengdu_bbox_raw.json（见 scripts/osm_pbf_extract.py）。
 SRC = ROOT / "out" / "osm" / "chengdu_centre_buildings.json"
-OUT = ROOT / "out" / "osm" / "base_buildings.json"
+OUT = ROOT / "samples" / "assets" / "osm" / "base_buildings.json"
 
 LAT0, LON0 = 30.657, 104.066
 K_LAT, K_LON = 110540.0, 95761.381

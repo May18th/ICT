@@ -186,9 +186,9 @@ def build_payload() -> dict:
     # 真实 OSM 底图（若已下载）：真实成都道路/建筑/地块/水系/铁路。
     # 数据源 OpenStreetMap，ODbL 1.0，坐标已投影到 scene_layout 示意图坐标系。
     basemap = None
-    base_roads_path = ROOT / "out" / "osm" / "base_roads.json"
-    base_bldg_path = ROOT / "out" / "osm" / "base_buildings_full.json"
-    base_area_path = ROOT / "out" / "osm" / "base_areas.json"
+    base_roads_path = ROOT / "samples" / "assets" / "osm" / "base_roads.json"
+    base_bldg_path = ROOT / "samples" / "assets" / "osm" / "base_buildings_full.json"
+    base_area_path = ROOT / "samples" / "assets" / "osm" / "base_areas.json"
     if base_roads_path.exists():
         basemap = json.loads(base_roads_path.read_text(encoding="utf-8"))
         # 真实建筑轮廓（全宽版，覆盖整个业务范围；旧 base_buildings.json 只覆盖中心）
@@ -205,7 +205,7 @@ def build_payload() -> dict:
     # 给每条示意路配一条可核对的说法，比改路名现实：改名要动 40+ 个文件与 4 套
     # 场景副本，而坐标本来就是示意的。纯展示，不参与推演。
     # 生成脚本 scripts/match_road_alias.py。
-    alias_path = ROOT / "out" / "osm" / "road_alias.json"
+    alias_path = ROOT / "samples" / "assets" / "osm" / "road_alias.json"
     if alias_path.exists():
         alias_rows = json.loads(alias_path.read_text(encoding="utf-8")).get("roads", [])
         alias_by_id = {x.get("road_id"): x for x in alias_rows}
@@ -2025,8 +2025,8 @@ function renderTrucks(t){
 }
 // 地图悬停提示：道路 / 地块 / 建筑共用一块浮层，答案分别是「这条路贴近哪条真实路」
 // 「这块地原本叫什么」。
-// 数据来源：道路对照取自 out/osm/road_alias.json（scripts/match_road_alias.py 生成），
-// 地块与建筑取自 out/osm/base_areas.json / base_buildings_full.json（OSM PBF 抽取）。
+// 数据来源：道路对照取自 samples/assets/osm/road_alias.json（scripts/match_road_alias.py 生成），
+// 地块与建筑取自 samples/assets/osm/base_areas.json / base_buildings_full.json（OSM PBF 抽取）。
 const TIP_SRC_OSM = '© OpenStreetMap 贡献者 · ODbL';
 // OSM 的 name 是用户填的，理论上可能带尖括号；直接拼进 innerHTML 会拆坏结构。
 function escTip(v){

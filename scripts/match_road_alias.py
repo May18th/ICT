@@ -6,7 +6,7 @@
 4 套场景副本、通知文书、测试、平台 Agent 提示词），所以不动数据；改成在展示层
 补一张对照表——鼠标放到示意路上就能看到它贴着哪条真实路、偏差多少米。
 
-产物 out/osm/road_alias.json。**纯新增数据，不参与任何推演与判据。**
+产物 samples/assets/osm/road_alias.json。**纯新增数据，不参与任何推演与判据。**
 
 数据来源：OpenStreetMap（ODbL 1.0）+ scene_layout.json。
 """
@@ -18,8 +18,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LAYOUT = ROOT / "samples" / "assets" / "urban" / "scene_layout.json"
-BASEMAP = ROOT / "out" / "osm" / "base_roads.json"
-OUT = ROOT / "out" / "osm" / "road_alias.json"
+BASEMAP = ROOT / "samples" / "assets" / "osm" / "base_roads.json"
+OUT = ROOT / "samples" / "assets" / "osm" / "road_alias.json"
 
 # 采样步长（米）。40m 对这个尺度够密：路宽 7~21m，40m 一个点不会漏掉弯道。
 STEP_M = 40.0

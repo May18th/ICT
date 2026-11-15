@@ -7,7 +7,7 @@
     lat = lat0 + y/k_lat   ->   y = (lat - lat0)*k_lat
     lon = lon0 + x/k_lon   ->   x = (lon - lon0)*k_lon
 
-产物：out/osm/base_roads.json —— 精简的道路折线，按 highway 等级分层。
+产物：samples/assets/osm/base_roads.json —— 精简的道路折线，按 highway 等级分层。
   只保留「机动车可通行」的道路（去掉 footway/steps/path 这类步行道），
   并按 OSM 等级映射到 主干/次干/支路 三档宽度。
 
@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "out" / "osm" / "chengdu_centre_raw.json"
-OUT = ROOT / "out" / "osm" / "base_roads.json"
+OUT = ROOT / "samples" / "assets" / "osm" / "base_roads.json"
 
 LAT0, LON0 = 30.657, 104.066
 K_LAT, K_LON = 110540.0, 95761.381

@@ -1,0 +1,70 @@
+{
+ "source": "示意路网来自 scene_layout.json；真实道路来自 OpenStreetMap © contributors（ODbL 1.0）",
+ "method": "沿示意路每 40 米取点，找最近的真实道路顶点，取距离中位数",
+ "note": "只用于展示层对照，不参与推演、不参与任何判据",
+ "roads": [
+  {
+   "road_id": "R-105",
+   "name": "兴华支路",
+   "real_name": "锦兴路",
+   "median_m": 30,
+   "p90_m": 55,
+   "max_m": 78,
+   "samples": 15
+  },
+  {
+   "road_id": "R-101",
+   "name": "兴华路",
+   "real_name": "人民南路一段",
+   "median_m": 34,
+   "p90_m": 76,
+   "max_m": 82,
+   "samples": 19
+  },
+  {
+   "road_id": "R-102",
+   "name": "建设大道",
+   "real_name": "文翁路",
+   "median_m": 34,
+   "p90_m": 190,
+   "max_m": 222,
+   "samples": 25
+  },
+  {
+   "road_id": "R-104",
+   "name": "环城北路",
+   "real_name": "小南街",
+   "median_m": 42,
+   "p90_m": 120,
+   "max_m": 156,
+   "samples": 24
+  },
+  {
+   "road_id": "R-202",
+   "name": "工业大道",
+   "real_name": "东大街城守东大街段",
+   "median_m": 100,
+   "p90_m": 143,
+   "max_m": 180,
+   "samples": 14
+  },
+  {
+   "road_id": "R-201",
+   "name": "滨河路",
+   "real_name": "蜀都大道大慈寺路",
+   "median_m": 107,
+   "p90_m": 163,
+   "max_m": 180,
+   "samples": 12
+  },
+  {
+   "road_id": "R-103",
+   "name": "民生街",
+   "real_name": "小南街",
+   "median_m": 138,
+   "p90_m": 214,
+   "max_m": 228,
+   "samples": 16
+  }
+ ]
+}
