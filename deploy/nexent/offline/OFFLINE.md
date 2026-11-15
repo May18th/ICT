@@ -1,153 +1,179 @@
-# Nexent 离线部署说明（urban-twin 决策智能体）
+# 离线部署说明书（OFFLINE.md）
 
-- 版本：Nexent v2.7.0 + `urban-twin-mcp:dev`
-- 适用：评审/复现环境**无外网**，或不允许在线拉镜像的机器
-- 实测环境：Windows 11 + Docker Desktop（WSL2 后端），2026-11-11
-- 本包解决的问题：官方要求「作品不能强依赖在线环境，须支持离线部署包」
+- 适用：赛题 3 硬要求「作品须支持离线部署包，不能强依赖在线环境」`[官方赋能直播 14:38]`
+- 性质：**可执行文档**。本文每个命令都在本机实测过（2026-11-11，Nexent v2.7.0 / 15 容器 / `/nb/v1/health` healthy）。
+  体积与裁剪结论引自 [离线部署评估](../../../docs/competition/offline-deploy-assessment.md)，未实测的部分明确标注「待验证」。
+- 仓库内 `deploy/nexent/offline/` 只放说明与镜像清单；**实际打包产物在离线包根目录**（`load-images.sh`、`deploy.sh`、`uninstall.sh`）。仓库里的 `install-offline.sh` / `verify-offline.sh` 是早期版本，实际包未采用，以本文档命令为准。
+- 打包位置约定：构建完成后本文应置于离线包**根目录**，与 `load-images.sh`、`deploy.sh` 同级。
 
 ---
 
-## 1 包结构
+## 1 资源要求
+
+| 项 | 官方口径 | 本机实测 |
+| --- | --- | --- |
+| CPU | 4 核最低 / 8 核推荐 `[直播 10:40]` | 未记录 |
+| 内存 | **8 GiB 最低 / 16 GiB 推荐** | 7.79 GiB（`MemTotal=8327397376`），贴边可用 |
+| 磁盘 | 40 GiB 最低 / 100 GiB 推荐 | 镜像解压后约 17.5 GiB，另需卷数据空间 |
+| 软件 | Docker 24+ / Compose v2+；Windows 需 Docker Desktop + WSL2 | Docker 29.9.1 + Docker Desktop，overlayfs |
+
+**内存是本项目最紧的一项**：`nexent-data-process` 常驻约 4.3 GiB，全栈稳态占用约 6.3/7.75 GiB（≈80%），
+一跑推理就接近上限。**建议把 Docker Desktop 内存上限设到 12 GiB** 再压测，否则失败会被误判成"平台不通"。
+
+## 2 包结构（官方打包器产出）
 
 ```
-offline-package/
-├── images/                 # 14 个镜像 tar（合计 4.6 GB）+ SHA256SUMS
-├── nexent/                 # Nexent v2.7.0 源码（含 deploy/ 与 sql/）
-├── scripts/
-│   ├── load-images.sh      # 校验 + 加载镜像
-│   ├── install-offline.sh  # 部署 + 等待就绪
-│   └── verify-offline.sh   # 自检（镜像/容器/端点）
-├── image-manifest.txt      # 镜像清单与角色说明
-└── OFFLINE.md              # 本文件
+nexent-offline/
+├── images/                 # 14 个镜像 tar（docker save）
+├── load-images.sh          # 批量 docker load
+├── deploy.sh / uninstall.sh
+├── push-images.sh          # 推内网仓库时用
+├── deploy/                 # 部署脚本、compose、SQL
+├── manifest.yaml
+├── checksums.txt           # 逐文件校验
+└── OFFLINE.md              # 本文
 ```
 
-> **不要把 `images/` 放进 Nexent 源码目录**。`nexent/deploy/` 下的部署脚本会扫描自身目录，
-> 4.6 GB 的 tar 混进去会让若干脚本变慢，且容易误提交。
+镜像清单（`images/`，**14 个 tar / 整包 4.8 GB**，2026-11-11 实测）：
 
-## 2 环境要求
+```
+nexent/nexent:v2.7.0                     nexent/nexent-web:v2.7.0
+nexent/nexent-mcp:v2.7.0                 nexent/nexent-data-process:v2.7.0
+nexent/nexent-sandbox:v2.7.0
+urban-twin-mcp:dev                       ← 本项目的 MCP 服务，必需（打包器不认识，需单独 save）
+docker.elastic.co/elasticsearch/elasticsearch:8.17.4
+postgres:15-alpine                       redis:alpine
+quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z
+kong:2.8.1                               supabase/gotrue:v2.170.0
+supabase/postgres:15.8.1.060
+otel/opentelemetry-collector-contrib:0.151.0
+```
 
-| 项 | 最低 | 推荐 | 说明 |
-|---|---|---|---|
-| CPU | 4 核 | 8 核 | 官方口径：做数据处理至少 4 核 |
-| 内存 | 8 GB | **16 GB** | 实测 7.9 GB 可跑，但 `nexent-data-process` 常驻 4.3 GB，并发推理易 OOM |
-| 磁盘 | 25 GB | 40 GB | 镜像解压后约 13–15 GB，另加日志与卷 |
-| Docker | 24+，Compose v2 | 同 | Windows 需 Docker Desktop + WSL2 |
-| 网络 | **不需要** | — | 安装完成后全程可断网 |
+> **两条必须记住的补齐项**（官方打包器不会自动带上，漏了断网必失败）：
+> ① `urban-twin-mcp:dev` 是本地构建标签，**不在任何公共仓库**；缺了它一个 MCP 工具都起不来。
+> ② `otel/opentelemetry-collector-contrib` 由 `docker-compose-monitoring.yml` 引用，**官方 manifest 里没有它**；
+>    断网时 pull 失败 → 监控栈起不来 → 连带 config/runtime 起不来（症状见 6.1）。
+> 补齐方式：`docker save <image> -o images/<name>.tar`，再登记进 `manifest.yaml` 的 `images:`，最后重算 `checksums.txt`。
+>
+> 不需要的：`kg-mcp-server:0.1`（Nexent 开发态知识图谱 MCP，compose 未引用，本项目也不使用）。
 
-## 3 三步安装
+> `urban-twin-mcp:dev` 是本地构建标签，**不在任何公共仓库**。评委拿到包后若缺这个 tar，一个 MCP 工具都起不来。
+
+## 3 构建（在有网络的机器上）
+
+优先用官方打包器，不要手搓 compose：
 
 ```bash
-# ① 加载镜像（约 2–5 分钟，含 4.6 GB 校验）
-./scripts/load-images.sh
-
-# ② 部署（首次 4–8 分钟）
-#    若 Nexent 源码不在 ./nexent，用 NEXENT_DIR=/path/to/nexent 指定
-./scripts/install-offline.sh
-
-# ③ 自检（可反复跑）
-./scripts/verify-offline.sh
+cd /path/to/Nexent
+bash deploy/offline/build_offline_package.sh \
+     --target docker \
+     --compress false \
+     --defaults \
+     --output-dir "D:/华为ICT/dist-offline/nexent-offline"
 ```
 
-全部通过后访问 `http://localhost:3000`。
-管理员账号 `suadmin@nexent.com`，口令见 `nexent/deploy/env/.env` 的 `NEXENT_SUPER_ADMIN_PASSWORD`。
+参数说明：`--target docker`（k8s 用不到）、`--compress false`（先出目录便于校对，分发前再压 zip）、
+`--defaults`（跳过交互，复用 `deploy/deploy.options` 或内置默认）、`--output-dir` 指定输出。
 
-### 3.1 启动 MCP 服务（决策工具的实际执行者）
+**构建前置条件**：本机镜像必须与 `deploy/env/image-source.*.env` 里的 tag 完全一致，否则打包器会去拉网。
+核对命令：`docker images --format "{{.Repository}}:{{.Tag}}"`。
 
-Nexent 里注册的 MCP 工具只是「地址」，真正的实现跑在 `urban-twin-mcp` 容器里。
-`deploy.sh` 不会启动它，需要单独一条命令：
+## 4 安装（在离线机器上，三步）
 
 ```bash
-docker run -d --name urban-twin-mcp --restart unless-stopped \
-  --network nexent_network \
-  -e PYTHONPATH=/app/src -e PYTHONUNBUFFERED=1 \
-  -p 127.0.0.1:18000:8000 \
-  urban-twin-mcp:dev \
-  python -m decision_poc.mcp_sse --host 0.0.0.0 --port 8000
+# 1. 灌镜像（脚本内部按 images/ 顺序 docker load）
+bash load-images.sh
+
+# 2. 校验（可选但建议：逐文件 sha256）
+sha256sum -c checksums.txt
+
+# 3. 部署（复用官方部署链路，不要自己 compose up）
+bash deploy.sh --defaults --load-images docker
 ```
 
-验证：`curl http://127.0.0.1:18000/health` 返回 200。
-然后在 Nexent「MCP 配置」里确认服务地址为 `http://urban-twin-mcp:8000/sse`（容器网络内）。
+若目标机已配好 `deploy/env/.env`，脚本会原样保留；否则从 `deploy/env/.env.example` 生成。
+**部署成功后立刻把 `deploy/env/.env` 冻结**——它是复现的第一步，也是排障的基准。
 
-> **导出包不包含工具实现**：`<agent>.zip` 只存 `mcp_info` 的地址，不含工具清单与代码。
-> 换机器复现时必须同时起这个 MCP 容器，否则 Agent 一个工具都调不到。
+## 5 验收（五条，逐条可判定）
 
-## 4 端口占用
+| # | 检查 | 期望 |
+| --- | --- | --- |
+| 1 | `docker ps --format "{{.Names}}\t{{.Status}}"` | 15 个容器 Up；`nexent-elasticsearch` / `nexent-redis` / `supabase-*-mini` healthy |
+| 2 | `curl -s http://127.0.0.1:5013/nb/v1/health` | `{"status":"healthy","service":"northbound-api"}` |
+| 3 | `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/zh` | `200` |
+| 4 | 无密钥访问 `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5013/nb/v1/agents` | `401`（鉴权边界生效） |
+| 5 | 浏览器登录 → 建/开 Agent → 跑一次六跳对话 | 结论与离线 8/8 一致 |
 
-| 端口 | 服务 |
-|---|---|
-| 3000 | Web 前端 |
-| 5010 / 5014 / 5013 | config / runtime / 北向 API |
-| 9010 / 9011 | MinIO API / Console |
-| 18000 | urban-twin-mcp（宿主侧，仅 127.0.0.1） |
-| 6379 / 5432 / 9200 | Redis / PostgreSQL / Elasticsearch |
+端口（本机实测）：Web `3000`、北向 `5013`、config `5010`、runtime `5014`、MinIO `9010/9011`、Redis `6379`、
+MCP 服务 `18000→8000`。其余端口以 `docker ps --format "{{.Names}}\t{{.Ports}}"` 现场输出为准。
 
-与本项目离线可视化 `web_demo`（8787）不冲突。
+## 6 故障排查（三条，都是实测踩过的）
 
-## 5 故障排查（实测踩到的三个坑）
+### 6.1 登录报「认证服务当前不可用」——其实是后端在崩溃循环
 
-### 5.1 登录报「认证服务当前不可用」
+**症状**：前端登录页提示认证服务不可用；`supabase-auth-mini` 显示 healthy，容易被误判成认证故障。
 
-**先别看认证服务。** Web 的 `HTTP_BACKEND=http://nexent-config:5010`，config 没起来时前端统称「认证不可用」。
+**根因**：`deploy/env/monitoring.env` 里 `OTEL_EXPORTER_OTLP_PROTOCOL="http"`，而 FastAPI 自动埋点只接受
+`http/protobuf`。`nexent-config` 与 `nexent-runtime` 启动即 `Application startup failed. Exiting.`，
+`restart: always` 让它们每 20 秒死一次，`docker ps` 里仍显示 `Up`。
+前端 `HTTP_BACKEND=http://nexent-config:5010`，config 死了就统称"认证不可用"。
 
-```bash
-docker logs --tail 20 nexent-config | grep -E "Uvicorn running|startup failed"
-```
-
-若看到 `FastAPI automatic telemetry requires the OTLP http/protobuf protocol`，就是下面这条。
-
-### 5.2 config / runtime 启动即退出（OTEL 协议非法）
-
-- **症状**：容器 `Up` 但每 20 秒死一次；日志末尾 `Application startup failed. Exiting.`
-- **根因**：`nexent/deploy/env/monitoring.env` 里 `OTEL_EXPORTER_OTLP_PROTOCOL="http"`，
-  FastAPI 自动埋点只接受 `http/protobuf`
-- **修法**：改成 `http/protobuf`，然后**必须重建容器**：
+**修法**：改为 `OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"`，然后**必须重建容器**：
 
 ```bash
-cd nexent && set -a && source deploy/env/.env && set +a
 cd deploy/docker/compose
 docker compose -p nexent -f docker-compose.prod.yml --env-file ../.env.generated \
-  up -d --force-recreate nexent-config nexent-runtime
+    up -d --force-recreate nexent-config nexent-runtime
 ```
 
-`install-offline.sh` 已内置这条自动修正。**注意 `docker restart` 无效**——env 在容器创建时固化。
+`docker restart` **不生效**——env 在容器创建时就固化了。
 
-### 5.3 重建服务时把 Elasticsearch 一起搞挂
+### 6.2 `--force-recreate` 会连带重建依赖，把 ES 搞成 unhealthy
 
-- **症状**：`docker compose up -d --force-recreate nexent-runtime` 之后 ES 变 unhealthy，runtime 因依赖失败起不来
-- **根因**：compose 会连带重建依赖；而 `--env-file .env.generated` 里**没有 `ELASTIC_PASSWORD`**
-  （正常部署靠 `source deploy/env/.env` 的 shell export 传值），ES 拿到空密码
-- **修法**：永远先 `set -a && source deploy/env/.env && set +a` 再执行 compose；
-  或直接重跑 `bash deploy.sh --defaults docker` 让它自己渲染
+**症状**：只重建 runtime，结果 `nexent-elasticsearch` 一起被重建成 unhealthy，runtime 因依赖失败起不来。
 
-### 5.4 管理员口令与库内不一致
+**根因**：compose 会连同依赖一起重建；而 `--env-file ../.env.generated` 里**没有 `ELASTIC_PASSWORD`**
+（`deploy/env/.env` 里才有），ES 拿到空密码直接起不来。
 
-- **症状**：`.env` 里的口令登录返回 401 `Email or password error`，但账号确实存在
-- **根因**：`deploy.sh` 发现 `suadmin@nexent.com` 已存在就跳过创建，改 `.env` 不会同步到库
-- **修法**（库名是 `supabase`，不是 `postgres`；pgcrypto 在 `extensions` schema）：
+**修法**：先 `source` 再 compose，让变量进 shell 环境：
+
+```bash
+set -a && source deploy/env/.env && set +a
+cd deploy/docker/compose && docker compose -p nexent -f docker-compose.prod.yml \
+    --env-file ../.env.generated up -d --force-recreate nexent-elasticsearch nexent-runtime
+```
+
+### 6.3 超级管理员登录 401——`.env` 里的密码和库里不一致
+
+**症状**：用 `NEXENT_SUPER_ADMIN_PASSWORD` 登录返回 `401 Email or password error`。
+
+**根因**：`suadmin@nexent.com` 是更早一次部署创建的，`deploy.sh` 检测到已存在就跳过创建，
+之后改 `.env` 不会同步到认证库。
+
+**修法**（注意库名是 `supabase`，不是 `postgres`；pgcrypto 在 `extensions` schema）：
 
 ```bash
 docker exec -i supabase-db-mini psql -U postgres -d supabase -c \
-"update auth.users set encrypted_password = extensions.crypt('<新口令>', extensions.gen_salt('bf'))
- where email='suadmin@nexent.com';"
+"update auth.users set encrypted_password = extensions.crypt('<新密码>', extensions.gen_salt('bf')) where email='suadmin@nexent.com';"
 ```
 
-### 5.5 `sha256sum -c` 报 `No such file or directory` 但文件明明在
+另有 `admin@nexent.com`（镜像自带，口令未知），演示统一用 `suadmin@nexent.com`。
 
-- **根因**：`SHA256SUMS` 是 CRLF 换行，文件名后面带了 `\r`
-- **修法**：用 LF 重写该文件（本包已修，2026-11-11 重新生成，14/14 校验通过）
+## 7 已知边界（材料里要写明，别等评委问）
 
-## 6 断网验证怎么做才算数
+1. **离线部署 ≠ 离线推理**。平台与工具链可完全离线，但 LLM 必须有一个可达的 OpenAI 兼容端点。
+   真断网环境下需把模型指向**内部部署的推理服务**（vLLM / Ollama 等，暴露 `/v1` 接口）；
+   否则对话能开、无模型可用。这一条必须在 PPT 与 OFFLINE 里都写清，不能含糊。
+2. **不裁 sandbox 是有依据的**：`setup_nexent.py` 的 `DUTY_PROMPT` 已禁用 `python_interpreter` 与
+   `parallel_executor`，全链路不执行沙箱代码，理论可省 1.89 GB；但「停掉 sandbox 后 8/8 是否仍通」**待真机验证**，
+   未验证前不从包里删。
+3. **`doc_search` 与主 Agent 的关系**：主 Agent 只挂 2 个工具（`event_deduce` / `evidence_locate`）是
+   `MAIN_TOOLS` **有意收窄**，检索以独立入口提供。评委问"为什么 15 个工具只挂 2 个"时，这是设计取舍，不是缺陷。
+4. **导出包不含 MCP 实现**：平台导出的 `agent.json` 只存 MCP 的 server 地址，工具能力由 `urban-twin-mcp` 提供，
+   所以离线包必须同时带 `urban-twin-mcp:dev` 镜像与 `src/decision_poc/mcp_server.py`。
 
-1. 拔网线 / 关闭 WLAN / `docker network disconnect`（三选一，拔网线最彻底）；
-2. `docker compose down` 后重新 `./scripts/install-offline.sh`；
-3. 若某个镜像缺失，compose 会因 `pull access denied` 直接失败，**不会静默降级**——这本身就是离线证明；
-4. 跑一次六跳对话，记录 `conversation_id`，与离线 8/8 的结论比对。
+## 8 复现凭据
 
-## 7 已知边界（如实声明）
-
-- 本包**不含** LLM 权重与 API Key。模型需在 `http://localhost:3000/zh/models` 里自行登记
-  （内置目录已预置 DeepSeek，填自己的 key 即可）。**Nexent 不读宿主机环境变量里的 key。**
-- `nexent-data-process`（6.77 GB）保留未裁：初赛材料若被问「知识库能力」，不能答「我们没用」。
-  沙箱镜像（1.89 GB）同样保留——虽然我们的提示词禁用了 `python_interpreter`，
-  但裁剪需真机验证，未验证前不做，避免演示时缺能力。
-- 首次启动后 Memory 需 16 GB 才稳；8 GB 环境建议关闭 `nexent-data-process` 之外的额外负载再压测。
+- 构建产物校验：`checksums.txt`（逐文件 sha256）；整包 sha256 不稳定（zip 头含时间戳，实测 5 次 5 个值），
+  以文件级校验为准；
+- 本机基线：15 容器 / `/nb/v1/health` healthy / `:3000/zh` 200 / `pytest` 977 collected / `evidence_check` 108/108。

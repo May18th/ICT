@@ -1,22 +1,39 @@
-# 离线镜像清单（14 个，合计 0.0 MB）
+# 离线镜像清单（14 个 tar，合计 4.57 GB）
 
-# tar 文件名 → 镜像 tag 对应关系：把文件名里第一个 '_' 后的 '/' 还原即可，
-# 保险起见以 `docker images` 实际 tag 为准。
+# 镜像 tar 位于离线包的 images/ 目录，不入代码仓库（体积 4.57 GB）。
+# 文件名到 tag 的对应见下表；加载后用 `docker images` 核对实际 tag 为准。
 
+| tar 文件 | 大小 | 镜像 tag |
+|---|---:|---|
+| `nexent-data-process-v2-7-0.tar` | 1843.9 MB | `nexent/nexent-data-process:v2.7.0` |
+| `elasticsearch-8-17-4.tar` | 678.1 MB | `docker.elastic.co/elasticsearch/elasticsearch:8.17.4` |
+| `postgres-15-8-1-060.tar` | 651.2 MB | `supabase/postgres:15.8.1.060` |
+| `nexent-v2-7-0.tar` | 399.0 MB | `nexent/nexent:v2.7.0` |
+| `nexent-sandbox-v2-7-0.tar` | 392.5 MB | `nexent/nexent-sandbox:v2.7.0` |
+| `nexent-web-v2-7-0.tar` | 126.4 MB | `nexent/nexent-web:v2.7.0` |
+| `nexent-mcp-v2-7-0.tar` | 114.2 MB | `nexent/nexent-mcp:v2.7.0` |
+| `postgres-15-alpine.tar` | 110.6 MB | `postgres:15-alpine` |
+| `minio-2023-12-20T01-00-02Z.tar` | 95.8 MB | `quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z` |
+| `otel-collector-0-151-0.tar` | 94.1 MB | `otel/opentelemetry-collector-contrib:0.151.0` |
+| `urban-twin-mcp-dev.tar` | 68.3 MB | `urban-twin-mcp:dev` |
+| `kong-2-8-1.tar` | 47.1 MB | `kong:2.8.1` |
+| `redis-alpine.tar` | 37.8 MB | `redis:alpine` |
+| `gotrue-v2-170-0.tar` | 22.1 MB | `supabase/gotrue:v2.170.0` |
 
 ## 角色说明
 
 - `nexent/nexent:v2.7.0` — 后端主服务（config/runtime/northbound 共用此镜像）
 - `nexent/nexent-web:v2.7.0` — 前端
-- `nexent/nexent-web:v2.7.0-ict` — 前端（ICT 定制版，可选）
-- `nexent/nexent-data-process:v2.7.0` — 文档处理 / 知识库切分
+- `nexent/nexent-data-process:v2.7.0` — 文档处理 / 知识库切分（单镜像 1.8 GB，占总量四成）
 - `nexent/nexent-sandbox:v2.7.0` — 代码沙箱（本项目提示词已禁用，仍保留）
-- `urban-twin-mcp:dev` — 本项目的 MCP 服务（15 个工具的实现）
+- `nexent/nexent-mcp:v2.7.0` — 平台 MCP 运行时
+- `urban-twin-mcp:dev` — 本项目的 MCP 服务（工具实现）
 - `docker.elastic.co/elasticsearch/elasticsearch:8.17.4` — 全文检索 / 技能与知识库
-- `postgres:15-alpine` — MCP 侧数据库
-- `supabase/postgres:15.8.1.060` — 平台主库
+- `postgres:15-alpine` / `supabase/postgres:15.8.1.060` — MCP 侧数据库 / 平台主库
 - `supabase/gotrue:v2.170.0` — 认证（登录/密钥）
 - `kong:2.8.1` — 网关
 - `redis:alpine` — 缓存
 - `quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z` — 对象存储
 - `otel/opentelemetry-collector-contrib:0.151.0` — 链路追踪（可停）
+
+- 前端 ICT 定制版（`nexent-web:v2.7.0-ict`）未单独打包，使用标准版前端。
