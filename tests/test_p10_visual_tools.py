@@ -14,6 +14,15 @@ from pathlib import Path
 
 import pytest
 
+#: Blender 资产清单在 visualization/blender/scenes/，该工具链已停用、目录不入仓库。
+#: 缺清单时这两个用例无从断言，跳过而不是报错——否则 clone 后会凭空多出两个红。
+_BLENDER_MANIFEST = (
+    Path(__file__).resolve().parents[1] / "visualization" / "blender" / "scenes" / "asset_manifest.json"
+)
+_SKIP_NO_BLENDER = pytest.mark.skipif(
+    not _BLENDER_MANIFEST.is_file(), reason="Blender 工具链已停用，资产清单不入仓库"
+)
+
 from decision_poc import visualize
 from decision_poc.mcp_server import TOOL_GROUPS, McpServer, UrbanToolkit
 
@@ -134,6 +143,7 @@ def test_compare_same_snapshot_is_flagged(toolkit: UrbanToolkit) -> None:
 # --- 资产 ---------------------------------------------------------------
 
 
+@_SKIP_NO_BLENDER
 def test_asset_lookup_reports_manifest() -> None:
     data = visualize.asset_lookup("construction")
     assert data["scenario"] == "construction"
@@ -203,6 +213,7 @@ def test_scene_compare_unknown_id(server: McpServer, baseline: dict) -> None:
     assert payload["error"]["code"] == "NOT_FOUND"
 
 
+@_SKIP_NO_BLENDER
 def test_asset_lookup_tool(server: McpServer) -> None:
     payload = _call(server, "asset_lookup", {"scenario": "flood"})
     assert payload["status"] == "ok"

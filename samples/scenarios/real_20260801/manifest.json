@@ -35,7 +35,7 @@
   },
   "assets": [
     {
-      "asset_id": "AS-A-03-construction_plan-9d16ae32",
+      "asset_id": "AS-A-03-construction_plan-abbe33a8",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "construction_plans.csv",
@@ -44,7 +44,7 @@
       "version": "v3",
       "standard_refs": [],
       "locator": "A-03/construction_plan/v3",
-      "checksum_sha256": "9d16ae32831e2b14cf383581c276c3441e286267c606e9cb38bc005811b3aad3",
+      "checksum_sha256": "abbe33a803f0ebc2c7873e5ffb979f7c2bf4ba9b7ae9bfd41b25882d42045822",
       "byte_size": 784,
       "summary": "表格资产：4 行 × 12 列，列名 plan_id、project_name、road_id、pipeline_id、work_type、excavation_depth_m 等",
       "structure": {
@@ -74,7 +74,7 @@
         "valid_from": "2026-10-26T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "9d16ae32831e2b14cf383581c276c3441e286267c606e9cb38bc005811b3aad3",
+        "content_hash": "abbe33a803f0ebc2c7873e5ffb979f7c2bf4ba9b7ae9bfd41b25882d42045822",
         "status": "published"
       },
       "coverage": [
@@ -83,7 +83,7 @@
       ]
     },
     {
-      "asset_id": "AS-A-03-drainage_facility-073cc674",
+      "asset_id": "AS-A-03-drainage_facility-d09effd5",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "drainage_facilities.csv",
@@ -92,7 +92,7 @@
       "version": "v1",
       "standard_refs": [],
       "locator": "A-03/drainage_facility/v1",
-      "checksum_sha256": "073cc6746cf7eff9ead095436fc1345fb567d0c1160a4bd9350c7d8ee5161a2f",
+      "checksum_sha256": "d09effd58e12e1b69a2e71c1c3c37417c8a32d2eec41661d05c5c4fff9ada06f",
       "byte_size": 920,
       "summary": "表格资产：7 行 × 13 列，列名 facility_id、name、facility_type、road_id、drainage_zone、capacity_m3h 等",
       "structure": {
@@ -123,7 +123,7 @@
         "valid_from": "2026-09-10T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "073cc6746cf7eff9ead095436fc1345fb567d0c1160a4bd9350c7d8ee5161a2f",
+        "content_hash": "d09effd58e12e1b69a2e71c1c3c37417c8a32d2eec41661d05c5c4fff9ada06f",
         "status": "published"
       },
       "coverage": [
@@ -238,7 +238,7 @@
       "coverage": []
     },
     {
-      "asset_id": "AS-A-03-pipeline_ledger-40793355",
+      "asset_id": "AS-A-03-pipeline_ledger-ef229ae4",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "pipeline_ledger.csv",
@@ -247,7 +247,7 @@
       "version": "v1",
       "standard_refs": [],
       "locator": "A-03/pipeline_ledger/v1",
-      "checksum_sha256": "407933557d21d1cc9ffca70dbed2c495af702a9e329d1fa738e4945a4d90ce0a",
+      "checksum_sha256": "ef229ae4e2fc35505f9de947feb2b48189e0c976f085df874b7d5981550765e3",
       "byte_size": 948,
       "summary": "表格资产：10 行 × 10 列，列名 pipeline_id、kind、road_id、depth_m、diameter_mm、material 等",
       "structure": {
@@ -275,7 +275,7 @@
         "valid_from": "2026-02-01T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "407933557d21d1cc9ffca70dbed2c495af702a9e329d1fa738e4945a4d90ce0a",
+        "content_hash": "ef229ae4e2fc35505f9de947feb2b48189e0c976f085df874b7d5981550765e3",
         "status": "published"
       },
       "coverage": [
@@ -482,7 +482,7 @@
       "coverage": []
     },
     {
-      "asset_id": "AS-A-03-underpass-d4ae624c",
+      "asset_id": "AS-A-03-underpass-5a68cab1",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "underpasses.csv",
@@ -491,7 +491,7 @@
       "version": "v1",
       "standard_refs": [],
       "locator": "A-03/underpass/v1",
-      "checksum_sha256": "d4ae624ce6a0df0fd7c82539af1eace12355d590e27fb1518110de8dc4ce9632",
+      "checksum_sha256": "5a68cab1a3c791b056af2efe2a4ac4d3462166c39c8305706d57e7b9f3205904",
       "byte_size": 548,
       "summary": "表格资产：2 行 × 13 列，列名 underpass_id、name、road_id、district、entry_sill_height_m、lowest_point_z_m 等",
       "structure": {
@@ -522,7 +522,7 @@
         "valid_from": "2026-10-29T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "d4ae624ce6a0df0fd7c82539af1eace12355d590e27fb1518110de8dc4ce9632",
+        "content_hash": "5a68cab1a3c791b056af2efe2a4ac4d3462166c39c8305706d57e7b9f3205904",
         "status": "published"
       },
       "coverage": [
@@ -577,7 +577,7 @@
       ]
     },
     {
-      "asset_id": "AS-A-03-work_order-6a1282a1",
+      "asset_id": "AS-A-03-work_order-4fa911d8",
       "modality": "table",
       "parse_status": "parsed",
       "file_name": "work_orders.csv",
@@ -586,7 +586,7 @@
       "version": "v1",
       "standard_refs": [],
       "locator": "A-03/work_order/v1",
-      "checksum_sha256": "6a1282a1710c5760648ce61a548cba8582f6ee713c72713d0fa4eddde1dbe18a",
+      "checksum_sha256": "4fa911d8c72841bc7420bc100d9d9437ee2b704c7156ace446b42e19aee387ee",
       "byte_size": 1283,
       "summary": "表格资产：8 行 × 10 列，列名 order_id、road_id、facility_id、pipeline_id、order_type、reported_at 等",
       "structure": {
@@ -614,44 +614,13 @@
         "valid_from": "2026-10-29T00:00:00+08:00",
         "valid_to": null,
         "visibility": [],
-        "content_hash": "6a1282a1710c5760648ce61a548cba8582f6ee713c72713d0fa4eddde1dbe18a",
+        "content_hash": "4fa911d8c72841bc7420bc100d9d9437ee2b704c7156ace446b42e19aee387ee",
         "status": "published"
       },
       "coverage": [
         "A-03",
         "B-01"
       ]
-    },
-    {
-      "asset_id": "AS-CD-CITY-emergency_plan-2de19b5d",
-      "modality": "text",
-      "parse_status": "parsed",
-      "file_name": "plan_flood_emergency_cd_2026.md",
-      "doc_type": "emergency_plan",
-      "equipment_id": "CD-CITY",
-      "version": "2026",
-      "standard_refs": [],
-      "locator": "CD-CITY/emergency_plan/2026",
-      "checksum_sha256": "2de19b5d1db280e4d22bd145fca2faf8dabfe22cd891a66b314dfce1ca8f630f",
-      "byte_size": 1975,
-      "summary": "文本资产：26 行，首段「四级响应（蓝色）：市气象台发布暴雨橙色预警。」",
-      "structure": {
-        "lines": 26,
-        "lead": "四级响应（蓝色）：市气象台发布暴雨橙色预警。"
-      },
-      "governance": {
-        "asset_type": "emergency_plan",
-        "title": "成都市防汛抗旱应急预案（2026 年度修订）",
-        "source_uri": "demo://urban/plan_flood_emergency_cd_2026.md",
-        "source_org": "成都市应急管理局",
-        "published_at": "2026-05-29T09:00:00+08:00",
-        "valid_from": "2026-05-29T00:00:00+08:00",
-        "valid_to": null,
-        "visibility": [],
-        "content_hash": "2de19b5d1db280e4d22bd145fca2faf8dabfe22cd891a66b314dfce1ca8f630f",
-        "status": "published"
-      },
-      "coverage": []
     },
     {
       "asset_id": "AS-CD-CITY-emergency_plan-b410bfe9",
@@ -680,6 +649,37 @@
         "valid_to": null,
         "visibility": [],
         "content_hash": "b410bfe994d4f21e84ac1e600a58f2223db95b99aeeb08c001f99f6f37fff6ec",
+        "status": "published"
+      },
+      "coverage": []
+    },
+    {
+      "asset_id": "AS-CD-CITY-emergency_plan-f6569517",
+      "modality": "text",
+      "parse_status": "parsed",
+      "file_name": "plan_flood_emergency_cd_2026.md",
+      "doc_type": "emergency_plan",
+      "equipment_id": "CD-CITY",
+      "version": "2026",
+      "standard_refs": [],
+      "locator": "CD-CITY/emergency_plan/2026",
+      "checksum_sha256": "f656951779e025fd0957facd638c4bb1e47e3af02135f66d36fdf941d304ec3f",
+      "byte_size": 1975,
+      "summary": "文本资产：26 行，首段「四级响应（蓝色）：市气象台发布暴雨橙色预警。」",
+      "structure": {
+        "lines": 26,
+        "lead": "四级响应（蓝色）：市气象台发布暴雨橙色预警。"
+      },
+      "governance": {
+        "asset_type": "emergency_plan",
+        "title": "成都市防汛抗旱应急预案（2026 年度修订）",
+        "source_uri": "demo://urban/plan_flood_emergency_cd_2026.md",
+        "source_org": "成都市应急管理局",
+        "published_at": "2026-05-29T09:00:00+08:00",
+        "valid_from": "2026-05-29T00:00:00+08:00",
+        "valid_to": null,
+        "visibility": [],
+        "content_hash": "f656951779e025fd0957facd638c4bb1e47e3af02135f66d36fdf941d304ec3f",
         "status": "published"
       },
       "coverage": []
