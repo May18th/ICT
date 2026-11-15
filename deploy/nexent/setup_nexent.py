@@ -18,10 +18,12 @@
     create-agent   创建/复用 Agent，挂两个结论类工具，发布版本
     create-collab-agent  创建/复用协同 Agent，挂 6 个协同工具，发布版本
     bind-skills    上传 SKILL.md → 绑 Agent 草稿 → 重新发布 → 复核已发布版本
+    eval           平台原生评测装配：code 评估器 + 两个评测集（v1/v1.2）→ 各跑一次 run
+                   → 打印进化前后 score_overall 对比（赛题 3「可进化」真机证据）
     mint-key       生成北向 API Key（打印一次）
-    status         只读自检：MCP / 工具 / 两个 Agent / 技能绑定，任一不成立即非 0
+    status         只读自检：MCP / 工具 / 两个 Agent / 技能绑定 / 评测资产，任一不成立即非 0
     all            从零装配：register-mcp → sync-tools → create-agent → create-collab-agent
-                   → bind-skills → mint-key
+                   → bind-skills → mint-key（不含 eval，评测需显式跑，因为要等 run 完成）
 
 **为什么技能必须排在发布之后再来一轮发布**
 `bind_skills.py` 只能写草稿（`version_no=0`），而运行期读的是已发布版本快照。
@@ -90,7 +92,13 @@ OUR_TOOLS = {
 #: 2026-11-13 起加入 doc_search（第 3 个）：真实预案进库后，推演需要能查到"依据哪一条"。
 #: 但必须限定用途——它只负责找依据，不负责提供事实。事实仍只认 event_deduce，
 #: 否则模型会用检索片段拼六跳，8 项结论一致性校验立刻失守（这条约束写进 DUTY_PROMPT）。
-MAIN_TOOLS = {"event_deduce", "evidence_locate", "doc_search"}
+#: 2026-11-14 实测推翻了一条旧假设：注释过去写"`collab_run` 挂主 Agent 会绕过 event_deduce、
+#: 8/8 守不住"。实测（v28，只挂工具、不改提示词）**8/8 仍然全过，答案 1484 字符、没有把
+#: 26 张动作卡抄进去**。原因：collab_run 内部走的是同一个确定性内核，六跳字段一样齐。
+#: 工具日志显示那轮模型确实调的是 collab_run 而不是 event_deduce —— 路径变了，结论没变。
+#: 所以现在**挂**（"多智能体进主链路"这件事因此成立），但要靠提示词限死"只在被问分工/顺序时
+#: 才调、且不许逐条抄卡片"，否则回答会被 26 张卡撑爆、撞上输出截断。
+MAIN_TOOLS = {"event_deduce", "evidence_locate", "doc_search", "collab_run"}
 
 #: 发布版本名。**必须是常量，不能在各处写死字面量**：曾经在 `publish()` 里写死
 #: `urban-mcp-v3`，而平台实际已是 v4，跑一次装配就会把版本命名写回旧值，事后只能翻
@@ -98,6 +106,16 @@ MAIN_TOOLS = {"event_deduce", "evidence_locate", "doc_search"}
 MAIN_VERSION_NAME = "urban-mcp-v5"
 
 DUTY_PROMPT = """你是城市内涝跨部门决策智能体。用户给出事件编号与时点后，严格按两步执行：
+
+第零步：**先确认事件编号，绝不自己挑一个工单号顶上**（2026-11-14 实测踩过：用户问"天府广场附近会不会积水"，
+本 Agent 拿 WO-20261029-007 当答案输出了一整套六跳，看起来专业，实际答的是另一个片区）。
+- 用户**没给**事件编号（只给了地名、现象或口语描述）时，第一个动作是调 `doc_search`，
+  query 用地名或现象的主题词（如「兴华路 积水」「下穿隧道 倒灌」），看库里有没有能对上的工单；
+- 检索到能对上的工单 → 在回答**开头写明**「按 <编号> 处理」，再进入第一步；
+- 检索不到 → **直接回答**：「这个片区不在本系统覆盖范围内。本系统只覆盖成都兴华路片区（A-03）约 3 公里，
+  现有工单为 WO-20261029-007/009、WO-20261026-013、WO-20261030-021。」
+  然后停止，**不要输出六跳、不要拿别的工单当参照结论**；
+- 参照可以提，但必须显式标注是"同型情形参照，不是该地点的结论"，且不得写进 six_hops 与 conflicts。
 
 第一步：**第一个动作就必须是调用 MCP 工具 event_deduce**，参数为 {"event_id": "<用户给的事件编号>",
 "as_of": "<事件时点>", "caller_labels": ["ORG-EMERG"]}。
@@ -114,8 +132,9 @@ as_of 取值规则（**必须遵守，取错会让整轮结论失真**）：
 （observed/affected/owner/conflict/resource/action）、三类冲突、资源缺口与 action_order，
 **所以事实层面不需要再调任何工具**。
 
-唯一允许的第二次工具调用是 doc_search，规则严格限定（违反即答错）：
-- 只在需要外部依据时才调，**最多 1 次**，query 用主题词，不要用事件编号去搜。允许两类用途：
+除第零步的工单定位外，唯一允许的第二次工具调用是 doc_search，规则严格限定（违反即答错）：
+- 只在需要外部依据时才调，**整轮 doc_search 累计最多 2 次**（含第零步那次），query 用主题词，
+  不要用事件编号去搜。允许两类用途：
   ① 规则依据：预案/规程条款（如「Ⅳ级响应启动条件」「下穿隧道封控阈值」「泵站运维主体的界定」）；
   ② 同类先例：真实政府的定级过程（如「成都 2020-08-11 防汛响应升级 依据」）——
      用来回答"同类情形以前是怎么定的"，库里有就引，没有就说不掌握，不要编；
@@ -126,6 +145,14 @@ as_of 取值规则（**必须遵守，取错会让整轮结论失真**）：
 - 检索结果与 event_deduce 返回冲突时，**一律以 event_deduce 为准**；
 - 检索不到就按 event_deduce 的事实作答，并在 summary 里注明"未检索到对应条款"，
   不要用常识补全。
+
+第 1.5 步（可选，**只在被问到"谁去干/怎么分工/先做哪个"时才用**）：
+调用 `collab_run`（参数与 event_deduce 相同：event_id / as_of / caller_labels）。它返回 1 总控 +
+5 部门的动作卡、联合发布对、处置顺序与 `kernel_fingerprint`。
+- **只问"怎么处置"时不要调它**——event_deduce 的 action_order 已经够用；多调一次只会拉长回答；
+- 调了以后，**只把 `kernel_fingerprint` 和合并顺序的前 3 条写进 summary**，
+  **绝对不要把动作卡逐条抄进最后答案**（26 张卡会把回答撑爆、触发截断，整轮判失败）；
+- 卡片与顺序一律以工具返回为准，不得改写、不得新增。
 
 第二步：只根据 event_deduce 的返回结果构造 JSON 对象，字段如下（不得增删字段）：
 {"event_id": "...", "as_of": "...", "summary": "<一句话结论>",
@@ -453,6 +480,195 @@ class Platform(PlatformClient):
         print(f"[key] NEXENT_API_KEY={access_key}")
         return access_key
 
+    # --- 评测（平台原生 Agent 评测，赛题 3「可进化」的真机证据）---------
+    #
+    # 把分配策略的进化前后对比搬上平台原生评测机制：一个 code 评估器复刻
+    # decide() 确定性算法 + 两个评测集（allocation_v1 / allocation_v12 各 12 例）
+    # 各跑一次 run，用平台 stats 对比综合得分（进化前 0.7763 → 进化后 1.0）。
+    #
+    # 评测集 JSON 在宿主机由 `deploy/nexent/build_eval_sets.py` 生成（读冻结
+    # `samples/eval/allocation_cases.json`），再 docker cp 进容器；评估器源码
+    # `deploy/nexent/alloc_deviation_evaluator.py` 同理。本脚本只负责容器内的装配，
+    # 与技能的处理方式（宿主机 cp 目录 → 容器内 bind）一致。
+    def _eval_dir(self) -> Path:
+        return Path(os.getenv("NEXENT_EVAL_DIR", "/tmp/nexent_eval"))
+
+    def eval_inputs(self) -> tuple[str, str]:
+        """返回 (evaluator_code, 评测集 JSON 目录)。缺文件时抛 RuntimeError。"""
+        code = self._eval_dir() / "alloc_deviation_evaluator.py"
+        if not code.is_file():
+            raise RuntimeError(f"{code} 不在容器里：先 docker cp deploy/nexent/alloc_deviation_evaluator.py nexent-config:{code}")
+        for name in ("allocation_v1.json", "allocation_v12.json"):
+            if not (self._eval_dir() / name).is_file():
+                raise RuntimeError(
+                    f"{self._eval_dir() / name} 不在容器里：先在宿主机跑 "
+                    "`python deploy/nexent/build_eval_sets.py` 再 docker cp dist/nexent-eval/*.json"
+                )
+        return str(code), str(self._eval_dir())
+
+    def find_evaluator(self, name: str) -> dict | None:
+        status, body = self.call("/api/evaluators")
+        if status != 200 or not isinstance(body, dict):
+            return None
+        for item in body.get("data", []):
+            if item.get("name") == name and item.get("source") == "custom":
+                return item
+        return None
+
+    def create_evaluator(self, name: str) -> int | None:
+        """创建（或复用）code 评估器并发布，返回 evaluator_id。"""
+        existing = self.find_evaluator(name)
+        if existing is not None:
+            eid = int(existing["evaluator_id"])
+            print(f"[eval] 复用评估器 id={eid} status={existing.get('status')}")
+            return eid
+        code, _ = self.eval_inputs()
+        code_text = Path(code).read_text(encoding="utf-8")
+        status, body = self.call(
+            "/api/evaluators",
+            method="POST",
+            payload={
+                "name": name,
+                "description": "复刻 decide() 确定性算法，计算跨片区抽排分配相对 ground truth 的加权偏差；score=1-偏差",
+                "evaluator_type": "code",
+                "prompt": None,
+                "code": code_text,
+                "score_range_min": 0.0,
+                "score_range_max": 1.0,
+                "pass_threshold": 0.5,
+                "input_fields": [
+                    {"name": "query", "type": "string", "required": True},
+                    {"name": "expected", "type": "string", "required": True},
+                    {"name": "actual", "type": "string", "required": False},
+                    {"name": "runtime_events", "type": "array", "required": False},
+                ],
+            },
+        )
+        data = body.get("data") if isinstance(body, dict) else {}
+        eid = data.get("evaluator_id")
+        if status != 200 or not eid:
+            print(f"[eval] 评估器创建失败：{status} {str(body)[:300]}")
+            return None
+        # 发布：code 评估器必须 PUBLISHED 才能被评测 run 引用
+        s2, _ = self.call(f"/api/evaluators/{eid}/publish", method="POST", payload={"version_name": "v1"})
+        print(f"[eval] 创建评估器 id={eid} publish={s2}")
+        return int(eid)
+
+    def find_eval_set(self, name: str) -> dict | None:
+        status, body = self.call("/api/evaluation-sets")
+        if status != 200 or not isinstance(body, dict):
+            return None
+        for item in body.get("data", []):
+            if item.get("name") == name:
+                return item
+        return None
+
+    def create_eval_set(self, name: str, desc: str, json_name: str) -> int | None:
+        """创建空评测集并按 json_name 逐条灌用例，返回 evaluation_set_id（幂等）。"""
+        existing = self.find_eval_set(name)
+        if existing is not None:
+            set_id = int(existing["evaluation_set_id"])
+            # 幂等：已存在就不重灌，避免重复用例
+            print(f"[eval] 复用评测集 {name} id={set_id}")
+            return set_id
+        status, body = self.call("/api/evaluation-sets", method="POST", payload={"name": name, "description": desc})
+        data = body.get("data") if isinstance(body, dict) else {}
+        set_id = data.get("evaluation_set_id")
+        if status != 200 or not set_id:
+            print(f"[eval] 评测集 {name} 创建失败：{status} {str(body)[:200]}")
+            return None
+        set_id = int(set_id)
+        _, eval_dir = self.eval_inputs()
+        payload = json.loads((Path(eval_dir) / json_name).read_text(encoding="utf-8"))
+        ok = 0
+        for case in payload["cases"]:
+            s, _ = self.call(
+                f"/api/evaluation-sets/{set_id}/cases",
+                method="POST",
+                payload={"inputs": case["inputs"], "label": case["label"]},
+            )
+            ok += 1 if s == 200 else 0
+        print(f"[eval] 评测集 {name} id={set_id} 灌入 {ok}/{len(payload['cases'])} 例")
+        return set_id
+
+    def create_eval_run(self, agent_id: int, evaluator_id: int, set_id: int) -> int | None:
+        """创建一次评测 run，返回 agent_evaluation_id。"""
+        status, body = self.call(
+            "/api/agent-evaluations",
+            method="POST",
+            payload={
+                "agent_id": agent_id,
+                "judge_model_id": MODEL_IDS[0],
+                "evaluator_ids": [evaluator_id],
+                "field_mappings": None,
+                "evaluation_set_id": set_id,
+                "agent_version_no": None,
+                "query_count": 10,
+            },
+        )
+        data = body.get("data") if isinstance(body, dict) else {}
+        run_id = data.get("agent_evaluation_id")
+        if status != 200 or not run_id:
+            print(f"[eval] 评测 run 创建失败（set={set_id}）：{status} {str(body)[:300]}")
+            return None
+        print(f"[eval] run id={run_id} status={data.get('status')} set={set_id}")
+        return int(run_id)
+
+    def assemble_eval(self, *, wait: bool = True) -> int:
+        """评测装配：评估器 → 两个评测集 → 两个 run。返回 0 成功。
+
+        wait=True 时阻塞到两个 run 都 COMPLETED/FAILED，并打印分数对比。
+        """
+        evaluator_name = os.getenv("NEXENT_EVAL_EVALUATOR", "内涝抽排分配偏差")
+        try:
+            self.eval_inputs()
+        except RuntimeError as exc:
+            print(f"[eval] {exc}", file=sys.stderr)
+            return 2
+
+        agent = self.find_agent()
+        if agent is None:
+            print("[eval] 找不到主 Agent，先跑 create-agent", file=sys.stderr)
+            return 1
+
+        evaluator_id = self.create_evaluator(evaluator_name)
+        if evaluator_id is None:
+            return 1
+        set_v1 = self.create_eval_set("allocation_v1", "内涝抽排资源分配评测集（进化前 v1 基线策略，12 例）", "allocation_v1.json")
+        set_v12 = self.create_eval_set("allocation_v12", "内涝抽排资源分配评测集（进化后 v1.2 策略，12 例）", "allocation_v12.json")
+        if set_v1 is None or set_v12 is None:
+            return 1
+
+        run_v1 = self.create_eval_run(int(agent["agent_id"]), evaluator_id, set_v1)
+        run_v12 = self.create_eval_run(int(agent["agent_id"]), evaluator_id, set_v12)
+        if run_v1 is None or run_v12 is None:
+            return 1
+
+        if not wait:
+            return 0
+
+        import time
+
+        for _ in range(120):
+            done = True
+            for rid in (run_v1, run_v12):
+                _, body = self.call(f"/api/agent-evaluations/{rid}")
+                st = (body.get("data") or {}).get("status") if isinstance(body, dict) else None
+                if st not in ("COMPLETED", "FAILED"):
+                    done = False
+            if done:
+                break
+            time.sleep(5)
+
+        for rid, label in ((run_v1, "v1 进化前"), (run_v12, "v1.2 进化后")):
+            _, body = self.call(f"/api/agent-evaluations/{rid}")
+            d = (body.get("data") or {}) if isinstance(body, dict) else {}
+            print(
+                f"[eval] run{rid} {label}: score_overall={d.get('score_overall')} "
+                f"pass={d.get('pass_count')} fail={d.get('fail_count')} status={d.get('status')}"
+            )
+        return 0
+
 
 # --- 装配步骤 -------------------------------------------------------------
 #
@@ -499,6 +715,10 @@ def _step_mint_key(platform: Platform) -> int:
     return 0
 
 
+def _step_eval(platform: Platform) -> int:
+    return platform.assemble_eval()
+
+
 ASSEMBLY_STEPS = {
     "register-mcp": _step_register,
     "sync-tools": _step_sync_tools,
@@ -506,15 +726,18 @@ ASSEMBLY_STEPS = {
     "create-collab": _step_create_collab,
     "skills": _step_skills,
     "mint-key": _step_mint_key,
+    "eval": _step_eval,
 }
 
 #: 每个子命令要跑的步骤序列。单条命令也带上前置步骤，保证"单独跑一次"同样是完整状态。
+#: `eval` 依赖主 Agent 已就位（评测 run 要挂在 agent 上），所以带 create-main 前置。
 COMMAND_STEPS: dict[str, tuple[str, ...]] = {
     "register-mcp": ("register-mcp",),
     "sync-tools": ("register-mcp", "sync-tools"),
     "create-agent": ("register-mcp", "sync-tools", "create-main"),
     "create-collab-agent": ("register-mcp", "sync-tools", "create-collab"),
     "bind-skills": ("register-mcp", "sync-tools", "skills"),
+    "eval": ("register-mcp", "sync-tools", "create-main", "eval"),
     "all": ("register-mcp", "sync-tools", "create-main", "create-collab", "skills", "mint-key"),
 }
 
@@ -563,13 +786,33 @@ def render_status(platform: Platform) -> int:
         if skills_rc != 0:
             failed.append(f"skills(verify 退出码 {skills_rc})")
 
+    # 评测：评估器 / 两个评测集是否已装配。评测集 JSON 没送进容器时归 unknown
+    # （与技能同口径——"没准备件"是 unknown，不是"装配失败"）。
+    try:
+        platform.eval_inputs()
+    except RuntimeError:
+        print("[eval] 无法断言：评测集/评估器源码没送进容器（先 build_eval_sets.py 再 docker cp）", file=sys.stderr)
+        unknown.append("eval(缺评测准备件)")
+    else:
+        evaluator = platform.find_evaluator(os.getenv("NEXENT_EVAL_EVALUATOR", "内涝抽排分配偏差"))
+        if evaluator is None:
+            failed.append("eval(评估器未创建)")
+        else:
+            print(f"[eval] 评估器 id={evaluator['evaluator_id']} status={evaluator.get('status')}")
+        for name in ("allocation_v1", "allocation_v12"):
+            s = platform.find_eval_set(name)
+            if s is None:
+                failed.append(f"eval(评测集 {name} 未创建)")
+            else:
+                print(f"[eval] 评测集 {name} id={s['evaluation_set_id']}")
+
     if failed:
         print(f"[status] 失败 {len(failed)} 项：{failed}")
         return 1
     if unknown:
         print(f"[status] 无法断言 {len(unknown)} 项：{unknown}")
         return 2
-    print("[status] 全部就位：MCP / 15 工具 / 两个 Agent / 技能草稿与发布快照")
+    print("[status] 全部就位：MCP / 15 工具 / 两个 Agent / 技能草稿与发布快照 / 评测资产")
     return 0
 
 

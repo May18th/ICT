@@ -1,6 +1,6 @@
 {
   "schema_version": "platform-ui-capture-1",
-  "captured_at": "2026-11-07T00:10:00+0800",
+  "captured_at": "2026-11-14T17:59:32+0800",
   "web_url": "http://127.0.0.1:3000",
   "pages": [
     {
@@ -20,26 +20,30 @@
       "url": "http://127.0.0.1:3000/zh/skill-space",
       "title": "AI Agent Platform",
       "screenshot": "docs/reports/captures/nexent/skill-space.png",
-      "screenshot_bytes": 88204,
-      "screenshot_sha256": "e470f7f4b51ccdcc35132be9c9c8f3cd8ad4e4fcc62e64b658905367087386dc"
+      "screenshot_bytes": 87889,
+      "screenshot_sha256": "d6fe7a67d5f7b8bfde022e09c1a66de89f866d8a975b6522a762e04f5c1305f7"
     },
     {
       "name": "agents",
       "path": "/zh/agents",
-      "purpose": "平台智能体列表：已发布的城市内涝决策 Agent（版本号以截图为准）",
+      "purpose": "平台智能体列表：主推演 v31 与台账问答 v10 同屏可见（版本号写死，拍旧图直接退出码 1）",
       "expect": [
-        "城市内涝跨部门决策智能体"
+        "城市内涝跨部门决策智能体",
+        "台账问答",
+        "v31"
       ],
       "hit": [
-        "城市内涝跨部门决策智能体"
+        "城市内涝跨部门决策智能体",
+        "台账问答",
+        "v31"
       ],
       "missing": [],
       "ok": true,
       "url": "http://127.0.0.1:3000/zh/agents",
       "title": "AI Agent Platform",
       "screenshot": "docs/reports/captures/nexent/agents.png",
-      "screenshot_bytes": 94835,
-      "screenshot_sha256": "5e7dd1e4b41802d8bca2411efd2ca09f0808bff2db4f0d7d274f4acad4296c22"
+      "screenshot_bytes": 113210,
+      "screenshot_sha256": "7e1a9660de1f92f9029cc70b31d8983c8d62b578a63fe0a4490ed07ede0226ff"
     },
     {
       "name": "mcp-space",
@@ -60,8 +64,8 @@
       "url": "http://127.0.0.1:3000/zh/mcp-space",
       "title": "AI Agent Platform",
       "screenshot": "docs/reports/captures/nexent/mcp-space.png",
-      "screenshot_bytes": 77881,
-      "screenshot_sha256": "b3e1ff569e1c6c291db43127d9d78d36b6f57726d0e6729284279fe24bb230db"
+      "screenshot_bytes": 77581,
+      "screenshot_sha256": "a8bdffe516f466138ef892eb783c6f9205a22a3b67a83cf4c45b91cc7e3be44d"
     }
   ],
   "all_expectations_met": true,

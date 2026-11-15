@@ -35,7 +35,7 @@
 | ② 低资源 KG 本体半自动构建 | 种子本体 → 规则抽取 → 置信度分档（auto/review/drop）→ 人工确认 → 版本发布/回滚；改 1 格只产 2 条候选，回滚哈希逐位一致 | 强 |
 | ③ MCP / Skills 编排 | 15 个 MCP 工具（含检索 `doc_search`、推演、冲突、分配、渲染、状态、协同）+ 5 Skill 编排 + 2 个 SKILL.md；检索与推演共用同一套 `asset_id#locator` 口径（检索命中可直接交 `evidence_locate` 复核）；**Nexent 平台 Agent 已实调 MCP 工具并产出结论** | 强（工具编排真机已验证；2 个 SKILL.md 已上传并**已绑定到已发布 Agent**：草稿与发布版本各 2 条实例、`present=enabled=true`，`bind_skills.py verify --require-published` 退出码 0） |
 | ④ 跨文档多跳推理与可溯源 | 六跳推演 + 三类冲突 + 反事实重放 + 哈希链账本 + 变更传播影响分析；引用完整率 100%、篡改可定位 | 强 |
-| ⑤ 基于 Nexent 可运行 | **真机已跑通**：15 工具注册、Agent 发布 v25、conversation_id=179、结论与离线 8/8 一致、平台工具调用日志可查（见 [真机报告](../reports/nexent-live-integration-report.md)） | **强**（原高风险项已解除） |
+| ⑤ 基于 Nexent 可运行 | **真机已跑通**：15 工具注册、Agent 发布 v31、conversation_id=245、结论与离线 8/8 一致、平台工具调用日志可查（见 [真机报告](../reports/nexent-live-integration-report.md)） | **强**（原高风险项已解除） |
 
 ## 3 背景与问题
 
@@ -125,7 +125,7 @@
 | 进化 | 训练/留出综合偏差 | 0.2264→0.0000 / 0.2182→0.0000 |
 | 进化 | 应调拨未调拨 / 关键片区未满足 | 4→0 次 / 15→6 台（6 为资源硬缺口下限） |
 | 进化 | 记忆 warm start / 评审约束 | 起点偏差 0.0000、轮次 3→1；评审偏差 0.1171→0 |
-| 工程 | 测试 / 对外数字自检 | 977 项测试通过；108/108 项一致 |
+| 工程 | 测试 / 对外数字自检 | 971 项测试通过；108/108 项一致 |
 | MCP | 工具数 / SSE 传输测试 | 14 个；10 项（握手、列工具、调工具、批量、错误路径） |
 
 ## 9 演示流程（现场 5–8 分钟）
@@ -141,7 +141,7 @@
 ## 10 与 Nexent 的集成状态（评委必问）——**已真机跑通**
 
 - **已完成（真机，Nexent v2.7.0）**：MCP 服务 `urban-twin-mcp`（15 工具，SSE）注册进平台；
-  Agent `urban_deduction_agent`（DeepSeek-Chat）创建并发布 v25；真机对话 **conversation_id=179**，
+  Agent `urban_deduction_agent`（DeepSeek-Chat）创建并发布 v31；真机对话 **conversation_id=245**，
   六跳结论与离线推演 **8/8 项一致**；平台侧调用日志为 1 次 `event_deduce`（28ms、`attempts=1`），
   两条快照哈希一致。证据：`samples/nexent/live/`。
 - **可复现**：`deploy/nexent/README.md`（容器构建 → 平台装配脚本 → 结论级校验 → 证据抓取），
@@ -160,7 +160,7 @@
 
 ```powershell
 uv sync --locked
-uv run --locked pytest -q                                  # 977 项测试（收集数）
+uv run --locked pytest -q                                  # 971 项测试（收集数）
 uv run --locked python -m decision_poc.evidence_check      # 108/108 项一致
 uv run --locked python -m decision_poc.urban_eval          # 22/22
 uv run --locked python -m decision_poc.policy_evolution --report docs/reports/p9-policy-evolution-report.md

@@ -2,7 +2,19 @@
 
 把本仓库的城市孪生 MCP 服务接入本机 Nexent v2.7.0，并验证"平台 Agent 调 MCP 工具 → 六跳结论与离线一致"。
 
-已验证结果（2026-11-06 复测，主 Agent **v19** / 协同 Agent **v7**，模型 **DeepSeek-Chat**）：
+**最新复核（2026-11-14，主 Agent `v26` / 协同 Agent `v9`，DeepSeek-Chat）**：
+
+| 项 | 结果 | 证据 |
+| --- | --- | --- |
+| 主链路 | **8/8 项一致**，conversation_id=223，attempts=1 | `samples/eval/nexent_urban_v26_retest.json` |
+| 协同链路 | **2/2**，指纹 `ab94413cf94bc9a5`，26 卡 / 15 序 / 6 角色，两次 14.4s / 8.3s | `samples/nexent/live/collab_v9_retest.json` |
+| v26 的 `doc_search` | 本轮**未被调用**（工具日志只有 1 条 `event_deduce`） | `artifacts/visual/tool_log.jsonl` |
+
+> v26 比 v25 多挂一个 `doc_search`（`MAIN_TOOLS` 在 2026-11-13 扩到 3 个）。这次复核说明：提示词里"只在需要外部依据时调用、
+> 最多 1 次"的约束在本轮生效了，行为与 v25 一致。**但这不等于它永不触发**——被追问"依据哪一条"时模型会去调它，
+> 届时要用另一套判据看结果是否仍 8/8，别拿这一轮当永久保证。
+
+历史基线（2026-11-06 复测，主 Agent **v19** / 协同 Agent **v7**）：
 
 | 项 | 结果 | 证据 |
 | --- | --- | --- |
@@ -75,6 +87,16 @@ docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_
 > 分步排障：`register-mcp` / `sync-tools` / `create-agent` / `create-collab-agent` /
 > `bind-skills` / `mint-key` / `status`。单条命令会自带它的前置步骤（例如 `bind-skills`
 > 会先 register + sync），所以单独跑一次也是完整状态。
+>
+> **`all` 跑完必须再跑一次 `dedupe_draft_mounts.py`**：`attach_tools_for()` 对每个工具调
+> `/api/tool/update`（`version_no=0`），而那个端点每次都是 **insert 新 instance**、不按
+> (agent, tool) upsert。所以跑两次装配，草稿层每个工具就有两条；发布层是干净的（平台发布时
+> 按 tool_id 去重），但**只要有人在平台上点一次"发布"，重复就会快照进新版本**。
+> ```powershell
+> docker cp deploy/nexent/dedupe_draft_mounts.py nexent-config:/tmp/
+> docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/dedupe_draft_mounts.py"
+> ```
+> 幂等：无重复时直接退出。2026-11-14 一天内跑 3 次装配、重新积累 8 条重复，不是理论风险。
 
 装配完用 `status` 自检，三档退出码：
 
@@ -228,8 +250,18 @@ docker cp nexent-config:/tmp/agent_export.json       samples/nexent/live/agent_e
   `agent_export.json` 的 `bundle.content_sha256`（实测 `0a3aef9c…`，连导两次稳定；MCP 记录或技能内容一变这个值就变）。
 - 导出包只存 `mcp_info` 的 **server 地址**，不含工具实现 → 复现包必须同时给
   `src/decision_poc/mcp_server.py` / `mcp_sse.py` 与容器启动方式。
-- 口径提醒：平台注册 15 个工具，但主 Agent 只挂 2 个（`MAIN_TOOLS`）、协同 Agent 挂 6 个
-  （`COLLAB_TOOLS`），见 `setup_nexent.py:76-134` 的注释。
+- 口径提醒：平台注册 **15 个**工具，**分两类，别把 15 说成"都在线"**（2026-11-14 UE/Blender 下线后校准）：
+  - **在线决策链路 11 个**：主 Agent 挂 **4 个**（`MAIN_TOOLS` = `event_deduce` + `evidence_locate` +
+    `doc_search` + `collab_run`）、协同 Agent 挂 6 个（`COLLAB_TOOLS`），去重后**实际被调用的是 7 个**；
+    其余 4 个（`claim_trace` / `provenance_verify` / `counterfactual_run` / `semantic_query`）
+    已注册、契约完整，按部门视角按需挂载。
+  - **离线渲染 4 个**：`scene_render` / `scene_status` / `scene_compare` / `asset_lookup`。它们把一次决策落盘成
+    渲染作业、读回出片状态、做快照对比与资产核对，**不参与在线决策**；`scene_render` 只落盘即返回，
+    引擎不在线时体现为 `delivery=pending`，不算失败。2026-11-14 起现场演示不再使用 UE/Blender，
+    这 4 个工具保留是因为 P10 模块有独立测试（`tests/test_p10_render_worker.py` 等），不是死代码，
+    但**对外不要宣称它们参与决策**。
+  - 挂载数不是越多越好：2026-11-03 把 12 个工具全挂上主 Agent，模型转去调 `parallel_executor`，
+    8/8 掉到 0/8。
 
 细节与交叉核对结论见 [`docs/reports/agent-export-evidence.md`](../../docs/reports/agent-export-evidence.md)。
 
@@ -256,11 +288,12 @@ docker cp nexent-config:/tmp/agent_export.json       samples/nexent/live/agent_e
 
 - 本目录脚本面向**本机 Docker 演示环境**，管理员用户与 JWT 由容器环境提供；生产环境要换成正式账号与权限体系。
 - 真机结论只覆盖 `WO-20261029-007` 一个事件与 8 项一致性检查；扩事件需要扩数据集与评测用例。
-- 主 Agent 只挂 **2 个工具**（`event_deduce` + `evidence_locate`）。平台工具库当前是 14 个
-  （`setup_nexent.py status` 显示 `命中 14/14`），主 Agent 的挂载是这 14 个里的 2 个子集。
+- 主 Agent 挂 **4 个工具**（`event_deduce` + `evidence_locate` + `doc_search` + `collab_run`）。平台工具库当前是 15 个
+  （`setup_nexent.py status` 显示 `命中 15/15`），主 Agent 的挂载是这 15 个里的 3 个子集。
   收窄挂载不是偷懒：openPangu 看到 `twin_neighbors` / `conflict_check` / `allocation_plan`
   就会去调（提示词明令禁止也拦不住），随后走 `parallel_executor` 把回答截断在 `<|tool_call_start|>`。
-  工具列表才是模型真正读的"提示词"。
+  工具列表才是模型真正读的"提示词"。`doc_search` 是 2026-11-13 加的第 3 个（真实预案进库后要能查"依据哪一条"），
+  提示词把它限死在"最多 1 次、只提供依据不提供事实"；2026-11-14 复核时模型**没触发**它。
 - 两个 SKILL.md 已进平台技能仓库**且已绑定到已发布版本**（草稿 v0 与发布快照各 2 条实例）。
   运行时效果分三层说，别压成一句：
   1. **会注入**：平台把每份 enabled 技能的 `name` + `description` 拼进 `<available_skills>`

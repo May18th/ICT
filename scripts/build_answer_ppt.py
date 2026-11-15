@@ -200,7 +200,7 @@ _header(s, "P3 · 五个考点对位（1:00–1:50）", "五个考点，五张�
 rows = [
     ("① 多模态数据资产认知", "19 资产统一登记（asset_id+sha256+locator+版本+有效期）；解析 19/19、未识别列 0", "强（图像只登记，不做 OCR）"),
     ("② 低资源本体半自动构建", "种子本体→规则抽取→置信度分档→人工确认→版本发布/回滚；改 1 格只产 2 条候选", "强"),
-    ("③ MCP / Skills 编排", "15 个 MCP 工具 + 5 Skill 编排 + 2 个已上传 SKILL.md；平台 Agent 实调工具", "强"),
+    ("③ MCP / Skills 编排", "15 个 MCP 工具（11 在线决策 + 4 离线渲染）+ 5 Skill 编排；平台 Agent 实调工具", "强"),
     ("④ 跨文档多跳推理与溯源", "六跳 + 三类冲突 + 反事实重放 + 哈希链账本；引用完整率 100%", "强"),
     ("⑤ 基于 Nexent 可运行", "真机 15 工具注册、Agent 发布、六跳结论 8/8 一致（单环境单事件）", "强"),
 ]
@@ -275,10 +275,10 @@ s = prs.slides.add_slide(BLANK)
 _rect(s, 0, 0, W, H, BG)
 _header(s, "P6 · Nexent 平台真机（3:15–4:05）", "不是本地脚本装智能体，是平台上真调工具")
 _bullets(s, Inches(0.62), Inches(2.0), Inches(5.6), Inches(4.3), [
-    "MCP 服务 urban-twin-mcp 以 SSE 注册进平台，15 个工具",
-    "Agent urban_deduction_agent（DeepSeek-Chat）已发布 v25",
+    "MCP 服务 urban-twin-mcp 以 SSE 注册进平台，15 个工具（在线挂载 4 个）",
+    "Agent urban_deduction_agent（DeepSeek-Chat）已发布 v31",
     "真机对话六跳结论与离线推演 8/8 一致，快照哈希一致",
-    "平台侧调用日志可查：event_deduce 实际调用",
+    "平台侧调用日志可查：工具调用逐条留存",
     "2 个 SKILL.md 已上传平台技能仓库（skill_id=2/3）",
 ], size=14, gap=11)
 cap = ROOT / "docs/competition/video-clips"

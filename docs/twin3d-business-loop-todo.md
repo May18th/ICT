@@ -1,5 +1,8 @@
 # Twin3D 完整业务闭环
 
+> **已废弃（2026-11-14）**：`/twin3d` 页面已下线（用户判断「表现太差」，3D 沙盘与 2.5D 大屏 /map2d 表达同一批数据，删页减入口）。
+> 本文件保留为此前工作的历史记录，**不再作为待办**。关联层 `twin_links.py` 仍在使用，被 `/map2d` 与 `/workbench` 的对象卡片消费。
+
 ## 已验收（2026-11-08）
 
 - [x] 统一 `event_id / jump_id / entity_id / work_order_id / action_card_id / claim_id`。
@@ -76,6 +79,6 @@
 ## 验证口径
 
 ```
-python -m pytest -q                     # 977 项，1 skipped（可选依赖 openai）
-python -m decision_poc.evidence_check    # 108/108，指纹 b0a3ecbead0bb678
+python -m pytest -q                     # 971 项，1 skipped（可选依赖 openai）
+python -m decision_poc.evidence_check    # 108/108，指纹 0a629ba506a2a9b7
 ```

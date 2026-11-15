@@ -1,0 +1,7 @@
+﻿run_id,participant,group,started_at,ended_at,minutes,depts_touched,handoffs,stuck_count,depth_cm,pumps,sealed,note
+A1,P1,manual,,,0.0,,,,,,,
+A2,P2,manual,,,0.0,,,,,,,
+A3,P3,manual,,,0.0,,,,,,,
+B1,P1,tool,,,0.0,,,,,,,
+B2,P2,tool,,,0.0,,,,,,,
+B3,P3,tool,,,0.0,,,,,,,

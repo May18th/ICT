@@ -91,6 +91,51 @@ echo "exit=$LASTEXITCODE"
 补充：`answer` 开头可能出现 `xxx</think>{...}` 之类的截断残留，是平台侧拼接问题，
 解析层已容错，不影响 `decision`。
 
+## 4.5 负例演示（30 秒，固定插入）
+
+演示"不瞎编"必须给反例，否则前面所有"有依据"都只是自述。两条各 15 秒，命令可直接粘，输出逐字稳定。
+
+### 4.5.1 证据不足 → 不推演
+
+把 `--as-of` 拨到工单上报之前（工单 09:20 上报，这里取 09:00）：
+
+```powershell
+uv run --locked python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:00:00+08:00
+```
+
+期望（逐字）：
+
+```text
+[observed] insufficient  {'refused': '事件尚未上报：工单上报时间 2026-10-29T09:20:00+08:00 晚于 as_of 2026-10-29T09:00:00+08:00'}
+```
+
+冲突、资源缺口、处置顺序全空，`需人工接手` 里原样给出这句原因。
+
+**现场话术**："把时间拨回工单上报之前，它不猜——第一步就判 insufficient，后面五跳根本不跑。"
+
+### 4.5.2 账本被改 → 检出
+
+```powershell
+uv run --locked python -m decision_poc.anchoring --tamper-demo
+```
+
+期望（逐字；锚定号是内容哈希，跨机器一致）：
+
+```text
+锚定 AN-0001-2f06efe1 决策 DEC-WO-20261029-007-20261029T0940；链校验=通过，链下复核=通过
+篡改演练：检出=True 证据=['OFFCHAIN_MISMATCH:AN-0001-2f06efe1:action:1ab1837ad086']
+```
+
+**现场话术**："链上哈希是好的——被改的是链下动作包。所以它能检出'哈希没问题、内容对不上'这种篡改，而这正是最常见的一种。"
+
+### 4.5.3 两条边界（必须主动说）
+
+- 这是**检测**，不是"不可篡改存储"：锚定是本地哈希链，**没有上链**。
+- 负例证明的是"该停的时候会停"，**不是**"模型不会出错"。别把它讲成准确率。
+
+截图对应：`docs/reports/captures/S31-ue-negative-insufficient.png`（拒答）、
+`S31-ue-negative-tampered.png`（篡改检出）；两张都已入仓，讲到哪条开哪张。
+
 ## 5. 失败对照表
 
 | 现象 | 原因 | 处理 |
@@ -314,7 +359,7 @@ uv run --locked python -m decision_poc.scene_layout      # 布局变了才需要
 Set-Location D:/华为ICT/agent_poc
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 对外数字自检：108/108 项一致（期望指纹 b0a3ecbead0bb678）
+# 对外数字自检：108/108 项一致（期望指纹 0a629ba506a2a9b7）
 echo "exit=$LASTEXITCODE"
 ```
 

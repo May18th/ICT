@@ -59,8 +59,15 @@ PAGES: List[Dict[str, Any]] = [
     {
         "name": "agents",
         "path": "/zh/agents",
-        "expect": ["城市内涝跨部门决策智能体"],
-        "purpose": "平台智能体列表：已发布的城市内涝决策 Agent（版本号以截图为准）",
+        # 版本号必须写死在断言里（2026-11-14 补）：
+        # 旧版这里只校验「城市内涝跨部门决策智能体」这个字符串，注释还写着"版本号以截图为准"，
+        # 结果 2026-11-07 拍的图上是 V19，一路混进 PPT 没人发现 —— 正文写 v31、图上是 V19，
+        # 评委对照一眼就露。现在拍错版本会直接 MISSING 退出码 1。
+        # 升版后如果这里报 MISSING，改这一行 + 重拍，就是"材料跟着版本走"的强制闸门。
+        # `expect_ci` 走大小写不敏感：前端卡片写的是「当前版本 V31」，正文里习惯写 v31。
+        "expect": ["城市内涝跨部门决策智能体", "台账问答"],
+        "expect_ci": ["v31"],
+        "purpose": "平台智能体列表：主推演 v31 与台账问答 v10 同屏可见（版本号写死，拍旧图直接退出码 1）",
     },
     {
         "name": "mcp-space",
@@ -138,7 +145,7 @@ async def _capture(cfg: Dict[str, Any], out_dir: Path) -> None:
                 "name": spec["name"],
                 "path": spec["path"],
                 "purpose": spec["purpose"],
-                "expect": list(spec["expect"]),
+                "expect": list(spec["expect"]) + list(spec.get("expect_ci") or []),
                 "hit": [],
                 "missing": [],
                 "ok": False,
@@ -154,10 +161,14 @@ async def _capture(cfg: Dict[str, Any], out_dir: Path) -> None:
                     await page.locator(spec["click_selector"]).first.click(timeout=15000)
                     await page.wait_for_timeout(5000)
                 body = await page.inner_text("body")
+                body_lower = body.lower()
+                strict = list(spec["expect"])
+                ci = list(spec.get("expect_ci") or [])
                 record["url"] = page.url
                 record["title"] = await page.title()
-                record["hit"] = [text for text in spec["expect"] if text in body]
-                record["missing"] = [text for text in spec["expect"] if text not in body]
+                record["expect"] = strict + ci
+                record["hit"] = [t for t in strict if t in body] + [t for t in ci if t.lower() in body_lower]
+                record["missing"] = [t for t in strict if t not in body] + [t for t in ci if t.lower() not in body_lower]
                 shot = out_dir / f"{spec['name']}.png"
                 await page.screenshot(path=str(shot), full_page=False)
                 record["screenshot"] = str(shot).replace("\\", "/")

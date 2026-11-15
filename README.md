@@ -21,9 +21,8 @@
 | `/` | 门户首页：三条动线入口 + 平台状态（Agent 版本 / MCP 工具 / 验收口径） |
 | `/workbench` | 证据工作台：问一句，每条结论点开是台账那一行；含工具轨迹、自检与复跑 |
 | `/map2d` | 2.5D 俯视大屏：积水 / 封路 / 泵站 / 跨区调泵，六跳可播放 |
-| `/twin3d` | 三维沙盘：空间关系与逐跳场景状态 |
-| `/demo` | 旧的决策面板页（首页改成门户后保留在此） |
-| `/status` | 自检明细与台账口径 |
+| `/limits` | 「它会错吗」：同一道题三组对照（给工具 8/8、不给工具 2/8、逼它编造）+ 自己交代的偏差 |
+| `/status` | 运行自检（内部核对页：台账、平台版本、同步状态是否彼此对得上） |
 
 Windows 一键起演示环境（检查容器 → 拉起未运行的容器 → 取北向 key → 起工作台 → 打开门户）：
 
@@ -69,10 +68,10 @@ powershell -ExecutionPolicy Bypass -File scripts\start_demo.ps1 -CheckOnly
 - Nexent 北向传输层（SSE 聚合、幂等键、401/429/冲突错误映射，默认不联网）；
 - Nexent SDK 传输层（无平台环境时的内嵌路径，可选依赖）；
 - 北向链路真机验证（本机 Nexent v2.7.0，SSE → 结构化决策）；
-- 城市内涝主链路 Nexent 真机集成：MCP-over-SSE（15 工具）+ Agent 发布 v25（DeepSeek-Chat）+ 8/8 结论一致性校验（v24 加 doc_search 后复跑仍 8/8；历史真机留痕 conversation_id=120）；
+- 城市内涝主链路 Nexent 真机集成：MCP-over-SSE（15 工具）+ Agent 发布 v31（DeepSeek-Chat）+ 8/8 结论一致性校验（v24 加 doc_search 后复跑仍 8/8；历史真机留痕 conversation_id=120）；
 - 多模态数据资产标识（表格 / 文本 / 图片统一登记、结构摘要、标准引用、可引用定位）；
 - 本体半自动构建（种子本体 → 规则抽取 → 置信度分档 + 跨文档多跳证据 + 合并计划）；
-- 城市内涝数字孪生语义层 + 六跳跨部门推演 + 三类职责冲突 + 反事实重放（P4–P6）；
+- 城市内涝语义孪生层（孪生对象是职责与状态，不是实时水体）+ 六跳跨部门推演 + 三类职责冲突 + 反事实重放（P4–P6）；
 - 五个 Skill 编排与 15 个 MCP 工具（9 个决策语义 + 4 个可视化 + 1 个协同，含权限收口、trace_id、失败语义、工具分组 allowlist）（P6/P9/P10）；
 - P8 评测：22 个事件用例、七项指标口径与改进前后对比；
 - P9 决策层：推演输出片区决策输入、稀缺资源分配策略、偏差归因 + 评测门禁 + 回滚的受控进化闭环；
@@ -124,7 +123,7 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望：对外数字自检：108/108 项一致（期望指纹 b0a3ecbead0bb678）
+# 期望：对外数字自检：108/108 项一致（期望指纹 0a629ba506a2a9b7）
 ```
 
 期望值冻结在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/答辩口径，
@@ -301,7 +300,7 @@ Nexent **v2.7.0**（主 Agent v19，模型 DeepSeek-Chat）跑通。原绑定的
 （历史）重发布到 v19 / v7 后同一提示词复测仍 8/8；下文真机证据以那一轮为准，当前线上为 v24：
 
 - MCP 服务 `urban-twin-mcp`（15 工具）以 SSE 方式跑在 `nexent_network` 容器里；
-- Agent `urban_deduction_agent`（agent_id=3，已发布 v25）挂三个工具（`event_deduce` / `evidence_locate` / `doc_search`，收窄原因见真机报告 §6）；`doc_search` 只查规则依据，事实仍只认 `event_deduce`；
+- Agent `urban_deduction_agent`（agent_id=3，已发布 v31）挂三个工具（`event_deduce` / `evidence_locate` / `doc_search`，收窄原因见真机报告 §6）；`doc_search` 只查规则依据，事实仍只认 `event_deduce`；
 - 一次真实对话（**conversation_id=120**）产出六跳 JSON，与离线 `DeductionEngine` **8/8 项一致**；
 - 平台侧确实发生了工具调用：`event_deduce`（18ms）+ 一次协议修复重试（6ms），
   两条日志快照哈希一致（协同链路的 3 次 `collab_run` 实测另见 `samples/nexent/live/collab_live.json`，成功率 2/3）。
@@ -472,8 +471,8 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **977 项测试通过**（口径是**收集数**：其中 1 项需可选依赖 `openai`，
-未 `uv sync --group llm` 时该条在输出里显示为 `skipped`，所以默认环境看到的是 passed 与 skipped 两个数，合计仍是 977）；
+当前基线：`uv run --locked pytest -q` 共 **971 项测试通过**（口径是**收集数**：其中 1 项需可选依赖 `openai`，
+未 `uv sync --group llm` 时该条在输出里显示为 `skipped`，所以默认环境看到的是 passed 与 skipped 两个数，合计仍是 971）；
 `python -m decision_poc.evidence_check` 108/108 项一致；
 城市内涝主链路 Nexent 真机校验 8/8（Agent v19 / DeepSeek-Chat，`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。

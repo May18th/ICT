@@ -62,7 +62,7 @@
 | **评测数据集 + 评测报告**（2026-11-06 新增） | 初赛要跑基础评测，需评测数据集 `[直播 16:48]` | **已完成说明书级整备**：`docs/competition/eval-dataset-spec.md`——22 例推演集 + 12 例分配集（含 4 例 holdout）字段字典、覆盖分布、五级消融基线、真假数据声明、四条可复跑命令；进化量化（训练 0.2264→0.0000、**留出 0.2182→0.0000**、未满足 15→6 台、记忆复用 1 轮）已落文档。**缺口缩小为**：还没有一份独立成篇的「评测报告」PDF | 低（原中高） |
 | **平台导出包**（新增） | 初赛「配置能力」= 平台导出作品 `[直播 17:05]`；实现为 `<agent>.zip` 含 `agent.json` + `skills/*.zip`（`Nexent/backend/management/services/agent/management.py:1410`，接口 `POST /agent/config/export`） | **已完成**（2026-11-06，2026-11-07 重导）：`samples/nexent/live/urban_deduction_agent.zip`（7 982 B）+ `agent_export.json`，脚本 `deploy/nexent/export_bundle.py`；**内容指纹 `0a3aef9c…`**（整包 sha256 不可用，zip 头带导出时刻时间戳，实测 5 次 5 个值），详见[导出证据](reports/agent-export-evidence.md) | 低（已交付，留待套模板时引用） |
 | **复现包须含 MCP 服务端**（新增，导出时暴露） | 导出包只存 `mcp_info` 的 server 地址，不含工具清单与实现；评委按 zip 复现时没有 `urban-twin-mcp` 就一个工具都起不来 | 服务端代码在 `src/decision_poc/mcp_server.py` / `mcp_sse.py`，容器启动方式在 `deploy/nexent/README.md`；但**未在材料里显式说明「导出包恢复 Agent 配置、工具能力由 MCP 服务提供」** | 中（一句话说明 + 复现包目录结构即可） |
-| **离线部署包 / 离线部署说明**（新增） | 平台作品须支持离线部署，不能强依赖在线 `[直播 14:38]` | **已产出（2026-11-11）**：`dist-offline/nexent-offline/` 4.8 GB / 14 镜像 / 3391 文件校验全过；说明书写在 [OFFLINE.md](competition/OFFLINE.md)（含三则实测故障排查与「离线部署≠离线推理」边界声明）。**遗留：断网实测未做** | 中（原中高，硬要求已基本满足） |
+| **离线部署包 / 离线部署说明**（新增） | 平台作品须支持离线部署，不能强依赖在线 `[直播 14:38]` | **已产出（2026-11-11）**：`dist-offline/nexent-offline/` 4.8 GB / 14 镜像 / 3391 文件校验全过；说明书写在 [OFFLINE.md](competition/OFFLINE.md)（含三则实测故障排查与「离线部署≠离线推理」边界声明）。**断网能力已实测（2026-11-14）**：隔离网内 15 工具 / 六跳 / 分配 / 检索全部可跑且与联网逐字一致，14/14 镜像本地齐备；边界是平台编排层需 4 个公网模型端点（[实测记录](reports/offline-network-test.md)）。**口径修正：初赛 6 项提交物不含离线包（直播 16:21–17:16：「演示：录屏即可，不必现场」），该项按「材料里怎么写、写了能否兜住」定级，不按现场验收定级** | 低（原中高）：初赛不阻塞；只有主动在概述里承诺「完全离线可运行」才会变成风险 |
 | **平台特性贡献**（新增，加分项） | 对平台能力优化或提交有价值特性 `[直播 15:06]` | 零准备。可切入口：`read_skill_md` 被提示词禁用（见第 2 节考点③）、MCP 工具参数校验、大资产上传的会话上下文控制 | 机会项 |
 
 ## 4 当前环境与可复现状态（实测）
@@ -70,8 +70,8 @@
 | 项 | 实测结果 |
 | --- | --- |
 | Docker / Nexent | **可用**：Docker Desktop 启动后 Nexent v2.7.0 全栈在线（`/nb/v1/health` healthy）；MCP 服务以 `urban-twin-mcp` 容器跑在 `nexent_network` |
-| Nexent 真机 | **已跑通**：15 工具注册、Agent `urban_deduction_agent` 发布 v25（DeepSeek-Chat）、conversation_id=179、8/8 一致；证据 `samples/nexent/live/` |
-| 测试与自检 | 977 项测试通过；对外数字自检 108/108；`uv lock --check`、`compileall`、`uv pip check` 通过 |
+| Nexent 真机 | **已跑通**：15 工具注册、Agent `urban_deduction_agent` 发布 v31（DeepSeek-Chat）、conversation_id=245、8/8 一致；证据 `samples/nexent/live/` |
+| 测试与自检 | 971 项测试通过；对外数字自检 108/108；`uv lock --check`、`compileall`、`uv pip check` 通过 |
 | Git | `main` 与 `origin/main` 同步在 `6f7c559`（2026-11-02 推送 12 个提交）；工作区干净；每轮结束由 `scripts/git_sync.ps1` 自动提交推送 |
 | 开源合规 | 无 `LICENSE`；`samples/` 为合成数据、来源已标注，未发现真实私有数据；真机证据不含 API Key |
 
@@ -103,7 +103,7 @@
 | ~~P1~~ | ~~**整备评测数据集 + 评测报告**（新增）：把 `samples/eval/` 收成「数据字典 + 基线对照表 + 场景覆盖说明 + 一键复跑」~~ | 评委能按 README 复跑出同样的评测数字 | **已完成（2026-11-06）**：`docs/competition/eval-dataset-spec.md`；四条命令全部实测跑通，**并纠正一处**：`decision_poc.evaluation` / `allocation` 没有 `__main__`，真实入口是 `urban_eval` / `policy_evolution` / `ablation` |
 | ~~P1~~ | ~~**检索侧接入**（新增）：把 `rag/` 从「能跑但零引用」接成 MCP 工具 `doc_search`，索引按台账登记建，检索结果直接可被 `evidence_locate` 复核~~ | 检索命中 → 取回原文闭环；平台 15/15 工具可用 | **已完成（2026-11-06）**：[接入报告](reports/rag-integration-2026-11-06.md)。索引改 `rag build --registered` 后 `asset_id` 与台账逐位一致；检索默认剔除已废止资产（2021 版预案 `valid_to=2025-06-01`）；主 Agent 仍只挂 2 个（收窄是稳定性设计），检索以独立入口提供 |
 | P2 | 平台卫生（新增）：清掉「删 MCP 但不删工具」留下的孤儿记录 | 工具库无 `is_available=false` 条目 | **已完成（2026-11-06）**：删 7 条（6 个 `kg_*` + 1 个 `local_test_tool_name`），平台工具 50→43、不可用项 6→0；备份 `artifacts/platform_tool_tables_backup_20261106.sql` |
-| **P2** | **离线部署包**（新增）：`docker save` 关键镜像 + 离线 compose + 离线安装 README；先在小范围（仅 urban-twin-mcp + Nexent 核心）验证断网可起 | 断网机器上能起服务、能跑一次六跳 | **包已构建（2026-11-11）**：`dist-offline/nexent-offline/`，**4.8 GB / 14 镜像 / 3391 个文件校验全过（0 失败）**，含源码 3122 个 git 文件 + `OFFLINE.md`；打包用官方 `build_offline_package.sh`，另手工补了打包器漏掉的 2 个镜像（`urban-twin-mcp:dev`、`otel-collector`）。**唯一遗留：断网实测未做**（需在断网机跑一次六跳并留证） |
+| **P2** | **离线部署包**（新增）：`docker save` 关键镜像 + 离线 compose + 离线安装 README；先在小范围（仅 urban-twin-mcp + Nexent 核心）验证断网可起 | 断网机器上能起服务、能跑一次六跳 | **包已构建（2026-11-11）**：`dist-offline/nexent-offline/`，**4.8 GB / 14 镜像 / 3391 个文件校验全过（0 失败）**，含源码 3122 个 git 文件 + `OFFLINE.md`；打包用官方 `build_offline_package.sh`，另手工补了打包器漏掉的 2 个镜像（`urban-twin-mcp:dev`、`otel-collector`）。**断网实测已做了一半（2026-11-14）**：用 `--network none` / `--internal` 实测——15 个工具、六跳推演、资源分配、检索全部离线可跑，输出与联网逐字一致；14/14 镜像本地齐备、无需 pull。**仍遗留两件**：① 整个容器栈的冷启动未测（会拆掉当前演示栈）；② 平台编排层要调 4 个公网模型端点，断网后"对话能开、无模型可用"，需接本地推理服务才到端到端离线。证据见 [断网能力实测](reports/offline-network-test.md) |
 | **P2** | **平台特性贡献**（新增，加分项）：至少在 Nexent 社区提交 1 个有价值的 issue/PR | 有 PR/issue 链接 + 采纳记录，可写进材料 | **已提交（2026-11-07）**：[ModelEngine-Group/nexent#4307](https://github.com/ModelEngine-Group/nexent/issues/4307)，主题为「绑定技能时缺技能-工具一致性校验」，含复现路径、量化影响（绑技能 8/8→0/8）、源码定位与最小改动建议。草稿见 [issue 草稿](competition/nexent-issue-draft.md)。**采纳记录待跟进** |
 | P1 | 提交并推送当前全部工作；补 LICENSE、部署说明、一键复现脚本 | 干净 clone 后按 README 可复现 108/108 自检 | LICENSE 与 `scripts/reproduce.py`（17/17 步）已完成；**2026-11-02 已推送 12 个分组提交到 `origin/main`（起始点 `6f7c559`）**，每轮结束由 `scripts/git_sync.ps1` 自动提交推送；HEAD 以 `git log -1` 为准 |
 | P1 | SKILL.md 上传到 Nexent 技能仓库 | 平台技能列表出现 2 个技能 | **已完成**：skill_id=2/3，正文逐位一致（`samples/nexent/live/skills.json`），平台截图 `captures/nexent/skill-space.png` |

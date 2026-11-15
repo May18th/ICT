@@ -178,4 +178,4 @@ docker exec -i supabase-db-mini psql -U postgres -d supabase -c \
 
 - 构建产物校验：`checksums.txt`（逐文件 sha256）；整包 sha256 不稳定（zip 头含时间戳，实测 5 次 5 个值），
   以文件级校验为准；
-- 本机基线：15 容器 / `/nb/v1/health` healthy / `:3000/zh` 200 / `pytest` 977 collected / `evidence_check` 108/108。
+- 本机基线：15 容器 / `/nb/v1/health` healthy / `:3000/zh` 200 / `pytest` 971 collected / `evidence_check` 108/108。
