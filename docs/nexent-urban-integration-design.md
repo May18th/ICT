@@ -121,7 +121,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 | 证据非空 | 至少一条 `asset_id#locator` |
 | 事件编号 | WO-20261029-007 |
 
-## 5 答辩要用的证据（缺一不可）
+## 5 说明要用的证据（缺一不可）
 
 | 证据 | 获取方式 |
 | --- | --- |

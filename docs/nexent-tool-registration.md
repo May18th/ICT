@@ -108,7 +108,7 @@ $env:PYTHONPATH = "src"
   （证明是智能体调的，不是人点的）；
 - 留 `conversation_id`、请求截图、`artifacts/visual/jobs/<snapshot_id>.json` 三样证据。
 
-## 表述边界（答辩时不要越界）
+## 表述边界（演示时不要越界）
 
 - ✅ 可以说：15 个 MCP 工具已实现并可被任意 MCP 客户端调用；注册清单由代码生成并有一致性测试。
 - ✅ 可以说：历史证据证明 Nexent v2.7.0 曾以平台工具库 13 个跑通内涝主链路（conversation_id=78，8/8 一致）；

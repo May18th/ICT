@@ -284,7 +284,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
 
 
 #: 补充资料根目录。台账目录是 `samples/assets/urban`，而这两份真实资料本来就不在台账里
-#: （它们不是演示场景的业务台账，是真实世界的公开材料），所以单独给一条通道。
+#: （它们不是演示场景的业务台账，是真实世界的公开文档），所以单独给一条通道。
 SAMPLES_ROOT = DEFAULT_DATASET_ROOT.parents[1]
 
 

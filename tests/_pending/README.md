@@ -28,16 +28,10 @@
 
 只剩一条：**一次改全对外数字**。
 
-6 个测试移回 `tests/` 会让 `collected` 从 880 变成 886，必须同步：
-`samples/eval/evidence_expectations.json` 的 `test_baseline.collected` 与
-`checks.test_suite.docs_declared`、README、`AGENTS.md`、`docs/competition-gap-audit.md`、
-`delivery-status.md`、`winning-gap-audit.md`、`preliminary-submission-draft.md`、`ppt-outline-10p.md`、
-`video-storyboard-3min.md`、`video-storyboard-v0.1.md`、`technical-breadth-and-presentation-boundary.md`、
-`qa-8-questions.md`、`docs/image-semantics.md`、`docs/real-feedback-channel.md`、`scripts/reproduce.py`
-（共 14 个文件 18 处），再重跑 DOCX/PPTX 生成器，最后 `evidence_check` 取新指纹并同步。
-
-**注意**：`presentation-closure-report.md:52` 的 `1534×876` 是 UE 视口分辨率，PPT 里的 `cy="804862"`
-是 EMU 坐标，批量替换会改坏这两处。
+6 个测试移回 `tests/` 会让收集数变化，必须同步所有声明测试数的地方：
+`samples/eval/evidence_expectations.json` 的两处、`README.md`、`docs/image-semantics.md`、
+`docs/real-feedback-channel.md`、`scripts/reproduce.py`，然后重跑 `evidence_check`
+取新的期望值。改不全会让自检报漂移。
 
 ## 这 6 个测试锁的是什么
 

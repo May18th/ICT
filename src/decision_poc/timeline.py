@@ -182,7 +182,7 @@ def _gap_events(deduction: Mapping[str, Any]) -> list[dict[str, Any]]:
                     f"需 {item.get('required')} / 可用 {item.get('available')}"
                     f" = 缺口 {item.get('gap')} {item.get('unit', '')}"
                 ),
-                # 测算链原样透出：答辩被问"2 台怎么来的"时，答案就在这里
+                # 测算链原样透出：被问"2 台怎么来的"时，答案就在这里
                 "basis": list(item.get("basis") or []),
                 "status": "shortfall" if (item.get("gap") or 0) > 0 else "covered",
                 "refs": refs[:REF_HEAD],

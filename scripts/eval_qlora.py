@@ -11,7 +11,7 @@
 输出：dist/qlora/eval_report.md + dist/qlora/eval_results.json
 
 口径：allocation_cases 为受控合成场景（见 eval-dataset-spec.md §2），
-材料表述为「评测集同源数据」，不得写「真实工单数据」。
+文档表述为「评测集同源数据」，不得写「真实工单数据」。
 """
 from __future__ import annotations
 

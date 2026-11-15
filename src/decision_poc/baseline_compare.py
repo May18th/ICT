@@ -3,7 +3,7 @@
 为什么不做成"我们省了 30 分钟"
 ------------------------------
 耗时必须真人测（`docs/competition/value-evidence.md` §4 有 15 分钟的做法），
-没测就不能写进材料——这是本仓库的硬规矩。但"人工要逐个确认几个部门、要翻几行台账、
+没测就不能写进文档——这是本仓库的硬规矩。但"人工要逐个确认几个部门、要翻几行台账、
 要读多少字规程"是从数据里算出来的，不依赖任何人计时，也不怕评委追问。
 
 所以本模块只做两类事：
@@ -188,7 +188,7 @@ __all__ = ["build_agent_baseline", "build_manual_baseline", "compare"]
 
 
 def main(argv: Sequence[str] | None = None) -> int:  # pragma: no cover - CLI 薄壳
-    """`python -m decision_poc.baseline_compare`：打印可复算对照，供答辩现场核对。"""
+    """`python -m decision_poc.baseline_compare`：打印可复算对照，供演示现场核对。"""
     import json as _json
     import sys
 

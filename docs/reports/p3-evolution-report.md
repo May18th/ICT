@@ -56,7 +56,7 @@ EvolutionProposal
 | B 新项目进场 | `construction_plans.csv` 追加 `CP-2026-051` | add 项目 + `located_in B-01` + `R-201 under_construction` + `PL-WTR-202 under_construction`（4 条） | 影响 4 实体 / 10 邻接 |
 | C 设备修复 | `DF-PS-01` 状态 `fault_pending_repair → in_service` | modify 1 条 | 影响 1 实体 / 2 邻接 |
 
-场景 A 是最有价值的一条：它证明**职责空白被新数据自然闭合**，而不是靠抽取器猜。同时 `responsibility_change` 标记告诉审批人"这条改动会动到责任链"，这正是要在答辩里讲的"提案自带影响评估"。
+场景 A 是最有价值的一条：它证明**职责空白被新数据自然闭合**，而不是靠抽取器猜。同时 `responsibility_change` 标记告诉审批人"这条改动会动到责任链"，这正是要在说明里讲的"提案自带影响评估"。
 
 ## 5. 逐条确认的真实用法
 

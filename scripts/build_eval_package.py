@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""build_eval_package: 把散落的评测材料打成一个自包含可提交单元。
+"""build_eval_package: 把散落的评测文档打成一个自包含可提交单元。
 
 输出 dist/eval-package/（git 外，与 dist-offline 同模式）：
     README.md          入口 = eval-dataset-spec.md（数据字典/真合成声明/消融/复跑）

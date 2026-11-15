@@ -1,4 +1,4 @@
-﻿"""一条命令生成并核对全部对外材料。
+﻿"""一条命令生成并核对全部对外说明。
 
 设计原则与仓库一致：**对外宣称的数字都由命令产生，脚本只比对，不改数字**。
 任一期望不成立即退出码 1，并把失败步骤的原始输出完整打出来。
@@ -329,7 +329,7 @@ def run_step(step: Step) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="一条命令生成并核对全部对外材料")
+    parser = argparse.ArgumentParser(description="一条命令生成并核对全部对外说明")
     parser.add_argument("--fast", action="store_true", help="跳过 pytest 与 P9 进化（只核对数字）")
     parser.add_argument("--list", action="store_true", help="只列出步骤，不执行")
     parser.add_argument("--keep-going", action="store_true", help="失败也继续执行后续步骤")
@@ -384,7 +384,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\n结果：{detail}。明细 {OUT_DIR / 'summary.json'}")
         return 1
 
-    print("\n材料清单：")
+    print("\n产物清单：")
     for step in steps:
         for rel in step.writes:
             path = ROOT / rel

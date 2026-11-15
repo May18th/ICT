@@ -26,7 +26,7 @@ urban_deduction_agent.zip
 `mcp_info` = `[{"mcp_server_name": "urban-twin-mcp", "mcp_url": "http://urban-twin-mcp:8000/sse"}]`。
 Agent 本体：`urban_deduction_agent`（显示名「城市内涝跨部门决策智能体」）、`enabled=true`、模型 `DeepSeek-Chat`、`requested_output_tokens=8192`、`duty_prompt` 与 `constraint_prompt` 均在包内。
 
-## 2 指纹：哪个能写进材料，哪个不能
+## 2 指纹：哪个能写进文档，哪个不能
 
 **整包 sha256 不可复算**，实测连续导出 5 次得到 5 个不同的值（`2b7a89c9…` / `1819273a…` / `bce94c27…` / `b359b1e4…` / `c6da97af…`）。原因在平台侧：`export_agent_with_skills_impl` 用 `zipfile.ZipFile.writestr` 打包且未指定时间戳，zip 条目头带的是**导出当刻的本地时间**。
 
@@ -39,7 +39,7 @@ Agent 本体：`urban_deduction_agent`（显示名「城市内涝跨部门决策
 | `skills/urban-six-hop-deduction.zip` | 2 943 | `b36d48792c3650c87ff7f306196044d27ea7c4c877b00abe5cc85ce7ddad6aa0` |
 | **内容指纹**（上述三项按名排序拼接后再 sha256） | — | `0a3aef9c61d8e5e523424ad738c93dd737772580a3b3082c3c81ee8810836221` |
 
-材料写法：**写内容指纹 `0a3aef9c…`，并注明「由包内 `agent.json` 与 `skills/*.zip` 逐项 sha256 排序拼接计算」**。不要写整包 sha256——评委照做复算会对不上，反而像造假。
+文档写法：**写内容指纹 `0a3aef9c…`，并注明「由包内 `agent.json` 与 `skills/*.zip` 逐项 sha256 排序拼接计算」**。不要写整包 sha256——评委照做复算会对不上，反而像造假。
 
 ## 3 与平台技能仓库的交叉核对：逐位不一致，但语义一致
 
@@ -52,11 +52,11 @@ Agent 本体：`urban_deduction_agent`（显示名「城市内涝跨部门决策
 
 原因已定位：平台把 `SKILL.md` 的 YAML frontmatter 解析后用标准序列化回写——本地写的是块标量 `description: |`，导出包里变成单引号字符串 `description: '…'`。**用 `yaml.safe_load` 解析后逐字段比对，`name` / `tags` / `description` 全部相等**，正文部分字节一致。
 
-材料写法：可说「导出包内技能与本地原文**语义一致**（frontmatter 逐字段相等、正文逐位一致）」，**不可说「逐位一致」**。
+文档写法：可说「导出包内技能与本地原文**语义一致**（frontmatter 逐字段相等、正文逐位一致）」，**不可说「逐位一致」**。
 
 ## 4 口径澄清：注册 15 个工具 ≠ Agent 挂 2 个
 
-导出包 `agent.json` 的 `tools` 只有 2 项（`event_deduce`、`evidence_locate`，`source=mcp`），而台账写「15 个 MCP 工具注册到平台」。这两个数字都对，但指的是不同东西，**答辩时必须一句话讲清，否则评委打开导出包会当场追问**：
+导出包 `agent.json` 的 `tools` 只有 2 项（`event_deduce`、`evidence_locate`，`source=mcp`），而台账写「15 个 MCP 工具注册到平台」。这两个数字都对，但指的是不同东西，**演示时必须一句话讲清，否则评委打开导出包会当场追问**：
 
 | 层级 | 数量 | 依据 |
 | --- | --- | --- |
@@ -72,7 +72,7 @@ Agent 本体：`urban_deduction_agent`（显示名「城市内涝跨部门决策
 
 导出包只存 `mcp_info` 里的 **server 地址**，不存工具清单与工具实现。评委拿到 zip 复现时，若没有 `urban-twin-mcp` 服务端代码，这 15 个工具一个都起不来。
 
-→ 初赛材料/复现包必须**同时交 MCP 服务端代码 + 启动说明**（`src/decision_poc/mcp_server.py` / `mcp_sse.py` + 容器启动方式），并说明「导出包恢复的是 Agent 配置，工具能力由 MCP 服务提供」。这一条已补进 [差距台账](../competition-gap-audit.md) 第 3 节。
+→ 对外说明/复现包必须**同时交 MCP 服务端代码 + 启动说明**（`src/decision_poc/mcp_server.py` / `mcp_sse.py` + 容器启动方式），并说明「导出包恢复的是 Agent 配置，工具能力由 MCP 服务提供」。这一条已补进 [差距台账](../competition-gap-audit.md) 第 3 节。
 
 ## 6 复跑命令
 

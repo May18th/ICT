@@ -142,7 +142,7 @@ from kg.kg_entity e join kg.kg_ontology_type t on t.id = e.type_id;
 - `plan_merge` 的四类操作对应 Skill 工作流的四个分支：`add` 走批量入库、`merge` 走属性补全、`conflict` 生成人工工单、`unchanged` 空转；
 - 每条候选的 `evidence.locator` 与数据资产规范里的定位符同构（`设备/文档类型/版本#锚点`），因此 Agent 回答可以一路引到原始行。
 
-## 9. 已知边界（答辩时主动说明）
+## 9. 已知边界（演示时主动说明）
 
 1. **列名别名是人工写的**：`LEDGER_ALIASES` / `OBSERVATION_ALIASES` 只覆盖中文字段名，遇到英文或异体列名需要加映射；未知数值列仍会成为 Metric，不会丢数据。
 2. **未接入 LLM**：当前全程确定性规则，好处是可复现、可单测；代价是同义表述（"轴温""轴承发热"）覆盖不到。接 LLM 时应把置信度定在 0.70（落在复核档），而不是直接采信。

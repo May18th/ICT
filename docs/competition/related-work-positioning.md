@@ -1,6 +1,6 @@
 # 相关工作定位：本仓库 vs 外部 Agentic AI + 数字孪生 + 审计框架
 
-- 用途：答辩/投稿被问"你们和已发表的那套框架有什么区别"时的标准回答；同时是引用口径。
+- 用途：说明/投稿被问"你们和已发表的那套框架有什么区别"时的标准回答；同时是引用口径。
 - 外部对象：Syed T A, Akarma A, Alatify A, Naqash M T, Alqurashi A. *Agentic AI-enhanced digital twins
   for Smart City civil infrastructure: A secure, autonomous and auditable management framework*.
   PLoS One, 2026, 21(7): e0353610. DOI: 10.1371/journal.pone.0353610（CC BY 4.0）；
@@ -23,7 +23,7 @@
 两条结论方向一致的地方值得讲：**审计/链层对运行指标没有显著贡献，价值在可追溯**。
 这条外部证据正好替本仓库"不上链、保持哈希链审计日志"的设计取舍背书。
 
-## 2 答辩口径（三句话）
+## 2 表述说明（三句话）
 
 1. "我们不是一个数字孪生大屏，是**一条从事件到可追责决策、并能从反馈中受控进化的链**：
    同一个事件 ID 穿过资产→语义→推演→反事实→溯源→进化→编排共 8 层，每层有一个可当场跑出来核对的数字。"

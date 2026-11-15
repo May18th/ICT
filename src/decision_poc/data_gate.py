@@ -854,12 +854,12 @@ def render_markdown(report: GateReport) -> str:
         f"assumption {report.by_provenance.get('assumption', 0)} 条、"
         f"synthetic {report.by_provenance.get('synthetic', 0)} 条。",
         "- assumption 与 synthetic 两类**不得对外表述为实测值**；"
-        "阈值与假设的口径需甲方书面确认后才能在对外材料中引用。",
+        "阈值与假设的口径需甲方书面确认后才能在对外说明中引用。",
     ]
     if pending:
         lines.append(
             f"- 来源层面有 **{len(pending)}** 项待确认（见上表）。"
-            "确认前，相关数值只能在内部联调材料里出现，不得写进对外材料当作实测。"
+            "确认前，相关数值只能在内部联调文档里出现，不得写进对外说明当作实测。"
         )
     lines += ["", f"结论：**{'通过' if report.ok else '不通过'}**（{len(report.errors)} 项 error / {len(report.warns)} 项 warn）", ""]
     return "\n".join(lines)

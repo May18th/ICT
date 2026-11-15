@@ -67,7 +67,7 @@ def test_affected_count_handles_comma_separated_objects(timeline: dict, payload:
 
 
 def test_gap_event_carries_calculation_chain(timeline: dict, payload: dict) -> None:
-    """缺口 2 台怎么来的：测算链原样透出，答辩被追问时的答案就在这。"""
+    """缺口 2 台怎么来的：测算链原样透出，被追问时的答案就在这。"""
     gap_event = next(event for event in timeline["events"] if event["kind"] == "gap")
     source = payload["deduction"]["resource_gaps"][0]
     assert str(source["gap"]) in gap_event["detail"]

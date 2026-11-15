@@ -463,7 +463,7 @@ class Platform(PlatformClient):
             return 1
         before = agent.get("current_version_no")
         # 绑的是草稿，运行期读的是发布快照；不重新发布等于没绑。
-        print(f"[skills] 重新发布以把技能带进新版本（{before} → {before + 1}，材料里的版本号要同步）")
+        print(f"[skills] 重新发布以把技能带进新版本（{before} → {before + 1}，文档里的版本号要同步）")
         self.publish(int(agent["agent_id"]))
         return self.verify_skills(require_published=True)
 

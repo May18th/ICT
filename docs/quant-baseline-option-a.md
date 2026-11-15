@@ -15,7 +15,7 @@
 | --- | --- |
 | 需求折算沿用 v1，缺口保持 2 台 | `src/decision_poc/deduction.py` 资源跳：`target = rated * derate` → `ceil(target / capacity)`；自检锁在 `evidence_check.py:95`（`resource_gap`） |
 | 负荷采用 `load_state` 表达 | `src/decision_poc/scenario_v2.py:pump_load()` 产出 `normal / high_load / overload`；六跳结论字段名 `pump_load` |
-| 材料补二次风险说明 | 本文件 §3；初赛文档"七、边界声明"（`scripts/build_preliminary_docx.py`） |
+| 说明补二次风险说明 | 本文件 §3；初赛文档"七、边界声明"（`scripts/build_preliminary_docx.py`） |
 | 保留 12 个分配案例、C3 冲突、全部演化数字 | 未改动 `allocation_cases.json`、`policy_evolution` 参数、P9 报告口径 |
 | 标注台账字段未补齐 | 本文件 §4；初赛文档"七、边界声明" |
 | 避免"假精确" | 表述红线见 §5 |
@@ -51,7 +51,7 @@ required 8 / available 6 / gap 2 / demand_by_district A-03:6|B-01:2
 3. 二次风险：泵站无备用电源，上级电源浸水即失电，抽排中断（规则原文，带行号）；
 4. 应对：缺口 2 台上报跨区调配 + 移动泵补位，**不通过调低负荷率来"消除"缺口**。
 
-答辩口径：负荷率是**风险指标**，缺口是**资源指标**，二者同时输出、互不换算。
+表述说明：负荷率是**风险指标**，缺口是**资源指标**，二者同时输出、互不换算。
 
 ## 4 台账字段缺口（结论的可信边界）
 
@@ -76,7 +76,7 @@ required 8 / available 6 / gap 2 / demand_by_district A-03:6|B-01:2
 - "缺口是物理模型算出来的"（是折算口径，不是水力模型）
 - "负荷率考虑了真实来水过程"（来水按额定取，是保守假设）
 - "汇水面积/产汇流已验证"（台账没有服务面积）
-- 在任何材料里出现"v1 折算"字样却同时引用 v2 字面数字
+- 在任何文档里出现"v1 折算"字样却同时引用 v2 字面数字
 
 ## 6 复算方式
 

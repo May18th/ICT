@@ -69,7 +69,7 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py --out docs/
 ```
 
 期望：技能末行 `缺失 []；正文逐位一致=True`；截图三行 `OK`，产物在 `docs/reports/captures/nexent/`。
-答辩时直接打开 `skill-space.png`（两个技能在平台技能仓库里）与 `mcp-space.png`（连通性校验成功 + 15 个工具）。
+演示时直接打开 `skill-space.png`（两个技能在平台技能仓库里）与 `mcp-space.png`（连通性校验成功 + 15 个工具）。
 
 ## 3. 跑一次决策（约 60–90 秒）
 
@@ -171,7 +171,7 @@ $tokenId = ($py | docker exec -i nexent-northbound sh -c "cd /opt/backend && .ve
 
 把第 1 节里的 `token_id=2` 换成新 id 即可。
 
-## 答辩口径（三句话）
+## 表述说明（三句话）
 
 1. 契约：按官方 `/nb/v1` 实现，并用本机 v2.7.0 的 `openapi.json` 逐字段核对。
 2. 可靠性：SSE 聚合、`Idempotency-Key`、401/429/conflict 分类处理，无 `final_answer` 一律判失败。
@@ -278,7 +278,7 @@ uv run --locked python -m decision_poc.web_demo --port 8787
 - 分享网关要求 URL 带 `?sharecode=`，不带会 403；卡片内嵌预览不带 sharecode，所以常显示 Not Found，
   **验收一律用完整链接在真实浏览器打开**。
 - 该服务对 HEAD 返回 501（Python `http.server` 未实现 `do_HEAD`），监控探活要用 GET。
-- `.env` 里的 `DEEPSEEK_API_KEY` 只落发布目录（`.gitignore` 已排除 `deploy-webdemo/`），不进仓库；交完材料记得吊销轮换。
+- `.env` 里的 `DEEPSEEK_API_KEY` 只落发布目录（`.gitignore` 已排除 `deploy-webdemo/`），不进仓库；交完说明记得吊销轮换。
 
 ### 2. 让智能体触发（MCP 侧）
 

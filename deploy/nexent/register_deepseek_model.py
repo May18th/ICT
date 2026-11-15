@@ -9,7 +9,7 @@
     .venv/bin/python /tmp/register_deepseek_model.py healthcheck
     .venv/bin/python /tmp/register_deepseek_model.py verify
 
-关键约束（与初赛材料口径一致）：
+关键约束（与对外说明口径一致）：
 - 只登记，不切换任何 Agent 的绑定模型；
 - skip_default_backfill=True，不得占用 10 个默认模型槽位中的任何一个；
 - API key 只从环境变量读，输出一律脱敏。

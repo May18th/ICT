@@ -236,7 +236,7 @@ mobile_pumps     = ceil(pump_gap / 400)           # 单台移动泵 400 m³/h
 load_state       = normal | high_load | overload  # inflow/capacity_avail ≤0.85 / 0.85–1.0 / >1.0
 ```
 
-优点：`load_state` 是可解释标签（答辩可讲），缺口是可计算公式（可重算），不再有拍出来的 0.8。
+优点：`load_state` 是可解释标签（说明可讲），缺口是可计算公式（可重算），不再有拍出来的 0.8。
 代价：DF-PS-01 可用能力从 960 降到 800，**A-03 需求必然上升，缺口从 1 台变成新值**，P9 分配数字随之漂移。
 
 ### 6.3 台账字段增补
@@ -333,7 +333,7 @@ class QuantResult(StrictModel):
 | 自检报告 | `docs/reports/evidence-check-report.md`（重生成，不手改） |
 
 新增 `docs/reports/p12-scenario-v2-changelog.md`：逐条列 v1 → v2 的数值变化与原因（新增通道、泵站口径）。
-**这张 changelog 是答辩材料**——被问"数字怎么变了"时直接给原因，而不是让它看起来像改数字过检。
+**这张 changelog 就是说明**——被问"数字怎么变了"时直接给原因，而不是让它看起来像改数字过检。
 
 ## 8 评测与消融
 
@@ -425,7 +425,7 @@ P11 五档（Rules → DT → 单 Agent → **多 Agent** → 全量）中的第
 - 禁止改动：P9 规则策略本身（本任务只加对照，不替换策略）；不新增第三方依赖。
 - 回传：规则解 vs 最优解差距表 + 缺口区间表 + 可靠性是否可算的结论。
 
-### T6 三维绑定与答辩口径
+### T6 三维绑定与表述说明
 - 范围：`semantic_entities.json` 与 UE 状态枚举同步；`preliminary-submission-draft.md` 数字节；
   `demo-runbook.md` 逐字期望；`innovation-and-evidence.md` 更新"多智能体暂不做"条目。
 - 测试：高亮 id 与推演 id 对齐断言；文档内不得残留旧数字（含深目录）。

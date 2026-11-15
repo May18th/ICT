@@ -1,4 +1,4 @@
-"""对外数字的单一真源守卫：**当前面向材料**里写死的计数必须等于权威源实算值。
+"""对外数字的单一真源守卫：**当前面向文档**里写死的计数必须等于权威源实算值。
 
 为什么需要
 ----------
@@ -90,7 +90,7 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("triples", re.compile(r"三元组\s*/\s*谓词种类\s*\|\s*(\d+)\s*条")),
     ("tools", re.compile(r"(\d+)\s*个工具")),
     # 「13 工具」这种不带宽度的写法漏了两轮（13→14 时没人发现），单独挂一条：
-    # `(\d+)\s*个工具` 要求有「个」，而材料里常写「15 工具注册」。
+    # `(\d+)\s*个工具` 要求有「个」，而文档里常写「15 工具注册」。
     ("tools", re.compile(r"(\d+)\s*工具")),
     ("selfcheck", re.compile(r"(\d+)/(\d+)\s*项一致")),
     ("selfcheck", re.compile(r"(\d+)\s*项自检")),
@@ -98,7 +98,7 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("selfcheck", re.compile(r"(\d+)\s*项(?:宣称证据|冻结期望|对外宣称数字|逐条表|证据自检)")),
     # 「834 项通过」这类验收口径。以前不扫，`553 项通过` 在两份文档里挂了两版都没人发现。
     ("testcount", re.compile(r"(\d+)\s*项通过")),
-    # 同一语义的其它写法。`(\d+)\s*项通过` 要求「项通过」连写，而材料里更常见的是
+    # 同一语义的其它写法。`(\d+)\s*项通过` 要求「项通过」连写，而文档里更常见的是
     # 「839 测试」「839 项测试」——PPT 里那句「平台真机 8/8 · 776 测试 · 106 项自检」
     # 因此从来没被这条正则校验过（连 STALE_SNAPSHOTS 里登记 testcount 也校验不到它），
     # 是"打开文件扫一眼"漏得一干二净的第三类漏法。三种语序都挂上。
@@ -313,7 +313,7 @@ def _assert_families(*families: str) -> None:
                 f"allowlist {rel} [{family}] {value!r} 声明 {allowed_count} 次，实际命中 {actual} 次"
             )
 
-    assert not problems, "当前面向材料的数字与权威源不一致：\n" + "\n".join(problems)
+    assert not problems, "当前面向文档的数字与权威源不一致：\n" + "\n".join(problems)
 
 
 def test_rules_count_in_materials_is_current() -> None:
@@ -348,14 +348,19 @@ def test_allowlist_entries_are_still_needed() -> None:
     """allowlist 只允许装"合法非总数"；命中消失后必须删条目，否则会盖住未来的漂移。"""
 
     seen = {(family, rel, value) for rel, family, value, _ in _scan()[0]}
-    stale = [key for key in ALLOWED_NON_TOTAL if key not in seen]
+    # 只对"仓库里确实存在的文件"判失效：留在本地、未随仓库分发的文档不参与扫描，
+    # 它的条目自然命中不到，但那不算 allowlist 失效。
+    stale = [
+        key for key in ALLOWED_NON_TOTAL
+        if key not in seen and (ROOT / key[1]).is_file()
+    ]
     assert not stale, f"allowlist 已失效，请删除这些条目：{stale}"
 
 
 # ---------------------------------------------------------------------------
 # 平台运行态：Agent 版本与模型名
 #
-# 这两项不在 PATTERNS 的"计数"体系里，却比计数更容易骗人：材料写 v10 + openPangu，
+# 这两项不在 PATTERNS 的"计数"体系里，却比计数更容易骗人：文档写 v10 + openPangu，
 # 平台上跑的是 v19 + DeepSeek-Chat，评委现场一对就穿。权威源取真机抓下来的
 # `samples/nexent/live/agents.json`（capture_evidence.py 的产物，不是手写）。
 # ---------------------------------------------------------------------------
@@ -391,7 +396,7 @@ def _scope_lines():
 
 
 def test_agent_version_claims_match_platform() -> None:
-    """材料里的「发布 vN」必须等于平台上主 Agent 的 current_version_no。"""
+    """文档里的「发布 vN」必须等于平台上主 Agent 的 current_version_no。"""
 
     expected = int(_live_agents()["urban_deduction_agent"]["current_version_no"])
     problems = []
@@ -407,7 +412,7 @@ def test_agent_version_claims_match_platform() -> None:
                     f"{rel}:{lineno} 期望 v{expected}，实际 v{claimed}：{line.strip()[:90]}"
                 )
     assert not problems, (
-        "对外材料里的 Agent 版本与平台真机记录不一致（权威源 samples/nexent/live/agents.json）：\n"
+        "对外说明里的 Agent 版本与平台真机记录不一致（权威源 samples/nexent/live/agents.json）：\n"
         + "\n".join(problems)
     )
 
@@ -428,7 +433,7 @@ def test_retired_model_only_appears_with_reason() -> None:
 
 
 def test_current_platform_model_is_what_materials_say() -> None:
-    """平台当前模型以 agents.json 为准；材料里至少要有一次写对，避免只靠历史叙述过关。"""
+    """平台当前模型以 agents.json 为准；文档里至少要有一次写对，避免只靠历史叙述过关。"""
 
     expected = str(_live_agents()["urban_deduction_agent"]["model_name"])
     hits = [
@@ -436,5 +441,5 @@ def test_current_platform_model_is_what_materials_say() -> None:
         for rel, lineno, line in _scope_lines()
         if expected in line and "本地" not in line
     ]
-    assert hits, f"对外材料没有一处说明当前平台模型是 {expected}"
+    assert hits, f"对外说明没有一处说明当前平台模型是 {expected}"
 

@@ -276,7 +276,7 @@ project/
 - [ ] 增加一次运行记录的回放功能。
 - [ ] 验收：评委无需查看代码即可看懂事件、推理、证据和处置建议。
 
-### P8：评测与材料
+### P8：评测与说明
 
 - [x] 建立至少 20 个事件案例，包含正常、证据不足、冲突和过期数据。（`samples/eval/urban_cases.json`，22 例：normal 7 / conflict 3 / insufficient 6 / expired 4 / permission 2）
 - [x] 评测资产解析、实体关系、检索命中、多跳路径、引用完整率和响应时间。（`python -m decision_poc.urban_eval`，指标口径见 `docs/reports/p8-evaluation-report.md` §1）
@@ -303,4 +303,4 @@ project/
 - [ ] MCP 工具和 Skill 可独立调用并可组合。
 - [ ] 冲突、过期、证据不足会安全处理。
 - [ ] Demo 展示完整，非代码人员可理解。
-- [ ] 测试、评测、README、数据说明和开源材料齐全。
+- [ ] 测试、评测、README、数据说明和开源说明齐全。

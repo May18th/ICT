@@ -121,7 +121,7 @@ def test_weather_replay_shape() -> None:
     assert len(data["points"]) == 24
     assert data["peak_mm"] == 15.5
     assert data["peak_time"] == "05:00"
-    # 自然日累计（77.5）与滑动窗口口径（77.7）必须在注记里说清，防止材料追问
+    # 自然日累计（77.5）与滑动窗口口径（77.7）必须在注记里说清，防止文档追问
     assert abs(data["total_mm"] - 77.5) < 0.05
     assert "滑动窗口" in data["note"]
     cum = [p["cum_mm"] for p in data["points"]]

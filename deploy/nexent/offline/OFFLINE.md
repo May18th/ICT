@@ -159,7 +159,7 @@ docker exec -i supabase-db-mini psql -U postgres -d supabase -c \
 
 另有 `admin@nexent.com`（镜像自带，口令未知），演示统一用 `suadmin@nexent.com`。
 
-## 7 已知边界（材料里要写明，别等评委问）
+## 7 已知边界（文档里要写明，别等评委问）
 
 1. **离线部署 ≠ 离线推理**。平台与工具链可完全离线，但 LLM 必须有一个可达的 OpenAI 兼容端点。
    真断网环境下需把模型指向**内部部署的推理服务**（vLLM / Ollama 等，暴露 `/v1` 接口）；

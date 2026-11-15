@@ -23,7 +23,7 @@
 
 产物用途
 --------
-`agent_export.json` 里的 sha256 是导出包指纹，写进初赛材料后可被评委复算核对。
+`agent_export.json` 里的 sha256 是导出包指纹，写进对外说明后可被评委复算核对。
 """
 
 from __future__ import annotations

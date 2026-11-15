@@ -23,7 +23,7 @@
 | 多事件回归 | 4 个事件全部 **8/8**（007/009/013/021，各自一次通过） | `samples/nexent/live/multi_event_regression.json` |
 | 协同链路 | 连跑 **2/2**，`kernel_fingerprint=ab94413cf94bc9a5` 与离线逐字一致（26 卡 / 15 序 / 6 角色） | `samples/nexent/live/collab_v7.json` |
 
-> 两段主链路对话都真实存在：**120** 是换 DeepSeek-Chat 后的首测（材料里引的是它，文件
+> 两段主链路对话都真实存在：**120** 是换 DeepSeek-Chat 后的首测（文档里引的是它，文件
 > `samples/nexent/live/conversation_120.json`），**134** 是同日 17:56 重采的基线（上面的证据文件）。
 > 都是 8/8、attempts=1，差别只是采集时点。
 
@@ -246,7 +246,7 @@ docker cp nexent-config:/tmp/agent_export.json       samples/nexent/live/agent_e
 ```
 
 - 包结构：`agent.json` + `skills/<name>.zip`（本仓库实测 7 890 B / 2 个技能）。
-- **整包 sha256 不可复算**（zip 条目头带导出时刻时间戳，连导 5 次得 5 个值）；材料里用
+- **整包 sha256 不可复算**（zip 条目头带导出时刻时间戳，连导 5 次得 5 个值）；文档里用
   `agent_export.json` 的 `bundle.content_sha256`（实测 `0a3aef9c…`，连导两次稳定；MCP 记录或技能内容一变这个值就变）。
 - 导出包只存 `mcp_info` 的 **server 地址**，不含工具实现 → 复现包必须同时给
   `src/decision_poc/mcp_server.py` / `mcp_sse.py` 与容器启动方式。

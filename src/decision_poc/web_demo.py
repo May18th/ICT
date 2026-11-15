@@ -201,7 +201,7 @@ def weather_replay() -> dict[str, Any]:
         "peak_time": peak["time"] if peak else "",
         "note": (
             "真实降雨回放（非推演输入）：动画水位由累计雨量占比驱动，事件推演仍读工单实测深度。"
-            "total_mm 为 08-01 自然日累计（77.5mm）；材料中 77.7mm 为最大 24h 滑动窗口口径"
+            "total_mm 为 08-01 自然日累计（77.5mm）；文档中 77.7mm 为最大 24h 滑动窗口口径"
             "（跨自然日），两者出处一致、定义不同"
         ),
         "points": points,
@@ -5087,7 +5087,7 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
 
 </div>
 <footer>
-  上述三组会话的原始记录随提交材料提供，可按会话编号在平台内查证。
+  上述三组会话的原始记录随本次提交提供，可按会话编号在平台内查证。
   数据来源与取值说明见 <a href="/data">数据来源与口径</a>。
 </footer>
 </body></html>

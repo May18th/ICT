@@ -40,7 +40,7 @@ api.modelarts-maas.com BLOCKED gaierror
 {"status":"error","error":{"code":"PERMISSION_DENIED","message":"推演引用了对当前调用方不可见的依据，不能只给结论不给依据"}}
 ```
 
-即"证据不可见就不给结论"。这条在答辩里可以当加分项讲，但演示时必须传 `caller_labels`，否则会看到 error 以为坏了。
+即"证据不可见就不给结论"。这条在说明里可以当加分项讲，但演示时必须传 `caller_labels`，否则会看到 error 以为坏了。
 
 **边界**：`python -m decision_poc.evidence_check`（108 项自检）**在部署镜像里跑不了**——
 它要读 `README.md` 与 `docs/`，而运行镜像只带 `src/ + samples/ + artifacts/`。
@@ -121,7 +121,7 @@ curl -s localhost:3000/zh -o /dev/null -w '%{http_code}\n'   # 期望 200
 
 ---
 
-## 7 一句话口径（答辩用）
+## 7 一句话口径（说明用）
 
 > "断网我们测过：15 个工具、六跳推演、资源分配、检索全部离线可跑，输出与联网逐字一致。
 > 平台层的对话编排要调大模型，现在是 4 个公网端点，断网后对话开得了但没有模型可用——

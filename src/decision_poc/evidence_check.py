@@ -2,7 +2,7 @@
 
 为什么需要它
 ------------
-答辩材料里的每个数字都散在报告、面板、README 里。只要有人改了规则、样本或阈值，
+对外说明里的每个数字都散在报告、面板、README 里。只要有人改了规则、样本或阈值，
 数字就会变，而旧文案还停在原处——评委按 README 复现出来对不上，整条证据链就会被质疑。
 
 所以把"对外宣称的数字"冻结成 `samples/eval/evidence_expectations.json`，本模块负责：
@@ -282,7 +282,7 @@ def _platform_skills_actuals() -> dict[str, Any]:
 def _platform_ui_actuals() -> dict[str, Any]:
     """平台界面截图证据：页面是否全部命中期望文字，图纸哈希是否还对得上。
 
-    截图属于对外材料，被替换或重新截过都必须重新生成证据；这里用 sha256 把
+    截图属于对外说明，被替换或重新截过都必须重新生成证据；这里用 sha256 把
     "证据文件里记的那张图"和"仓库里现在那张图"绑在一起。
     """
     if not PLATFORM_UI_PATH.is_file():
@@ -310,14 +310,18 @@ def docs_declared_test_counts() -> list[int]:
     """扫一遍对外文档宣称的"测试通过数"，去重排序返回。"""
     counts: set[int] = set()
     for rel in DOCS_WITH_TEST_COUNT:
-        text = (REPO_ROOT / rel).read_text(encoding="utf-8")
+        path = REPO_ROOT / rel
+        if not path.is_file():
+            # 该文档不随仓库分发（内部工作文档），跳过而不是报错
+            continue
+        text = path.read_text(encoding="utf-8")
         for pattern in TEST_COUNT_PATTERNS:
             counts.update(int(match.group(1)) for match in pattern.finditer(text))
     return sorted(counts)
 
 
 def _rules_actuals() -> dict[str, Any]:
-    """推演规则条数：规则是数据，条数同样是**对外数字**（材料里多处引用）。
+    """推演规则条数：规则是数据，条数同样是**对外数字**（文档里多处引用）。
 
     真源是 `samples/rules/urban_deduction_rules.json`（加载时逐条校验 source_ref/keyword，
     不符即 `RuleSourceError`），这里只做计数，不复制任何规则内容。
@@ -407,7 +411,7 @@ def expected_item_count(
 ) -> int:
     """期望文件里会被逐项比对的条目数。
 
-    `run_evidence_check().total` 用的是同一套展开逻辑（`_compare`）。对外材料里
+    `run_evidence_check().total` 用的是同一套展开逻辑（`_compare`）。对外说明里
     「108/108 项一致」的那个 108 就是它——所以别处要写这个数时来这里取，
     别在脚本里硬编码：期望文件增删一项，这里自动跟着变，硬编码会静默过期。
     """
@@ -452,7 +456,7 @@ def to_markdown(report: EvidenceReport) -> str:
         "",
         f"- 期望指纹：`{report.expectations_digest[:16]}`（期望文件被改动即换指纹）",
         f"- 检查项：{report.total} 项，通过 {report.passed_count}，失败 {report.failed_count}",
-        f"- 结论：{'全部一致' if report.passed else '存在漂移，禁止按旧文案答辩'}",
+        f"- 结论：{'全部一致' if report.passed else '存在漂移，禁止按旧文案陈述'}",
         "",
         "| 检查项 | 期望 | 实际 | 结果 |",
         "| --- | --- | --- | --- |",

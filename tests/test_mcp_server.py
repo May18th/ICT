@@ -83,7 +83,7 @@ def test_tools_list_shape(server: McpServer) -> None:
         "collab_run",
     ]
     # decision 10（含 P5 的 7 个 + 反事实 1 + 分配 1 + doc_search 1）+ 可视化 3 + bootstrap 1 + 协同 1
-    assert len(names) == 15, "工具数变化必须同时改 samples/nexent/tools.json 与材料里的「N 个工具」"
+    assert len(names) == 15, "工具数变化必须同时改 samples/nexent/tools.json 与文档里的「N 个工具」"
     for tool in tools:
         assert tool["description"]
         schema = tool["inputSchema"]

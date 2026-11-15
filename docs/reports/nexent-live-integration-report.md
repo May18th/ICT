@@ -96,7 +96,7 @@ Agent 回答是**纯 JSON**（3596 字符，无 `<|tool_call_start|>` 残留、�
 | 协同验证 | `artifacts/nexent_collab_live.py --attempts 3` | 指纹比对 + 成功率 |
 | 取证 | `deploy/nexent/capture_evidence.py` | `samples/nexent/live/` |
 
-## 6 真实踩坑与修复（答辩可讲）
+## 6 真实踩坑与修复（说明可讲）
 
 1. **Nexent 不认 stdio**：v2.7.0 的 MCP 客户端按 URL 后缀选传输（`/sse` → SSE，`/mcp` → Streamable HTTP），
    原有 stdio 服务接不进去 → 新增 `mcp_sse.py`（标准库手写 SSE，10 项测试）。
@@ -141,7 +141,7 @@ Agent 回答是**纯 JSON**（3596 字符，无 `<|tool_call_start|>` 残留、�
 3. **Key 与口令外置**：`NEXENT_API_KEY`、管理员口令走环境变量/密钥管理，不进镜像、不进仓；
 4. 演示期给北向接口加**限流 + 只读白名单**（只放 `chat/run` 与 `agents`、`conversations/{id}`）。
 
-## 9 一句话答辩口径
+## 9 一句话表述说明
 
 「同一套推理内核，离线可复算、平台上可运行：Nexent 的 Agent 调我们 13 个 MCP 工具做六跳推演，
 结论与本仓库离线引擎 8/8 一致（conversation_id 可查）；策略进化与回滚在面板上可当场演示。」
@@ -210,7 +210,7 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 | 工具调用次数 | 2 次 `event_deduce` | **1 次** `event_deduce` |
 
 结论：换模型没有改变结论一致性，也印证了前面的判断——8/8 靠的是"MCP 工具返回的事实 + 提示词约束"，
-不是某个模型的运气。副作用要记住：**模型名进了对外材料**（v18 是 openPangu，v19 起是 DeepSeek-Chat），
+不是某个模型的运气。副作用要记住：**模型名进了对外说明**（v18 是 openPangu，v19 起是 DeepSeek-Chat），
 引用旧截图/旧报告时不能再说"当前用 openPangu"。
 
 ## 2026-11-06 追加：LLM 决策对照从 0/3 修到 3/3
@@ -254,7 +254,7 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 ### 要说清的边界
 
 - 这条链路的定性从"LLM 独立判断"收窄为"LLM 把确定性排序落成决策记录"。3/3 证明的是**服从性**，
-  不是"LLM 也能独立算出同样排序"；后者没有证据，别在材料里混着说。
+  不是"LLM 也能独立算出同样排序"；后者没有证据，别在文档里混着说。
 - `evaluate_cases`（离线 A/B）默认不传解析器，保持旧行为；平台脚本才启用，
   因为它跨进程，只有它需要把出处变原文。
 

@@ -266,7 +266,7 @@ def build_plan_alternatives(
     """当前方案（v1：各片区先用本区库存）与备选方案（v4 进化策略）并排。
 
     两套方案都由同一份 `deduction.decision_inputs` 现算，差额来自**策略参数**而不是
-    换了数据——所以"为什么换了方案"只有一个原因，答辩时可以指着参数说清楚。
+    换了数据——所以"为什么换了方案"只有一个原因，可以指着参数说清楚。
     """
     deduction = payload.get("deduction") or {}
     inputs = deduction.get("decision_inputs") or {}

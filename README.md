@@ -1,16 +1,33 @@
-# ICT：可进化决策智能体 PoC
+# ICT：城市内涝跨部门决策智能体
 
-这是一个面向华为 ModelEngine Nexent 赛题方向的决策智能体工程：**离线内核可复现、平台上可运行**。默认离线（不联网、不带凭据），
-只在内核验证完成后通过北向 API / MCP 接入真实 Nexent。城市内涝主链路已在本机 Nexent v2.7.0 真机跑通，
-平台 Agent（v19，模型 DeepSeek-Chat）调 MCP 工具产出的六跳结论与离线推演 8/8 一致（conversation_id=120，证据见 `samples/nexent/live/`）。
-同日 17:56 又重采过一次基线（conversation_id=134，同样 8/8，`samples/nexent/live/main_v19_baseline.json`）；
-两段对话都是真实记录，`conversation_120.json` 是换模型后的首测，134 是当日基线复采。
+给排水防涝应急处置的推演工具。输入一场降雨和一套台账，输出谁负责、先做什么、缺多少资源；
+每条结论都能定位到台账里的原文行。
 
-当前提供 `NexentAdapter` 作为离线适配边界：它只把 `DecisionRequest` 转成可传输的 JSON 负载，并调用注入的传输函数；默认不会联网。真实 Nexent 接入由 `NexentHttpTransport` 承担，走官方北向 `/nb/v1/chat/run` SSE 契约（Bearer API Key + `Idempotency-Key`），并且只在显式构造时才联网，现有审批、评测和回滚门禁保持不变。
+结论由本地规则引擎算出，语言模型只负责把结果写成人话，不参与判定。
 
-策略演进可通过 `evaluate_and_apply` 执行离线评测门禁：候选策略只有在 `EvaluationReport.passed` 为真时才会升为 active 版本，评测失败则保留当前版本并记录拒绝历史。
+## 边界
 
-运行 `run_evolution_showcase()` 可重复演示一次发布和一次拒绝路径，结果包含版本历史，便于后续接入 Nexent 或整理赛题材料。
+- **没有实时采集，也没有控制回路。** 这是离线场景推演，不接 SCADA，不向现场下发指令。
+- **台账是构造的评测场景**：工单、部门、库存、告示均为编写内容。底图是成都真实路网
+  （© OpenStreetMap 贡献者，ODbL 1.0）；路名使用场景代号，与底图路名不重叠。
+- **产流参数含假设**：ψ=0.70 取自 GB 50014，汇水面积按台账反算，堵塞率 10% 为假设。
+  逐条列在 `/limits`。
+- **尚未在真实业务中投用过。** 目前是一套完整跑通的方案验证，不是已上线的系统。
+
+## 与 Nexent 的关系
+
+默认离线（不联网、不带凭据），需要时才通过北向 API / MCP 接入 Nexent v2.7.0。
+接入后平台 Agent 调 MCP 工具产出的六步结论与离线推演 8/8 一致，两轮对话记录见
+`samples/nexent/live/`（`conversation_120.json` 是换模型后的首测，
+`main_v19_baseline.json` 是当日基线复采）。
+
+`NexentAdapter` 是离线适配边界：只把 `DecisionRequest` 转成可传输的 JSON 负载并调用注入的
+传输函数，默认不联网。`NexentHttpTransport` 承担真实接入，走官方北向 `/nb/v1/chat/run` SSE
+契约（Bearer API Key + `Idempotency-Key`），只在显式构造时才联网；审批、评测和回滚校验逻辑不变。
+
+策略演进通过 `evaluate_and_apply` 执行离线评测校验：候选策略只有在 `EvaluationReport.passed`
+为真时才升为 active 版本，评测失败则保留当前版本并记录拒绝历史。`run_evolution_showcase()`
+可重复演示一次发布和一次拒绝路径。
 
 ## 入口
 
@@ -18,11 +35,13 @@
 
 | 路径 | 是什么 |
 | --- | --- |
-| `/` | 门户首页：三条动线入口 + 平台状态（Agent 版本 / MCP 工具 / 验收口径） |
-| `/workbench` | 证据工作台：问一句，每条结论点开是台账那一行；含工具轨迹、自检与复跑 |
-| `/map2d` | 2.5D 俯视大屏：积水 / 封路 / 泵站 / 跨区调泵，六跳可播放 |
+| `/` | 门户首页：五个问题各一个入口 + 平台状态（Agent 版本 / MCP 工具 / 验收口径） |
+| `/workbench` | 证据工作台：问一句，每条结论点开是台账那一行；含工具轨迹、自检与重跑 |
+| `/map2d` | 2.5D 俯视大屏：真实底图 + 场景路网，积水 / 封路 / 泵站 / 跨区调泵，六步可播放 |
+| `/data` | 数据来源：哪些是真实、哪些是编写、哪些由台账算出 |
 | `/limits` | 「它会错吗」：同一道题三组对照（给工具 8/8、不给工具 2/8、逼它编造）+ 自己交代的偏差 |
-| `/status` | 运行自检（内部核对页：台账、平台版本、同步状态是否彼此对得上） |
+| `/evolution` | 策略版本与调整记录 |
+| `/status` | 运行自检（内部核对页，不对外链） |
 
 Windows 一键起演示环境（检查容器 → 拉起未运行的容器 → 取北向 key → 起工作台 → 打开门户）：
 
@@ -49,7 +68,7 @@ powershell -ExecutionPolicy Bypass -File scripts\start_demo.ps1 -CheckOnly
 | --- | --- | --- |
 | LangGraph | 唯一流程编排器、状态流和终止路由 | 不引入第二套 Agent Loop |
 | Pydantic AI | 生成类型化决策输出 | 当前使用无凭据的 `TestModel` |
-| 确定性 Python 规则 | Schema、证据校验、审批门禁、版本发布和回滚 | 不绑定行业规则 |
+| 确定性 Python 规则 | Schema、证据校验、审批校验、版本发布和回滚 | 不绑定行业规则 |
 | LangChain Core | 同步/异步 `Runnable` 演示和评测适配 | 不负责流程编排 |
 | httpx 传输层 | 调用 Nexent 北向 `/nb/v1/chat/run`、聚合 SSE、映射错误 | 不做编排，不影响离线路径 |
 | Nexent SDK 传输层（可选） | 无平台环境时内嵌运行 Nexent Agent | 需手动装 `nexent`，不验证北向契约 |
@@ -63,21 +82,21 @@ powershell -ExecutionPolicy Bypass -File scripts\start_demo.ps1 -CheckOnly
 - 可重试/不可重试错误与有限重试；
 - 关联 ID、证据来源、版本和内容一致性校验；
 - 缺少审批或审批拒绝时阻断执行；
-- 反馈记录、候选策略、评测门禁、发布和回滚；
+- 反馈记录、候选策略、评测校验、发布和回滚；
 - LangChain 同步/异步适配；
 - Nexent 北向传输层（SSE 聚合、幂等键、401/429/冲突错误映射，默认不联网）；
 - Nexent SDK 传输层（无平台环境时的内嵌路径，可选依赖）；
-- 北向链路真机验证（本机 Nexent v2.7.0，SSE → 结构化决策）；
-- 城市内涝主链路 Nexent 真机集成：MCP-over-SSE（15 工具）+ Agent 发布 v31（DeepSeek-Chat）+ 8/8 结论一致性校验（v24 加 doc_search 后复跑仍 8/8；历史真机留痕 conversation_id=120）；
+- 北向链路实测验证（本机 Nexent v2.7.0，SSE → 结构化决策）；
+- 城市内涝主链路 Nexent 集成实测：MCP-over-SSE（15 工具）+ Agent 发布 v31（DeepSeek-Chat）+ 8/8 结论一致性校验（v24 加 doc_search 后重跑仍 8/8；历史实测留痕 conversation_id=120）；
 - 多模态数据资产标识（表格 / 文本 / 图片统一登记、结构摘要、标准引用、可引用定位）；
 - 本体半自动构建（种子本体 → 规则抽取 → 置信度分档 + 跨文档多跳证据 + 合并计划）；
-- 城市内涝语义孪生层（孪生对象是职责与状态，不是实时水体）+ 六跳跨部门推演 + 三类职责冲突 + 反事实重放（P4–P6）；
+- 城市内涝语义孪生层（孪生对象是职责与状态，不是实时水体）+ 六步跨部门推演 + 三类职责冲突 + 反事实重放（P4–P6）；
 - 五个 Skill 编排与 15 个 MCP 工具（9 个决策语义 + 4 个可视化 + 1 个协同，含权限收口、trace_id、失败语义、工具分组 allowlist）（P6/P9/P10）；
 - P8 评测：22 个事件用例、七项指标口径与改进前后对比；
-- P9 决策层：推演输出片区决策输入、稀缺资源分配策略、偏差归因 + 评测门禁 + 回滚的受控进化闭环；
+- P9 决策层：推演输出片区决策输入、稀缺资源分配策略、偏差归因 + 评测校验 + 回滚的受控演进流程；
 - P9.1 持续进化：分层决策记忆（离线同构）+ 人工评审第二反馈通道 + 语义化策略版本标签；
 - P9.2 浏览器进化对比面板：`/evolution` 一屏展示双会话、评审、版本标签与真实事件分配；
-- P10 可视化工具层：决策快照（`snapshot_id` 内容哈希）→ UE 渲染作业 → 引擎 ack 的异步闭环，
+- P10 可视化工具层：决策状态记录（`snapshot_id` 内容哈希）→ UE 渲染作业 → 引擎 ack 的异步流程，
   3 个 MCP 工具（`scene_render` / `scene_compare` / `asset_lookup`）+ 工具分组 allowlist，
   让"智能体决定调策略 → 自动调可视化工具 → 场景呈现变化"可核对而不是人工切镜头；
 - P10.1 实体重投影与绑定表：把决策层 `TW-*` 投影成场景实体（`twin_id ↔ 布局几何 ↔ Actor tag`），
@@ -94,7 +113,7 @@ powershell -ExecutionPolicy Bypass -File scripts\start_demo.ps1 -CheckOnly
 暂不做：
 
 - 固定行业业务流程和主题专属逻辑；
-- 生产环境 Nexent / 数据库 / 生产工具接入（当前只在本地 Docker 演示环境做真机验证）；
+- 生产环境 Nexent / 数据库 / 生产工具接入（当前只在本地 Docker 演示环境做实测验证）；
 - 完整业务 UI；
 - 最终行业评价指标。
 
@@ -113,7 +132,7 @@ uv run --locked pytest -q
 uv run --locked python -m decision_poc.web_demo --port 18765
 ```
 
-一条命令生成并核对全部对外材料（测试、数据集、数据门禁、布局、回放、实体表、推演、反事实、Skill 编排、P8 评测、MCP 契约、P9 进化、P11 消融与锚定、108 项自检）：
+一条命令生成并核对全部对外说明（测试、数据集、数据核对、布局、回放、实体表、推演、反事实、Skill 编排、P8 评测、MCP 契约、P9 进化、P11 消融与锚定、108 项自检）：
 
 ```powershell
 uv run --locked python scripts/reproduce.py            # 全量，约 40 秒（本机实测 20/20 步通过）
@@ -124,18 +143,18 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 期望末行 `结果：20/20 步通过`；明细写 `artifacts/reproduce/summary.json`（已被 .gitignore 忽略）。
 脚本只比对、不改数字：任一期望不成立即退出码 1，并把失败步骤的原始输出打出来。
 
-一条命令核对全部对外宣称数字（六跳、P8 评测、P9 双会话进化、MCP 工具数；任一项漂移即失败）：
+一条命令核对全部对外宣称数字（六步、P8 评测、P9 双会话进化、MCP 工具数；任一项漂移即失败）：
 
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望：对外数字自检：108/108 项一致（期望指纹 0a629ba506a2a9b7）
+# 期望末行：对外数字自检：108/108 项一致（括号内是本轮期望值的标识 0a629ba506a2a9b7）
 ```
 
-期望值冻结在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/答辩口径，
+期望值固定在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/对外说明，
 不允许为过检放宽期望。报告见 [对外数字自检报告](docs/reports/evidence-check-report.md)。
 
-数据门禁：逐条核对**数据来源分级、高程基准、跨字段一致性**，不通过即退出码 1：
+数据核对：逐条核对**数据来源分级、高程基准、跨字段一致性**，不通过即退出码 1：
 
 ```powershell
 $env:PYTHONPATH = "src"
@@ -147,9 +166,9 @@ uv run --locked python -m decision_poc.data_gate
 它回答的是另外三个模块都不回答的问题：这份数据里哪一条是实测、哪一条是推导、哪一条是假设。
 `deduction.verify_rules` 只校规则出处，`provenance` 只校运行时 claim，`evidence_check` 只校对外数字，
 三者都不管"CSV 里这个数到底是台账还是占位"。来源标注写在 `samples/gate/data_provenance.json`，
-**不改数据集 CSV**——改 CSV 会让 `manifest.json` 指纹和上面的 108/108 一起漂。
+**不改数据集 CSV**——改 CSV 会让 `manifest.json` 里的校验值和上面的 108/108 一起变。
 眼下唯一的 warn 是「50 条未逐条标注来源，按数据集自述记为 synthetic」：这是当前真实状况，
-不是可以忽略的提示，对外材料不得把这一批说成实测值。
+不是可以忽略的提示，对外说明不得把这一批说成实测值。
 
 运行技术基线：
 
@@ -178,7 +197,7 @@ uv run --locked python -m decision_poc.health --dataset samples/assets/urban
 数据集说明见 [samples/assets/urban/README.md](samples/assets/urban/README.md)，
 推演标准答案见 [核心事件 Ground Truth](docs/urban-scenario-ground-truth.md)。
 
-跑六跳跨部门推演（规则来自 `samples/rules/`，每条带原文行号并在加载时校验）：
+跑六步跨部门推演（规则来自 `samples/rules/`，每条带原文行号并在加载时校验）：
 
 ```powershell
 $env:PYTHONPATH = "src"
@@ -229,7 +248,7 @@ uv run --locked python -m decision_poc.mcp_server                  # 进入 stdi
 `event_deduce`、`counterfactual_run`、`conflict_check`、`allocation_plan`、`scene_render`、`scene_compare`、`asset_lookup`。
 全部返回既有 `ToolResult` 信封；失败返回 `status="error"` 且不返回伪造数据。
 可视化三个工具做工具分组隔离（`--groups decision|presentation|bootstrap`），推演循环里看不见渲染工具。
-`scene_render` 只接受快照 id 与策略参数（不接受位姿/材质/镜头），作业落盘即返回——引擎没起只体现为 `delivery=pending`，不算失败。
+`scene_render` 只接受状态记录 id 与策略参数（不接受位姿/材质/镜头），作业落盘即返回——引擎没起只体现为 `delivery=pending`，不算失败。
 推演、冲突与分配工具需要 `caller_labels`：结论引用了调用方不可见的依据时返回 `PERMISSION_DENIED`，而不是删掉依据照给结论。
 调用日志用 `--log artifacts/mcp_calls.jsonl` 落盘（缺省写 `artifacts/visual/tool_log.jsonl`，与 Web 端工具日志面板同一份），
 `trace_id` 随请求透传到 `context.trace_id` 并写进日志；每条带 `origin`（`mcp` / `manual`），演示时能分辨是谁触发的渲染。
@@ -246,13 +265,13 @@ uv sync --group llm                          # 可选依赖（openai SDK）；�
 $env:DECISION_LLM_PROVIDER = "deepseek"
 $env:DEEPSEEK_API_KEY      = "<你的 key>"    # 只放环境变量，不要写进仓库
 $env:DEEPSEEK_MODEL        = "deepseek-chat" # 可选：deepseek-reasoner / deepseek-v4-flash / deepseek-v4-pro
-$env:DEEPSEEK_TEMPERATURE  = "0"             # 可选，默认 0；固定采样温度，重复跑 A/B 才有可比性
+$env:DEEPSEEK_TEMPERATURE  = "0"             # 可选，默认 0；固定采样温度，多跑几次 A/B 才有可比性
 uv run --group llm python scripts/deepseek_smoke.py
 ```
 
 未配置 provider 时脚本打印"跳过"并返回 0；缺 key 或缺依赖会给出明确错误且**不发请求**；
 `.gitignore` 已排除 `.env` / `.env.*`，密钥不会入库。真实模型只替换 `DecisionOutput` 生成节点，
-六跳推演仍由确定性规则引擎产生，不参与断言生成。设计、失败语义与安全约束见
+六步推演仍由确定性规则引擎产生，不参与断言生成。设计、失败语义与安全约束见
 [真实模型接入设计](docs/real-model-provider-design.md)。
 
 加 `--out samples/eval/deepseek_smoke.json` 可把这次真实模型输出固化为证据（不含凭据）：
@@ -270,7 +289,7 @@ $env:DECISION_LLM_PROVIDER = "deepseek"
 uv run --group llm python scripts/llm_ab_eval.py --provider rule --provider test --provider deepseek
 ```
 
-真机联调（可选，需自行提供凭据）：
+接本机平台联调（可选，需自行提供凭据）：
 
 ```powershell
 $env:NEXENT_BASE_URL   = "http://<nexent-host>:5013"
@@ -298,18 +317,18 @@ uv run --locked python -c "from decision_poc.nexent_sdk_transport import NexentS
 这条路径用真实模型和真实 Nexent Agent 运行时，但不验证 `/nb/v1` 北向契约；两者取舍见
 [北向传输层设计](docs/nexent-northbound-transport-design.md) 第 6 节。
 
-## Nexent 真机接入（已验证：8/8）
+## Nexent 平台接入（已验证：8/8）
 
 赛题 3 的「基于 Nexent 可运行」不是"能连上"，而是"平台 Agent 调工具产出的结论与离线一致"。当前已在本机
 Nexent **v2.7.0**（主 Agent v19，模型 DeepSeek-Chat）跑通。原绑定的 openPangu-2.0-Pro 走华为 ModelArts，
 2026-11-06 因账户欠费停服，主/协同 Agent 改挂平台已注册的 DeepSeek-Chat（`MODEL_IDS` 默认 5），
-（历史）重发布到 v19 / v7 后同一提示词复测仍 8/8；下文真机证据以那一轮为准，当前线上为 v24：
+（历史）重发布到 v19 / v7 后同一提示词复测仍 8/8；下文实测证据以那一轮为准，当前线上为 v24：
 
 - MCP 服务 `urban-twin-mcp`（15 工具）以 SSE 方式跑在 `nexent_network` 容器里；
-- Agent `urban_deduction_agent`（agent_id=3，已发布 v31）挂三个工具（`event_deduce` / `evidence_locate` / `doc_search`，收窄原因见真机报告 §6）；`doc_search` 只查规则依据，事实仍只认 `event_deduce`；
-- 一次真实对话（**conversation_id=120**）产出六跳 JSON，与离线 `DeductionEngine` **8/8 项一致**；
+- Agent `urban_deduction_agent`（agent_id=3，已发布 v31）接了三个工具（`event_deduce` / `evidence_locate` / `doc_search`，收窄原因见集成实测报告 §6）；`doc_search` 只查规则依据，事实仍只认 `event_deduce`；
+- 一次真实对话（**conversation_id=120**）产出六步 JSON，与离线 `DeductionEngine` **8/8 项一致**；
 - 平台侧确实发生了工具调用：`event_deduce`（18ms）+ 一次协议修复重试（6ms），
-  两条日志快照哈希一致（协同链路的 3 次 `collab_run` 实测另见 `samples/nexent/live/collab_live.json`，成功率 2/3）。
+  两条日志记录的哈希一致（协同链路的 3 次 `collab_run` 实测另见 `samples/nexent/live/collab_live.json`，成功率 2/3）。
 
 ```powershell
 # 1) 构建并启动 MCP 容器（详细步骤见 deploy/nexent/README.md）
@@ -324,7 +343,7 @@ docker cp deploy/nexent/upload_skills.py   nexent-config:/tmp/upload_skills.py
 docker cp deploy/nexent/bind_skills.py     nexent-config:/tmp/bind_skills.py
 docker cp samples/nexent/skill             nexent-config:/tmp/nexent_skills
 docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_nexent.py all"
-# 自检：0=MCP/15 工具/两个 Agent/技能草稿与发布快照全就位；1=有失败；2=有项无法断言
+# 自检：0=MCP/15 工具/两个 Agent/技能草稿与发布状态全就位；1=有失败；2=有项无法断言
 docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_nexent.py status"
 
 # 3) 结论级验证（宿主机）
@@ -336,22 +355,22 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 ```
 
 证据固化：`python deploy/nexent/capture_evidence.py` → `samples/nexent/live/`（Agent 列表、会话、MCP 调用日志、
-汇总 JSON）。完整排障与边界见 [真机集成报告](docs/reports/nexent-live-integration-report.md)。
+汇总 JSON）。完整排障与边界见 [集成实测报告](docs/reports/nexent-live-integration-report.md)。
 
 边界：只在小规模本机 Docker 演示环境验证；两个 SKILL.md 已上传技能仓库（skill_id=2/3）**并已绑定到已发布 Agent**（草稿与发布版本各 2 条实例、全部 enabled，`bind_skills.py verify --require-published` 退出码 0，证据 `samples/nexent/live/skill_bindings.json`）；
-平台界面截图 3 张已固化（`docs/reports/captures/nexent/`，含 sha256 自检），问答过程录屏与多事件真机回归仍待补；
+平台界面截图 3 张已固化（`docs/reports/captures/nexent/`，含 sha256 自检），问答过程录屏与多事件实测回归仍待补；
 不宣称"多 Agent 协同"。
 
-## 决策进化闭环（P9 / P9.1）
+## 策略演进（P9 / P9.1）
 
-六跳推演只回答「缺多少台」，不回答「这几台先给谁」。P9 把「分配」做成一层**有版本、可评测、可回滚的策略**，
-并把它接进受控进化循环：偏差归因 → 候选策略 → 评测门禁（训练集提升 + 留出集不退化 + 不违反人工评审）→
+六步推演只回答「缺多少台」，不回答「这几台先给谁」。P9 把「分配」做成一层**有版本、可评测、可回滚的策略**，
+并把它接进受控进化循环：偏差归因 → 候选策略 → 评测校验（训练集提升 + 留出集不退化 + 不违反人工评审）→
 采纳/拒绝 → 回滚验证。
 
 P9.1 再把「一次演示」做成「持续机制」，三个新增证据：
 
 - **分层记忆 warm start**：同类场景第二次遇到，从已验证有效的策略起步（离线同构契约：Tenant/User/Agent 三层）；
-- **人工评审第二信号**：评审给出的修正转成评审用例进门禁，候选违反即拒（演示为角色扮演，非真实批复）；
+- **人工评审第二信号**：评审给出的修正转成评审用例进校验，候选违反即拒（演示为角色扮演，非真实批复）；
 - **语义化版本标签**：每次采纳产出 `flood-response-v1.N`，带触发反馈 ID、触发评审 ID 与预期改善，可回滚。
 
 ```powershell
@@ -373,9 +392,9 @@ uv run --locked python -m decision_poc.policy_evolution --report docs/reports/p9
 `A-03 6 台 / B-01 0 台` 对应 40 分钟跨区时延（台账字段，不是叙事）。记忆落盘在
 `samples/eval/decision_memory.json`，加 `--reuse-memory` 可演示真正跨进程沉淀。
 
-反馈信号来自 `samples/eval/allocation_cases.json`（8 训练 + 4 留出，逐例标注依据条款）的**冻结 ground truth**
+反馈信号来自 `samples/eval/allocation_cases.json`（8 训练 + 4 留出，逐例标注依据条款）的**固定 ground truth**
 与 `samples/eval/decision_reviews.json` 的**人工评审结论**，不是真实市政数据回流；报告口径统一写作
-「受控评测环境下的反馈信号」。分层记忆为**离线同构实现，未在真实 Nexent 平台真机验证**。
+「受控评测环境下的反馈信号」。分层记忆为**离线同构实现，未在真实 Nexent 平台实际验证**。
 策略本身可由 Nexent 通过 MCP 工具 `allocation_plan` 调用（`policy` 参数可传进化后的版本），
 见 [P9 设计规格](docs/superpowers/specs/2026-10-30-p9-decision-evolution-design.md) 与
 [P9 报告](docs/reports/p9-policy-evolution-report.md)。
@@ -384,17 +403,17 @@ uv run --locked python -m decision_poc.policy_evolution --report docs/reports/p9
 
 P9.1 的评审是角色扮演；真实用户评分另走一条可采集通道：`/evolution` 页面上的表单，
 或 CLI `python -m decision_poc.review_collect add`。四维 1–5 分只做汇总（样本/均分/前后差值），
-**不参与门禁**；只有同时给出"建议分配"的评分才会转成评审用例进入 P9 门禁（与角色扮演评审同一条路）。
+**不参与校验**；只有同时给出"建议分配"的评分才会转成评审用例进入 P9 校验（与角色扮演评审同一条路）。
 
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.review_collect add --reviewer u1 --phase before --scores 4,3,5,4
 uv run --locked python -m decision_poc.review_collect add --reviewer u2 --phase after --scores 5,4,5,5 --suggested "A-03=5,B-01=1"
 uv run --locked python -m decision_poc.review_collect summary --markdown
-uv run --locked python -m decision_poc.review_collect to-reviews   # 导出给 P9 门禁消费
+uv run --locked python -m decision_poc.review_collect to-reviews   # 导出给 P9 校验消费
 ```
 
-在 `/evolution` 页面上提交「进化后」评分时，后端会自动重跑一次进化门禁，把候选采纳/拒绝、训练与留出偏差前后值回显在同一屏。
+在 `/evolution` 页面上提交「进化后」评分时，后端会自动重跑一次进化校验，把候选采纳/拒绝、训练与留出偏差前后值回显在同一屏。
 
 记录默认落 `samples/eval/review_submissions.jsonl`（追加式、幂等、默认不入 git，可用
 `URBAN_TWIN_REVIEWS` 改路径）；口径固定写「真实用户评分（个人意见，非部门批复）」。
@@ -420,7 +439,7 @@ uv run --locked python -m decision_poc.image_semantics --image samples/assets/ur
 ## 评测（P8）
 
 22 个事件用例覆盖正常、冲突、证据不足、过期数据、越权五类形态，逐例声明可核查的期望
-（状态、六跳、冲突编号、缺口、必须出现的对象、必须能定位的证据、引用完整率、拒答理由）：
+（状态、六步、冲突编号、缺口、必须出现的对象、必须能定位的证据、引用完整率、拒答理由）：
 
 ```powershell
 $env:PYTHONPATH = "src"
@@ -430,9 +449,9 @@ uv run --locked python -m decision_poc.urban_eval --json samples/eval/latest.jso
     --baseline samples/eval/baseline_before_temporal_guard.json                        # 含改进前后对比
 ```
 
-预期：`22/22 通过`；资产解析 19/19、未识别列 0、检索命中 100%、六跳完整 100%、引用完整率 100%、
+预期：`22/22 通过`；资产解析 19/19、未识别列 0、检索命中 100%、六步完整 100%、引用完整率 100%、
 不可支撑结论 0，单用例 p50 约 10 ms 以内。改进前基线（`samples/eval/baseline_before_temporal_guard.json`）
-是 17/22——差的 5 条全部是「as_of 早于上报时间 / 工单已闭环」被当成正常事件推演掉的，
+是 17/22——差的 5 条全部是「as_of 早于上报时间 / 工单已办结」被当成正常事件推演掉的，
 生成方式见 `samples/eval/make_pre_guard_baseline.py` 顶部注释。
 
 ## 仓库结构
@@ -444,11 +463,10 @@ agent_poc/
 ├─ samples/assets/urban/   # 19 个资产（17 合成 + 2 真实公开预案）
 ├─ samples/rules/          # 推演规则（每条带原文行号）
 ├─ samples/nexent/         # Nexent 侧绑定表（由代码生成，不手改）
-├─ samples/eval/           # P8 评测用例 + P9 分配用例/人工评审/分层记忆/进化快照
+├─ samples/eval/           # P8 评测用例 + P9 分配用例/人工评审/分层记忆/进化记录
 ├─ docs/                   # 文档导航、技术基线、回传报告
 ├─ pyproject.toml          # Python 与依赖约束
 ├─ uv.lock                 # 锁定后的完整依赖图
-├─ AGENTS.md               # 项目级协作与验证约束
 └─ README.md               # 项目入口说明
 ```
 
@@ -460,19 +478,18 @@ agent_poc/
 - [技术基线与风险](docs/technical-baseline.md)
 - [Nexent 集成边界](docs/nexent-integration-boundary.md)
 - [Nexent 北向传输层设计](docs/nexent-northbound-transport-design.md)
-- [城市内涝主链路 Nexent 集成与真机报告](docs/reports/nexent-live-integration-report.md)（8/8 一致性，conversation_id=120）
+- [城市内涝主链路 Nexent 集成实测报告](docs/reports/nexent-live-integration-report.md)（8/8 一致性，conversation_id=120）
 - [Nexent 集成设计（SSE + SKILL.md）](docs/nexent-urban-integration-design.md)
 - [平台侧证据报告（技能上传 + 界面截图）](docs/reports/platform-evidence-report.md)
 - [Nexent 侧装配与复现手册](deploy/nexent/README.md)
-- [赛题 3 差距审计](docs/competition-gap-audit.md)
 - [演示运行手册](docs/demo-runbook.md)
 - [数据资产标识规范](docs/data-asset-spec.md)
 - [P8 评测报告](docs/reports/p8-evaluation-report.md)（由评测命令生成，勿手改）
-- [P9 进化闭环报告](docs/reports/p9-policy-evolution-report.md)（由进化命令生成，勿手改）
+- [P9 策略演进报告](docs/reports/p9-policy-evolution-report.md)（由进化命令生成，勿手改）
 - [对外数字自检报告](docs/reports/evidence-check-report.md)（由自检命令生成，勿手改）
-- [P9 决策进化闭环设计](docs/superpowers/specs/2026-10-30-p9-decision-evolution-design.md)
+- [P9 决策演进设计](docs/superpowers/specs/2026-10-30-p9-decision-evolution-design.md)
 - [本体半自动构建方案](docs/ontology-bootstrap.md)
-- [通用内核设计](docs/superpowers/specs/2026-10-26-generic-evolution-kernel-design.md)
+- [通用演进设计](docs/superpowers/specs/2026-10-26-generic-evolution-kernel-design.md)
 - [实施计划](docs/superpowers/plans/2026-10-26-generic-evolution-kernel.md)
 
 ## 验证状态
@@ -480,39 +497,27 @@ agent_poc/
 当前基线：`uv run --locked pytest -q` 共 **971 项测试通过**（口径是**收集数**：其中 1 项需可选依赖 `openai`，
 未 `uv sync --group llm` 时该条在输出里显示为 `skipped`，所以默认环境看到的是 passed 与 skipped 两个数，合计仍是 971）；
 `python -m decision_poc.evidence_check` 108/108 项一致；
-城市内涝主链路 Nexent 真机校验 8/8（Agent v19 / DeepSeek-Chat，`python -m decision_poc.nexent_urban`）；
+城市内涝主链路 Nexent 平台校验 8/8（Agent v19 / DeepSeek-Chat，`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。
 P0-P10 的验收口径与实测数字见各阶段回传报告（`docs/reports/`）。
 
 ## 后续演进
 
-赛题主题确定后，仅替换领域 Schema、规则、工具和评测集；LangGraph 状态流、Pydantic AI 类型化输出、审批门禁、评测发布和回滚机制继续复用。真实 Nexent 接入应作为独立适配层，不直接破坏当前离线 PoC。
+赛题主题确定后，仅替换领域 Schema、规则、工具和评测集；LangGraph 状态流、Pydantic AI 类型化输出、审批校验、评测发布和回滚机制继续复用。真实 Nexent 接入应作为独立适配层，不直接破坏当前离线 PoC。
 
-P9 的进化循环目前跑在**冻结的合成 ground truth + 人工评审结论** 上（受控、可重复、可回滚）。接真实数据时只替换反馈 provider：
-把工单复盘/处置结果评测成同口径的 `AllocationCase`，门禁、偏差归因、版本与回滚逻辑不变；
-在此之前不宣称"真实市政数据回流"。分层记忆同理：现为离线同构契约，接 Nexent 时换成平台记忆 API，**未真机验证前不宣称已接入**。
+P9 的进化循环目前跑在**固定的合成 ground truth + 人工评审结论** 上（受控、可重复、可回滚）。接真实数据时只替换反馈 provider：
+把工单复盘/处置结果评测成同口径的 `AllocationCase`，校验、偏差归因、版本与回滚逻辑不变；
+在此之前不宣称"真实市政数据回流"。分层记忆同理：现为离线同构契约，接 Nexent 时换成平台记忆 API，**未在平台实测前不宣称已接入**。
 
-## 城市内涝 Web Demo 与三维场景桥接
-
-启动无额外依赖的浏览器 Demo：
-
-```powershell
-$env:PYTHONPATH = "src"
-uv run --locked python -m decision_poc.web_demo --port 8787
-# 推演面板   http://127.0.0.1:8787
-# 进化对比面板 http://127.0.0.1:8787/evolution   （数据接口 /api/evolution）
-```
-
-进化对比面板把 P9.1 的双会话证据放在同一屏：第一会话进化前/后（训练 0.2264→0.0000、留出 0.2182→0.0000）、
-第二会话记忆 warm start（起点偏差 0.0000、轮次 3→1）、人工评审（0.1171→0.0000）、版本标签
-`flood-response-v1.0→v1.1→v1.2`、真实事件分配（`A-03 4→5 台 / B-01 2→1 台`）。
-页面数据直接取 `run_showcase()`，展示层不重算任何指标；页脚固定印三条表述边界（受控反馈 / 评审角色扮演 / 记忆离线同构）。
+## 场景数据导出
 
 导出场景数据（格式与渲染引擎无关，下游工具可直接读取）：
 
-```powershell
-$env:PYTHONPATH = "src"
+```text
 uv run --locked python -m decision_poc.scene_export --out samples/assets/urban/scene.json
 ```
 
-场景文件只负责稳定的 `twin_id`、类型、状态、`geometry_ref` 和溯源信息；模型资产与坐标解析属于展示层，不参与推理结论生成。
+场景文件只负责稳定的 `twin_id`、类型、状态、`geometry_ref` 和溯源信息；模型资产与坐标解析
+属于展示层，不参与推理结论生成。
+
+页面的启动方式、七个入口与 2.5D 大屏见上文「入口」与「快速开始」。

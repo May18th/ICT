@@ -3,7 +3,7 @@
 
 **取数走两条路，北向优先**：
 1. `GET /nb/v1/agents`（北向，Bearer key）—— 平台对外接口，直接给 `current_version_no`
-   与 `version_name`（如 `urban-mcp-v3`）。答辩要说"平台对外可回读版本"，就得走这条。
+   与 `version_name`（如 `urban-mcp-v3`）。要说明"平台对外可回读版本"，就得走这条。
 2. 回退读库 `nexent.ag_tenant_agent_t` —— 北向没配 key 或服务没起时用，只读 select。
 
 北向**没有版本历史**（只有当前版本），要看逐版本轨迹得走 config 服务的内部路由，

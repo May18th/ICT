@@ -240,7 +240,7 @@ class ProvenanceRecord(StrictModel):
 
 - `ProvenanceLedger.append(record) -> ProvenanceRecord`：自动填 `upstream_record_hash` 与 `record_hash`。
 - `ledger.verify() -> VerifyReport`：从头重算哈希，返回首个断链位置与受影响 `record_id` 列表（不抛异常，异常会掩盖审计信息）。
-- `ledger.replay(decision_id) -> ReplayBundle`：输出重建该结论所需的最小证据集（资产指纹 + 知识版本 + 快照哈希 + 规则版本），用于"数据变了结论是否还成立"的答辩追问。
+- `ledger.replay(decision_id) -> ReplayBundle`：输出重建该结论所需的最小证据集（资产指纹 + 知识版本 + 快照哈希 + 规则版本），用于"数据变了结论是否还成立"的说明追问。
 
 ### 5.3 三重拦截
 

@@ -14,7 +14,7 @@
 3. 把那组参数放回**冻结 12 例**评测，看它是否退化。
 
 结论指向一件事：**策略是口径的函数，不存在"越学越好"的单一真值**。
-这不是缺陷，是必须写进材料的适用边界。
+这不是缺陷，是必须写进文档的适用边界。
 
 **唯一性约定（本脚本必须遵守）**：全系统**唯一生产策略是 `flood-response-v1.2`**。
 本脚本产出的 `flood-response-v1.3` 是敏感性实验的副产品，**不提升为生产**，理由是：
@@ -57,12 +57,12 @@ def assert_production_singleton() -> None:
     """确认全系统只有一个生产策略，且其参数与冻结记忆逐字一致。
 
     这条校验是"唯一性"的可执行形式：将来若有人把生产标签改成别的版本、
-    或只改了标签没改参数，这里会直接失败，而不是等两个答案同时出现在材料里。
+    或只改了标签没改参数，这里会直接失败，而不是等两个答案同时出现在文档里。
     """
     if PRODUCTION_LABEL != "flood-response-v1.2":
         raise SystemExit(
             f"生产策略标签被改动：{PRODUCTION_LABEL}。"
-            "改之前必须同步更新 samples/eval/decision_memory.json、平台台账与全部材料。"
+            "改之前必须同步更新 samples/eval/decision_memory.json、平台台账与全部文档。"
         )
     if not FROZEN_MEMORY.is_file():
         raise SystemExit(f"缺少冻结记忆：{FROZEN_MEMORY}")

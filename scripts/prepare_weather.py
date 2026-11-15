@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """整备 Open-Meteo 真实气象数据为交付 CSV，并挑出汛期最大暴雨过程。
 
-数据出处（必须随材料一起展示）：
+数据出处（必须随文档一起展示）：
 - 来源: Open-Meteo Historical Weather API (https://open-meteo.com/en/docs/historical-weather-api)
 - 底层数据: ERA5 / ERA5-Land 再分析（ECMWF）
 - 许可: CC BY 4.0，非商用需署名
