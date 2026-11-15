@@ -162,7 +162,7 @@ def status_checks() -> list[dict[str, Any]]:
     )
     checks.append(
         {
-            "name": "参数有冻结依据",
+            "name": "参数来源明确",
             "state": "ok" if entries else "warn",
             "detail": (
                 f"decision_memory.json 命中 {len(entries)} 条（{PRODUCTION_LABEL}）"
@@ -176,9 +176,9 @@ def status_checks() -> list[dict[str, Any]]:
     case_count = len(cases.get("cases") or []) if cases else 0
     checks.append(
         {
-            "name": "冻结评测集完整",
+            "name": "评测集完整",
             "state": "ok" if case_count == FROZEN_CASE_COUNT else "bad",
-            "detail": f"allocation_cases.json 共 {case_count} 例（期望 {FROZEN_CASE_COUNT}，冻结基线不可增删）",
+            "detail": f"allocation_cases.json 共 {case_count} 例（期望 {FROZEN_CASE_COUNT}，基线不可增删）",
         }
     )
 
@@ -195,7 +195,7 @@ def status_checks() -> list[dict[str, Any]]:
     run_count = _feedback_run_count()
     checks.append(
         {
-            "name": "反馈闭环有记录",
+            "name": "反馈记录完整",
             "state": "ok" if run_count else "warn",
             "detail": f"history.jsonl 共 {run_count} 条",
         }

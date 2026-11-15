@@ -513,7 +513,7 @@ header .scope{font-size:11px;color:#5f6f83;border:1px solid var(--line);border-r
   <span class=sub>底图 © OpenStreetMap 贡献者（ODbL 1.0）· 路名与工单为评测场景代号，非真实路名<span id=hydro-src></span><span id=tl-src></span></span>
 </header>
 <div id=kpibar>
-  <div class=kpi-card style="--kpi:var(--blue)"><div class=k>当前积水深度</div><div class=v><span id=k-depth>0</span><span class=u>cm</span></div><div class=n id=k-depth-note>峰值 30 cm</div></div>
+  <div class=kpi-card style="--kpi:var(--blue)"><div class=k>当前积水深度</div><div class=v><span id=k-depth>0</span><span class=u>cm</span></div><div class=n id=k-depth-note>场景设定 30 cm</div></div>
   <div class=kpi-card style="--kpi:var(--red)"><div class=k>封路路段</div><div class=v><span id=k-block>0</span><span class=u>条</span></div><div class=n id=k-block-note>—</div></div>
   <div class=kpi-card style="--kpi:var(--amber)"><div class=k>堵塞雨水口</div><div class=v><span id=k-clog>0</span><span class=u>处</span></div><div class=n id=k-clog-note>—</div></div>
   <div class=kpi-card style="--kpi:var(--green)"><div class=k>泵站运行</div><div class=v><span id=k-pump>0</span><span class=u id=k-pump-total>/ 3</span></div><div class=n id=k-pump-note>—</div></div>

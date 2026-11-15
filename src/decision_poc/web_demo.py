@@ -703,7 +703,7 @@ function renderExecution(){
   if(cb){
     if(PENDING_CLOSE){
       cb.innerHTML='<div class=exclose><b>确认关闭工单 '+esc(PENDING_CLOSE)+'？</b>'
-        +' 这是人工确认动作：会写入执行账本并留痕，但**不改**冻结的 work_orders.csv。'
+        +' 这是人工确认动作：会写入执行记录并留痕，不改动台账中的工单。'
         +'<div style="margin-top:8px"><button data-close="'+esc(PENDING_CLOSE)+'">确认关闭</button> '
         +'<button class=ghost data-cancel="1">取消</button></div></div>';
     }else if((EXEC.closable_orders||[]).length){
@@ -1208,7 +1208,7 @@ button{grid-column:1/-1;justify-self:start;background:#1d7f6f;border:0;color:#ea
 .k{color:#7dd3fc}.ok{color:#34d399}.warn{color:#fbbf24}
 a{color:#5eead4}
 </style></head><body><main>
-<h1>反馈注入 · <span>决策进化闭环</span></h1>
+<h1>反馈注入 · <span>处置结果回写与策略调整</span></h1>
 <div class="sub">填入一次内涝处置结果，系统据此判定处置是否有效；有效性成立时，按评测集跑一轮策略调整。
 评测集只读，策略调整写入运行期记录，不覆盖评测基线。
 专家评审意见以角色扮演方式给出（非真实部门批复）；偏差超过阈值时，整轮候选作废。
@@ -1231,7 +1231,7 @@ a{color:#5eead4}
     </select></label>
   <label>预期水深 cm（可空）<input name="expected_depth_cm" type="number" step="0.1"></label>
   <label class="full">备注 <input name="note" placeholder="例如：封路后仍超临界，泵站单台运行"></label>
-  <button type="submit">提交反馈并跑闭环</button>
+  <button type="submit">提交反馈并评估</button>
 </form>
 <div id="out">等待提交…</div>
 <h2 style="font-size:16px;margin:26px 0 8px">反馈流水 <span style="color:#7d95ab;font-weight:400;font-size:12.5px">（最近 30 条，倒序）</span></h2>
@@ -1328,8 +1328,8 @@ td{padding:6px 8px;border-bottom:1px solid #16273a;vertical-align:top}
 a{color:#5eead4}
 </style></head><body><main>
 <h1>方案评审 · <span>人工评分与修正建议</span></h1>
-<div class="sub">四维评分只做样本记录，不进决策门禁；只有填了「建议调拨」的提交才会转成评审用例，
-和 12 例一起送进候选评估。评分口径：__NOTE__。
+<div class="sub">四维评分只做样本记录，不参与策略判定；只有填了「建议调拨」的提交才会转成评审用例，
+和既定的 12 例一起进入策略评估。评分口径：__NOTE__。
 <a href="/">← 回推演页</a> · <a href="/feedback">反馈注入 →</a> · <a href="/evolution">进化对比 →</a></div>
 <div class="stats">__STATS__</div>
 <form id="f">
@@ -1398,7 +1398,7 @@ def build_review_html() -> str:
         card("before 均分", "—" if before is None else f"{before:.2f}"),
         card("after 均分", "—" if after is None else f"{after:.2f}"),
         card("前后差", "—" if delta is None else f"{delta:+.2f}"),
-        card("门禁候选", str(summary["gate_candidates"])),
+        card("待评估候选", str(summary["gate_candidates"])),
     ]
 
     rows: list[str] = []
@@ -1489,7 +1489,7 @@ a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
 <div class="card"><table><thead><tr><th>检查项</th><th>状态</th><th>详情</th></tr></thead><tbody>__ROWS__</tbody></table></div>
 <div class="hint">检查时间：__WHEN__<br>
 发现告警时的处理入口：台账落后 → <code>deploy/nexent/sync_policy_ledger.py --apply</code>；
-平台快照缺失 → <code>deploy/nexent/snapshot_platform_versions.py</code>；
+平台状态缺失 → <code>deploy/nexent/snapshot_platform_versions.py</code>；
 同步状态未知 → <code>deploy/nexent/check_ledger_sync.py</code>。</div>
 </main></body></html>"""
 
@@ -2254,7 +2254,7 @@ function loadReplay(){
   btn.id='replayBtn'; btn.style.height='32px'; btn.style.borderRadius='8px';
   btn.onclick=function(){runReplay(this);};
   bar.appendChild(btn);
-  bar.appendChild(el('span','empty','只跑 WO-20261029-007（期望值只对这一个事件定过）：点一下，真机跑一遍主智能体，八项当场重算，并与上一轮逐项比。约 10–30 秒。'));
+  bar.appendChild(el('span','empty','只跑 WO-20261029-007（期望值只对这一个事件定过）：点一下，实际调用一遍主智能体，八项当场重算，并与上一轮逐项比。约 10–30 秒。'));
   pane.appendChild(bar);
   var host=el('div'); host.id='replayResult'; pane.appendChild(host);
   host.appendChild(el('div','empty','读取历史…'));
@@ -4055,11 +4055,11 @@ fetch('/api/portal').then(function(r){ return r.json(); }).then(renderStatus)
 #: 脚本名只留在 payload 里供内部核对；页面印的是第 5 项——评委要看的是
 #: 「这份数据被怎么处理过」，不是仓库里哪个文件跑出来的。
 _OSM_ARTIFACTS: tuple[tuple[str, str, str, str, str], ...] = (
-    ("chengdu_bbox_raw.json", "按业务范围切出的原始要素", "elements",
-     "scripts/osm_pbf_extract.py", "省域数据按业务范围切出，未做筛选"),
+    ("chengdu_bbox_raw.json", "按要素分布裁出的原始要素", "elements",
+     "scripts/osm_pbf_extract.py", "省域数据按要素分布裁出，未做筛选"),
     ("base_roads.json", "真实路网骨架（主干 + 次干）", "roads",
      "scripts/build_osm_basemap.py", "只留机动车道，按等级分三档"),
-    ("base_buildings_full.json", "真实建筑轮廓（覆盖全业务范围）", "buildings",
+    ("base_buildings_full.json", "真实建筑轮廓（覆盖整个取景范围）", "buildings",
      "scripts/build_osm_buildings.py", "保留轮廓，高度按标签或类型推定"),
     ("base_areas.json", "地块 / 水系 / 轨道", "areas",
      "scripts/build_osm_areas.py", "按地类拆成地块、水系、轨道三层"),
@@ -4152,14 +4152,14 @@ def data_payload() -> dict[str, Any]:
         "roadAlias": road_alias,
         "settings": [
             {"what": "平面布局", "how": "示意坐标，非测绘。距离以台账里的米数为准"},
-            {"what": "路名与设施编号", "how": "为示意编号，不是真实路名；与真实道路的对应关系见下表"},
+            {"what": "路名与设施编号", "how": "为场景代号，不是真实路名；参照哪条真实道路见下表"},
             {"what": "积水深度", "how": "场景设定值，非实测；本场景取 30 cm 峰值"},
         ],
         "computed": [
             {"what": "六步推演", "how": "雨情定级 → 影响对象 → 责任部门 → 跨部门冲突 → 资源缺口 → 处置动作，"
                                         "全部由本地规则引擎按台账算出，不经过大模型"},
             {"what": "调拨方案与优先级", "how": "按评测案例的期望方案逐字段对齐；换一次输入跑出的结果要逐位一致"},
-            {"what": "八项结论逐条比对", "how": "每次真机跑一遍主智能体，与离线算出的期望值逐项比对，差异逐项列出"},
+            {"what": "八项结论逐条比对", "how": "每次实际调用一遍主智能体，与离线算出的期望值逐项比对，差异逐项列出"},
         ],
     }
 
@@ -4240,8 +4240,8 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
     <p class=note id=osm-origin>__OSM_ORIGIN__</p>
     <p class=note>这是本项目所在区域的真实街道图：浅蓝是河道，灰块是建筑，白线是道路；
       取景框约 3.2 × 1.1 公里，按要素分布裁出，<b>不是行政区或项目边界</b>。
-      橙色虚线是台账里的七条路，用的是场景自己的路名——台账是虚构的评测场景（工单、部门、资源均为编写），
-      所以没有沿用真实路名，每条对应的真实道路与偏差见下表。这些要素同时是大屏的底图。
+      橙色虚线是台账里的七条路，使用场景代号（路名、设施编号、工单、部门、资源均为场景内容）；
+      底图路网为真实数据，每条场景路参照的真实道路与距离见下节。这些要素同时是大屏的底图。
       <a href="/map2d">在大屏上查看 →</a></p>
     <div class=osm-prev>__OSM_SVG__</div>
     <div class=osm-cap><b style="color:#9a3412;font-weight:600">点橙线或路名，到大屏看该路段的推演。</b>
@@ -4273,9 +4273,9 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
 
   <section class=wide>
     <h2>场景路网的位置参照<span class="tag">沿路取点比对</span></h2>
-    <p class=note id=alias-note>场景里的七条路用评测代号，不沿用真实路名——虚构的积水深度、封路与调拨记录
-      如果挂在真实路名上，会被读成一次真实发生过的事件。下表只回答「这套场景落在本区域哪几条真实道路上」，
-      便于对照地图，<b>不代表名称对应关系</b>。
+    <p class=note id=alias-note>七条路使用场景代号，底图路网为真实数据，两者名称不重叠。
+      下表给出每条场景路在本区域的参照道路与距离中位数，用于在地图上定位，
+      <b>不构成名称对应关系</b>。
       <a href="/map2d?entity=R-101">在大屏上定位兴华路 →</a></p>
     <table>
       <tr><th>场景路名</th><th>参照的真实道路</th><th class=num>中位偏差</th><th class=num>九成落在</th></tr>
@@ -4284,7 +4284,7 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
   </section>
 
   <section class=wide>
-    <h2>算出来的，不是数据<span class="tag">可重跑</span></h2>
+    <h2>由台账算出<span class="tag">可重跑</span></h2>
     <ul class=set id=computed>__COMPUTED__</ul>
   </section>
 </main>
