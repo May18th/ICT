@@ -28,6 +28,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .urban_dataset import ASSET_SCOPE
+
 from pydantic import Field
 
 from .contracts import StrictModel
@@ -382,7 +384,7 @@ def build_layout(dataset_root: Path | str | None = None) -> SceneLayout:
                 polyline=[LayoutPoint(x=a[0], y=a[1]), LayoutPoint(x=b[0], y=b[1])],
                 from_node=row["from_node"].strip(),
                 to_node=row["to_node"].strip(),
-                evidence=f"A-03/road_network/v1.1#row:{_line_of(root, 'road_network.csv', row['road_id'])}",
+                evidence=f"{ASSET_SCOPE}/road_network/v1.1#row:{_line_of(root, 'road_network.csv', row['road_id'])}",
             )
         )
 
@@ -418,7 +420,7 @@ def build_layout(dataset_root: Path | str | None = None) -> SceneLayout:
                     z_start=round(z_start, 2),
                     z_end=round(z_end, 2),
                     polyline=_offset_polyline(a, b, offset),
-                    evidence=f"A-03/pipeline_ledger/v1#row:{_line_of(root, 'pipeline_ledger.csv', row['pipeline_id'])}",
+                    evidence=f"{ASSET_SCOPE}/pipeline_ledger/v1#row:{_line_of(root, 'pipeline_ledger.csv', row['pipeline_id'])}",
                 )
             )
 
@@ -452,7 +454,7 @@ def build_layout(dataset_root: Path | str | None = None) -> SceneLayout:
                 footprint_m=round(6.0 + _num(row.get("capacity_m3h"), 0) / 400, 1),
                 xy=LayoutPoint(x=round(xy[0], 1), y=round(xy[1], 1)),
                 z=road.z,
-                evidence=f"A-03/drainage_facility/v1#row:{_line_of(root, 'drainage_facilities.csv', row['facility_id'])}",
+                evidence=f"{ASSET_SCOPE}/drainage_facility/v1#row:{_line_of(root, 'drainage_facilities.csv', row['facility_id'])}",
             )
         )
 
@@ -540,7 +542,7 @@ def build_layout(dataset_root: Path | str | None = None) -> SceneLayout:
                 depth_cm=depth,
                 z=round(road.z + 0.05, 2),
                 polygon=polygon,
-                evidence=f"A-03/work_order/v1#row:{_line_of(root, 'work_orders.csv', order['order_id'])}",
+                evidence=f"{ASSET_SCOPE}/work_order/v1#row:{_line_of(root, 'work_orders.csv', order['order_id'])}",
             )
         )
 

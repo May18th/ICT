@@ -35,8 +35,39 @@ from .contracts import (
 
 #: 各片区内涝判定临界水深（cm）。A-03 取台账峰值 30cm，B-01 取 18cm。
 #: 缺省 30 是保守值：宁可把"刚好没淹"判成不达标，也不要把真淹了判成达标。
-CRITICAL_DEPTH_CM: dict[str, float] = {"A-03": 30.0, "B-01": 18.0}
+#:
+#: 这两个数值是**这座城市的标定**，不该写死在代码里。换城市时把
+#: `<district_id>,critical_depth_cm` 放进数据集根目录的 district_thresholds.csv（可选），
+#: 这里只留兜底；文件不存在时行为与以前逐位一致，所以现有样本不受影响。
+_BUILTIN_CRITICAL_CM: dict[str, float] = {"A-03": 30.0, "B-01": 18.0}
 DEFAULT_CRITICAL_CM = 30.0
+THRESHOLD_FILE = "district_thresholds.csv"
+
+
+def _load_critical_depth() -> dict[str, float]:
+    """片区阈值表：优先读数据集里的 district_thresholds.csv，缺省用内置表。"""
+    from .urban_dataset import DEFAULT_DATASET_ROOT
+
+    path = DEFAULT_DATASET_ROOT / THRESHOLD_FILE
+    table = dict(_BUILTIN_CRITICAL_CM)
+    if not path.is_file():
+        return table
+    import csv
+
+    with path.open(encoding="utf-8-sig", newline="") as fh:
+        for row in csv.DictReader(fh):
+            district = (row.get("district_id") or "").strip()
+            raw = (row.get("critical_depth_cm") or "").strip()
+            if not district or not raw:
+                continue
+            try:
+                table[district] = float(raw)
+            except ValueError:
+                continue
+    return table
+
+
+CRITICAL_DEPTH_CM: dict[str, float] = _load_critical_depth()
 
 #: 显著回落阈值：低于临界值的 40% 才算"处置有效"，中间地带一律 neutral。
 #: 设一档"说不清"比强行二分类诚实——19cm 到底算不算解决了，取决于片区和时点。

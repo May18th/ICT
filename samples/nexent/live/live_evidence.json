@@ -1,20 +1,20 @@
 {
   "schema_version": "nexent-live-evidence-1",
   "nexent_base_url": "http://localhost:5013",
-  "conversation_id": 179,
+  "conversation_id": 245,
   "agents": [
     {
       "name": "urban_asset_qa",
       "display_name": "内涝资产台账问答",
       "model_name": "DeepSeek-Chat",
-      "current_version_no": 8,
-      "version_name": "urban-asset-qa-v2"
+      "current_version_no": 10,
+      "version_name": "urban-asset-qa-v3"
     },
     {
       "name": "urban_control_no_tools",
       "display_name": "对照：无 MCP 工具的城市内涝智能体",
       "model_name": "DeepSeek-Chat",
-      "current_version_no": 1,
+      "current_version_no": 2,
       "version_name": "control-no-tools-v1"
     },
     {
@@ -35,7 +35,7 @@
       "name": "urban_deduction_agent",
       "display_name": "城市内涝跨部门决策智能体",
       "model_name": "DeepSeek-Chat",
-      "current_version_no": 25,
+      "current_version_no": 31,
       "version_name": "urban-mcp-v5"
     }
   ],
@@ -119,5 +119,5 @@
   "checks_passed": 8,
   "checks_total": 8,
   "smoke_passed": true,
-  "note": "Nexent v2.7.0 真机：平台 Agent 调用 MCP 工具后产出六跳结论，与离线推演逐项比对"
+  "note": "Nexent v2.7.0 真机：平台 Agent（v31）调用 MCP 工具后产出六跳结论，与离线推演逐项比对"
 }

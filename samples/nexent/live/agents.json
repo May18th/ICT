@@ -2,6 +2,37 @@
   "message": "success",
   "data": [
     {
+      "name": "urban_collab_control_no_tools",
+      "display_name": "对照：无 MCP 工具的协同总控",
+      "description": "实验对照组。提示词/模型与协同 Agent 完全相同，仅解绑协同工具，用于证明动作卡与处置顺序来自 collab_run 而非模型编造",
+      "author": "UrbanEvolve",
+      "model_ids": [
+        5
+      ],
+      "model_names": [
+        "DeepSeek-Chat"
+      ],
+      "model_name": "DeepSeek-Chat",
+      "is_available": true,
+      "unavailable_reasons": [],
+      "is_new": true,
+      "is_main_agent": true,
+      "group_ids": "2",
+      "permission": "EDIT",
+      "current_version_no": 2,
+      "version_name": "control-collab-no-tools-v1",
+      "greeting_message": null,
+      "example_questions": null,
+      "allow_chat_metadata": false,
+      "model_params_override": {
+        "5": {
+          "extra_params": {}
+        }
+      },
+      "enable_protocol_repair_retry": true,
+      "tags": []
+    },
+    {
       "name": "urban_asset_qa",
       "display_name": "内涝资产台账问答",
       "description": "基于平台知识库回答设施状态、路段属性、部门职责与预案条款；每条结论标出处",
@@ -17,10 +48,10 @@
       "unavailable_reasons": [],
       "is_new": true,
       "is_main_agent": true,
-      "group_ids": "",
+      "group_ids": "2",
       "permission": "EDIT",
-      "current_version_no": 8,
-      "version_name": "urban-asset-qa-v2",
+      "current_version_no": 10,
+      "version_name": "urban-asset-qa-v3",
       "greeting_message": "我是内涝资产台账问答助手。\n\n可以问我这几类问题：\n· 某台设施现在什么状态、容量多少、谁负责维护\n· 某个路段的等级、车道数、所属片区、是否易涝\n· 某个部门的职责范围与上报路径\n· 预案条款里对某个场景是怎么规定的\n\n我只回答\"台账和预案原文里写了什么\"，每条结论都会标出处。\n处置建议请找「城市内涝跨部门决策智能体」。",
       "example_questions": [
         "DF-PS-01 泵站现在是什么状态？设计流量多少？运维主体是谁？",
@@ -40,7 +71,7 @@
     {
       "name": "urban_control_no_tools",
       "display_name": "对照：无 MCP 工具的城市内涝智能体",
-      "description": "实验对照组。提示词/模型与主 Agent 完全相同，仅解绑 14 个 MCP 工具，用于证明 8/8 来自工具而非模型先验",
+      "description": "实验对照组。提示词/模型与主 Agent 完全相同，仅解绑 15 个 MCP 工具，用于证明八项一致来自工具而非模型先验",
       "author": "UrbanEvolve",
       "model_ids": [
         5
@@ -55,7 +86,7 @@
       "is_main_agent": true,
       "group_ids": "2",
       "permission": "EDIT",
-      "current_version_no": 1,
+      "current_version_no": 2,
       "version_name": "control-no-tools-v1",
       "greeting_message": null,
       "example_questions": null,
@@ -156,7 +187,7 @@
       "is_main_agent": true,
       "group_ids": "2",
       "permission": "EDIT",
-      "current_version_no": 25,
+      "current_version_no": 31,
       "version_name": "urban-mcp-v5",
       "greeting_message": "我是城市内涝跨部门决策智能体。给我一个工单号（如 WO-20261029-007），我按「事件现象 → 受影响设施 → 责任部门 → 资源需求 → 处置动作 → 后续风险」六跳推演，每个结论都标注依据来源与版本。",
       "example_questions": [
@@ -178,5 +209,5 @@
       "tags": []
     }
   ],
-  "requestId": "4c1b89fe-07cb-43b2-bc2c-70bf9d705b1a"
+  "requestId": "29b6cf2d-d775-489b-ac08-a7744c461484"
 }

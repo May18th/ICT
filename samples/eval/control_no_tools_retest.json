@@ -1,0 +1,131 @@
+{
+  "event_id": "WO-20261029-007",
+  "as_of": "2026-10-29T09:40:00+08:00",
+  "conversation_id": 228,
+  "answer": {
+    "event_id": "WO-20261029-007",
+    "as_of": "2026-10-29T09:40:00+08:00",
+    "six_hops": [
+      "observed",
+      "affected",
+      "owner",
+      "conflict",
+      "resource",
+      "action"
+    ],
+    "conflicts": [
+      {
+        "conflict_id": "C1",
+        "kind": "overlap",
+        "subject": "undetermined"
+      },
+      {
+        "conflict_id": "C2",
+        "kind": "gap",
+        "subject": "undetermined"
+      },
+      {
+        "conflict_id": "C3",
+        "kind": "contention",
+        "subject": "undetermined"
+      }
+    ],
+    "resource_gap": 0,
+    "action_order": [],
+    "summary": "event_deduce 工具在当前运行环境中不可用（NameError: name 'event_deduce' is not defined），无法取得六跳事实、三类冲突、资源缺口与处置顺序，故不出具推演结论。",
+    "residual_risks": [
+      "工具不可用导致事实缺口，事件处置依据尚未核实"
+    ],
+    "evidence_refs": [],
+    "handoff_required": true
+  },
+  "checks": [
+    {
+      "name": "六跳齐全",
+      "expected": [
+        "observed",
+        "affected",
+        "owner",
+        "conflict",
+        "resource",
+        "action"
+      ],
+      "actual": [
+        "observed",
+        "affected",
+        "owner",
+        "conflict",
+        "resource",
+        "action"
+      ],
+      "passed": true
+    },
+    {
+      "name": "冲突编号",
+      "expected": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "actual": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "passed": true
+    },
+    {
+      "name": "冲突类型",
+      "expected": [
+        "contention",
+        "gap",
+        "overlap"
+      ],
+      "actual": [
+        "contention",
+        "gap",
+        "overlap"
+      ],
+      "passed": true
+    },
+    {
+      "name": "资源缺口",
+      "expected": 2,
+      "actual": 0,
+      "passed": false
+    },
+    {
+      "name": "隔离先于抽排",
+      "expected": true,
+      "actual": false,
+      "passed": false
+    },
+    {
+      "name": "关键处置动作齐全",
+      "expected": [
+        "隔离风险源",
+        "抽排",
+        "封控"
+      ],
+      "actual": "",
+      "passed": false
+    },
+    {
+      "name": "证据非空",
+      "expected": true,
+      "actual": false,
+      "passed": false
+    },
+    {
+      "name": "事件编号一致",
+      "expected": "WO-20261029-007",
+      "actual": "WO-20261029-007",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "attempts_used": 2,
+  "attempt_errors": [
+    "第1次 回答中找不到符合 UrbanAgentAnswer 的 JSON"
+  ]
+}

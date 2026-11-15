@@ -1,0 +1,13 @@
+{
+  "agent_id": 40,
+  "endpoint": "http://localhost:5010/agent/export",
+  "http_status": 200,
+  "content_type": "application/json",
+  "bytes": 9922,
+  "sha256": "32a878d6e6c9f56c4c6ab8225eec07eb6d3b1926444a20a65fcf1a7fa150100a",
+  "out": "/tmp/urban_asset_qa.zip",
+  "bundle": {
+    "is_zip": false,
+    "entries": []
+  }
+}

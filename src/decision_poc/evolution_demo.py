@@ -199,13 +199,13 @@ code{background:#eef4f1;color:#35605c;padding:2px 6px;border-radius:5px;font-siz
 def build_evolution_html() -> str:
     return """<!doctype html><html lang=zh-CN><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>决策进化对比</title>""" + EVOLUTION_STYLE + """
 <main class=evolution-page>
-<header class=evolution-hero><div class=evolution-hero-copy><div class=evolution-eyebrow>POLICY EVOLUTION · 策略如何变好</div><h1>决策进化：从反馈到可回滚策略</h1><div class=sub>看清楚每次调整改了什么、为什么被采纳，以及下一次推演能否直接复用。</div></div><a class=back href='/'>← 返回推演面板</a></header>
+<header class=evolution-hero><div class=evolution-hero-copy><div class=evolution-eyebrow>POLICY EVOLUTION · 版本与调整记录</div><h1>决策进化：从反馈到可回滚策略</h1><div class=sub>每次调整的内容、采纳依据，以及能否被后续推演复用。</div></div><a class=back href='/'>← 返回推演面板</a></header>
 <div class="grid evolution-metrics" id=metrics><div class=metric><span>正在读取进化结果…</span></div></div>
 <div class=evolution-grid>
-<section class="card evolution-card outcome-card"><h2>先看结论</h2><div class=outcome-result>这次方案变好了</div><p>系统根据演练反馈调整了资源分配，结果更接近人工建议；下一次遇到相似事件，可以直接复用这套策略。</p><div class=outcome-list><span>误差降到 0</span><span>新场景没有变差</span><span>策略已记录，可回滚</span></div></section>
-<section class="card evolution-card flow-card"><h2>这页只讲四件事</h2><div class=story-flow><div class=story-step><strong>1 · 原来的方案</strong><span>先按初始规则分配资源。</span></div><div class=story-step><strong>2 · 收到建议</strong><span>人工指出重点片区需要更多资源。</span></div><div class=story-step><strong>3 · 调整方案</strong><span>把资源从低优先区域转到重点区域。</span></div><div class=story-step><strong>4 · 下次复用</strong><span>相似事件可直接沿用已验证策略。</span></div></div><p class=story-note>下面的数字用于证明这四步确实发生过；不需要先理解专业术语。</p></section>
+<section class="card evolution-card outcome-card"><h2>本轮结果</h2><div class=outcome-result>资源分配与人工建议一致</div><p>策略依据人工反馈调整了区域权重，本次推演的分配结果与人工建议一致；该策略已记录版本，可回滚。</p><div class=outcome-list><span>与人工建议差异 0</span><span>新场景未退化</span><span>版本可回滚</span></div></section>
+<section class="card evolution-card flow-card"><h2>策略调整的四个环节</h2><div class=story-flow><div class=story-step><strong>1 · 原来的方案</strong><span>先按初始规则分配资源。</span></div><div class=story-step><strong>2 · 收到建议</strong><span>人工指出重点片区需要更多资源。</span></div><div class=story-step><strong>3 · 调整方案</strong><span>把资源从低优先区域转到重点区域。</span></div><div class=story-step><strong>4 · 下次复用</strong><span>相似事件可直接沿用已验证策略。</span></div></div></section>
 <section class="card evolution-card memory-card"><h2>第二会话：复用已验证经验</h2><div id=memory></div></section>
-<section class="card evolution-card review-panel"><h2>人工协同反馈：为什么采纳这次调整</h2><div id=review></div></section>
+<section class="card evolution-card review-panel"><h2>人工协同反馈：本次调整的采纳依据</h2><div id=review></div></section>
 <section class="card evolution-card allocation-card"><h2>真实事件：资源分配变化 · WO-20261029-007</h2><div id=realEvent></div></section>
 <details class=secondary-details><summary>更多审计信息 <span>评分、版本与边界说明</span></summary><div class=details-body>
 <section class="card evolution-card comparison-card"><h2>第一会话：策略调整前后</h2><table id=firstTable></table></section>
@@ -225,7 +225,7 @@ def build_evolution_html() -> str:
 <p class=dim>口径：评分只做汇总（样本/均分/前后差值），<b>不参与门禁</b>；只有给出"建议分配"的提交才会转成评审用例，成为候选策略的硬约束。真实用户评分是个人意见，非部门批复。</p>
 </section>
 <section class="card evolution-card history-panel"><h2>策略版本：可审计、可回滚</h2><table id=releases></table></section>
-<section class="card evolution-card platform-card"><h2>平台运行版本：这套策略落在哪个 Agent 上</h2><div id=platformVersions></div></section>
+<section class="card evolution-card platform-card"><h2>平台运行版本：策略所在的 Agent</h2><div id=platformVersions></div></section>
 <section class="card evolution-card ledger-card"><h2>知识库台账：平台侧是否已同步</h2><div id=ledgerSync></div></section>
 <div class="bound evolution-footer" id=boundaries></div></div></details>
 </div>

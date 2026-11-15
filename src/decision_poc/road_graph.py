@@ -31,10 +31,11 @@ from pathlib import Path
 from pydantic import Field
 
 from .contracts import StrictModel
-from .urban_dataset import DEFAULT_DATASET_ROOT
+from .urban_dataset import ASSET_SCOPE, DEFAULT_DATASET_ROOT
 
 ROAD_FILE = "road_network.csv"
-ROAD_LOCATOR = "A-03/road_network/v1.1"
+# 证据前缀跟着资产 scope 走，别写字面量：换城市时前缀会变，写死就指向不存在的台账。
+ROAD_LOCATOR = f"{ASSET_SCOPE}/road_network/v1.1"
 
 # 缺这些列就只能说算不出：不从别的列反推速度，也不给默认限速。
 REQUIRED_COLUMNS: tuple[str, ...] = ("road_id", "from_node", "to_node", "length_m", "speed_kmh")

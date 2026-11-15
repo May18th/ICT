@@ -1,0 +1,8 @@
+﻿road_id,band_m,status,note
+R-101,54,calibrated,次干路 14 m + 两侧各 20 m 铺装；几何法预测台账 30cm 得 29.3cm（偏差 -2.4%）
+R-102,,unverified,默认 54 m；无积水深度观测，未核
+R-103,,unverified,默认 54 m；无积水深度观测，未核
+R-104,,unverified,默认 54 m；无积水深度观测，未核
+R-105,,unverified,默认 54 m；无积水深度观测，未核
+R-201,,pending,默认 54 m；台账 18cm 反推需 67 m，差 31%，待现场核实街区进深
+R-202,,unverified,默认 54 m；无积水深度观测，未核

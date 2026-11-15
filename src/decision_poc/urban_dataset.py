@@ -30,6 +30,10 @@ from .contracts import ProvenanceLevel
 
 MANIFEST_VERSION = "urban-1"
 DEFAULT_DATASET_ROOT = Path(__file__).resolve().parents[2] / "samples" / "assets" / "urban"
+#: 本数据集的辖区号。资产路径与证据引用都长成 `<scope>/<asset_type>/<version>`
+#: （例如 `A-03/road_network/v1.1#row:4`）。换城市只改这一处——
+#: 之前这个字面量在 road_graph / scene_layout 里各写了一遍，改一处漏四处。
+ASSET_SCOPE = "A-03"
 TZ = "+08:00"
 
 
@@ -59,7 +63,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         version="v1.1",
         published_at="2026-01-15T09:00:00+08:00",
         valid_from="2026-01-15T00:00:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         note="7 条道路（A-03/B-01），含高程、排水分区与路段连接（from_node/to_node/speed_kmh）",
     ),
     UrbanAssetSpec(
@@ -70,7 +74,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         version="v1",
         published_at="2026-02-01T09:00:00+08:00",
         valid_from="2026-02-01T00:00:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         note="含排水/燃气/电力/通信/供水，管径与埋深可判风险",
     ),
     UrbanAssetSpec(
@@ -81,7 +85,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         version="v1",
         published_at="2026-09-10T09:00:00+08:00",
         valid_from="2026-09-10T00:00:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         note="泵站与雨水口，DF-PS-01 运维主体空缺",
     ),
     UrbanAssetSpec(
@@ -92,7 +96,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         version="v3",
         published_at="2026-10-26T10:00:00+08:00",
         valid_from="2026-10-26T00:00:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         note="CP-2026-041 燃气主干管更换，开挖 2.5m",
     ),
     UrbanAssetSpec(
@@ -103,7 +107,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         version="v1",
         published_at="2026-10-29T09:40:00+08:00",
         valid_from="2026-10-29T00:00:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         note="含积水、泵站故障、基坑沉陷三类工单",
     ),
     UrbanAssetSpec(
@@ -114,7 +118,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         version="v2",
         published_at="2026-10-29T07:30:00+08:00",
         valid_from="2026-10-29T07:30:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         note="含一条已解除的黄色预警，用于过期证据测试",
     ),
     UrbanAssetSpec(
@@ -125,7 +129,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         version="v2",
         published_at="2026-01-05T09:00:00+08:00",
         valid_from="2026-01-05T00:00:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         note="含封路权限交叉与泵站职责空缺",
     ),
     UrbanAssetSpec(
@@ -136,7 +140,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         version="v1",
         published_at="2026-10-01T09:00:00+08:00",
         valid_from="2026-10-01T00:00:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         note="抽水泵 4 台，用于资源缺口核算",
     ),
     UrbanAssetSpec(
@@ -147,7 +151,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         version="v2.0",
         published_at="2025-05-20T09:00:00+08:00",
         valid_from="2025-06-01T00:00:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         standard_refs=("YJ-FX-2025-002",),
         note="现行版，封路阈值 25cm，处置顺序先隔离风险源",
     ),
@@ -182,7 +186,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         published_at="2021-04-15T09:00:00+08:00",
         valid_from="2021-05-01T00:00:00+08:00",
         valid_to="2025-06-01T00:00:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         status=AssetStatus.DEPRECATED,
         standard_refs=("YJ-FX-2021-001",),
         note="封路阈值 30cm 且抽排优先，与 v2 冲突，用于过期与冲突测试",
@@ -195,7 +199,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         version="v1.2",
         published_at="2026-03-10T09:00:00+08:00",
         valid_from="2026-03-15T00:00:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         visibility=("ORG-DRAIN", "ORG-EMERG"),
         standard_refs=("ZY-DRN-2026-003",),
         note="内部文件，含移动泵折算口径",
@@ -208,7 +212,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         version="v3.1",
         published_at="2025-09-01T09:00:00+08:00",
         valid_from="2025-09-15T00:00:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         visibility=("ORG-GAS", "ORG-EMERG"),
         standard_refs=("GC-GAS-2025-011",),
         note="内部文件，排水公司不可见，用于权限过滤测试",
@@ -247,7 +251,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         version="v1",
         published_at="2026-10-29T08:00:00+08:00",
         valid_from="2026-10-29T00:00:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         note="示意图非地理配准；道路/管线台账为其结构化替代",
     ),
     UrbanAssetSpec(
@@ -258,7 +262,7 @@ URBAN_ASSETS: tuple[UrbanAssetSpec, ...] = (
         version="v1",
         published_at="2026-10-29T07:00:00+08:00",
         valid_from="2026-10-29T00:00:00+08:00",
-        scope="A-03",
+        scope=ASSET_SCOPE,
         note="含入口挡水槛、最低点标高、洞口宽与敞口汇水面积；封控阈值为假设值，运维主体空白（触发职责空白）",
     ),
     UrbanAssetSpec(

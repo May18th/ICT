@@ -1,0 +1,13 @@
+{
+  "agent_id": 4,
+  "endpoint": "http://localhost:5010/agent/export",
+  "http_status": 200,
+  "content_type": "application/json",
+  "bytes": 4090,
+  "sha256": "2f63c902266fe3819a7b5bd64f0c2c10aaab8e2426aadb0a42a376e19f40d023",
+  "out": "/tmp/urban_collab_agent.zip",
+  "bundle": {
+    "is_zip": false,
+    "entries": []
+  }
+}

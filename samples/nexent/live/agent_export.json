@@ -3,16 +3,16 @@
   "endpoint": "http://localhost:5010/agent/export",
   "http_status": 200,
   "content_type": "application/zip",
-  "bytes": 7982,
-  "sha256": "70c9abfd3a904dc0c810556dad22ef49a8f5f22888aa0e83ee51e0068ee3d99c",
+  "bytes": 10718,
+  "sha256": "1ca0b3e6d3ba35b1daecb201ca2ce639650a26717a273ab51c39704fbc2cd8b0",
   "out": "/tmp/urban_deduction_agent.zip",
   "bundle": {
     "is_zip": true,
     "entries": [
       {
         "name": "agent.json",
-        "bytes": 6486,
-        "sha256": "9639de1f776901cff69419f484f0c309c30ddfa2ef8c6b8e5d26a20466bf363e"
+        "bytes": 15378,
+        "sha256": "aeea9c02a79a670e46d2afde7030e8961445abb223ef76413108f32155cc97f1"
       },
       {
         "name": "skills/scarcity-allocation-evolution.zip",
@@ -25,7 +25,7 @@
         "sha256": "b36d48792c3650c87ff7f306196044d27ea7c4c877b00abe5cc85ce7ddad6aa0"
       }
     ],
-    "content_sha256": "0a3aef9c61d8e5e523424ad738c93dd737772580a3b3082c3c81ee8810836221",
+    "content_sha256": "cc56c6db155e7203abaa83ed5909f6923be1d9f987cf8414f4dca741a1ad3af5",
     "has_agent_json": true,
     "skill_zips": [
       "skills/scarcity-allocation-evolution.zip",
@@ -45,8 +45,8 @@
     ],
     "agent_tool_count": 2,
     "agent_tools": [
-      "event_deduce",
-      "evidence_locate"
+      "collab_run",
+      "doc_search"
     ],
     "agent_skill_names": [
       "scarcity-allocation-evolution",
