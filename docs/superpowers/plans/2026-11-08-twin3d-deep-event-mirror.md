@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** 为 `/twin3d` 增加六跳时间轴、可点击对象详情、空间高亮和证据面板。
+**Goal:** 为 `/twin3d` 增加六步时间轴、可点击对象详情、空间高亮和证据面板。
 
 **Architecture:** 保持 `build_twin3d_html()` 为现有入口，新增统一的前端状态对象，将 scheduler 数据映射为时间轴与对象索引；Three.js 只负责空间渲染，DOM 面板负责解释信息。所有状态由同一跳次状态驱动。
 
@@ -17,7 +17,7 @@
 
 ## Review Focus
 - scheduler 缺少可选字段时页面仍可渲染。
-- 六跳数据为空或顺序异常时控件不崩溃。
+- 六步数据为空或顺序异常时控件不崩溃。
 - 点击对象后切换跳次，详情与空间高亮保持一致。
 - 共享材质不能造成不同对象状态串扰。
 - 页面初始化未完成时，时间轴控件不能抛出错误。
@@ -25,7 +25,7 @@
 ### Task 1: 数据状态模型与时间轴
 **Files:** Modify `src/decision_poc/web_demo.py`; Test existing route/render checks.
 - [ ] 从 scheduler 响应建立统一 `twinState`，包含 jumps、currentJump、selectedEntity。
-- [ ] 将六跳控件接入播放、暂停、上一跳、下一跳、重播。
+- [ ] 将六步控件接入播放、暂停、上一跳、下一跳、重播。
 - [ ] 为空数据和缺失字段提供可读降级文本。
 - [ ] 运行定向测试与编译检查。
 
@@ -47,6 +47,6 @@
 **Files:** Modify `src/decision_poc/web_demo.py`; possibly update `docs/`.
 - [ ] 增加回到主页面对应事件位置的链接或按钮。
 - [ ] 运行 pytest、锁文件检查、compileall、pip check。
-- [ ] 用浏览器或可用 headless 方式验证六跳和对象详情关键状态。
+- [ ] 用浏览器或可用 headless 方式验证六步和对象详情关键状态。
 - [ ] 检查 git 状态，仅提交本次明确修改路径。
 

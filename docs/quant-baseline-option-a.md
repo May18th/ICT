@@ -1,8 +1,8 @@
-# 定量口径冻结：方案 A（需求折算 v1 + 负荷 load_state）
+# 定量口径固定：方案 A（需求折算 v1 + 负荷 load_state）
 
 - 裁决日期：2026-11-06
 - 裁决人：项目负责人
-- 状态：**已冻结**。本文件是"为什么缺口写 2 台"的唯一权威解释，与代码或说明文档冲突时以本文件为准。
+- 状态：**已固定**。本文件是"为什么缺口写 2 台"的唯一权威解释，与代码或说明文档冲突时以本文件为准。
 - 上位文档：[P12 场景 v2 口径标定报告](reports/p12-scenario-v2-calibration-report.md) §4.3（二选一裁决点）、[交付状态核对表](competition/delivery-status.md) §3-B
 
 ## 0 一句话
@@ -14,7 +14,7 @@
 | 裁决项 | 落地位置 |
 | --- | --- |
 | 需求折算沿用 v1，缺口保持 2 台 | `src/decision_poc/deduction.py` 资源跳：`target = rated * derate` → `ceil(target / capacity)`；自检锁在 `evidence_check.py:95`（`resource_gap`） |
-| 负荷采用 `load_state` 表达 | `src/decision_poc/scenario_v2.py:pump_load()` 产出 `normal / high_load / overload`；六跳结论字段名 `pump_load` |
+| 负荷采用 `load_state` 表达 | `src/decision_poc/scenario_v2.py:pump_load()` 产出 `normal / high_load / overload`；六步结论字段名 `pump_load` |
 | 说明补二次风险说明 | 本文件 §3 |
 | 保留 12 个分配案例、C3 冲突、全部演化数字 | 未改动 `allocation_cases.json`、`policy_evolution` 参数、P9 报告口径 |
 | 标注台账字段未补齐 | 本文件 §4 |
@@ -96,6 +96,6 @@ uv run --locked pytest tests/test_scenario_v2.py -q
 
 | 项 | 原因 |
 | --- | --- |
-| 定量层接管六跳跳 5 的缺口 | 需先补 §4 三项台账字段；补齐前接口冻结不动 |
-| 整批重标 12 个分配案例 | 方案 A 下无需重标，`allocation_cases.json` 是手写冻结信号，不读推演数据集 |
+| 定量层接管六步跳 5 的缺口 | 需先补 §4 三项台账字段；补齐前接口固定不动 |
+| 整批重标 12 个分配案例 | 方案 A 下无需重标，`allocation_cases.json` 是手写固定信号，不读推演数据集 |
 | 把 `overload` 折算成额外移动泵需求 | 会把风险指标混进资源指标，等于偷偷换口径 |

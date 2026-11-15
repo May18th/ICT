@@ -1,12 +1,12 @@
 # 断网能力实测：哪些能离线跑，哪些不能
 
-> 结论先说：**决策核心全链路离线实测通过**（六跳、分配、15 个 MCP 工具、检索），输出与联网时逐字一致。
+> 结论先说：**决策核心全链路离线实测通过**（六步、分配、15 个 MCP 工具、检索），输出与联网时逐字一致。
 > **平台 Agent 编排层离线不可用**——它要调 4 个公网模型端点。这是配置事实，不是没测。
 > 整个容器栈的"冷启动"未测（会拆掉当前演示栈），见第 5 节。
 
 测试时间：2026-11-14　测试机：本机（Windows + Docker 29.9.1）
 方法：`docker run --network none` / `--network <internal>` 把被测进程放进**无路由、无 DNS** 的网络里，
-不是"拔网线猜"，而是可复现、可反复跑的网络隔离。
+不是"拔网线猜"，而是可复现、可反重跑的网络隔离。
 
 ---
 
@@ -28,7 +28,7 @@ api.modelarts-maas.com BLOCKED gaierror
 
 | 项 | 命令 | 结果 |
 |---|---|---|
-| 六跳推演 | `python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00` | 通过，与联网输出**逐字一致**（`diff --strip-trailing-cr` 无差异，仅 Windows CRLF 不同） |
+| 六步推演 | `python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00` | 通过，与联网输出**逐字一致**（`diff --strip-trailing-cr` 无差异，仅 Windows CRLF 不同） |
 | MCP 工具清单 | `UrbanToolkit().tools()` | **15 个**全部注册：semantic_query / twin_neighbors / doc_search / evidence_locate / claim_trace / provenance_verify / event_deduce / counterfactual_run / conflict_check / allocation_plan / scene_render / scene_status / scene_compare / asset_lookup / collab_run |
 | `event_deduce` | 带 `caller_labels=['ORG-EMERG']` | `status=ok`，返回 steps / conflicts / resource_gaps / residual_risks |
 | `allocation_plan` | 同上 | `status=ok`，返回 policy + allocation + snapshot_hash |
@@ -115,7 +115,7 @@ curl -s localhost:3000/zh -o /dev/null -w '%{http_code}\n'   # 期望 200
 - 本地服务选 vLLM 或 Ollama 都行，需要**再打一个镜像进离线包**（当前 14 个镜像里没有）；
 - 1.5B 级模型不足以稳定产出结构化决策（已有 QLoRA 结论），
   所以离线演示的正确姿势是：**用本地小模型跑通"能对话、能调工具"**，
-  结论由确定性内核给（`event_deduce` 已实测离线可跑），不要指望小模型自己算对。
+  结论由确定性引擎给（`event_deduce` 已实测离线可跑），不要指望小模型自己算对。
 
 **做到这一步，"离线部署"才从 L2 升到 L3。** 工作量：打 1 个镜像 + 加 1 条模型记录 + 重跑一次 §5 的清单。
 
@@ -123,7 +123,7 @@ curl -s localhost:3000/zh -o /dev/null -w '%{http_code}\n'   # 期望 200
 
 ## 7 一句话口径（说明用）
 
-> "断网我们测过：15 个工具、六跳推演、资源分配、检索全部离线可跑，输出与联网逐字一致。
+> "断网我们测过：15 个工具、六步推演、资源分配、检索全部离线可跑，输出与联网逐字一致。
 > 平台层的对话编排要调大模型，现在是 4 个公网端点，断网后对话开得了但没有模型可用——
 > 这一条我们写在离线说明里，接本地推理服务就能补齐，不需要改代码。"
 

@@ -9,7 +9,7 @@
 不需要猜测。真正缺的只是把这份契约落成仓库里的一份文档和一个传输层实现。
 
 离线边界靠"传输函数注入"保证，不靠"不知道协议"保证。把契约写清楚反而让离线边界更硬：
-单测用 stub，真机联调用唯一一处 HTTP 客户端，中间没有第二套编排逻辑。
+单测用 stub，实测联调用唯一一处 HTTP 客户端，中间没有第二套编排逻辑。
 
 ## 2. 已核对的契约
 
@@ -186,15 +186,15 @@ NexentAdapter(invoke=transport).run(request)
   无 `final_answer` 一律 `NexentStreamError`，不返回 accepted。
 - **代价**：这条路径验证的是 Agent 运行时，不是 `/nb/v1` 北向契约。要给平台契约背书，仍须
   `NexentHttpTransport` + 真实部署。
-- **未在真机验证**：实现依据官方 SDK 文档（`agent_run` / `AgentRunInfo` / `ModelConfig` 字段），
-  首次真机运行需核对事件字段名；我方聚合逻辑由 fake SDK 单测覆盖（5 项）。
+- **未在实测验证**：实现依据官方 SDK 文档（`agent_run` / `AgentRunInfo` / `ModelConfig` 字段），
+  首次实测运行需核对事件字段名；我方聚合逻辑由 fake SDK 单测覆盖（5 项）。
 - 不能在有运行中事件循环的进程里同步调用（`asyncio.run` 限制），会明确报错而不是死等。
 
 ## 7. 待确认事项
 
 1. ~~是否加 `httpx` 依赖~~ → 已加 `httpx==0.28.1`。
 2. ~~Agent 输出契约~~ → 已定为严格 JSON，失败降级为 `decision_error`。
-3. **真机联调**：需要提供 Nexent 部署地址 + 发布后生成的 API Key + 已发布 Agent 名称，
+3. **实测联调**：需要提供 Nexent 部署地址 + 发布后生成的 API Key + 已发布 Agent 名称，
    才能跑一次真实 smoke。在此之前只有 Mock 单测覆盖。
    脚本已就位：`uv run --locked python -m decision_poc.nexent_smoke`；
    缺凭据时列出缺失环境变量并返回 2，不发任何请求；调用失败返回 1；成功返回 0 并打印聚合结果。
@@ -226,7 +226,7 @@ $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.nexent_smoke
 ```
 
-### 8.1 真机调用结果（三次，实测；其中 `equipment_decision_agent` 已于 2026-11-05 下线，结论按历史记录保留）
+### 8.1 实测调用结果（三次，实测；其中 `equipment_decision_agent` 已于 2026-11-05 下线，结论按历史记录保留）
 
 | # | Agent | 结果 |
 | --- | --- | --- |

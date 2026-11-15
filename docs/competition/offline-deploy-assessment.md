@@ -33,7 +33,7 @@
 
 `setup_nexent.py:96` 的 `DUTY_PROMPT` 已明确禁用 `python_interpreter` 与 `parallel_executor`，协同 Agent 同样禁用。也就是说**我们全链路不执行沙箱代码**。
 
-- 待验证：停掉 `nexent-runtime-sandbox` 容器后，Agent 对话与 `event_deduce` / `collab_run` 是否仍全通（真机 8/8 复跑一次即可判定）。
+- 待验证：停掉 `nexent-runtime-sandbox` 容器后，Agent 对话与 `event_deduce` / `collab_run` 是否仍全通（实测 8/8 重跑一次即可判定）。
 - 若成立，离线包直接少 1.89 GB，且减少一个攻击面。
 
 ### 3.2 data-process（6.77 GB）——最大，但要看场景
@@ -53,7 +53,7 @@
 | 方案 | 做法 | 体积 | 优点 | 风险 |
 | --- | --- | --- | --- | --- |
 | **A 全量** | 全部镜像 `docker save` 成一个 tar + 离线 compose + 安装脚本 | ~17.5 GB（压缩后待实测） | 一小时能做完，风险最低 | 分发成本高；评委下载不友好 |
-| **B 裁剪** | 按第 3 节裁掉 sandbox（+可选 ES），其余全量 | 约 15.6 GB | 证明"我们真的做过离线适配" | 每个裁剪点都要真机验证，任一不通就回退 |
+| **B 裁剪** | 按第 3 节裁掉 sandbox（+可选 ES），其余全量 | 约 15.6 GB | 证明"我们真的做过离线适配" | 每个裁剪点都要实测验证，任一不通就回退 |
 
 建议：**A 打底、B 作为加分**。先按 A 出一份能跑的离线包（保底满足硬要求），再用 3.1 的 sandbox 裁剪做一次"离线最小集"验证，作为"我们做过离线适配"的具体证据。
 
@@ -62,7 +62,7 @@
 1. `docker save` 关键镜像 → `offline/images/*.tar`，逐个记 sha256；
 2. 离线 compose：把 `deploy/` 下现有 compose 的 `image:` 改为本地 tar 加载后的标签，去掉 `build:` 段；
 3. `install.sh`：`docker load` 全部 tar → `docker compose up -d` → 健康检查（`/nb/v1/health` + `urban-twin-mcp` 的 `/health`）；
-4. **断网实测**：拔网线/断 WLAN，从零起一遍，跑一次六跳对话，截图留证；
+4. **断网实测**：拔网线/断 WLAN，从零起一遍，跑一次六步对话，截图留证；
 5. 写 `OFFLINE.md`：资源需求（官方口径 4 核 16G 起步，本机实测见下）、端口占用、常见失败（镜像标签不一致、卷权限）。
 
 ## 6 本机实测参照（写文档可引用）

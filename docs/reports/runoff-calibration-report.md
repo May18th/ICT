@@ -4,7 +4,7 @@
 >
 > 同时必须说清楚：**只有 1 个标定点、0 个验证点**。样本外的两个检查（B-01 片区、2020-08-11 历史雨）一个暴露了结构问题、一个只够做量级检查。第 7 节列了要补什么数据。
 
-复跑：`.venv/Scripts/python.exe scripts/calibrate_runoff.py`
+重跑：`.venv/Scripts/python.exe scripts/calibrate_runoff.py`
 产物：`out/map2d/runoff_calibration.json`（不参与出图，仅报告与 tooltip 引用）
 
 ---
@@ -142,7 +142,7 @@ B-01 的参数按台账各取各的：路长 443.2 m、DF-IN-201 150 m³/h（in_
 - ψ 来自 GB 50014，不是拟合值；
 - 汇水面积可由路网几何独立算出（4.055 ha），与反算值差 1.3%；
 - 在"规范 ψ + 几何 F"这组参数下，模型对台账峰值的预测偏差是 **−2.4%**；
-- 参数与算法全部可复跑，`scripts/calibrate_runoff.py` 一条命令出全部数字。
+- 参数与算法全部可重跑，`scripts/calibrate_runoff.py` 一条命令出全部数字。
 
 **不能说的：**
 
@@ -159,7 +159,7 @@ B-01 的参数按台账各取各的：路长 443.2 m、DF-IN-201 150 m³/h（in_
 
 ---
 
-## 8 复跑与校验
+## 8 重跑与校验
 
 ```bash
 # 标定分析（本报告的全部数字）

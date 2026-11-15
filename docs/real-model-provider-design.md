@@ -27,7 +27,7 @@ scripts/deepseek_smoke.py ──generate_decision_live──> model_provider.bui
   `OpenAIChatModel`，不自写 HTTP 客户端、不维护第二套 wire 格式；
 - `model_provider.py` 只做三件事：读环境、校验配置、构造模型；不含 prompt 与业务逻辑；
 - 决策输出仍由 `DecisionOutput` Schema 约束；真实模型只影响这一节点的生成质量，
-  **不参与六跳推演**（推演由确定性规则引擎产生，见 `docs/innovation-and-evidence.md`）。
+  **不参与六步推演**（推演由确定性规则引擎产生，见 `docs/innovation-and-evidence.md`）。
 
 ## 3. 配置
 
@@ -75,7 +75,7 @@ scripts/deepseek_smoke.py ──generate_decision_live──> model_provider.bui
 
 - DeepSeek API Key 由使用者自行提供，调用计费、数据合规由使用者负责；
 - 本设计不保证模型质量、不把模型输出当作推演依据；
-- 与 Nexent 真机链路的取舍见 `docs/nexent-northbound-transport-design.md`。
+- 与 Nexent 实测链路的取舍见 `docs/nexent-northbound-transport-design.md`。
 
 ## 8. A/B 评测（2026-10-30 实测）
 
@@ -98,9 +98,9 @@ scripts/deepseek_smoke.py ──generate_decision_live──> model_provider.bui
 结论：生产链路保留**确定性推演负责排序、模型只做给定选项内的选择与解释**；
 这与 `docs/innovation-and-evidence.md` 的"不让模型生成推演断言"一致。
 
-### 8.1 复跑与采样温度（2026-11-03）
+### 8.1 重跑与采样温度（2026-11-03）
 
-同 key、同用例、`deepseek-chat` 复跑两次，结果随采样温度变化：
+同 key、同用例、`deepseek-chat` 重跑两次，结果随采样温度变化：
 
 | 温度 | 选中参照项 | 两轮是否逐用例一致 | 未命中用例 |
 |---|---:|---|---|

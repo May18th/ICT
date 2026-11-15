@@ -144,11 +144,11 @@ class TwinSemanticStore:
 
 ## 4. 跨部门事件推演设计（`src/decision_poc/deduction.py`）
 
-### 4.1 推演链固定为六跳
+### 4.1 推演链固定为六步
 
 现象 → 受影响孪生对象 → 责任部门 → 职责冲突 → 资源需求 → 处置动作 → 二次风险
 
-六跳写死在 `DEDUCTION_STAGES` 常量里，每跳有独立的状态与失败原因。跳数固定是为了让"路径正确率"这个指标可计算——自由跳数无法定义 ground truth。
+六步写死在 `DEDUCTION_STAGES` 常量里，每跳有独立的状态与失败原因。跳数固定是为了让"路径正确率"这个指标可计算——自由跳数无法定义 ground truth。
 
 ### 4.2 规则是数据，不是代码
 
@@ -240,7 +240,7 @@ class ProvenanceRecord(StrictModel):
 
 - `ProvenanceLedger.append(record) -> ProvenanceRecord`：自动填 `upstream_record_hash` 与 `record_hash`。
 - `ledger.verify() -> VerifyReport`：从头重算哈希，返回首个断链位置与受影响 `record_id` 列表（不抛异常，异常会掩盖审计信息）。
-- `ledger.replay(decision_id) -> ReplayBundle`：输出重建该结论所需的最小证据集（资产指纹 + 知识版本 + 快照哈希 + 规则版本），用于"数据变了结论是否还成立"的说明追问。
+- `ledger.replay(decision_id) -> ReplayBundle`：输出重建该结论所需的最小证据集（资产校验值 + 知识版本 + 状态记录哈希 + 规则版本），用于"数据变了结论是否还成立"的说明追问。
 
 ### 5.3 三重拦截
 
@@ -281,7 +281,7 @@ samples/assets/
 
 ## 8. 子任务拆分（CodeArts 可直接执行）
 
-### Task 1：语义层内核
+### Task 1：语义层引擎
 - 目标：`semantic.py` 提供带时态、权限、版本的孪生实体与三元组查询。
 - 范围：仅新增 `semantic.py`、`tests/test_semantic.py`。
 - 输入：本规格第 3 节；`samples/assets/urban/` 样例数据。
@@ -291,9 +291,9 @@ samples/assets/
 - 回传：变更说明 + 测试输出 + 覆盖率。
 
 ### Task 2：事件推演引擎
-- 目标：六跳推演可跑通并输出推演树、冲突、资源缺口。
+- 目标：六步推演可跑通并输出推演树、冲突、资源缺口。
 - 范围：`deduction.py`、`tests/test_deduction.py`。
-- 测试标准：六跳顺序固定；规则缺失产出 `insufficient` 而非静默补全；三类职责冲突均可复现；`evidence_refs` 为空即构造失败；跳数上限生效。
+- 测试标准：六步顺序固定；规则缺失产出 `insufficient` 而非静默补全；三类职责冲突均可复现；`evidence_refs` 为空即构造失败；跳数上限生效。
 - 禁止改动：语义层公开接口；不得在推演中调用任何模型。
 - 回传：推演树样例 JSON + 冲突用例。
 
@@ -301,7 +301,7 @@ samples/assets/
 - 目标：claim 校验、哈希链、verify、replay 全通。
 - 范围：`provenance.py`、`tests/test_provenance.py`。
 - 测试标准：篡改任意字段 `verify()` 定位到正确断点；`inference` 引用不足 2 条被拒；`replay` 输出的证据集足以重建结论；账本 append-only（不可变对象）。
-- 禁止改动：`DataAsset` 指纹算法。
+- 禁止改动：`DataAsset` 校验值算法。
 - 回传：篡改检测用例 + verify 报告样例。
 
 ### Task 4：演示主线装配
@@ -336,8 +336,8 @@ samples/assets/
 | 赛题指标 | 本设计落点 |
 | --- | --- |
 | 检索 Top-k 证据命中率 ≥85% | `semantic_query` + 关键词/邻接检索评测集 |
-| 多跳路径正确率 ≥80% | 六跳固定 stage 的 ground truth 比对 |
-| 结论引用完整率 100% | claim 引用校验闸门（硬门禁，非统计） |
+| 多跳路径正确率 ≥80% | 六步固定 stage 的 ground truth 比对 |
+| 结论引用完整率 100% | claim 引用校验闸门（硬校验，非统计） |
 | 冲突/过期证据拦截率 100% | `verify()` + 三重拦截 |
 | 端到端响应 ≤30s | `urban_demo` 计时断言 |
 
@@ -345,7 +345,7 @@ samples/assets/
 
 | 风险 | 影响 | 对策 |
 | --- | --- | --- |
-| 六跳规则写死后场景无法扩展 | 演示泛化性质疑 | 规则全部数据化（`DeductionRule`），新增场景只加 JSON 不改代码 |
+| 六步规则写死后场景无法扩展 | 演示泛化性质疑 | 规则全部数据化（`DeductionRule`），新增场景只加 JSON 不改代码 |
 | 语义层与孪生实时状态漂移 | 结论引用过期事实 | 查询强制 `as_of` + `snapshot_hash` 锚定 |
 | 演示数据自造，评委质疑真实性 | 可信度 | 资产全部经 `data_asset.py` 登记，保留 checksum 与 locator，标注来源与合成说明 |
 | 哈希链被当成区块链宣传 | 技术表述失真 | 文档统一表述为"append-only 哈希链审计日志"，不宣称不可篡改存储 |

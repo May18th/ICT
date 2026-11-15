@@ -115,7 +115,7 @@ docker images -q | xargs docker rmi -f    # 清全部镜像（不可逆，确认
 
 ### 判定标准（两档通用）
 
-通过 = ① load 全部成功无报错；② compose up 全程无 pull 尝试（日志无 "Pulling"）；③ 15 容器全 Up 且 healthy；④ `/health` tools_count=15；⑤ 六跳对话 8/8。任一不满足即失败，记录现场后回退（恢复网络按原部署文档重建）。
+通过 = ① load 全部成功无报错；② compose up 全程无 pull 尝试（日志无 "Pulling"）；③ 15 容器全 Up 且 healthy；④ `/health` tools_count=15；⑤ 六步对话 8/8。任一不满足即失败，记录现场后回退（恢复网络按原部署文档重建）。
 
 ## 附录 A：镜像清单（权威，14 个，共 4.92 GB）
 

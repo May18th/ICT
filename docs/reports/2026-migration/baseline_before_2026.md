@@ -1,11 +1,11 @@
 # 2026 迁移 · 迁移前基线（2026-11-03）
 
-> 用途：Task #2 第二步（资产 17→18 + 冻结数字同步）的对照基线。**只记录，不改任何数字。**
+> 用途：Task #2 第二步（资产 17→18 + 固定数字同步）的对照基线。**只记录，不改任何数字。**
 
 ## 当前口径
 | 项 | 值 |
 |---|---|
-| 对外数字自检 | **106/106 项一致**，期望指纹 `db4af83c9449a498` |
+| 对外数字自检 | **106/106 项一致**，期望校验值 `db4af83c9449a498` |
 | 测试 | `743 passed` |
 | 期望文件 | `samples/eval/evidence_expectations.json` |
 | urban 资产数（manifest） | 17 |
@@ -23,7 +23,7 @@
 4. `samples/assets/urban/README.md` 资产表；
 5. `tests/test_urban_dataset.py:24`、`tests/test_urban_eval.py:74`（**不要动 :120 的 17/22 用例数**）；
 6. 若加“observed 定级白名单”守护测试 → 743→744，须同一次提交同步；
-7. 重生成 `evidence-check-report.md` 与新指纹。
+7. 重生成 `evidence-check-report.md` 与新校验值。
 
 ## 迁移前检查
 - [x] 工作区 clean、HEAD 与 origin/main 一致

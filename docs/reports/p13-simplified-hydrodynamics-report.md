@@ -2,8 +2,8 @@
 
 - 日期：2026-11-05
 - 对应设计：[P13 简化水动力演进设计](../superpowers/specs/2026-11-05-p13-simplified-hydrodynamics-design.md)
-- 本阶段范围：**只做内核定量模块 + 测试 + 文档**，不接六跳、不注册 MCP 工具、不改任何既有推演数字
-- 结论：P13 的两种简化演进方法与两个过程线查询已落地，27 项新测试全绿；对外数字只动"测试数 + 期望指纹"，
+- 本阶段范围：**只做引擎定量模块 + 测试 + 文档**，不接六步、不注册 MCP 工具、不改任何既有推演数字
+- 结论：P13 的两种简化演进方法与两个过程线查询已落地，27 项新测试全绿；对外数字只动"测试数 + 期望校验值"，
   106 项自检项数不变
 
 ## 1 实现清单
@@ -69,7 +69,7 @@
 **假设输入已补**：`samples/assets/urban/pump_forebay_curves.csv`（DF-PS-01 前池，`value_basis=assumption`，
 假设链条与前池 10m×10m×3.0m、警戒 2.4 m 的依据）与说明见
 [泵站前池库容曲线（假设值）数据说明](../hydro-forebay-assumptions.md)。
-该文件已于 2026-11-06 资产化（资产数 18→19、门禁事实 69→70、来源级别由 loader 从 CSV 读出），
+该文件已于 2026-11-06 资产化（资产数 18→19、校验事实 69→70、来源级别由 loader 从 CSV 读出），
 本阶段落地时它只是"可算输入"、未注册；现行口径见
 [数据说明 §6](../hydro-forebay-assumptions.md)。
 
@@ -77,7 +77,7 @@
 
 | 项 | 原因 |
 | --- | --- |
-| 接六跳推演 | 会改变缺口与处置顺序，必须与对外数字重算同一批做 |
+| 接六步推演 | 会改变缺口与处置顺序，必须与对外数字重算同一批做 |
 | MCP `quant` 工具组新增工具 | 会改 `mcp.tools_count` 对外数字，需单独一轮 |
 | 圣维南非恒定流 / 2D 浅水 | 需 SWMM 级模型与率定数据，边界不变（见设计 §2） |
 | 泵特性曲线 H–Q、库容曲线自动生成 | 台账缺数据；本层只接受调用方给定曲线 |
@@ -87,13 +87,13 @@
 | 口径 | 变更前 | 变更后 |
 | --- | --- | --- |
 | 测试总数 | 776 | **803**（新增 27 项） |
-| 对外数字自检 | 106/106（指纹 `3e01b8b1d25523d5`） | **106/106（指纹 `a60477b1f24dcfa9`）**，项数不变 |
+| 对外数字自检 | 106/106（校验值 `3e01b8b1d25523d5`） | **106/106（校验值 `a60477b1f24dcfa9`）**，项数不变 |
 
 按 `AGENTS.md`「单一 owner + 一次性同步」执行：
 
 - `samples/eval/evidence_expectations.json`：`test_baseline.collected`、`checks.test_suite.docs_declared`；
 - 三份文档测试数：`README.md`、`docs/competition-gap-audit.md`、`docs/competition/preliminary-submission-draft.md`；
-- 其余对外文档与脚本里"803 测试 / 新指纹"同步更新（含 `scripts/reproduce.py` 说明与
+- 其余对外文档与脚本里"803 测试 / 新校验值"同步更新（含 `scripts/reproduce.py` 说明与
   `scripts/build_answer_ppt.py`、`scripts/build_preliminary_docx.py` 文案）；
 - `docs/reports/evidence-check-report.md` 与 `samples/eval/evidence_check.json` 由命令重生成（勿手改）。
 
@@ -111,6 +111,6 @@ uv pip check --python .venv\Scripts\python.exe              # 通过
 
 ## 8 后续接入说明
 
-P13 报告记录的是内核落地时的范围；随后 P14 已将可选 `HydrographResult` 接入六跳、Skills、
+P13 报告记录的是引擎落地时的范围；随后 P14 已将可选 `HydrographResult` 接入六步、Skills、
 `collab_run` 与三维回放。P14 只补充过程线事实状态，仍不重算“需 8 台、可用 6 台、缺口 2 台”等
 资源缺口 v1 口径，完整二维浅水求解与真实场景率定仍不在范围内。

@@ -1,4 +1,4 @@
-# P3 本体演化闭环：候选 → 确认 → 发布 → 回滚（回传）
+# P3 本体演化流程：候选 → 确认 → 发布 → 回滚（回传）
 
 > 对应验收点：「本体是否支持人工确认、发布和回滚」。
 > 代码：`src/decision_poc/knowledge_evolution.py`；测试：`tests/test_knowledge_evolution.py`（16 项）。
@@ -16,7 +16,7 @@
 | 跨进程 | 未决提案可从磁盘重载，人工确认不必与提案同进程 |
 | 全量测试 | 170 passed |
 
-## 2. 数据结构（冻结）
+## 2. 数据结构（固定）
 
 ```
 EvolutionProposal
@@ -31,7 +31,7 @@ EvolutionProposal
 
 三点取舍：
 
-1. **提案是 diff，不是抽取结果快照**。审批人只看变了什么，不看全量候选。
+1. **提案是 diff，不是抽取结果状态记录**。审批人只看变了什么，不看全量候选。
 2. **影响评估在审批前算完**。`neighbor_count` 走图 1 跳扩散，回答"改这条会动到什么"。
 3. **`stale_claim_ids` 现在就是钩子**。P3 没有 claim，字段由调用方注入的 `claim_index` 填充；P4 把血缘索引接上后，同一个字段直接变成"哪些历史结论失效"的答案，契约不用改。
 
@@ -41,7 +41,7 @@ EvolutionProposal
 
 **根因**：`asset_id` 是内容寻址的（`AS-A-03-drainage_facility-cd569425`，尾 8 位是内容哈希）。改一个单元格 → 整份文件换 id → 该文件产出的**每个**候选的 `evidence.asset_id` 都变 → 全部判为"属性变化"。
 
-**修法**：比对指纹改用 `locator + quote`，`asset_id` 只作溯源信息保留。
+**修法**：比对校验值改用 `locator + quote`，`asset_id` 只作溯源信息保留。
 
 - `locator` 本身已编码逻辑身份（`A-03/drainage_facility/v1#row:3`），文件真换版（`v1→v2`）仍会触发变更；
 - 内容编辑不换 `locator`，只有真实的属性/引文差异才浮出来。

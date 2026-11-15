@@ -22,7 +22,7 @@ py "D:/华为ICT/blender-ue-scene/tools/import_vd02_p4_to_ue.py"
 | 2 | 尺寸 | 任一实体 `ActorTools.get_actor_bounds` 世界尺寸与 `bbox_m` 一致（误差 <0.05 m） |
 | 3 | 位置 | Actor 世界坐标 == `location_m × 100`（厘米） |
 | 4 | 标签 | 每个语义 Actor 的 tags 含 `twin:<id>`，且 `kind:`/`state:`/`hop:`/`layer:` 齐全 |
-| 5 | 高亮链路 | 按 `twin:` 标签选中 6 实体，逐个截图（六跳） |
+| 5 | 高亮链路 | 按 `twin:` 标签选中 6 实体，逐个截图（六步） |
 | 6 | 截图 | `out/S5-{hex}-<twin>.png` 至少 3 张（水域/主路/泵站各一），非黑屏 |
 | 7 | 单位 | 管线三件套分别导入后位置正确（Z 方向 −5.4~0），不出现 1/100 尺寸 |
 

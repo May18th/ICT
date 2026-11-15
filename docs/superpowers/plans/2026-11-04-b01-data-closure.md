@@ -1,8 +1,8 @@
-# B-01 数据闭环 Implementation Plan
+# B-01 数据流程 Implementation Plan
 
 > Native execution in this session.
 
-**Goal:** 修复 B-01 的资产归属，补齐最小业务闭环，让 A-03 与 B-01 可进行分区对比。
+**Goal:** 修复 B-01 的资产归属，补齐最小业务流程，让 A-03 与 B-01 可进行分区对比。
 
 **Architecture:** 保留现有 CSV 文件作为数据真源，在 manifest 中为跨区 CSV 增加按分区的逻辑资产记录。新增 B-01 下穿点、工单、燃气/电力管线和占道施工行。通过既有生成器重建 manifest、scene、scene_layout 与语义投影，并让 Blender 构建脚本对施工场景生成围挡、开挖和暴露管线。
 

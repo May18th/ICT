@@ -34,7 +34,7 @@ clips/<snapshot_id>.mp4  +  acks/<snapshot_id>.json         （delivery=acked，
 | decision ×9 | semantic_query … allocation_plan | 推演主链路，**看不见任何渲染工具** |
 | presentation ×3 | `scene_render` | 起渲染作业 |
 | | `scene_status` | 查交付状态与产物（P11 新增，只读） |
-| | `scene_compare` | 两份快照差异 |
+| | `scene_compare` | 两份状态记录差异 |
 | bootstrap ×1 | `asset_lookup` | 核对 Blender 资产就绪 |
 | collaboration ×1 | `collab_run` | 多智能体协同 |
 
@@ -125,7 +125,7 @@ PY
 | 情况 | 表现 | 处理 |
 |---|---|---|
 | 引擎没跑 / 没出片 | `delivery=pending`，`next_action` 给出下一句该敲的命令 | 不是错误，决策照出 |
-| 快照不存在 | `NOT_FOUND` | 先 `scene_render` |
+| 状态记录不存在 | `NOT_FOUND` | 先 `scene_render` |
 | 没有对应工单的预渲染资产 | `render_worker` 退出码 2，明确说是哪个 event_id 缺 | 换 `--mode blender` 或补资产 |
 | Blender 环境变量缺 | 退出码 2，逐条列出缺哪个变量 | **不静默降级成假渲染** |
 | 渲染中途失败 | 不写 ack，`delivery` 保持 pending，stderr 带最后 600 字符 | 修完重跑，`--force` 可强制重来 |
@@ -138,10 +138,10 @@ PY
 |---|---|---|
 | 工具清单与代码同源 | ✅ 自动化测试锁死 | `samples/nexent/tools.json` + `tests/test_nexent_tools.py` |
 | 渲染执行器端到端 | ✅ 7 条测试 | `tests/test_p10_render_worker.py` |
-| 真机调用链输出（pending→acked→reused） | ✅ 已固化 | `docs/competition/evidence/index.html` 第 02 节 |
+| 实测调用链输出（pending→acked→reused） | ✅ 已固化 | `docs/competition/evidence/index.html` 第 02 节 |
 | 成片与 sha256 | ✅ | `docs/competition/evidence/VD02-B-incident-P9.mp4` |
 | 平台界面截图（技能仓库 / Agent 工具列表） | ⬜ 待补 | 需平台实例运行 |
-| 平台侧真机回归（Agent 自主调 `scene_status`） | ⬜ 待补 | 需平台实例运行 |
+| 平台侧实测回归（Agent 自主调 `scene_status`） | ⬜ 待补 | 需平台实例运行 |
 
 后两项**无法离线伪造**，必须在 Nexent 实例起来后跑一遍并截图。没跑之前不要在文档里写"已验证"。
 

@@ -2,7 +2,7 @@
 
 ## 问题
 
-P5 起的 MCP 服务有 9 个工具，全部是决策语义工具（语义查询、证据定位、六跳推演、
+P5 起的 MCP 服务有 9 个工具，全部是决策语义工具（语义查询、证据定位、六步推演、
 反事实、分配）。**没有任何工具能让智能体触发一次渲染。** 可视化通路是：
 
 ```
@@ -16,20 +16,20 @@ replay_export.py → samples/replay/core_run.json → 人工在 UE 编辑器里�
 2. 唯一的触发方式是人手敲命令，正是"三维演示"而不是"决策动作"。
 
 结论：缺口不是 UE 不够实时，是**触发权**和**工具在册**。本阶段只补这两条，不引入
-实时闭环。
+实时流程。
 
 ## 定位
 
 | 层 | 承担者 | 职责 | 频率 |
 | --- | --- | --- | --- |
-| 决策层 | LangGraph / Nexent | 六跳推演、P9 策略进化 | 每轮 |
+| 决策层 | LangGraph / Nexent | 六步推演、P9 策略进化 | 每轮 |
 | 工具层 | `urban-twin-mcp` | 现有 9 个 + 本阶段 3 个 | 按需 |
-| 呈现层 | UE / Web | 演快照、并排对比 | 决策定稿后 |
+| 呈现层 | UE / Web | 演状态记录、并排对比 | 决策定稿后 |
 | 资产层 | Blender | 离线生成 4 套场景资产 | 初始化 / 低频 |
 
 ## 三条硬约束
 
-1. **只接受快照 id，不接受低层渲染参数。** 不开放位姿、材质、镜头。开放低层参数
+1. **只接受状态记录 id，不接受低层渲染参数。** 不开放位姿、材质、镜头。开放低层参数
    会让决策循环被渲染细节污染，演示不可复现。
 2. **异步、可降级。** 渲染作业落盘即返回，不等引擎渲染完成。引擎没起时返回
    `UPSTREAM_UNAVAILABLE`，决策层照常出结论。渲染不得进主循环的强依赖路径。
@@ -52,9 +52,9 @@ UE urban_twin_state.py   apply_job() → apply_scenario + show_step + 面板
 
 | 字段 | 来源 |
 | --- | --- |
-| `steps` / `actions` | `replay_export.build_replay_from_report`（P6 六跳） |
+| `steps` / `actions` | `replay_export.build_replay_from_report`（P6 六步） |
 | `allocation` | `allocation.decide(decision_inputs, policy)`（P9） |
-| `snapshot_hash` | `SkillPipeline` 知识快照 |
+| `snapshot_hash` | `SkillPipeline` 知识状态记录 |
 | `scene_hash` | `scene_export.build_scene_payload()` 的规范化哈希 |
 | `scenario` | 事件深度 + 受影响对象的 `lifecycle_state` |
 
@@ -134,5 +134,5 @@ v1（全零权重、不跨区）与进化后版本在同一事件上跑，分配
 ## 不做什么
 
 - 不做 UE 像素流（浏览器可交互已由 `web_demo.py` 承担）。
-- 不做实时逐帧同步（异步快照回放足够撑起"决策 → 渲染 → 对比"叙事）。
+- 不做实时逐帧同步（异步状态记录回放足够撑起"决策 → 渲染 → 对比"叙事）。
 - 不在推演循环里启动 Blender / UE 进程。

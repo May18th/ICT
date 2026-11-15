@@ -4,7 +4,7 @@
 - 数据文件：`samples/assets/urban/pump_forebay_curves.csv`
 - 用途：给 P13 简化水动力演进（`level_pool_route`）提供"泵站停机后水位过程线"所需的**库容曲线输入**
 - 状态：**假设值，未经图纸/实测核实**；已注册为数据集资产（`forebay_curve`，资产数 18→19），
-  来源级别由 CSV 的 `value_basis` 驱动，不接入六跳默认口径
+  来源级别由 CSV 的 `value_basis` 驱动，不接入六步默认口径
 
 ## 1 为什么需要它
 
@@ -94,7 +94,7 @@ print(time_to_level(hydrograph=hydrograph, target_level_m=curve.warning_stage_m)
 | --- | --- |
 | 资产数 | `manifest.json` 18 → **19**（新增 `forebay_curve` 类型 1 份） |
 | 资产解析 | `p8_eval.assets_parsed / assets_total` 18/18 → **19/19**（`samples/eval/latest.json` 与 p8 报告一并重生成） |
-| 门禁事实 | `data_gate` 新增 `pump:DF-PS-01/forebay_effective_volume_m3` = 300 m³、来源 `assumption`，事实数 69 → **70**（`FACTS_TOTAL` 与期望文件同步） |
+| 校验事实 | `data_gate` 新增 `pump:DF-PS-01/forebay_effective_volume_m3` = 300 m³、来源 `assumption`，事实数 69 → **70**（`FACTS_TOTAL` 与期望文件同步） |
 | 来源级别 | 由数据层 `load_forebay_curves()` 从 CSV 的 `value_basis` 直接读出，**不在这里二次声明**；"登记级别 == CSV 级别"由 `test_data_gate_fact_level_follows_csv_basis` 守住 |
 
 **资产化真正要解决的问题不是"把文件加进清单"，而是堵住"数字换了、来源没换"**：

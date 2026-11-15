@@ -5,12 +5,12 @@
 > 2026-11-06 实测平台 `/api/tool/list`：15 个工具全部为 `source=mcp`、`is_available=true`，
 > `tool_id` 41–53 加后注册的 `scene_status=86`（新增工具不会复用旧编号，看到 41–53 就断言"只有 13 个"是错的）。
 > 主 Agent `urban_deduction_agent` 已发布 **v31**（模型 **DeepSeek-Chat**，因 openPangu 于 2026-11-06 欠费停服而切换）；
-> 真机复测 **conversation_id=120，8/8 一致，attempts=1**。
+> 实测复测 **conversation_id=120，8/8 一致，attempts=1**。
 >
-> 历史：2026-11-03 首次真机注册时平台工具库为 13 个（尚无 `scene_status`），Agent 版本 v10，
-> 真机对话 `conversation_id=78`、8/8 一致——那组数字属当天快照，不再代表当前状态。
+> 历史：2026-11-03 首次实测注册时平台工具库为 13 个（尚无 `scene_status`），Agent 版本 v10，
+> 实测对话 `conversation_id=78`、8/8 一致——那组数字属当天状态记录，不再代表当前状态。
 >
-> 完整证据见 [真机集成报告](reports/nexent-live-integration-report.md)，装配步骤见
+> 完整证据见 [实测集成报告](reports/nexent-live-integration-report.md)，装配步骤见
 > [deploy/nexent/README.md](../deploy/nexent/README.md)。
 
 已就绪的产物（本轮之后仍然有效）：
@@ -103,7 +103,7 @@ $env:PYTHONPATH = "src"
 
 ### 4. 验收标准（缺一条就不算接入完成）
 
-- 一轮问答产出六跳 + 分配方案 + 证据链，且与 CLI（`decision_poc.pipeline`）结果可核对；
+- 一轮问答产出六步 + 分配方案 + 证据链，且与 CLI（`decision_poc.pipeline`）结果可核对；
 - `scene_render` 出现在 `artifacts/visual/tool_log.jsonl` 里，且 `origin = "mcp"`
   （证明是智能体调的，不是人点的）；
 - 留 `conversation_id`、请求截图、`artifacts/visual/jobs/<snapshot_id>.json` 三样证据。
@@ -115,5 +115,5 @@ $env:PYTHONPATH = "src"
   当前代码实现和导出清单为 14 个，平台重扫结果待 Docker 恢复后确认。
 - ✅ 可以说：2 个 SKILL.md 已上传到本机 Nexent 技能仓库（skill_id=2/3，正文逐位一致，见 `samples/nexent/live/skills.json`）。
 
-真机证据已留档：`samples/nexent/live/`（Agent 列表、会话、MCP 调用日志、汇总 JSON）+
+实测证据已留档：`samples/nexent/live/`（Agent 列表、会话、MCP 调用日志、汇总 JSON）+
 `samples/eval/nexent_urban_smoke.json`；平台界面截图 3 张已留档（`docs/reports/captures/nexent/`，脚本 `deploy/nexent/capture_platform_ui.py`），问答过程录屏仍待补。

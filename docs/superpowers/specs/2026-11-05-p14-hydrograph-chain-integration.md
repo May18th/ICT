@@ -16,7 +16,7 @@ HydrographResult → DeductionEngine → SkillPipeline → collab_run / ReplaySc
   观测深度，并记录 `depth_source=hydrograph_peak`、峰值与峰现时刻。
 - `SkillPipeline`、`event_deduce`、`collab_run` 和回放指标透传同一份契约对象。
 - 协同结果同时保留原有 `resource_gaps`；资源缺口仍按 v1 规则计算，不由过程线自动改写。
-- 回放从同一份 Pipeline 报告读取规则 id，避免再次调用引擎造成两份可能漂移的快照。
+- 回放从同一份 Pipeline 报告读取规则 id，避免再次调用引擎造成两份可能漂移的状态记录。
 
 ## 3 明确不做
 

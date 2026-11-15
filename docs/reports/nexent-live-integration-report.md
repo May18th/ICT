@@ -1,8 +1,8 @@
-# Nexent 真机集成报告：城市内涝主链路上平台
+# Nexent 实测集成报告：城市内涝主链路上平台
 
-- 日期：2026-11-03（首版 2026-10-30，本轮全量复跑并重写结论段）
+- 日期：2026-11-03（首版 2026-10-30，本轮全量重跑并重写结论段）
 - 环境：本机 Docker Desktop + Nexent **v2.7.0**（openPangu-2.0-Pro 模型，`nexent-config` / `nexent-runtime` / `nexent-northbound` 全栈）
-- 结论：**城市内涝主链路已在 Nexent 上真机跑通**——平台 Agent 调用 MCP 工具后产出六跳 JSON，
+- 结论：**城市内涝主链路已在 Nexent 上实测跑通**——平台 Agent 调用 MCP 工具后产出六步 JSON，
   与离线推演 **8/8 项一致**（`conversation_id=78`）。
 - 证据：`samples/nexent/live/`（Agent 列表、会话记录、MCP 调用日志、技能绑定、协同实测、汇总 JSON）。
 - 复现：`deploy/nexent/README.md`。
@@ -10,7 +10,7 @@
 ## 1 为什么这一步是必须的
 
 赛题 3 的五个考点里，「基于 Nexent 可运行」是唯一无法用离线测试替代的。此前仓库的证据是：
-北向传输层 + 绑定表 + 设备振动场景 smoke——**主演示链路（内涝六跳/冲突/分配）从未在平台上运行**。
+北向传输层 + 绑定表 + 设备振动场景 smoke——**主演示链路（内涝六步/冲突/分配）从未在平台上运行**。
 本轮补的就是这一格，并且不是"能答一句话"，而是"结论与离线逐项一致"。
 
 ## 2 装配结果（平台内实际对象）
@@ -27,9 +27,9 @@
 | 协议修复 | `enable_protocol_repair_retry=true`（openPangu 工具调用文本需要修复重试） |
 | 北向 Key | 平台函数生成（token_id=38，密钥不落仓） |
 
-## 3 真机对话结果（conversation 78）
+## 3 实测对话结果（conversation 78）
 
-用户问题：`WO-20261029-007 @ 2026-10-29T09:40:00+08:00`（城市内涝跨部门六跳推演）。
+用户问题：`WO-20261029-007 @ 2026-10-29T09:40:00+08:00`（城市内涝跨部门六步推演）。
 
 Agent 回答是**纯 JSON**（3596 字符，无 `<|tool_call_start|>` 残留、无 Markdown 围栏），
 节选如下，完整见 `samples/nexent/live/conversation_78.json`：
@@ -55,12 +55,12 @@ Agent 回答是**纯 JSON**（3596 字符，无 `<|tool_call_start|>` 残留、�
 
 平台确实调用了 MCP 工具（`samples/nexent/live/mcp_tool_log.jsonl`，来自 MCP 容器自身的调用日志）：
 
-| 工具 | 状态 | 耗时 | 快照哈希前 12 位 |
+| 工具 | 状态 | 耗时 | 状态记录哈希前 12 位 |
 | --- | --- | --- | --- |
 | `event_deduce` | ok | 18 ms | `2085018615b3` |
 | `event_deduce`（协议修复重试） | ok | 6 ms | `2085018615b3` |
 
-两条记录快照哈希一致 → 平台看到的语义世界与离线是同一版。
+两条记录状态记录哈希一致 → 平台看到的语义世界与离线是同一版。
 日志归属：本轮验证前已清空容器日志，`live_evidence.json` 的 `tool_log` 记了
 `container_started_at` 与 `file_mtime`，所以这份日志只覆盖这一轮。
 
@@ -70,7 +70,7 @@ Agent 回答是**纯 JSON**（3596 字符，无 `<|tool_call_start|>` 残留、�
 
 | 检查项 | 期望（离线） | 平台实际 | 结果 |
 | --- | --- | --- | --- |
-| 六跳齐全 | observed/affected/owner/conflict/resource/action | 同 | ✅ |
+| 六步齐全 | observed/affected/owner/conflict/resource/action | 同 | ✅ |
 | 冲突编号 | C1/C2/C3 | 同 | ✅ |
 | 冲突类型 | overlap/gap/contention | 同 | ✅ |
 | 资源缺口 | 2 台 | 2 台 | ✅ |
@@ -93,7 +93,7 @@ Agent 回答是**纯 JSON**（3596 字符，无 `<|tool_call_start|>` 残留、�
 | 技能绑定 | `bind_skills.py all`（绑草稿 v0）→ 重新发布 → `verify --require-published` | 草稿与 v10 均 enabled |
 | 北向 Key | `mint-key`（平台 `database.token_db.create_token`，不手写 SQL） | token_id=38 |
 | 验证 | `python -m decision_poc.nexent_urban` | 8/8 + conversation_id |
-| 协同验证 | `artifacts/nexent_collab_live.py --attempts 3` | 指纹比对 + 成功率 |
+| 协同验证 | `artifacts/nexent_collab_live.py --attempts 3` | 校验值比对 + 成功率 |
 | 取证 | `deploy/nexent/capture_evidence.py` | `samples/nexent/live/` |
 
 ## 6 真实踩坑与修复（说明可讲）
@@ -110,7 +110,7 @@ Agent 回答是**纯 JSON**（3596 字符，无 `<|tool_call_start|>` 残留、�
    模型的任务理解**。
 5. **提示词拦不住工具选择**：DUTY_PROMPT 明令"禁止 python_interpreter / read_skill_md /
    parallel_executor、只调 event_deduce"，实测 conv 74 仍开 `parallel_executor`，conv 75 把调用
-   写成 `event_deduce(event_id=...)` 函数语法。**模型真正读的"提示词"是挂载的工具列表**——
+   写成 `event_deduce(event_id=...)` 函数语法。**模型真正读的"提示词"是接入的工具列表**——
    把主 Agent 收窄到 2 个工具后，v10 一次跑通 8/8。
 6. **装配脚本两个隐性坑**：`create_agent` 只在 Agent 不存在时创建，复用已有 Agent 时**不回写
    prompt**（改了提示词却发布旧提示词，行为"没变化"却查不出原因）；`mint_api_key` 从 `/tmp`
@@ -128,7 +128,7 @@ Agent 回答是**纯 JSON**（3596 字符，无 `<|tool_call_start|>` 残留、�
 | Skills 上传 + 绑定到已发布 Agent | **已完成**（skill_id=2/3；草稿与 v10 均 enabled）。但实测模型不主动读技能文档，口径只能说"技能已绑定、可在平台浏览与复用"，不能说"Agent 按技能文档执行流程" |
 | 平台截图与录屏 | **未完成**：`capture_platform_ui.py` 需要租户账号密码（`NEXENT_ADMIN_PASSWORD`），本会话未提供 |
 | 公网 Demo 地址 | **未做**：当前是本机 Docker + 本机面板；方案见 §8 |
-| 多事件真机回归 | 未做：当前只验证核心事件；扩事件需同步扩 `nexent_urban` 的 baseline 与用例 |
+| 多事件实测回归 | 未做：当前只验证核心事件；扩事件需同步扩 `nexent_urban` 的 baseline 与用例 |
 | 主 Agent 工具收窄的代价 | 主 Agent 只挂 2 个工具，13 个工具在"工具库"里可见但不由主 Agent 直接调；若要演示"多工具编排"，走协同 Agent（6 个工具） |
 
 ## 8 公网化的可行路径（未实施，先给方案）
@@ -143,12 +143,12 @@ Agent 回答是**纯 JSON**（3596 字符，无 `<|tool_call_start|>` 残留、�
 
 ## 9 一句话表述说明
 
-「同一套推理内核，离线可复算、平台上可运行：Nexent 的 Agent 调我们 13 个 MCP 工具做六跳推演，
+「同一套推理引擎，离线可复算、平台上可运行：Nexent 的 Agent 调我们 13 个 MCP 工具做六步推演，
 结论与本仓库离线引擎 8/8 一致（conversation_id 可查）；策略进化与回滚在面板上可当场演示。」
 
 ---
 
-## 附：2026-11-02 复跑记录（历史，口径已被 11-03 取代）
+## 附：2026-11-02 重跑记录（历史，口径已被 11-03 取代）
 
 | 项 | 结果 |
 | --- | --- |
@@ -184,7 +184,7 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 | 结论一致性 | **8/8**，`attempts=1`（未用重试） |
 | conversation_id | **119** |
 | Agent 版本 | v18（主 Agent），v6（协同），v2（LLM 决策） |
-| 工具调用 | 2 次 `event_deduce`，均 `status=ok`，快照 `d102aa80…` |
+| 工具调用 | 2 次 `event_deduce`，均 `status=ok`，状态记录 `d102aa80…` |
 | 工具日志 | `samples/nexent/live/mcp_tool_log.jsonl` 仅 2 行，与本轮一一对应（跑前清空过，避免历史累积冒充本轮） |
 
 遗留问题（下一轮）：
@@ -197,7 +197,7 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 
 ## 2026-11-06 追加：openPangu 欠费，主/协同 Agent 切到 DeepSeek-Chat（v19 / v7）
 
-当天华为 ModelArts 账户欠费，`openpangu-2.0-pro`（model_id=2）停服，真机请求直接失败。
+当天华为 ModelArts 账户欠费，`openpangu-2.0-pro`（model_id=2）停服，实测请求直接失败。
 平台已注册的可用对话模型只剩 `deepseek-chat`（model_id=5，`https://api.deepseek.com/v1`，独立计费），
 因此把 `MODEL_IDS` 默认值从 `2` 改成 `5`，重新发布主 Agent v19、协同 Agent v7。
 
@@ -223,7 +223,7 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 | 层 | 问题 | 证据 |
 | --- | --- | --- |
 | 请求构造 | `build_task` 把证据放在 `task.evidence`，**没进 `request`**；平台只发 `request` | `build_decision_query()` 输出里 `action_priority` 一次都没出现过 |
-| 证据池 | `pool[:8]` 硬截断，7~15 条 `action_priority` 把冲突/资源缺口/六跳结论全挤掉 | N01 的 8 条里 7 条是排序 |
+| 证据池 | `pool[:8]` 硬截断，7~15 条 `action_priority` 把冲突/资源缺口/六步结论全挤掉 | N01 的 8 条里 7 条是排序 |
 | 表达形式 | 即使给了出处，也只是 `AS-...#line:38` 这种字符串，**没有原文** | 模型原话："evidence 中无基坑作业、无燃气泄漏相关依据" |
 
 第三层最致命：决定排序的那条依据是应急预案 4.2「开挖深度 ≥ 2m 的基坑，橙色及以上预警期间应停止开挖、
@@ -233,7 +233,7 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 ### 修法（四件，各自有测试）
 
 1. **证据进请求**：`request.context["evidence"]` 与 `task.evidence` 同一份（`test_evidence_travels_inside_the_request`）；
-2. **按种类配额**：`EVIDENCE_QUOTA` = 事实 1 / 排序 5 / 冲突 3 / 缺口 2 / 六跳结论 3 / 第 1 优先原文 2，
+2. **按种类配额**：`EVIDENCE_QUOTA` = 事实 1 / 排序 5 / 冲突 3 / 缺口 2 / 六步结论 3 / 第 1 优先原文 2，
    总数上限 16，任何一类都不能吃光池子（`test_pool_reserves_slots_for_conflicts_and_gaps`）；
 3. **出处解析成原文**：新增 `evidence_resolver.make_ref_resolver()`，走 `UrbanToolkit._evidence_locate`，
    受限资产仍取不到（回 `None`，退回旧行为），权利边界不变（`test_resolver_replaces_ref_with_excerpt`）；
@@ -275,7 +275,7 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 看着像记忆模块故障，实际是工具通道断了）。
 
 修复：`update nexent.mcp_record_t set mcp_server='http://urban-twin-mcp:8000/sse' where mcp_id=3`，
-然后复测通过。**教训：这个更新接口改任一字段都要把其它字段原样带上；改完必须跑一次真机，不能只看列表回显。**
+然后复测通过。**教训：这个更新接口改任一字段都要把其它字段原样带上；改完必须跑一次实测，不能只看列表回显。**
 
 ### 顺带复核的平台侧证据
 
@@ -284,9 +284,9 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 | 工具库 | 43 条，我方 15/15 全 `source=mcp`、全可用，无 `is_available=false` 条目 |
 | MCP 卡片 | `urban-twin-mcp`、连接成功、**15 个工具**、已启用（截图 `captures/nexent/mcp-space.png`，2026-11-07 00:10 重拍） |
 | 技能绑定 | 主 Agent v19 上 2 条实例 `enabled=true` |
-| 导出包 | 重导 7 982 B，内容指纹 `0a3aef9c61d8e5e523424ad738c93dd737772580a3b3082c3c81ee8810836221`（连导两次一致） |
+| 导出包 | 重导 7 982 B，内容校验值 `0a3aef9c61d8e5e523424ad738c93dd737772580a3b3082c3c81ee8810836221`（连导两次一致） |
 
-## 2026-11-13 追加：真实案例进检索后，先例被引用且不污染六跳（v25）
+## 2026-11-13 追加：真实案例进检索后，先例被引用且不污染六步（v25）
 
 ### 改了什么
 
@@ -297,7 +297,7 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 `AS-CD-CITY-emergency_response_case-e00d311b`，locator 形如
 `CD-CITY/emergency_response_case/2020#line:3-3`。
 
-配套修了一处会让闭环断在最后一步的问题：`evidence_locate` 原本按 `dataset_root / file_name`
+配套修了一处会让流程断在最后一步的问题：`evidence_locate` 原本按 `dataset_root / file_name`
 取正文，而补充资料不在台账目录下，不修就是"检索得到、取证失败"。
 
 提示词同步放开第二类用途（版本 v24 → v25，`urban-mcp-v5`）：`doc_search` 除查规则条款外，
@@ -318,8 +318,8 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 | 追问先例 | 8/8 一致，`conversation_id=180`，工具调用 `event_deduce` + `doc_search` 各 1 次 |
 | 先例出处 | `AS-CD-CITY-emergency_response_case-e00d311b#CD-CITY/emergency_response_case/2020#line:1-2` |
 | 结论纪律 | summary 写明"同类先例中成都 2020-08-11 由市防指依预案Ⅳ级条件启动蓝色响应，**其等级与雨量口径不适用于本事件**" |
-| 取证闭环 | 该 ref 交给 `evidence_locate` 可取回原文，`span=1-2/4` |
-| 调用日志 | 3 条，`event_deduce`×2 + `doc_search`×1，快照哈希一致 |
+| 取证流程 | 该 ref 交给 `evidence_locate` 可取回原文，`span=1-2/4` |
+| 调用日志 | 3 条，`event_deduce`×2 + `doc_search`×1，状态记录哈希一致 |
 
 证据文件：`samples/eval/nexent_urban_smoke.json`（179）、
 `samples/nexent/live/precedent_live.json`（180）、`samples/nexent/live/live_evidence.json`、

@@ -14,7 +14,7 @@
 | 协议方法 | `initialize` / `notifications/initialized` / `ping` / `tools/list` / `tools/call` |
 | 错误契约 | 协议级 5 个标准码 + 业务级 10 个 `ErrorCode`，`retryable` 判定正确 |
 | 权限边界 | `semantic_query` / `twin_neighbors` 按 `caller_labels`；`evidence_locate` 按资产 `visibility` |
-| 可观测 | 每次调用一条日志（工具、状态、错误码、耗时、快照哈希），`trace_id` 透传 |
+| 可观测 | 每次调用一条日志（工具、状态、错误码、耗时、状态记录哈希），`trace_id` 透传 |
 | 子进程实测 | 真实 spawn 起来跑完整握手 + 查询，退出码 0 |
 
 ## 2. 为什么不用 MCP SDK
@@ -32,7 +32,7 @@
 | `semantic_query` | `query_id` / `as_of` / `seed_ids` / 谓词与类型过滤 / `caller_labels` / `block_expansion_through` | triples、objects、`snapshot_hash`、`knowledge_version` | 可用 |
 | `twin_neighbors` | `twin_id` / `as_of` / `max_hops` / `caller_labels` | 邻接三元组 + 对象摘要 | 可用 |
 | `evidence_locate` | `evidence_ref`（`asset_id#locator`）/ `caller_labels` | 表格行（含解析后的字段）、文段行号区间、图片标注区域 | 可用 |
-| `claim_trace` | `claim_id` | 来源资产 + 定位 + 指纹、规则出处、记录 id、决策 id、快照哈希 | 可用 |
+| `claim_trace` | `claim_id` | 来源资产 + 定位 + 校验值、规则出处、记录 id、决策 id、状态记录哈希 | 可用 |
 | `provenance_verify` | 可选 `decision_id` | 哈希链校验报告；带 decision_id 时附最小重放证据集 | 可用 |
 | `event_deduce` | `event_id` / `as_of` / 种子 | — | `NOT_IMPLEMENTED`（P6） |
 | `conflict_check` | `decision_id` | — | `NOT_IMPLEMENTED`（P6） |

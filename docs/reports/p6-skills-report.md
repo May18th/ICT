@@ -30,7 +30,7 @@
 | 1 | `event_understand` | understand | `event_id` / `as_of` / `caller_labels` | 片区、道路、深度、响应等级、预警等级、规则覆盖、数据缺口、同片区过期依据数 | 事件不存在 → `NOT_FOUND`（整链终止）；量级缺失 → `partial` |
 | 2 | `impact_analysis` | impact | 同上 + `max_hops` / `min_confidence` | 受影响对象（分类型）、道路、片区、涉及部门、三元组数 | 范围被权限过滤 → `partial` + 原因码 |
 | 3 | `resource_check` | resource | 同 1 | 需求/库存/缺口、折算依据逐条 | 参数规则不可用 → `partial`，缺口留空**不填 0** |
-| 4 | `cross_department_deduction` | deduce | 同 1 | 六跳逐步状态、三类冲突、处置顺序、二次风险、转人工理由 | 依据越权 → `PERMISSION_DENIED`（不删证据后照给结论）；有跳不足 → `partial` |
+| 4 | `cross_department_deduction` | deduce | 同 1 | 六步逐步状态、三类冲突、处置顺序、二次风险、转人工理由 | 依据越权 → `PERMISSION_DENIED`（不删证据后照给结论）；有跳不足 → `partial` |
 | 5 | `evidence_audit` | audit | 同 1 + `persist` | 逐条 claim 是否过闸、引用完整率、账本记录号与哈希、链校验 | 任一 claim 不达标 → `EVIDENCE_INSUFFICIENT`，**不落账** |
 
 统一信封：五者都返回 MCP 那套 `ToolResult`（`status` / `data` / `error` / `stats` / `context`）。`data` 固定含 `skill`、`stage`、`payload`、`degraded`，降级时多一个 `notice`。
@@ -106,7 +106,7 @@ S6-action-undecided  undecided: RULE-ACT-CLOSE-ROAD|area_m2,depth_cm
 
 Skill 在进程内直调模块，MCP 走 JSON-RPC。两条路径必须给同一个结论，否则"两个入口两个产品"。
 
-`test_skill_deduction_agrees_with_the_mcp_tool` 比对：快照哈希、冲突编号序列、资源缺口数值、处置顺序逐项相等。这条测试的价值在于——**以后任何一边改了推演参数，它立刻失败**。
+`test_skill_deduction_agrees_with_the_mcp_tool` 比对：状态记录哈希、冲突编号序列、资源缺口数值、处置顺序逐项相等。这条测试的价值在于——**以后任何一边改了推演参数，它立刻失败**。
 
 ## 8. 边界（写在前面，避免说明被问倒）
 

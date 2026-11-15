@@ -13,7 +13,7 @@
 | 权限 | 绑定证据资产的 `visibility`，且在置信度与排序**之前**过滤 |
 | 引用闸门 | 无证据 / 未知资产 / 引用格式错 / 推理引用不足 / 缺前驱引用 / 规则不可定位 —— 6 类全部拒收，`append` 抛错不落账 |
 | 哈希链 | `verify()` 能定位被篡改记录与断链位置，不抛异常 |
-| 追溯 | claim → 资产 → 行号 → 指纹 → 规则来源 → 记录 → 决策，全部一次取回 |
+| 追溯 | claim → 资产 → 行号 → 校验值 → 规则来源 → 记录 → 决策，全部一次取回 |
 | 影响分析 | 改 1 个单元格，只点名依赖该行的结论，不牵连无关结论 |
 
 ## 2. 这一轮改掉的四个真问题
@@ -22,7 +22,7 @@
 
 原 `semantic.py` 在 `SemanticTriple` 上放 `visibility_labels` 字段，但**没有任何构建器填它**，于是权限测试里手写一个 label 就通过，真实数据里永远是空 → 永不生效。
 
-改成权限绑定到**证据资产的治理字段**（`AssetGovernance.visibility`，P0 已冻结）。理由：可见性是资产的属性，同一个 label 在资产和三元组各存一份，迟早不一致；而溯源、权限审计都从资产出发。
+改成权限绑定到**证据资产的治理字段**（`AssetGovernance.visibility`，P0 已固定）。理由：可见性是资产的属性，同一个 label 在资产和三元组各存一份，迟早不一致；而溯源、权限审计都从资产出发。
 
 同时修掉占位实现的另两处：邻接只走 subject→object 单向（反向查不到）、`under_construction`/`precedes` 两个谓词不在枚举里被静默丢弃——后者恰好是推演最需要的两条边。
 
@@ -62,7 +62,7 @@ P3 已经踩过一次：`asset_id` 是内容寻址的，改一个单元格整份
 | --- | --- | --- |
 | `fact` | `NO_EVIDENCE` | 无引用 |
 | 任意 | `MALFORMED_REF` | 缺 `#locator` 或某段为空 |
-| 任意 | `UNKNOWN_ASSET` | 资产不在账本指纹表（= 溯源不到来源） |
+| 任意 | `UNKNOWN_ASSET` | 资产不在账本校验值表（= 溯源不到来源） |
 | `inference` | `INFERENCE_TOO_FEW_REFS` | 不同出处 < 2 |
 | `inference` | `INFERENCE_MISSING_PREMISE_REFS` | 未包含前驱 claim 的全部引用 |
 | `inference` | `UNKNOWN_PREMISE` | 前驱 claim 未注册 |

@@ -3,7 +3,7 @@
 由 `python -m decision_poc.scene_binding --markdown <path>` 生成，**不要手改**。
 
 - 事件：`WO-20261029-007` @ `2026-10-29T09:40:00+08:00`（片区 A-03）
-- 投影指纹：`proj-de40f14cbc813e83`
+- 投影校验值：`proj-de40f14cbc813e83`
 - 真源哈希：scene `d102aa807648` / layout `438d4cc786ba` / replay `d102aa807648`
 - 实体 26 个（全部可画）/ 未落到几何 3 个 / 本事件会被高亮 17 个
 - 回放高亮 id 20 个：可画 17 + 不可画 3（不允许静默丢）

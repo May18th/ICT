@@ -217,7 +217,7 @@ project/
 
 ## 6. WorkBuddy Todo（执行顺序）
 
-### P0：项目骨架和接口冻结
+### P0：项目骨架和接口固定
 
 - [x] 建立目录和 Python/TypeScript 运行环境。
 - [x] 固定所有公共 JSON Schema 和错误码。
@@ -280,9 +280,9 @@ project/
 
 - [x] 建立至少 20 个事件案例，包含正常、证据不足、冲突和过期数据。（`samples/eval/urban_cases.json`，22 例：normal 7 / conflict 3 / insufficient 6 / expired 4 / permission 2）
 - [x] 评测资产解析、实体关系、检索命中、多跳路径、引用完整率和响应时间。（`python -m decision_poc.urban_eval`，指标口径见 `docs/reports/p8-evaluation-report.md` §1）
-- [x] 输出失败案例和改进前后对比。（改进前 17/22 → 22/22；差的是「as_of 早于上报时间 / 工单已闭环」被当成正常事件推演，已加时点闸门，对比见报告 §5）
+- [x] 输出失败案例和改进前后对比。（改进前 17/22 → 22/22；差的是「as_of 早于上报时间 / 工单已流程」被当成正常事件推演，已加时点闸门，对比见报告 §5）
 - [ ] 完成 README、部署说明、数据说明、开源截图和演示脚本。（README / `docs/demo-runbook.md` / `docs/data-asset-spec.md` 已有；**开源截图待补**）
-- [x] 验收：从干净环境按 README 可复现；评测结果可重复生成。（`uv run --locked pytest -q` 370 项通过；评测正确性指纹在 `test_correctness_is_reproducible` 里逐位比对）
+- [x] 验收：从干净环境按 README 可复现；评测结果可重复生成。（`uv run --locked pytest -q` 370 项通过；评测正确性校验值在 `test_correctness_is_reproducible` 里逐位比对）
 
 ## 7. WorkBuddy 禁止事项
 

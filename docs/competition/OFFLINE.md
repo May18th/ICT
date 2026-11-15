@@ -91,7 +91,7 @@ bash deploy.sh --defaults --load-images docker
 ```
 
 若目标机已配好 `deploy/env/.env`，脚本会原样保留；否则从 `deploy/env/.env.example` 生成。
-**部署成功后立刻把 `deploy/env/.env` 冻结**——它是复现的第一步，也是排障的基准。
+**部署成功后立刻把 `deploy/env/.env` 固定**——它是复现的第一步，也是排障的基准。
 
 ## 5 验收（五条，逐条可判定）
 
@@ -101,7 +101,7 @@ bash deploy.sh --defaults --load-images docker
 | 2 | `curl -s http://127.0.0.1:5013/nb/v1/health` | `{"status":"healthy","service":"northbound-api"}` |
 | 3 | `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/zh` | `200` |
 | 4 | 无密钥访问 `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5013/nb/v1/agents` | `401`（鉴权边界生效） |
-| 5 | 浏览器登录 → 建/开 Agent → 跑一次六跳对话 | 结论与离线 8/8 一致 |
+| 5 | 浏览器登录 → 建/开 Agent → 跑一次六步对话 | 结论与离线 8/8 一致 |
 
 端口（本机实测）：Web `3000`、北向 `5013`、config `5010`、runtime `5014`、MinIO `9010/9011`、Redis `6379`、
 MCP 服务 `18000→8000`。其余端口以 `docker ps --format "{{.Names}}\t{{.Ports}}"` 现场输出为准。
@@ -164,7 +164,7 @@ docker exec -i supabase-db-mini psql -U postgres -d supabase -c \
    真断网环境下需把模型指向**内部部署的推理服务**（vLLM / Ollama 等，暴露 `/v1` 接口）；
    否则对话能开、无模型可用。这一条必须在 PPT 与 OFFLINE 里都写清，不能含糊。
 2. **不裁 sandbox 是有依据的**：`setup_nexent.py` 的 `DUTY_PROMPT` 已禁用 `python_interpreter` 与
-   `parallel_executor`，全链路不执行沙箱代码，理论可省 1.89 GB；但「停掉 sandbox 后 8/8 是否仍通」**待真机验证**，
+   `parallel_executor`，全链路不执行沙箱代码，理论可省 1.89 GB；但「停掉 sandbox 后 8/8 是否仍通」**待实测验证**，
    未验证前不从包里删。
 3. **`doc_search` 与主 Agent 的关系**：主 Agent 挂三个工具（`event_deduce` / `evidence_locate` /
    `doc_search`）是 `MAIN_TOOLS` **有意收窄**的结果——15 个工具里只留这三个。2026-11-13 才加进

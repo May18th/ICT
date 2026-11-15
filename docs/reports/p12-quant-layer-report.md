@@ -2,8 +2,8 @@
 
 - 日期：2026-11-02
 - 对应设计：[P12 多智能体协同 + 场景 v2 设计](../superpowers/specs/2026-11-02-p12-multi-agent-collaboration-and-scenario-v2-design.md) §6.4、T7、T8
-- 本阶段范围：**只做内核定量模块，不接六跳、不注册 MCP 工具、不改任何既有推演数字**
-- 结论：T7 的水文/水力与 T8 的不确定性内核已落地，39 项新测试全绿；六跳与缺口数字保持原口径，留到 T1/T2/T3 一次性重算
+- 本阶段范围：**只做引擎定量模块，不接六步、不注册 MCP 工具、不改任何既有推演数字**
+- 结论：T7 的水文/水力与 T8 的不确定性引擎已落地，39 项新测试全绿；六步与缺口数字保持原口径，留到 T1/T2/T3 一次性重算
 
 ## 1 实现清单
 
@@ -46,7 +46,7 @@
 
 | 项 | 原因 |
 | --- | --- |
-| 接六跳推演（T1/T2） | 会改变缺口与处置顺序，必须与对外数字重算（T3）同一批做，不能分两次漂移 |
+| 接六步推演（T1/T2） | 会改变缺口与处置顺序，必须与对外数字重算（T3）同一批做，不能分两次漂移 |
 | 图论封控优化 `graphopt.py` | 需要与既有 `road_graph.py` 的连通语义对齐，单独一轮更安全 |
 | 最优分配上界 / 可靠性 `optimize.py`、`reliability.py` | **已补完，见 §7**（不依赖 T1 也能算，因为输入就是 DistrictSignal） |
 | MCP `quant` 工具组（T7 工具注册） | 会让 `mcp.tools_count` 从 12 变 13，属于对外数字变更，并入 T5 一次改全 |
@@ -54,19 +54,19 @@
 
 ## 5 对外数字变化
 
-本阶段新增 39 项测试（600 → 639），自检指纹随之变更；随后协同层再增至 671（见
+本阶段新增 39 项测试（600 → 639），自检校验值随之变更；随后协同层再增至 671（见
 [协同层报告](p12-collab-layer-report.md)），**当前口径以 `pytest -q` 与 `evidence_check` 实跑为准**。
 已按 `AGENTS.md`「单一 owner + 一次性同步」执行：
 
 - `samples/eval/evidence_expectations.json`：`test_baseline.collected`、`checks.test_suite.docs_declared`；
 - 三份文档测试数：`README.md`、`docs/competition-gap-audit.md`、`docs/competition/preliminary-submission-draft.md`；
-- 全部"106/106 + 指纹"位置：README、`docs/demo-runbook.md`、
+- 全部"106/106 + 校验值"位置：README、`docs/demo-runbook.md`、
   `docs/competition/technical-breadth-and-presentation-boundary.md`、
   `docs/competition/presentation-closure-report.md`、`scripts/build_preliminary_docx.py`、`AGENTS.md`；
 - `docs/reports/evidence-check-report.md` 由命令重生成（勿手改）；
 - 初赛内容稿 `.docx` 已用 bundled python 重新生成（`scripts/build_preliminary_docx.py`）。
 
-六跳、缺口、冲突、P9 分配等**其余 105 项自检口径未变**。
+六步、缺口、冲突、P9 分配等**其余 105 项自检口径未变**。
 
 ## 6 验证命令与结果
 

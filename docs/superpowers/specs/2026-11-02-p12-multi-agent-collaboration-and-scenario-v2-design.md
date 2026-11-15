@@ -12,9 +12,9 @@
 
 ## 0 一句话
 
-**多 Agent 管"协同"，单内核管"断言"**：5 个部门 Agent + 1 个总控 Agent 在协同板上产出动作草案与联合发布建议；
+**多 Agent 管"协同"，单引擎管"断言"**：5 个部门 Agent + 1 个总控 Agent 在协同板上产出动作草案与联合发布建议；
 任何进入对外结论的断言仍只能由 `event_deduce` / `conflict_check` / `allocation_plan` / `provenance_verify` 生成。
-多 Agent 因此不破坏"六跳路径正确率可计算、引用完整率 100%、同输入逐位一致"这三条已冻结口径。
+多 Agent 因此不破坏"六步路径正确率可计算、引用完整率 100%、同输入逐位一致"这三条已固定口径。
 
 ## 0.1 三个现实问题 → 三项能力 → 可核实证据
 
@@ -23,7 +23,7 @@
 | 现实问题 | 对应能力 | 技术落点 | 现状可核实证据 |
 | --- | --- | --- | --- |
 | 城市设施数据分散、彼此关系不清楚 | 基础设施语义知识图谱 | `TwinObject` + `SemanticTriple` + `as_of` 时态 + `snapshot_hash` 锚定 | 16 个异构资产统一登记（`asset_id+sha256+locator`）、102 条语义三元组 / 8 类谓词 |
-| 各部门独立分析、缺乏协同 | 多智能体协同推演 + 任务分配 | 1 总控 + 5 专业 Agent + 协同板 + 内核冲突/分配 | C1 权限交叉 / C2 职责空白 / C3 资源争用全部保留；P9 分配 A-03 5 台 / B-01 1 台 |
+| 各部门独立分析、缺乏协同 | 多智能体协同推演 + 任务分配 | 1 总控 + 5 专业 Agent + 协同板 + 引擎冲突/分配 | C1 权限交叉 / C2 职责空白 / C3 资源争用全部保留；P9 分配 A-03 5 台 / B-01 1 台 |
 | AI 给出结论后无法说明依据 | 数据来源与决策过程溯源 | claim 引用闸门 + append-only 哈希链 + `verify` / `replay` | 引用完整率 100%、篡改可定位断点、replay 给出最小证据集 |
 
 三条能力的失败形态必须可测（沿用既有定义）：语义层与孪生状态不同步 → 结论引用已失效事实；
@@ -37,10 +37,10 @@
 | --- | --- | --- |
 | G1 | 6 个 Agent 真跑（总控 1 + 部门 5），有协同轨迹与冲突汇总 | `CollabTrace` 含每角色调用与交接 |
 | G2 | 部门 Agent 只产出 `ActionCard`，不产出 claim | 构造期校验：`ActionCard` 无 `evidence_refs` 之外的断言字段 |
-| G3 | 多 Agent 最终结论 = 单内核结论 | 逐位一致 8/8，不一致即失败 |
-| G4 | 地下通道倒灌进六跳推演（不只是场景） | ground-truth v2 跳 2/5/6 命中 |
+| G3 | 多 Agent 最终结论 = 单引擎结论 | 逐位一致 8/8，不一致即失败 |
+| G4 | 地下通道倒灌进六步推演（不只是场景） | ground-truth v2 跳 2/5/6 命中 |
 | G5 | 泵站"负荷升高"成为可计算口径 | 缺口由公式重算，不再用固定 80% 折算 |
-| G6 | 对外数字一次性重算并重新冻结 | `evidence_check` 全绿 + 五处同步 |
+| G6 | 对外数字一次性重算并重新固定 | `evidence_check` 全绿 + 五处同步 |
 
 ### 1.2 非目标（本阶段不做）
 
@@ -76,7 +76,7 @@
 | 路径 | 做法 | 前置 |
 | --- | --- | --- |
 | **B（默认，先做）** | Nexent 只挂 1 个总控 Agent，调 `collab_run` 一次拿全部角色动作 + 协同轨迹 | 无需平台新能力 |
-| A（探索） | Nexent 上建 5 个部门 Agent + 总控，真机 Agent 互调 | **需验证 Nexent v2.7 是否支持 Agent-as-Tool；仓库现无证据，标注"无法确认"** |
+| A（探索） | Nexent 上建 5 个部门 Agent + 总控，实测 Agent 互调 | **需验证 Nexent v2.7 是否支持 Agent-as-Tool；仓库现无证据，标注"无法确认"** |
 
 ## 3 Agent 花名册与契约
 
@@ -111,9 +111,9 @@ class ActionCard(StrictModel):
 
 硬约束（构造期校验，违反即抛异常）：
 
-1. `claim_ids` 非空且每个 id 都能在内核 `DeductionResult` / `ProvenanceLedger` 中查到；
+1. `claim_ids` 非空且每个 id 都能在引擎 `DeductionResult` / `ProvenanceLedger` 中查到；
 2. `evidence_refs` 非空且可在资产清单解析；
-3. `targets` 每个 `twin_id` 都存在于语义层快照（`snapshot_hash` 锚定）；
+3. `targets` 每个 `twin_id` 都存在于语义层状态记录（`snapshot_hash` 锚定）；
 4. `status=proposed` 的卡不得直接进入对外答案，必须经裁决。
 
 ### 3.3 协同板与裁决
@@ -133,12 +133,12 @@ class CollabResult(StrictModel):
 
 裁决规则（顺序固定，不投票）：
 
-1. 内核 `conflict_check` 给出的 C1/C2/C3 不可被 Agent 抹平，原样进 `conflicts`；
+1. 引擎 `conflict_check` 给出的 C1/C2/C3 不可被 Agent 抹平，原样进 `conflicts`；
 2. `co_sign_required` 非空的动作必须由全部列名部门各出一张卡才可 `accepted`，否则 `rejected` + 原因；
 3. 处置顺序按 `depends_on` 拓扑排序，再套预案硬约束（见 §5）；
 4. 拓扑冲突（环）或硬约束冲突 → 整体 `conflict` 状态，转人工确认点，不得自动取一个顺序。
 
-**任务分配落在总控，不落在部门之间**：分配由总控依据内核 `conflict_check` / `allocation_plan` 的输出生成，
+**任务分配落在总控，不落在部门之间**：分配由总控依据引擎 `conflict_check` / `allocation_plan` 的输出生成，
 专业 Agent 只能 `accept` / `reject + reason`，不得互相派活。Agent 之间互派任务等于把编排逻辑交给 LLM，
 既不可复现，也会让"资源缺口 2 台"这类可核数字变成协商产物。
 
@@ -160,16 +160,16 @@ class CollabResult(StrictModel):
 
 | 边界 | 内容 | 失守后果 |
 | --- | --- | --- |
-| **断言权** | Agent 不生成 claim；所有断言来自内核工具 | 引用完整率 100% 与"可证伪"叙事同时失效 |
+| **断言权** | Agent 不生成 claim；所有断言来自引擎工具 | 引用完整率 100% 与"可证伪"叙事同时失效 |
 | **裁决权** | 冲突与顺序由规则 + 预案硬约束决定，不由 Agent 协商或投票 | C1/C2/C3 会被"综合判断"抹平，正好是竞品被批评的点 |
-| **复现口径分轨** | 内核指标要求逐位一致；多 Agent 层只要求"结论一致"，对话轨迹允许不同并整轨留痕 | 把 LLM 轨迹当可复现证据 → 现场第二次跑就对不上 |
+| **复现口径分轨** | 引擎指标要求逐位一致；多 Agent 层只要求"结论一致"，对话轨迹允许不同并整轨留痕 | 把 LLM 轨迹当可复现证据 → 现场第二次跑就对不上 |
 
 复现口径具体分法：
 
 | 对象 | 要求 |
 | --- | --- |
 | `event_deduce` / `conflict_check` / `allocation_plan` 输出 | 逐位一致（现有 `evidence_check` 口径不变） |
-| `CollabResult.cards` 的动作集合与 `merge_order` | 与单 Agent 内核驱动结果一致（`kernel_fingerprint` 相等） |
+| `CollabResult.cards` 的动作集合与 `merge_order` | 与单 Agent 引擎驱动结果一致（`kernel_fingerprint` 相等） |
 | `CollabTrace` 的 LLM 文本、调用顺序 | 不要求一致，只要求落盘可查；离线测试用确定性桩替代 LLM |
 
 ## 5 场景 v2 之一：地下通道倒灌入推演
@@ -202,7 +202,7 @@ class CollabResult(StrictModel):
 | `RULE-ACT-CLOSE-UNDERPASS` | `action` | 通道内水深 ≥ `close_threshold` 或 `backflow_risk = high` | `close_underpass`，`co_sign = [ORG-ROAD, ORG-TRAFFIC]` |
 | `RULE-RES-PUMP-UNDERPASS` | `resource` | `has_pump_room=false` 且通道积水 | 移动泵台数 = `ceil(通道汇水量 / 单泵 400 m³/h)` |
 
-**跳数不变**（仍六跳）。倒灌是"受影响对象 + 二次风险 + 处置动作"三跳里的新实例，不新增跳。
+**跳数不变**（仍六步）。倒灌是"受影响对象 + 二次风险 + 处置动作"三跳里的新实例，不新增跳。
 这是刻意的：跳数一变，"路径正确率"口径要重定义，代价远大于收益。
 
 ### 5.3 处置顺序硬约束（ground truth 跳 6 验收口径更新）
@@ -246,11 +246,11 @@ load_state       = normal | high_load | overload  # inflow/capacity_avail ≤0.8
 
 ## 6.4 物理与数学定量层（新增：解决"数字凭什么"）
 
-现状：决策内核只从台账取值 + 算术。`blender-ue-scene/out/hydraulics-report.md` 做过稳态校核
-（Manning 满流、推理公式 `Q=ψqF`、泵站能力对比），但它是**一次性报告，没进内核，也没被任何 claim 引用**。
-本阶段把它做成内核里的确定性定量提供者。
+现状：决策引擎只从台账取值 + 算术。`blender-ue-scene/out/hydraulics-report.md` 做过稳态校核
+（Manning 满流、推理公式 `Q=ψqF`、泵站能力对比），但它是**一次性报告，没进引擎，也没被任何 claim 引用**。
+本阶段把它做成引擎里的确定性定量提供者。
 
-### 能算且该进内核（确定性强、有规范出处）
+### 能算且该进引擎（确定性强、有规范出处）
 
 | 计算 | 公式/方法 | 用途 | 数据前提 |
 | --- | --- | --- | --- |
@@ -261,7 +261,7 @@ load_state       = normal | high_load | overload  # inflow/capacity_avail ≤0.8
 | 封控点选择 | 图论：点覆盖 / 最小割 / 绕行代价加权最短路 | 替代"逐条按阈值判封控"，给出代价最小的封控组合 | 路网连接表（已有 `road_graph.py`） |
 | 不确定性传播 | 区间算术 / 固定种子 Monte Carlo | 降雨 60–100 mm 情景下的缺口区间（如 1–3 台），决策从点估计变稳健区间 | 各输入的量级范围 |
 
-### 统计学、运筹学与可靠性（同样进内核，不靠 Agent 口算）
+### 统计学、运筹学与可靠性（同样进引擎，不靠 Agent 口算）
 
 | 学科 | 具体机制 | 落在哪里 | 数据前提 |
 | --- | --- | --- | --- |
@@ -283,7 +283,7 @@ load_state       = normal | high_load | overload  # inflow/capacity_avail ≤0.8
 | 不做 | 原因 |
 | --- | --- |
 | 圣维南非恒定流**完整方程**、2D 浅水、1D/2D 耦合内涝推演 | 需 EPA SWMM 级模型 + 率定数据，硬做就是假精确。过程线级别的一阶近似（马斯京根汇流 / 修正 Puls 调蓄）不在本条内，见 [P13 简化水动力演进设计](2026-11-05-p13-simplified-hydrodynamics-design.md) |
-| 让 LLM 现场推导流体公式 | 违反 §4「断言权在内核」 |
+| 让 LLM 现场推导流体公式 | 违反 §4「断言权在引擎」 |
 | 把定量计算塞进推演主循环做迭代求解 | 时延不可控；准静态 + 缓存足够 |
 
 ### 架构落法
@@ -311,7 +311,7 @@ class QuantResult(StrictModel):
 
 以 `rule_output` 类 claim 进溯源链，`source_ref` 指公式出处 —— 物理算出来的数与台账里的数走同一套可证伪机制。
 
-**与多智能体的关系**：定量层是工具，不是 Agent 能力。部门 Agent 决定"算什么情景"，内核决定"算出多少、依据哪条公式"。
+**与多智能体的关系**：定量层是工具，不是 Agent 能力。部门 Agent 决定"算什么情景"，引擎决定"算出多少、依据哪条公式"。
 新增 MCP 工具组 `quant`（`runoff_estimate` / `ponding_forecast` / `backflow_estimate` / `closure_optimize` /
 `sensitivity_run`），Agent 只能调用，不能自己推公式。角色去重性因此可测：排水 Agent 引用产流与提升能力、
 交通 Agent 引用封控提前量、燃气 Agent 引用浸泡时长，各自引用的物理量不同。
@@ -325,8 +325,8 @@ class QuantResult(StrictModel):
 
 | 需重算/重生成 | 位置 |
 | --- | --- |
-| 六跳与缺口 | `docs/urban-scenario-ground-truth.md`（升 v2） |
-| 冻结期望 | `samples/eval/evidence_expectations.json`（含 `checks.*`、指纹） |
+| 六步与缺口 | `docs/urban-scenario-ground-truth.md`（升 v2） |
+| 固定期望 | `samples/eval/evidence_expectations.json`（含 `checks.*`、校验值） |
 | 评测用例 | `samples/eval/*.json`、`urban_eval` 22 用例期望 |
 | P9 进化 | `allocation_cases.json`（8 训练 + 4 留出）、`p9-policy-evolution-report.md` |
 | 五处同步 | `README.md`、`docs/competition-gap-audit.md`、`docs/competition/preliminary-submission-draft.md`、`docs/demo-runbook.md`、`scripts/reproduce.py` 的 `expect` |
@@ -359,7 +359,7 @@ P11 五档（Rules → DT → 单 Agent → **多 Agent** → 全量）中的第
 - 现有 `--groups` 白名单机制复用，新增 `role_drain` / `role_road` / `role_traffic` / `role_gas` / `role_power` 五组，
   部门 Agent 只能看见本组工具（越权在工具层就拦住，不靠提示词自律）。
 - 平台侧（路径 B）：总控 Agent 工具集改为「`collab_run` + 推理类工具」，提示词改为先 `collab_run` 再摘要。
-- 真机验证从"六跳 8/8"扩展为"六跳 8/8 + `collab_run` 结论一致 8/8"。
+- 实测验证从"六步 8/8"扩展为"六步 8/8 + `collab_run` 结论一致 8/8"。
 
 ## 10 三维与语义绑定同步
 
@@ -368,7 +368,7 @@ P11 五档（Rules → DT → 单 Agent → **多 Agent** → 全量）中的第
 | 实体 id 统一 | 3D 用 `TN-TIANFU`，推演用对象 id，两边未对齐 | 建立 `twin_id` 映射表，高亮按推演 id 命中 |
 | 泵站状态枚举 | `fault` / `normal` | 增 `high_load` / `overload`，UE `apply_scenario` 同步 |
 | 通道倒灌表现 | 只表现为"隧道积水" | 增加倒灌状态标签与封控动作高亮（`close_underpass`） |
-| 六跳高亮 | 24 实体 / 6 跳 | 补 `UNDERPASS` 类与 `co_sign` 部门节点 |
+| 六步高亮 | 24 实体 / 6 跳 | 补 `UNDERPASS` 类与 `co_sign` 部门节点 |
 
 ## 11 子任务拆分（CodeArts 可直接执行）
 
@@ -381,29 +381,29 @@ P11 五档（Rules → DT → 单 Agent → **多 Agent** → 全量）中的第
 - 回传：v1/v2 数值对照表 + ground truth v2 全文。
 
 ### T2 推演层扩展
-- 范围：`ObjectKind.UNDERPASS`、通道规则接入六跳、§5.3 两条顺序硬约束、`ActionCard` 所需的 claim 关联。
+- 范围：`ObjectKind.UNDERPASS`、通道规则接入六步、§5.3 两条顺序硬约束、`ActionCard` 所需的 claim 关联。
 - 测试：跳数仍为 6；倒灌命中时 `close_underpass` 出现在 `action` 跳；"先抽排"仍被拒；通道权重空白产出 C2。
-- 禁止改动：六跳 stage 枚举；`DeductionStep` 构造期非空校验。
+- 禁止改动：六步 stage 枚举；`DeductionStep` 构造期非空校验。
 - 回传：新推演树样例 JSON + 顺序约束用例。
 
-### T3 对外数字重算与冻结
+### T3 对外数字重算与固定
 - 范围：§7 全表，按 AGENTS.md 单一 owner 流程一次改全；新增 changelog。
 - 测试：`evidence_check` 全绿（新口径）；`pytest -q` 全绿；`git status` 干净。
 - 禁止改动：不为过检放宽期望值。
-- 回传：新指纹 + 五处同步清单 + changelog。
+- 回传：新校验值 + 五处同步清单 + changelog。
 
-### T4 多 Agent 契约与编排内核
+### T4 多 Agent 契约与编排引擎
 - 范围：新增 `src/decision_poc/collab/`（`contracts.py` / `roles.py` / `blackboard.py` / `orchestrator.py` / `runtime.py`）+ 测试。
 - 测试：构造期校验四条硬约束；拓扑冲突转人工；离线用确定性桩跑通全流程（不依赖真实 LLM）；
   结论一致性 8/8；单 Agent 驱动与多 Agent 驱动 `kernel_fingerprint` 相等。
-- 禁止改动：内核 13 工具签名；`conflict_check` 判定逻辑。
+- 禁止改动：引擎 13 工具签名；`conflict_check` 判定逻辑。
 - 回传：`CollabResult` 样例 + `trace.jsonl` 样例。
 
 ### T5 MCP 分组与平台装配
 - 范围：`collab_run` 工具 + 6 个工具组白名单；`deploy/nexent/` 装配脚本与提示词更新。
 - 测试：越权工具调用返回 `PERMISSION_DENIED`；`tools/list` 分组过滤生效（13 工具全量）。
 - 禁止改动：MCP 信封类型。
-- 回传：分组表 + 越权用例 + 真机 `collab_run` 调用记录。
+- 回传：分组表 + 越权用例 + 实测 `collab_run` 调用记录。
 
 ### T7 物理/数学定量层
 - 范围：新增 `src/decision_poc/quant/`（`hydrology.py` / `hydraulics.py` / `graphopt.py`）
@@ -412,7 +412,7 @@ P11 五档（Rules → DT → 单 Agent → **多 Agent** → 全量）中的第
 - 输入：§6.4。
 - 测试：每个公式至少一个手算对拍用例（如 DN600 i=0.30% 满流能力 ≈ 1211 m³/h，须与 `hydraulics-report.md` 一致）；
   `assumptions` 为空即构造失败；`computable=False` 时不得产出数字；固定种子 Monte Carlo 两次结果逐位一致。
-- 禁止改动：`deduction.py` 六跳结构与规则判定；除标准库外不新增依赖（图论与矩阵运算手写）。
+- 禁止改动：`deduction.py` 六步结构与规则判定；除标准库外不新增依赖（图论与矩阵运算手写）。
 - 回传：公式-出处对照表 + 手算对拍表 + 对 §6.2 缺口的重算差异。
 
 ### T8 统计、优化与可靠性落点
@@ -436,20 +436,20 @@ P11 五档（Rules → DT → 单 Agent → **多 Agent** → 全量）中的第
 
 - [ ] 6 个 Agent 真跑，`trace.jsonl` 有每角色调用。
 - [ ] `ActionCard` 四条构造期校验全部生效（各有一个失败用例）。
-- [ ] 多 Agent 结论与单内核结论逐位一致 8/8。
+- [ ] 多 Agent 结论与单引擎结论逐位一致 8/8。
 - [ ] C1/C2/C3 全部保留，未被"综合判断"抹平。
-- [ ] 倒灌进入六跳；跳数仍为 6；"封闭通道不晚于封路"成立。
+- [ ] 倒灌进入六步；跳数仍为 6；"封闭通道不晚于封路"成立。
 - [ ] 泵站负荷用 §6.2 公式计算，`load_state` 标签可复算。
 - [ ] `evidence_check` 全绿、`pytest -q` 全绿、`git status` 干净。
 - [ ] 五处对外数字同步完成，changelog 逐条可核。
 - [ ] 3D 高亮 id 与推演 id 对齐。
-- [ ] 平台真机 `collab_run` 结论与离线一致。
+- [ ] 平台实测 `collab_run` 结论与离线一致。
 
 ## 13 风险与对策
 
 | 风险 | 影响 | 对策 |
 | --- | --- | --- |
-| 多 Agent 放大不可复现性 | 现场第二次跑对不上 | 断言权在內核 + 结论一致性门禁 + 轨迹整轨留痕；对外只说"结论一致"，不说"轨迹一致" |
+| 多 Agent 放大不可复现性 | 现场第二次跑对不上 | 断言权在內核 + 结论一致性校验 + 轨迹整轨留痕；对外只说"结论一致"，不说"轨迹一致" |
 | Nexent 不支持 Agent 互调 | 路径 A 无法交付 | 先做路径 B（总控 + `collab_run`），A 作为探索，不写进验收线 |
 | 重算后数字全漂移被质疑"改数字" | 可信度 | changelog 写清原因（新增通道、替换 0.8 口径）；v1 报告归档不删 |
 | 多 Agent 时延上升 | 演示节奏 | 只报协同覆盖度收益，不承诺更快；渲染仍异步、不进主循环 |

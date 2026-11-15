@@ -121,12 +121,12 @@ tag 与 `visualization/unreal/Content/Python/build_urban_level.py` 逐字对齐�
 | --- | --- |
 | 实体 id 全部来自真源 | `tests/test_scene_binding.py` |
 | 19 个高亮 id 无静默丢失 | 同上（含 `summary` 不变量） |
-| hop 只取六跳、取最后一跳 | 同上 |
+| hop 只取六步、取最后一跳 | 同上 |
 | tag 与 UE 脚本一致 | 同上（读 `build_urban_level.py` / `urban_twin_state.py`） |
-| 同一真源逐位一致、换布局换指纹 | 同上（`projection_hash`） |
+| 同一真源逐位一致、换布局换校验值 | 同上（`projection_hash`） |
 | 提交的实体表能用当前真源复算 | `python -m decision_poc.scene_binding --check` |
 
-## 7 仍未闭环的部分
+## 7 仍未流程的部分
 
 本阶段只保证"高亮要的对象在主键上找得到"。剩下两件事没有做，也没有宣称做了：
 
@@ -143,7 +143,7 @@ tag 与 `visualization/unreal/Content/Python/build_urban_level.py` 逐字对齐�
 
 几何资产与 UE 关卡在 `blender-ue-scene`，绑定表更新必须两侧同一批做；本轮只落口径与映射计划，不动几何。
 
-## 2026-11-02 真机执行结果（UE 5.8 + 低显存启动配置）
+## 2026-11-02 实测执行结果（UE 5.8 + 低显存启动配置）
 
 - **启动**：本机显存吃紧，D3D12 曾在 2048² 纹理分配时驱动崩溃；在 `Config/DefaultEngine.ini` 增加
   低显存渲染设置（关虚拟阴影/Lumen/Nanite、`r.Shadow.MaxResolution=1024`、`r.Streaming.PoolSize=512`）后，
@@ -151,15 +151,15 @@ tag 与 `visualization/unreal/Content/Python/build_urban_level.py` 逐字对齐�
 - **语义代理**：在 `/Game/UrbanTwin/Maps/VD02Only` 生成两个带标签的 Mesh 代理并保存：
   `twin:TW-underpass-UP-XH-101` + `kind:underpass` + `state:backflow_high`（1 个）、
   `twin:TW-pump_station-DF-PS-01` + `kind:pump_station` + `state:overload`（1 个）；`find_actors` 反查各命中 1；
-- **绑定代码真机执行**：用 `-ExecCmds="py .../bind_check.py"` 在编辑器内跑 `apply_scenario("flood")` 与
+- **绑定代码实测执行**：用 `-ExecCmds="py .../bind_check.py"` 在编辑器内跑 `apply_scenario("flood")` 与
   `highlight([...])`，日志实测
   `{"tags_added": [], "scenario": {"pump_alerts": 1, "underpass_alerts": 1}, "highlight_hits": 2}`
-  —— 通道倒灌与泵站过载两条新状态在真机命中，高亮 2 个目标；
+  —— 通道倒灌与泵站过载两条新状态在实测命中，高亮 2 个目标；
 - **截图**：`docs/reports/captures/S33-binding-v2.png`（视口 1546×538）；
 - **仍未做**：`M_Underpass` / `M_Underpass_Alert` 材质不存在，倒灌状态暂用回退材质；UE 关卡里的
   `TN-TIANFU → TW-underpass-UP-XH-101` 只做了锚点改绑，真实隧道几何体的材质换绑待资产重导入。
 
-复跑命令：
+重跑命令：
 
 ```powershell
 Set-Location D:/华为ICT/agent_poc/visualization/unreal
@@ -169,7 +169,7 @@ Set-Location D:/华为ICT/agent_poc/visualization/unreal
   -ExecCmds="py D:/华为ICT/agent_poc/visualization/unreal/Content/Python/bind_check.py"
 ```
 
-### 2026-11-02 追加：告警材质与真机颜色核对
+### 2026-11-02 追加：告警材质与实测颜色核对
 
 新建三张材质（`/Game/UrbanTwin/Materials/`，BaseColor 常量，已编译并保存）：
 
@@ -179,11 +179,11 @@ Set-Location D:/华为ICT/agent_poc/visualization/unreal
 | `M_Underpass_Alert` | 通道倒灌 `backflow_high/medium` | 0.95 / 0.25 / 0.05 |
 | `M_PumpStation_Alert` | 泵站 `overload/high_load` | 1.00 / 0.55 / 0.05 |
 
-真机核对（`-ExecCmds="py .../bind_check.py"`，`BIND_CHECK_HIGHLIGHT=0` 保留告警材质）：
+实测核对（`-ExecCmds="py .../bind_check.py"`，`BIND_CHECK_HIGHLIGHT=0` 保留告警材质）：
 
 - 日志：`{"tags_added": [], "scenario": {"pump_alerts": 1, "underpass_alerts": 1}, "highlight": "skipped"}`
 - 截图：`docs/reports/captures/S33-binding-pump.png`（泵站代理 = 琥珀色 = `M_PumpStation_Alert`）、
   `docs/reports/captures/S33-binding-underpass.png`（通道代理 = 橙红色 = `M_Underpass_Alert`）
-- 设 `BIND_CHECK_HIGHLIGHT=1` 时恢复"六跳高亮"行为（`highlight_hits` 会记 2）
+- 设 `BIND_CHECK_HIGHLIGHT=1` 时恢复"六步高亮"行为（`highlight_hits` 会记 2）
 
 遗留：关卡里有两个 DirectionalLight（启动会提示 ForwardShadingPriority 竞争），不影响绑定，清场景时可删一个。

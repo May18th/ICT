@@ -1,13 +1,13 @@
-# Nexent 侧装配与真机验证（可复现）
+# Nexent 侧装配与实测验证（可复现）
 
-把本仓库的城市孪生 MCP 服务接入本机 Nexent v2.7.0，并验证"平台 Agent 调 MCP 工具 → 六跳结论与离线一致"。
+把本仓库的城市孪生 MCP 服务接入本机 Nexent v2.7.0，并验证"平台 Agent 调 MCP 工具 → 六步结论与离线一致"。
 
 **最新复核（2026-11-14，主 Agent `v26` / 协同 Agent `v9`，DeepSeek-Chat）**：
 
 | 项 | 结果 | 证据 |
 | --- | --- | --- |
 | 主链路 | **8/8 项一致**，conversation_id=223，attempts=1 | `samples/eval/nexent_urban_v26_retest.json` |
-| 协同链路 | **2/2**，指纹 `ab94413cf94bc9a5`，26 卡 / 15 序 / 6 角色，两次 14.4s / 8.3s | `samples/nexent/live/collab_v9_retest.json` |
+| 协同链路 | **2/2**，校验值 `ab94413cf94bc9a5`，26 卡 / 15 序 / 6 角色，两次 14.4s / 8.3s | `samples/nexent/live/collab_v9_retest.json` |
 | v26 的 `doc_search` | 本轮**未被调用**（工具日志只有 1 条 `event_deduce`） | `artifacts/visual/tool_log.jsonl` |
 
 > v26 比 v25 多挂一个 `doc_search`（`MAIN_TOOLS` 在 2026-11-13 扩到 3 个）。这次复核说明：提示词里"只在需要外部依据时调用、
@@ -29,7 +29,7 @@
 
 平台实际调用 `event_deduce` 1 次，工具日志与该轮一一对应（`samples/nexent/live/mcp_tool_log.jsonl` 仅 1 行）。
 > 模型切换原因：openPangu-2.0-Pro 走华为 ModelArts，2026-11-06 因账户欠费停服，改为平台已注册的 DeepSeek-Chat（`https://api.deepseek.com/v1`，独立计费）。切换后深度思考段消失，同一提示词下一轮即通过，作答预算也从 16384 回调到 8192。
-完整过程与排障见 [真机集成报告](../../docs/reports/nexent-live-integration-report.md)。
+完整过程与排障见 [实测集成报告](../../docs/reports/nexent-live-integration-report.md)。
 
 ## 0 前置
 
@@ -75,13 +75,13 @@ docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_
 | --- | --- | --- |
 | `register-mcp` | 注册 MCP 服务 `urban-twin-mcp`（URL `http://urban-twin-mcp:8000/sse`） | 同名已存在则复用 |
 | `sync-tools` | `scan_tool` 把 15 个 MCP 工具同步进平台工具库 | 已存在则覆盖状态 |
-| `create-main` | 创建/复用 `urban_deduction_agent`（**upsert**：带 `agent_id` 回写提示词），挂 2 个结论类工具并发布 | 同名 Agent 复用；重复挂载无害 |
+| `create-main` | 创建/复用 `urban_deduction_agent`（**upsert**：带 `agent_id` 回写提示词），挂 2 个结论类工具并发布 | 同名 Agent 复用；重复接入无害 |
 | `create-collab` | 创建/复用 `urban_collab_agent`，挂 6 个协同工具并发布 | 同上 |
 | `skills` | 上传 SKILL.md → 绑 Agent 草稿 → **重新发布** → 复核已发布版本 | 上传按正文哈希判 `unchanged`；绑定是覆盖写 |
 | `mint-key` | 生成北向 API Key | 每次生成新 Key（旧 Key 可继续用） |
 
-`skills` 必须排在两次发布之后：绑定只能写草稿（`version_no=0`），运行期读的是发布快照。
-少最后那次重新发布，表里草稿有、快照没有，**看起来绑了、实际不生效**。这条顺序以前靠人记，
+`skills` 必须排在两次发布之后：绑定只能写草稿（`version_no=0`），运行期读的是发布状态。
+少最后那次重新发布，表里草稿有、状态记录没有，**看起来绑了、实际不生效**。这条顺序以前靠人记，
 现在由 `tests/test_nexent_setup_steps.py` 锁住。
 
 > 分步排障：`register-mcp` / `sync-tools` / `create-agent` / `create-collab-agent` /
@@ -91,7 +91,7 @@ docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_
 > **`all` 跑完必须再跑一次 `dedupe_draft_mounts.py`**：`attach_tools_for()` 对每个工具调
 > `/api/tool/update`（`version_no=0`），而那个端点每次都是 **insert 新 instance**、不按
 > (agent, tool) upsert。所以跑两次装配，草稿层每个工具就有两条；发布层是干净的（平台发布时
-> 按 tool_id 去重），但**只要有人在平台上点一次"发布"，重复就会快照进新版本**。
+> 按 tool_id 去重），但**只要有人在平台上点一次"发布"，重复就会状态记录进新版本**。
 > ```powershell
 > docker cp deploy/nexent/dedupe_draft_mounts.py nexent-config:/tmp/
 > docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/dedupe_draft_mounts.py"
@@ -106,7 +106,7 @@ docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_
 
 | 退出码 | 含义 |
 | --- | --- |
-| 0 | MCP / 15 工具 / 两个 Agent / 技能草稿与发布快照全部就位 |
+| 0 | MCP / 15 工具 / 两个 Agent / 技能草稿与发布状态全部就位 |
 | 1 | 有硬失败（缺工具、Agent 不存在、技能 verify 不过） |
 | 2 | 有项**无法断言**（如技能目录没挂进容器）——这不是通过 |
 
@@ -158,14 +158,14 @@ docker cp nexent-config:/tmp/skills_evidence.json samples/nexent/live/skills.jso
 
 由此能宣称与不能宣称要分开：
 
-- **能宣称**：技能绑定有效（草稿与发布快照都有实例）；技能的 description 会进入模型上下文，
+- **能宣称**：技能绑定有效（草稿与发布状态都有实例）；技能的 description 会进入模型上下文，
   影响它对任务的理解。
 - **不能宣称**："技能正文参与了推理"或"技能驱动了工具选择"。当前 8/8 证明的是 MCP 工具链与
   输出协议有效，技能正文全程没进上下文。现场被追问时按这个边界答。
 
 两个技能的 `tool_ids` 都是空的——技能本身没挂工具，工具是按 Agent 挂的。
 
-## 3 真机验证（结论级）
+## 3 实测验证（结论级）
 
 ```powershell
 $env:PYTHONPATH = "src"
@@ -195,8 +195,8 @@ uv run --locked python deploy/nexent/capture_evidence.py
 | 文件 | 内容 |
 | --- | --- |
 | `agents.json` | 北向已发布 Agent 列表（含 `urban_deduction_agent`、版本号） |
-| `conversation_<id>.json` | 真实对话：用户问题 + Agent 六跳 JSON 结论 |
-| `mcp_tool_log.jsonl` | 平台调用 MCP 工具的日志（工具名、状态、耗时、快照哈希） |
+| `conversation_<id>.json` | 真实对话：用户问题 + Agent 六步 JSON 结论 |
+| `mcp_tool_log.jsonl` | 平台调用 MCP 工具的日志（工具名、状态、耗时、状态记录哈希） |
 | `live_evidence.json` | 汇总：Agent、会话、工具调用、8 项校验结果 |
 
 ## 4.1 平台界面截图 / 录屏（可核对，不是"人工截一张图"）
@@ -254,13 +254,13 @@ docker cp nexent-config:/tmp/agent_export.json       samples/nexent/live/agent_e
   - **在线决策链路 11 个**：主 Agent 挂 **4 个**（`MAIN_TOOLS` = `event_deduce` + `evidence_locate` +
     `doc_search` + `collab_run`）、协同 Agent 挂 6 个（`COLLAB_TOOLS`），去重后**实际被调用的是 7 个**；
     其余 4 个（`claim_trace` / `provenance_verify` / `counterfactual_run` / `semantic_query`）
-    已注册、契约完整，按部门视角按需挂载。
+    已注册、契约完整，按部门视角按需接入。
   - **离线渲染 4 个**：`scene_render` / `scene_status` / `scene_compare` / `asset_lookup`。它们把一次决策落盘成
-    渲染作业、读回出片状态、做快照对比与资产核对，**不参与在线决策**；`scene_render` 只落盘即返回，
+    渲染作业、读回出片状态、做状态记录对比与资产核对，**不参与在线决策**；`scene_render` 只落盘即返回，
     引擎不在线时体现为 `delivery=pending`，不算失败。2026-11-14 起现场演示不再使用 UE/Blender，
     这 4 个工具保留是因为 P10 模块有独立测试（`tests/test_p10_render_worker.py` 等），不是死代码，
     但**对外不要宣称它们参与决策**。
-  - 挂载数不是越多越好：2026-11-03 把 12 个工具全挂上主 Agent，模型转去调 `parallel_executor`，
+  - 接入数不是越多越好：2026-11-03 把 12 个工具全挂上主 Agent，模型转去调 `parallel_executor`，
     8/8 掉到 0/8。
 
 细节与交叉核对结论见 [`docs/reports/agent-export-evidence.md`](../../docs/reports/agent-export-evidence.md)。
@@ -268,7 +268,7 @@ docker cp nexent-config:/tmp/agent_export.json       samples/nexent/live/agent_e
 ## 5 现场演示顺序（约 2 分钟）
 
 1. 打开 Nexent 前端 `http://localhost:3000`，选 `urban_deduction_agent`，提问核心事件；
-2. 展示回答里的六跳 JSON + C1/C2/C3 + 缺口 2 台；
+2. 展示回答里的六步 JSON + C1/C2/C3 + 缺口 2 台；
 3. 切到 `samples/nexent/live/mcp_tool_log.jsonl`，指出 `event_deduce` / `allocation_plan` 是平台调用的；
 4. 跑 `python -m decision_poc.nexent_urban` 输出 8/8，证明与离线结论一致；
 5. 打开 `/evolution` 面板收尾（策略进化与回滚）。
@@ -281,20 +281,20 @@ docker cp nexent-config:/tmp/agent_export.json       samples/nexent/live/agent_e
 | Agent 最终回答是 `<\|tool_call_start\|>...` 文本 | openPangu 工具调用协议需修复重试 | Agent 开 `enable_protocol_repair_retry`；提示词改成"先调 event_deduce，再只输出 JSON"两步式 |
 | 工具调用走 `parallel_executor` 后卡住 | 模型自行发起并行子任务 | 提示词明确禁止 `parallel_executor` |
 | `twin_neighbors` 返回 NOT_FOUND | 模型把事件编号当 `twin_id` 传 | 提示词可补"twin_id 用 `TW-incident-<工单号>`"；当前校验不依赖该工具 |
-| 界面里 MCP 显示"未连接" | 卡片上的连通性是**上次校验**的快照，容器重启后不会自动重测 | 点卡片右上角「连通性校验」；`capture_platform_ui.py` 会自己点一次再截图 |
+| 界面里 MCP 显示"未连接" | 卡片上的连通性是**上次校验**的状态记录，容器重启后不会自动重测 | 点卡片右上角「连通性校验」；`capture_platform_ui.py` 会自己点一次再截图 |
 | Skills 未出现在平台 | 旧轮次只装配了 MCP 工具，`samples/nexent/skill/*/SKILL.md` 没上传 | 已解决：见 §2.1（skill_id=2/3，正文逐位一致） |
 
 ## 7 诚实边界
 
 - 本目录脚本面向**本机 Docker 演示环境**，管理员用户与 JWT 由容器环境提供；生产环境要换成正式账号与权限体系。
-- 真机结论只覆盖 `WO-20261029-007` 一个事件与 8 项一致性检查；扩事件需要扩数据集与评测用例。
+- 实测结论只覆盖 `WO-20261029-007` 一个事件与 8 项一致性检查；扩事件需要扩数据集与评测用例。
 - 主 Agent 挂 **4 个工具**（`event_deduce` + `evidence_locate` + `doc_search` + `collab_run`）。平台工具库当前是 15 个
-  （`setup_nexent.py status` 显示 `命中 15/15`），主 Agent 的挂载是这 15 个里的 3 个子集。
-  收窄挂载不是偷懒：openPangu 看到 `twin_neighbors` / `conflict_check` / `allocation_plan`
+  （`setup_nexent.py status` 显示 `命中 15/15`），主 Agent 的接入是这 15 个里的 3 个子集。
+  收窄接入不是偷懒：openPangu 看到 `twin_neighbors` / `conflict_check` / `allocation_plan`
   就会去调（提示词明令禁止也拦不住），随后走 `parallel_executor` 把回答截断在 `<|tool_call_start|>`。
   工具列表才是模型真正读的"提示词"。`doc_search` 是 2026-11-13 加的第 3 个（真实预案进库后要能查"依据哪一条"），
   提示词把它限死在"最多 1 次、只提供依据不提供事实"；2026-11-14 复核时模型**没触发**它。
-- 两个 SKILL.md 已进平台技能仓库**且已绑定到已发布版本**（草稿 v0 与发布快照各 2 条实例）。
+- 两个 SKILL.md 已进平台技能仓库**且已绑定到已发布版本**（草稿 v0 与发布状态各 2 条实例）。
   运行时效果分三层说，别压成一句：
   1. **会注入**：平台把每份 enabled 技能的 `name` + `description` 拼进 `<available_skills>`
      随系统提示下发，并指示"先审视 description 判断是否匹配"
@@ -326,12 +326,12 @@ uv run --locked python -m decision_poc.nexent_urban --attempts 2 --json samples/
 
 实测 **2/8**（主 Agent 同一时点 8/8，conversation 134）。塌掉的是需要工具取数的 6 项：
 冲突编号、冲突类型、资源缺口、隔离先于抽排、关键处置动作、证据非空。通过的两项不需要工具——
-`事件编号一致`是把输入回填，`六跳齐全`是照抄提示词里那六个字段名。
+`事件编号一致`是把输入回填，`六步齐全`是照抄提示词里那六个字段名。
 
 第 1 次调用连 JSON 都没产出；第 2 次模型按约束拒答，原话：
 
-> 无法完成六跳推演：本轮运行环境未注入 MCP 工具 event_deduce（工具调用不可见，报 NameError），
-> 六跳事实、三类冲突、资源缺口与处置顺序均无法取证，按规则不输出结论。
+> 无法完成六步推演：本轮运行环境未注入 MCP 工具 event_deduce（工具调用不可见，报 NameError），
+> 六步事实、三类冲突、资源缺口与处置顺序均无法取证，按规则不输出结论。
 
 这同时说明提示词里"拿不到工具返回就不输出结论"那条约束是生效的——它没有硬编一套看起来很对的答案。
 
@@ -341,21 +341,21 @@ uv run --locked python -m decision_poc.nexent_urban --attempts 2 --json samples/
 
 ### 协同侧的对照实验（2026-11-13）
 
-主 Agent 的对照只回答"六跳要不要工具"。协同 Agent 此前只有"2/2 指纹一致"，
+主 Agent 的对照只回答"六步要不要工具"。协同 Agent 此前只有"2/2 校验值一致"，
 那只说明**它会照着工具返回值抄**，说明不了"动作卡与处置顺序不是它自己排的"。
 所以补三组同题实验（同模型、同提示词，唯一差别是有没有工具）：
 
-| 组 | Agent | 工具 | 问法 | 指纹 | 卡片 / 顺序 |
+| 组 | Agent | 工具 | 问法 | 校验值 | 卡片 / 顺序 |
 | --- | --- | --- | --- | --- | --- |
 | A | `urban_collab_agent`（v9） | 6 个 | 先调 `collab_run` | `ab94413cf94bc9a5`，一致 | 26 / 15 |
 | B | `urban_collab_control_no_tools`（v2） | 0 个 | 同上 | 无（连可解析 JSON 都没产出） | — |
 | C | 同上 | 0 个 | 明令不许调工具，要求凭经验出方案 | `b7f3c2a9e41d5806`（编的，格式合法） | 8 / 8 |
 
-C 组是这组实验里最有用的一格：它编出来的指纹**格式完全正确**（16 位十六进制）。
-如果验收只检查"有没有 `kernel_fingerprint` 字段"，就会被它骗过去；能对得上只能来自内核。
-卡片 id 也露馅——真实是内核命名的卡，C 组编的是 `CARD-01…CARD-08`，数量只有 26 的三分之一。
-不同轮次它编的指纹还不一样（另一次是拿事件编号拼的 `WO20261029007A0`），
-说明"编一个像指纹的字符串"是随机的，这正是不该只看格式的原因。
+C 组是这组实验里最有用的一格：它编出来的校验值**格式完全正确**（16 位十六进制）。
+如果验收只检查"有没有 `kernel_fingerprint` 字段"，就会被它骗过去；能对得上只能来自引擎。
+卡片 id 也露馅——真实是引擎命名的卡，C 组编的是 `CARD-01…CARD-08`，数量只有 26 的三分之一。
+不同轮次它编的校验值还不一样（另一次是拿事件编号拼的 `WO20261029007A0`），
+说明"编一个像校验值的字符串"是随机的，这正是不该只看格式的原因。
 
 跑法：
 
@@ -365,8 +365,8 @@ docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/no_too
 PYTHONPATH=src python scripts/nexent_collab_ab.py   # 三组同题，写 samples/nexent/live/collab_ab.json
 ```
 
-主侧对照组同日复跑仍 **2/8**（conversation 200），通过项依旧是"事件编号回填"与
-"六跳字段名照抄"——升到 v25 后行为没有变化，说明那两个薄弱项是判据本身的形状，不是版本回归。
+主侧对照组同日重跑仍 **2/8**（conversation 200），通过项依旧是"事件编号回填"与
+"六步字段名照抄"——升到 v25 后行为没有变化，说明那两个薄弱项是判据本身的形状，不是版本回归。
 
 边界：一个事件、每组跑一次。B/C 组的合格形态是"拿不到凭据"，不是"必须拒答"——
 B 组这次写的是 `<code>print("collab_run" in dir())</code>`，它去运行时查符号，也没硬编答案。
@@ -378,12 +378,12 @@ MCP 工具数已到 **15**（含 `collab_run`，分组 `collaboration`）。平�
 | 命令 | 作用 |
 | --- | --- |
 | `python /tmp/setup_nexent.py all` | 注册 MCP → 同步 15 工具 → 建主 Agent → 建协同 Agent → **上传技能 + 绑草稿 + 重新发布 + 复核** → 签发 Key（六步任一失败即停） |
-| `python /tmp/setup_nexent.py status` | 只读自检：MCP / 15 工具 / 两个 Agent / 技能草稿与发布快照；0 全绿、1 有失败、2 无法断言 |
+| `python /tmp/setup_nexent.py status` | 只读自检：MCP / 15 工具 / 两个 Agent / 技能草稿与发布状态；0 全绿、1 有失败、2 无法断言 |
 | `python /tmp/setup_nexent.py bind-skills` | 只重跑技能链（改过 SKILL.md 后用它；会重新发布一版，版本号 +1） |
 | `python /tmp/setup_nexent.py create-collab-agent` | 只建/更新协同 Agent `urban_collab_agent` 并挂 `collab_run` 等 6 个工具 |
 
 协同 Agent 的提示词是"两步式"：先 `collab_run`，再**逐字转述**动作卡、联合发布对、处置顺序与
-`kernel_fingerprint`；不得新增卡片、不得改写冲突，指纹必须与工具返回逐位一致。
+`kernel_fingerprint`；不得新增卡片、不得改写冲突，校验值必须与工具返回逐位一致。
 
 验收脚本 `scripts/nexent_collab_live.py`（多次调用算成功率，不是跑通一次就宣称稳定）：
 
@@ -399,11 +399,11 @@ uv run --locked python scripts/nexent_collab_live.py --attempts 2 --json samples
 角色白名单 `ROLE_TOOL_GROUPS` 是**运行期视图**，不导出到 `tools.json`；部门 Agent 若单独建（路径 A），
 只能看到本组工具。Nexent v2.7 是否支持 Agent-as-Tool **未验证**，故默认走路径 B。
 
-> **历史真机状态**：2026-11-03 已在 Docker 恢复后完整复跑（平台工具库 13 个 / 主 Agent v10 / 协同 Agent v4）；
+> **历史实测状态**：2026-11-03 已在 Docker 恢复后完整重跑（平台工具库 13 个 / 主 Agent v10 / 协同 Agent v4）；
 > 当时 `scene_status` 尚未加入平台工具库。当前代码与 MCP 清单为 14 个，需 Docker 恢复后重扫，
-> 结果见文末「2026-11-03 复跑」一节；主 Agent 挂载工具数已从 12 收窄到 2，原因见该节。
+> 结果见文末「2026-11-03 重跑」一节；主 Agent 接入工具数已从 12 收窄到 2，原因见该节。
 
-## 2026-11-02 真机复跑（Docker 恢复后）
+## 2026-11-02 实测重跑（Docker 恢复后）
 
 | 项 | 结果 |
 | --- | --- |
@@ -412,15 +412,15 @@ uv run --locked python scripts/nexent_collab_live.py --attempts 2 --json samples
 | 主 Agent | `urban_deduction_agent` 发布 **v5**，挂 12 个结论类工具（`collab_run` 显式 detach） |
 | 协同 Agent | `urban_collab_agent` agent_id=4 发布 **v1**，挂 6 个工具（含 `collab_run`） |
 | 主链路复核 | `python -m decision_poc.nexent_urban` → **8/8 项一致，conversation_id=59** |
-| 协同复核 | `collab_run` 真机返回 JSON，`kernel_fingerprint=d7c16d572ca7a33e` 与离线**逐字一致**，conversation_id=60 |
+| 协同复核 | `collab_run` 实测返回 JSON，`kernel_fingerprint=d7c16d572ca7a33e` 与离线**逐字一致**，conversation_id=60 |
 
 已知限制如实记录（证据见 `samples/nexent/live/collab_live.json`）：
-- 协同 Agent 输出格式不稳定：2 次调用中 1 次返回可解析 JSON（指纹一致）、1 次未按要求输出 JSON；
+- 协同 Agent 输出格式不稳定：2 次调用中 1 次返回可解析 JSON（校验值一致）、1 次未按要求输出 JSON；
 - 环境侧：本机内存仅 15.3 GB，`nexent-data-process` 占 4.5 GB 时宿主只剩 0.5 GB，导致 northbound 请求被掐断；
   临时 `docker stop nexent-data-process kg-mcp` 后恢复；`localhost:5013` 端口映射失效时需 `docker restart nexent-northbound`；
 - 未验证：Nexent 的 Agent-as-Tool（路径 A），无证据不宣称。
 
-## 2026-11-03 复跑（Docker 恢复后，全链路）
+## 2026-11-03 重跑（Docker 恢复后，全链路）
 
 | 项 | 结果 |
 | --- | --- |
@@ -429,7 +429,7 @@ uv run --locked python scripts/nexent_collab_live.py --attempts 2 --json samples
 | 主 Agent | `urban_deduction_agent` 发布 **v10**，只挂 2 个工具（`event_deduce` + `evidence_locate`） |
 | 主链路 | **8/8 项一致，conversation_id=78**，退出码 0 |
 | 技能绑定 | 两个技能在草稿与 v10 发布版本均 `present=True enabled=True`（`bind_skills.py verify --require-published` 退出码 0） |
-| 协同 Agent | 发布 **v4**，挂 6 个工具；3 次调用 **2 次**指纹逐字一致（`d7c16d572ca7a33e`、26 卡 / 15 序 / 6 角色） |
+| 协同 Agent | 发布 **v4**，挂 6 个工具；3 次调用 **2 次**校验值逐字一致（`d7c16d572ca7a33e`、26 卡 / 15 序 / 6 角色） |
 
 ### 这一轮真正卡住的地方（都实测过，不是猜想）
 
@@ -439,7 +439,7 @@ uv run --locked python scripts/nexent_collab_live.py --attempts 2 --json samples
 2. **改提示词拦不住**。DUTY_PROMPT 加"禁止 python_interpreter / read_skill_md / parallel_executor"
    之后，conv 74 仍开 `parallel_executor`，conv 75 把调用写成 `event_deduce(event_id=...)`
    这种函数语法。提示词对工具选择的影响力远低于工具列表本身。
-3. **真正的约束是挂载哪些工具**。把主 Agent 收窄到 `event_deduce` + `evidence_locate` 后，
+3. **真正的约束是接入哪些工具**。把主 Agent 收窄到 `event_deduce` + `evidence_locate` 后，
    v10 一次跑通 8/8。
 4. **装配脚本两个隐性坑**：`create_agent` 原来只在 Agent 不存在时创建，复用已有 Agent 时
    **不回写 prompt**（改了提示词却发布旧提示词）；`mint_api_key` 从 `/tmp` 跑会
@@ -480,7 +480,7 @@ Nexent 侧注册的地址就是 `http://urban-twin-mcp:8000/sse`），不能靠�
 `docker run` 起的、没有 compose 标签，compose 见到同名容器直接报
 `Conflict. The container name "/urban-twin-mcp" is already in use`，一键部署当场失败。
 `up_mcp.ps1` 补的就是这一步：比对 `com.docker.compose.project` 标签，不是本编排建的就把
-`docker inspect` 快照存到 `out/backup/urban-twin-mcp.manual.inspect.<时间戳>.json` 再 `docker rm -f`，
+`docker inspect` 状态记录存到 `out/backup/urban-twin-mcp.manual.inspect.<时间戳>.json` 再 `docker rm -f`，
 由 compose 重新接管；`compose up` 仍报冲突时再清一次重试。重复执行是幂等的（已归属本编排则只做校验）。
 
 healthcheck 判据是"15 个工具都在"，不是"进程没死"——容器活着但工具没注册时，平台侧只表现为

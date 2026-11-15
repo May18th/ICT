@@ -103,23 +103,23 @@ Equipment「主传动减速机」-exhibits-> FaultMode -triggered_by-> Threshold
 
 ## 6. 动态更新与合并计划
 
-`plan_merge(bundle, snapshot)` 把候选与现有图快照对比，输出四类操作：
+`plan_merge(bundle, snapshot)` 把候选与现有图状态记录对比，输出四类操作：
 
 | op | 含义 | 动作 |
 |---|---|---|
-| `add` | 快照中无同名同类型节点 | 直接新增 |
+| `add` | 状态记录中无同名同类型节点 | 直接新增 |
 | `merge` | 同名同类型、属性不冲突 | 补属性、补证据 |
 | `conflict` | 同名同类型但属性值不同 | **不改图**，人工裁决 |
 | `unchanged` | 完全一致 | 跳过 |
 
-快照的生成方式（平台在线时执行）：
+状态记录的生成方式（平台在线时执行）：
 
 ```sql
 select e.name, t.name as type, e.properties as attributes
 from kg.kg_entity e join kg.kg_ontology_type t on t.id = e.type_id;
 ```
 
-把结果保存为 `samples/assets/kg_snapshot.json`（形如 `{"entities": [...]}`），再跑一次引导命令即会打印合并计划。**平台不在线时该文件不存在，命令只提示"全部按新增处理"，不会伪造快照。**
+把结果保存为 `samples/assets/kg_snapshot.json`（形如 `{"entities": [...]}`），再跑一次引导命令即会打印合并计划。**平台不在线时该文件不存在，命令只提示"全部按新增处理"，不会伪造状态记录。**
 
 ## 7. 实测指标（本样本集：4 份资产）
 

@@ -1,6 +1,6 @@
 # P2 任务单：数据资产认知加工层
 
-- 阶段：P2（前置 P0 接口冻结 ✅、P1 数据集 ✅）
+- 阶段：P2（前置 P0 接口固定 ✅、P1 数据集 ✅）
 - 下发：Codex → CodeArts
 - 依据：`docs/ICT-赛题3-城市内涝事件推演-WorkBuddy任务单.md` §6 P2、`docs/p0-interface-freeze.md`、`docs/urban-scenario-ground-truth.md`
 - 状态：**待用户确认后下发**
@@ -12,7 +12,7 @@
 | 本体管线是设备运维域写死的 | `ontology.py:145` `SEED_ONTOLOGY` 仅含 Equipment/Line/Metric/FaultMode/ThresholdRule 等 10 类 | 城市域（Road/Pipeline/Department/Resource）无法复用，必须新增域配置 |
 | 抽取器按中文表头硬编码 | `ontology.py:297` `LEDGER_ALIASES`、`ontology.py:307` `OBSERVATION_ALIASES`、`ontology.py:1165` 判 `"设备名称" in header` | 道路/管线/职责表全部走不进抽取，只会产出 `warning` |
 | 资产目录写死 | `ontology.py:1143` `assets_dir = base / "samples" / "assets"` | 城市数据集在 `samples/assets/urban/` 子目录，路径需参数化 |
-| 已有可复用的通用件 | `Evidence` / `ReviewDecision` / `decide()` / `normalize_name()` / `_freeze()` / `OntologySchema` / `plan_merge()` | 置信度分档、证据合并、类型校验、快照 diff 不必重写 |
+| 已有可复用的通用件 | `Evidence` / `ReviewDecision` / `decide()` / `normalize_name()` / `_freeze()` / `OntologySchema` / `plan_merge()` | 置信度分档、证据合并、类型校验、状态记录 diff 不必重写 |
 | 现无 PDF/XLSX/图片解析依赖 | `pyproject.toml` 仅 httpx/langchain/langgraph/pydantic/pydantic-ai | 真解析需引入第三方库，属范围决策（见 §7 待确认项） |
 
 **结论**：P2 不重写管线，只做三件事——① 把目录、域 Schema、表头别名参数化；② 新增适配器与切片/标准化/区域标注；③ 新增城市域抽取基线。通用件继续复用，117 项既有测试必须保持全绿。
@@ -44,7 +44,7 @@
 - 禁止改 `samples/assets/` 下既有设备运维样例与其 manifest（既有测试依赖）。
 - 禁止在 P2 建图存储或推演（属 P3/P4/P6）。
 
-## 3 接口契约（冻结后 P3 不得改签名）
+## 3 接口契约（固定后 P3 不得改签名）
 
 ### 3.1 适配器
 
@@ -211,5 +211,5 @@ T1 必须先做且单独提交——它决定 T5 能否复用而不是重写。
 | --- | --- |
 | 参数化 `ontology.py` 引入回归 | T1 单独提交 + 先跑 117 项基线；`freeze_candidates` 保留旧名别名 |
 | 表头别名覆盖不全导致候选缺失 | T5 输出未识别列清单，P3 前补齐；`unmapped_columns` 必须显式 |
-| 抽取基线过于规则化、被判"没技术含量" | 定位为**可解释基线**：置信度分档 + 人工确认 + 冲突不自动消解，创新点在 P3 的演化闭环，不在抽取算法本身 |
+| 抽取基线过于规则化、被判"没技术含量" | 定位为**可解释基线**：置信度分档 + 人工确认 + 冲突不自动消解，创新点在 P3 的演化流程，不在抽取算法本身 |
 | 图片标注与真实图画不一致 | `annotations.json` 与 PNG 同版本提交，bbox 越界即测试失败 |

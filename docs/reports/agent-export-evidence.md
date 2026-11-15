@@ -9,7 +9,7 @@
 | 文件 | 内容 |
 | --- | --- |
 | `samples/nexent/live/urban_deduction_agent.zip` | 导出包 7 890 B，含 `agent.json` + 2 个技能 zip |
-| `samples/nexent/live/agent_export.json` | 导出证据：HTTP 状态、字节数、整包 sha256、内容指纹、包内条目清单与逐项 sha256 |
+| `samples/nexent/live/agent_export.json` | 导出证据：HTTP 状态、字节数、整包 sha256、内容校验值、包内条目清单与逐项 sha256 |
 | `deploy/nexent/export_bundle.py` | 导出 + 核验脚本（在 `nexent-config` 容器内跑，见第 6 节） |
 
 包内结构：
@@ -26,20 +26,20 @@ urban_deduction_agent.zip
 `mcp_info` = `[{"mcp_server_name": "urban-twin-mcp", "mcp_url": "http://urban-twin-mcp:8000/sse"}]`。
 Agent 本体：`urban_deduction_agent`（显示名「城市内涝跨部门决策智能体」）、`enabled=true`、模型 `DeepSeek-Chat`、`requested_output_tokens=8192`、`duty_prompt` 与 `constraint_prompt` 均在包内。
 
-## 2 指纹：哪个能写进文档，哪个不能
+## 2 校验值：哪个能写进文档，哪个不能
 
 **整包 sha256 不可复算**，实测连续导出 5 次得到 5 个不同的值（`2b7a89c9…` / `1819273a…` / `bce94c27…` / `b359b1e4…` / `c6da97af…`）。原因在平台侧：`export_agent_with_skills_impl` 用 `zipfile.ZipFile.writestr` 打包且未指定时间戳，zip 条目头带的是**导出当刻的本地时间**。
 
-**内容指纹可复算**，5 次导出完全一致：
+**内容校验值可复算**，5 次导出完全一致：
 
 | 条目 | 字节 | sha256 |
 | --- | --- | --- |
 | `agent.json` | 6 486 | `9639de1f776901cff69419f484f0c309c30ddfa2ef8c6b8e5d26a20466bf363e` |
 | `skills/scarcity-allocation-evolution.zip` | 2 188 | `6aab9fab8cbb26a90b60e9f72aba1122f482ca955464e7ffdad8477b565993d5` |
 | `skills/urban-six-hop-deduction.zip` | 2 943 | `b36d48792c3650c87ff7f306196044d27ea7c4c877b00abe5cc85ce7ddad6aa0` |
-| **内容指纹**（上述三项按名排序拼接后再 sha256） | — | `0a3aef9c61d8e5e523424ad738c93dd737772580a3b3082c3c81ee8810836221` |
+| **内容校验值**（上述三项按名排序拼接后再 sha256） | — | `0a3aef9c61d8e5e523424ad738c93dd737772580a3b3082c3c81ee8810836221` |
 
-文档写法：**写内容指纹 `0a3aef9c…`，并注明「由包内 `agent.json` 与 `skills/*.zip` 逐项 sha256 排序拼接计算」**。不要写整包 sha256——评委照做复算会对不上，反而像造假。
+文档写法：**写内容校验值 `0a3aef9c…`，并注明「由包内 `agent.json` 与 `skills/*.zip` 逐项 sha256 排序拼接计算」**。不要写整包 sha256——评委照做复算会对不上，反而像造假。
 
 ## 3 与平台技能仓库的交叉核对：逐位不一致，但语义一致
 
@@ -61,8 +61,8 @@ Agent 本体：`urban_deduction_agent`（显示名「城市内涝跨部门决策
 | 层级 | 数量 | 依据 |
 | --- | --- | --- |
 | 注册到平台 MCP 服务的工具 | **15** | `deploy/nexent/setup_nexent.py:76 OUR_TOOLS`（2026-11-06 补入 `doc_search`） |
-| 主 Agent `urban_deduction_agent` 挂载 | **2**（`event_deduce`、`evidence_locate`） | `setup_nexent.py:89 MAIN_TOOLS`，导出包实测 |
-| 协同 Agent `urban_collab_agent` 挂载 | **6**（含 `collab_run`） | `setup_nexent.py:131 COLLAB_TOOLS` |
+| 主 Agent `urban_deduction_agent` 接入 | **2**（`event_deduce`、`evidence_locate`） | `setup_nexent.py:89 MAIN_TOOLS`，导出包实测 |
+| 协同 Agent `urban_collab_agent` 接入 | **6**（含 `collab_run`） | `setup_nexent.py:131 COLLAB_TOOLS` |
 
 主 Agent 收窄到 2 个是**有意的设计决策**，源码注释给了理由（`setup_nexent.py:83-88`）：模型真正读的「提示词」是工具列表，工具一多就会绕过 `event_deduce` 去调 `twin_neighbors` / `allocation_plan`，随后 `parallel_executor` 把回答截断在 `<|tool_call_start|>`，8 项结论一致性校验就守不住。
 
@@ -74,7 +74,7 @@ Agent 本体：`urban_deduction_agent`（显示名「城市内涝跨部门决策
 
 → 对外说明/复现包必须**同时交 MCP 服务端代码 + 启动说明**（`src/decision_poc/mcp_server.py` / `mcp_sse.py` + 容器启动方式），并说明「导出包恢复的是 Agent 配置，工具能力由 MCP 服务提供」。这一条已补进 [差距台账](../competition-gap-audit.md) 第 3 节。
 
-## 6 复跑命令
+## 6 重跑命令
 
 ```bash
 docker cp deploy/nexent/platform_client.py nexent-config:/tmp/platform_client.py

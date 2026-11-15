@@ -177,9 +177,9 @@ $tokenId = ($py | docker exec -i nexent-northbound sh -c "cd /opt/backend && .ve
 2. 可靠性：SSE 聚合、`Idempotency-Key`、401/429/conflict 分类处理，无 `final_answer` 一律判失败。
 3. 合规：真实调用已验证（`conversation_id=15`），证据可追溯，记忆污染有明确清理路径。
 
-## 附：P9 决策进化闭环演示（本地，不依赖 Nexent，约 30 秒）
+## 附：P9 决策进化流程演示（本地，不依赖 Nexent，约 30 秒）
 
-三句话讲清"智能体自己变好了"：偏差归因 → 策略调整 → 前后对比；再补分层记忆、人工评审、门禁与回滚。
+三句话讲清"智能体自己变好了"：偏差归因 → 策略调整 → 前后对比；再补分层记忆、人工评审、校验与回滚。
 
 ```powershell
 Set-Location D:/华为ICT/agent_poc
@@ -202,19 +202,19 @@ uv run --locked python -m decision_poc.policy_evolution --report docs/reports/p9
 1. 第 1 轮归因到"调拨"维度：先建立封路阈值优先序（25cm 硬阈值来自预案），偏差 0.2264 → 0.0471，
    产出标签 `flood-response-v1.1`。
 2. 第 2 轮残留偏差指向"仅危险源也算关键"：补 `weight_hazard`，偏差 → 0，标签 `v1.2`；留出集同步下降，不是背训练集。
-3. 第 3 轮是收敛探针（把调拨门槛降到 0.05），被门禁拒绝——**改坏了不生效**，active 版本不变。
-4. 人工评审 `REV-001`（角色扮演）要求"从 B-01 调 1 台给 A-03、B-01 保留 1 台底盘"：该评审已变成门禁硬约束，
+3. 第 3 轮是收敛探针（把调拨门槛降到 0.05），被校验拒绝——**改坏了不生效**，active 版本不变。
+4. 人工评审 `REV-001`（角色扮演）要求"从 B-01 调 1 台给 A-03、B-01 保留 1 台底盘"：该评审已变成校验硬约束，
    评审用例偏差 0.1171 → 0；不满足它的候选一律被拒。
 5. 第二次会话从分层记忆 warm start：起点偏差 0.0000、只需 1 轮探针——**记忆存的是已验证有效的策略**。
 6. 回滚到 v1，偏差逐位回到 0.2264；报告里每个数字都能用 `--json samples/eval/p9_evolution.json` 复算，
    记忆在 `samples/eval/decision_memory.json`，加 `--reuse-memory` 可演示跨进程沉淀。
 
-评委若追问"反馈是哪来的"：冻结的合成 ground truth（`samples/eval/allocation_cases.json`，8 训练 + 4 留出，逐例带依据条款）
+评委若追问"反馈是哪来的"：固定的合成 ground truth（`samples/eval/allocation_cases.json`，8 训练 + 4 留出，逐例带依据条款）
 + 人工评审结论（`samples/eval/decision_reviews.json`），口径是"受控评测环境下的反馈信号"，**不是**真实市政数据回流；
-接真实复盘数据时只替换反馈 provider，门禁与回滚逻辑不动。
+接真实复盘数据时只替换反馈 provider，校验与回滚逻辑不动。
 
 评委若追问"记忆是不是真的接了 Nexent"：**没有**。这是 Tenant/User/Agent 三层的离线同构契约，接口对齐 Nexent 记忆分层，
-但未真机验证；接平台时只换 `remember / recall` 的实现。这条必须直说，不能包装成"已接入平台记忆"。
+但未实测验证；接平台时只换 `remember / recall` 的实现。这条必须直说，不能包装成"已接入平台记忆"。
 
 ### 浏览器对比面板（评委自己能点的版本，约 20 秒）
 
@@ -237,9 +237,9 @@ uv run --locked python -m decision_poc.web_demo --port 8787
 面板数据来自 `/api/evolution`，与 CLI 报告同源（都取 `run_showcase()`），展示层不重算指标；
 页面无外部依赖，断网也能开。
 
-## 附：P10 可视化闭环演示（决策 → 渲染 → 对比，约 40 秒）
+## 附：P10 可视化流程演示（决策 → 渲染 → 对比，约 40 秒）
 
-一句话：**不是你在 UE 里切镜头，是智能体调工具让场景变**。渲染工具只接受快照 id 与策略，
+一句话：**不是你在 UE 里切镜头，是智能体调工具让场景变**。渲染工具只接受状态记录 id 与策略，
 不接受位姿 / 材质 / 镜头；作业落盘即返回，引擎没起只体现为 `delivery=pending`。
 
 ### 1. 起浏览器端（评委能自己点）
@@ -260,14 +260,14 @@ uv run --locked python -m decision_poc.web_demo --port 8787
 （直接复用 `llm_ab.build_task`）生成，模型调用与 P8 A/B 同一条 `generate_decision_live` 路径，temperature 钉 0。
 
 - 未配置 `DECISION_LLM_PROVIDER=deepseek` + `DEEPSEEK_API_KEY` 时返回 `configured=false`，页面显示"未配置"，不影响其余演示；
-- 卡片顶部固定显示 Nexent 平台真机验证行（`/api/platform-evidence`，只读 `samples/nexent/live/llm_decision_platform.json`），**按 JSON 实际字段展示，不要手改**。
+- 卡片顶部固定显示 Nexent 平台实测验证行（`/api/platform-evidence`，只读 `samples/nexent/live/llm_decision_platform.json`），**按 JSON 实际字段展示，不要手改**。
   当前入仓 4 条（`llm_decision_platform.json` + `run1/2/3`，2026-11-06 复测）：全部 `selected_option_id=opt-3`、`selected_match=true`；公网页面已于 2026-11-06 18:26 重发并复核过。
   修复前同名的旧记录是 `opt-1` / `selected_match=false`（`git show e351027~1:samples/nexent/live/llm_decision_platform.json`）——
   讲这一段要讲"先错后对"：错在证据没进请求，对在补齐证据原文与职责边界之后；3/3 证明的是**服从性**，不是模型独立算出排序。
 - 卡片 `method` 那行原样取自证据 JSON：里面「不动 v10」是 11-06 记录时的原话，意思是这个 LLM 决策 Agent 独立、不占主 Agent 的版本号；
   主 Agent 当前是 v19，别把这句话读成"平台还在 v10"。
 - 平台侧模型温度钉不住 0，重跑仍可能漂移，页面这时会如实显示不一致——不要为了好看去改 JSON。
-  改过发布包内容必须重新发布，否则公网 `platform-evidence` 仍是上一版快照（同步文件不等于已上线）。
+  改过发布包内容必须重新发布，否则公网 `platform-evidence` 仍是上一版状态记录（同步文件不等于已上线）。
 
 #### 公网演示地址（已发布）
 
@@ -330,7 +330,7 @@ UnrealEditor-Cmd.exe UrbanTwinDemo.uproject -run=pythonscript `
 
 ### 现场可说的三句
 
-1. 快照 id 是内容哈希：同一决策同一 id，评委可当场核对"渲的是不是刚才那份结论"。
+1. 状态记录 id 是内容哈希：同一决策同一 id，评委可当场核对"渲的是不是刚才那份结论"。
 2. 渲染是异步的：引擎没起不阻塞决策，只是 delivery 停在 pending——**可视化不是决策的强依赖**。
 3. 对比是策略差异的出口：v1 与进化版在同一事件上跑，分配向量不同即得差异，数字与 P9 报告逐位一致。
 
@@ -348,12 +348,12 @@ uv run --locked python -m decision_poc.scene_layout      # 布局变了才需要
 ### 两条明确不做
 
 - 不做 UE 像素流：浏览器可交互已由 `/`（无外部依赖）承担，再叠一套推流只增部署风险；
-- 不做实时逐帧同步：异步快照回放足够撑起"决策 → 渲染 → 对比"的叙事。
+- 不做实时逐帧同步：异步状态记录回放足够撑起"决策 → 渲染 → 对比"的叙事。
 
 ## 附：评委现场自检（一条命令，约 4 秒）
 
-被问"你这些数字怎么保证不是手写的"，直接跑这条——它重跑六跳推演、P8 评测、P9 双会话进化与 MCP 工具清单，
-逐项比对冻结期望，任何一项漂移都会打印 `! 路径: 期望 X 实际 Y` 并返回退出码 1：
+被问"你这些数字怎么保证不是手写的"，直接跑这条——它重跑六步推演、P8 评测、P9 双会话进化与 MCP 工具清单，
+逐项比对固定期望，任何一项漂移都会打印 `! 路径: 期望 X 实际 Y` 并返回退出码 1：
 
 ```powershell
 Set-Location D:/华为ICT/agent_poc
@@ -365,7 +365,7 @@ echo "exit=$LASTEXITCODE"
 
 可主动演示"自检真的会拦"：把 `samples/eval/evidence_expectations.json` 里
 `p9_evolution.train.initial_deviation` 改成 `0.2`，再跑一次——自检报 `! p9_evolution.train.initial_deviation`、
-退出码 1；改回去恢复 108/108。这说明期望是冻结口径，不是跟着代码动态变的。
+退出码 1；改回去恢复 108/108。这说明期望是固定口径，不是跟着代码动态变的。
 
 完整逐项对照见 `docs/reports/evidence-check-report.md`（由命令生成，勿手改）。
 

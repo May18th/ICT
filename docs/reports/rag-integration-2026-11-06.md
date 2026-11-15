@@ -29,7 +29,7 @@
 
 被剔除的两条是 `AS-A-03-emergency_plan-cbaa17ca`（`deprecated`，`valid_to=2025-06-01`）。
 
-## 3 闭环验证
+## 3 流程验证
 
 `doc_search` 的返回里，每条命中直接给出 `evidence_ref = asset_id#locator`，与 `evidence_locate` 要的格式完全一致：
 
@@ -82,7 +82,7 @@ doc_search("基坑开挖 暴雨 职责冲突")
 ### 5.3 两处仍与实情不符（未动，怕连带破坏证据）
 
 1. **`urban_control_no_tools`(38) 的描述**仍写「仅解绑 14 个 MCP 工具」。改描述要重新发布 → v1→v2，而 A/B 对照证据 JSON 绑的是那次运行，不值得为一句话换版本号。
-2. **主 Agent 已发布 v19 早于 `doc_search`**：平台上看到的主 Agent 只有 2 个启用工具（这正是设计），但 v19 的发布快照里没有检索工具。要让评委在 Agent 配置页看到检索工具，得重新发布成 v20，会连带 42 处 `v19` 与 27 处 `conversation_id=120` 的引用，且必须重跑真机 8/8 才敢说没坏。
+2. **主 Agent 已发布 v19 早于 `doc_search`**：平台上看到的主 Agent 只有 2 个启用工具（这正是设计），但 v19 的发布状态里没有检索工具。要让评委在 Agent 配置页看到检索工具，得重新发布成 v20，会连带 42 处 `v19` 与 27 处 `conversation_id=120` 的引用，且必须重跑实测 8/8 才敢说没坏。
 
 ## 6 主 Agent 为什么不挂 `doc_search`
 

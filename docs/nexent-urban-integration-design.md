@@ -2,7 +2,7 @@
 
 - 日期：2026-10-30
 - 背景：`docs/competition-gap-audit.md` 把"基于 Nexent 可运行"列为最高风险项——本仓库此前只有设备振动
-  场景在 Nexent 上跑通，城市内涝主链路（六跳 + 冲突 + 分配 + 进化）从未进过平台。
+  场景在 Nexent 上跑通，城市内涝主链路（六步 + 冲突 + 分配 + 进化）从未进过平台。
 - 目标：让**同一个智能体**在 Nexent 上完成内涝推演，且结论与离线可复现结果逐项一致。
 
 ## 1 根因与结论
@@ -95,7 +95,7 @@ curl.exe http://127.0.0.1:8000/health
 
 - 发布 → 生成 Access Key。
 
-### 3.5 真机验证（结论级）
+### 3.5 实测验证（结论级）
 
 ```powershell
 $env:NEXENT_BASE_URL   = "http://localhost:5013"
@@ -112,7 +112,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 
 | 检查 | 期望（来自离线推演） |
 | --- | --- |
-| 六跳齐全 | observed / affected / owner / conflict / resource / action |
+| 六步齐全 | observed / affected / owner / conflict / resource / action |
 | 冲突编号 | C1 / C2 / C3 |
 | 冲突类型 | overlap / gap / contention |
 | 资源缺口 | 1 台 |
@@ -127,7 +127,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 | --- | --- |
 | MCP 服务在线 | `/health` 截图（含 15 工具）+ 终端启动日志 |
 | Nexent 已接入 MCP | MCP 配置页截图（URL 与连通性校验通过） |
-| Agent 挂载工具/Skills | Agent 编辑页工具列表截图 |
+| Agent 接入工具/Skills | Agent 编辑页工具列表截图 |
 | 平台对话 | 浏览器对话截图（question + 工具调用 + JSON 结论） |
 | 结论一致 | `nexent_urban` 的 8/8 输出 + JSON 报告 |
 | 工具调用留痕 | `artifacts/visual/tool_log.jsonl`（每次工具调用一条） |
@@ -138,9 +138,9 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 - [x] `/health` 返回 15 个工具，SSE 握手可被独立的 MCP 客户端完成（已离线测试：10 项）。
       2026-11-06 实测：`tools_count=14`，`scene_status` 为后注册（平台 `tool_id=86`，其余 41–53）。
 - [x] Nexent MCP 配置「连通性校验」通过，工具列表可见（`mcp_id=3`，`status=true`，`permission=EDIT`）。
-- [x] Agent 一次对话产出六跳 JSON，且 8/8 与离线一致（`conversation_id=120`，Agent v19 / DeepSeek-Chat，`attempts=1`）。
+- [x] Agent 一次对话产出六步 JSON，且 8/8 与离线一致（`conversation_id=120`，Agent v19 / DeepSeek-Chat，`attempts=1`）。
 - [ ] 工具日志里能看到 `event_deduce`、`conflict_check`、`allocation_plan` 至少各一次。
-      **当前只满足 `event_deduce`**：主 Agent 只挂 `event_deduce` + `evidence_locate`（收窄挂载是硬约束，
+      **当前只满足 `event_deduce`**：主 Agent 只挂 `event_deduce` + `evidence_locate`（收窄接入是硬约束，
       见 §8.1 说明），冲突与分配在 `event_deduce` 的返回里；`conflict_check`/`allocation_plan` 的独立调用
       属协同 Agent 侧，尚未在 v19 上复测，故本条保持未打勾。
 - [ ] 若 Agent 未调工具直接作答（凭记忆），结论比对必须失败——这是"是不是真编排"的区分点。
@@ -157,20 +157,20 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 | SSE 服务无鉴权 | 只绑 127.0.0.1，仅本地演示；上公网需反代 + 鉴权，不在本次范围 |
 | 并行开发冲突 | `mcp_sse.py` 为独立模块，不改 `mcp_server.py`；工具增减自动跟随主线 |
 
-## 8 当前状态（2026-10-30 更新：真机已通）
+## 8 当前状态（2026-10-30 更新：实测已通）
 
 - 已完成（离线可验证）：SSE 传输（`mcp_sse.py` + 10 项测试）、2 个 SKILL.md、`nexent_urban` 查询/解析/比对（11 项测试）、
   `NexentHttpTransport` 支持注入 `query_builder`（默认行为不变）、`trust_env=False` 避免系统代理打挂本地调用。
-- **已完成（真机）**：本机 Nexent v2.7.0 上注册 15 个 MCP 工具（tool_id 41–53）、创建并发布 Agent
-  `urban_deduction_agent`（agent_id=3，v10）、一次真实对话六跳结论与离线 **8/8 一致**（conversation_id=78），
+- **已完成（实测）**：本机 Nexent v2.7.0 上注册 15 个 MCP 工具（tool_id 41–53）、创建并发布 Agent
+  `urban_deduction_agent`（agent_id=3，v10）、一次真实对话六步结论与离线 **8/8 一致**（conversation_id=78），
   平台调用日志含 `event_deduce`（含一次协议修复重试）。
-  证据：`samples/nexent/live/`；报告：[真机集成报告](reports/nexent-live-integration-report.md)。
+  证据：`samples/nexent/live/`；报告：[实测集成报告](reports/nexent-live-integration-report.md)。
 - **2026-11-06 复测（Agent v18 → v19）**：平台运行时的作答协议升级后，原提示词（"只输出 JSON、不要代码块"）
   与运行时要求的 `<code> final_answer(...) </code>` 冲突，主 Agent 反复被判 `no_action_no_final` 并整轮重跑；
   另有一次 `truncated_generation`（输出预算 4096 被深度思考吃掉）。两处已在 `setup_nexent.py` 修正：
   提示词与查询都要求 `final_answer(json.dumps(...))` 交卷且禁用 ``` 围栏，主 Agent 输出预算提到 16384，
   `evidence_refs` 限 3–5 条。复测结果 **8/8、conversation_id=119、attempts=1**，
-  工具日志 2 行均为 `event_deduce`、快照 `d102aa80…`，与 `samples/eval/nexent_urban_smoke.json` 同源。
+  工具日志 2 行均为 `event_deduce`、状态记录 `d102aa80…`，与 `samples/eval/nexent_urban_smoke.json` 同源。
   同日 openPangu 欠费停服，主/协同 Agent 改挂 DeepSeek-Chat（`MODEL_IDS` 默认 5）后发布 v19/v7，
   再测 **8/8、conversation_id=120、attempts=1、工具调用 1 次**——换模型没有改变结论一致性。
 - **已完成（平台侧）**：2 个 SKILL.md 已上传平台技能仓库（skill_id=2/3，幂等脚本 `deploy/nexent/upload_skills.py`），证据 `samples/nexent/live/skills.json`；平台界面截图 3 张 + sha256 证据（`deploy/nexent/capture_platform_ui.py` → `docs/reports/captures/nexent/`），报告 [平台侧证据报告](reports/platform-evidence-report.md)。
@@ -178,7 +178,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 
 ### 8.1 实际装配路径（与 §3 的差异）
 
-原 §3 写的是 UI 点选步骤；真机执行时改为可复现脚本（平台 API + JWT），流程等价但可审计：
+原 §3 写的是 UI 点选步骤；实测执行时改为可复现脚本（平台 API + JWT），流程等价但可审计：
 
 1. `deploy/mcp_sse/Dockerfile` 构建 `urban-twin-mcp:dev`，以 `--network nexent_network` 运行；
 2. `deploy/nexent/setup_nexent.py`（在 `nexent-config` 容器内）依次：注册 MCP → `scan_tool` 同步 15 工具 →
@@ -195,5 +195,5 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 - 提示词两步式：先 `collab_run`，再转述 `cards / co_sign_pairs / merge_order / conflicts / kernel_fingerprint`。
 - 为什么单开一个 Agent：主 Agent 的 8 项结论一致性校验依赖固定 JSON 结构，
   把"部门动作卡"塞进同一份回答会让两种产出互相污染。
-- 未验证项：Nexent v2.7 的 Agent-as-Tool（路径 A，5 个部门 Agent 真机互调）**没有证据**，
+- 未验证项：Nexent v2.7 的 Agent-as-Tool（路径 A，5 个部门 Agent 实测互调）**没有证据**，
   规格里已标"无法确认"，因此只交付路径 B。
