@@ -106,3 +106,12 @@ scripts/build_preliminary_docx.py
 scripts/build_handoff_package.py
 scripts/delivery_check.py
 scripts/check_internal_words.py
+
+# 已停用功能的进度记录（UE / 3D 沙盘）
+docs/ue-real-assets-progress.md
+docs/twin3d-business-loop-todo.md
+
+# 3D 渲染素材与生产脚本（3D 沙盘已停用，2026-11-15 移出）
+assets/
+scripts/build_worker_char.py
+scripts/bake_worker_anim.py
