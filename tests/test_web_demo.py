@@ -10,7 +10,6 @@ from decision_poc.web_demo import (
     build_demo_payload,
     build_html,
     build_review_html,
-    build_twin3d_html,
     build_workbench_html,
     render_snapshot,
     route,
@@ -110,8 +109,10 @@ def test_page_has_scheduler_panels_and_live_scene():
     from decision_poc.web_demo import build_html
 
     html = build_html()
+    # 「演示链路」这一条随 2026-11-14 的讲稿清理一起删了：它只出现在
+    # 「01 先看结论 / 02 再看依据 / 03 最后改条件」那块引导条里，而那块是讲解词，
+    # 不该出现在页面上。面板本身由下面的 id 断言保证。
     for marker in (
-        "演示链路",
         "工单列表",
         "资源状态",
         "当前方案 vs 备选方案",
@@ -168,7 +169,6 @@ def test_page_script_parses(tmp_path):
 
     for name, builder in (
         ("index", build_html),
-        ("twin3d", build_twin3d_html),
         ("review", build_review_html),
         ("evolution", build_evolution_html),
         ("workbench", build_workbench_html),
@@ -208,7 +208,8 @@ def test_flood_playback_is_event_driven():
     assert "setTimeout(function(){runChain()" not in html
     assert "loadScheduler().then(function(){chainAll(true)})" in html
     assert "flood-story" in html and "flood-cause" in html
-    assert "twin-reading-guide" in html and "对象 → 影响 → 动作" in html
+    # 「这张图怎么读」阅读说明同属讲解词，已删；影响链路本身仍由 impact-flow 承载
+    assert "impact-flow" in html and "受影响对象" in html
     # 受影响对象卡已从「第二张地图」改为对象清单（上方动画地图不再有雷同副本），
     # scene-step 编号随旧地图删除；清单容器 ent-item + 详情面板 scene-action 必须在。
     assert "ent-item" in html and "scene-action" in html

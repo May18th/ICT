@@ -32,10 +32,30 @@ import setup_nexent  # noqa: E402
 class _FakePlatform:
     """只实现 render_status 会用到的读接口，不碰网络。"""
 
-    def __init__(self, *, skills_rc: int = 0, mcp: dict | None = None, tools: set[str] | None = None):
+    _SENTINEL = object()
+
+    def __init__(
+        self,
+        *,
+        skills_rc: int = 0,
+        mcp: dict | None = None,
+        tools: set[str] | None = None,
+        evaluator: dict | None = _SENTINEL,
+        eval_sets: dict[str, dict] | None = None,
+    ):
         self._skills_rc = skills_rc
         self._mcp = mcp if mcp is not None else {"mcp_id": 3, "enabled": True}
         self._tools = tools if tools is not None else set(setup_nexent.OUR_TOOLS)
+        # evaluator 用哨兵区分"没传（用默认值）"与"显式传 None（模拟缺失）"
+        self._evaluator = (
+            {"evaluator_id": 17, "status": "PUBLISHED"}
+            if evaluator is self._SENTINEL
+            else evaluator
+        )
+        self._eval_sets = eval_sets if eval_sets is not None else {
+            "allocation_v1": {"evaluation_set_id": 1},
+            "allocation_v12": {"evaluation_set_id": 2},
+        }
         self.verify_calls: list[bool] = []
 
     def find_mcp(self):
@@ -53,6 +73,16 @@ class _FakePlatform:
     def verify_skills(self, *, require_published: bool) -> int:
         self.verify_calls.append(require_published)
         return self._skills_rc
+
+    # --- 评测相关（render_status 的评测检查会调这三个）---
+    def eval_inputs(self):
+        return "/tmp/alloc_deviation_evaluator.py", "/tmp/nexent_eval"
+
+    def find_evaluator(self, name: str):
+        return self._evaluator
+
+    def find_eval_set(self, name: str):
+        return self._eval_sets.get(name)
 
 
 @pytest.fixture()
@@ -141,3 +171,33 @@ def test_status_flags_disabled_mcp(skills_dir) -> None:
 def test_skill_files_detects_unmounted_dir(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(setup_nexent, "SKILLS_DIR", tmp_path / "absent")
     assert setup_nexent.skill_files() == []
+
+
+# --- 评测资产的 status 语义 ------------------------------------------------
+#
+# 2026-11-14 起 status 也查评测资产（评估器 + 两个评测集）。缺准备件归 unknown，
+# 装配不完整归 failed——与技能同口径。
+
+
+def test_status_flags_missing_evaluator(skills_dir) -> None:
+    """评测集在、评估器没建 → failed。"""
+    platform = _FakePlatform(evaluator=None)
+    assert setup_nexent.render_status(platform) == 1
+
+
+def test_status_flags_missing_eval_set(skills_dir) -> None:
+    """缺一个评测集 → failed。"""
+    platform = _FakePlatform(eval_sets={"allocation_v1": {"evaluation_set_id": 1}})
+    assert setup_nexent.render_status(platform) == 1
+
+
+def test_eval_command_runs_after_create_main() -> None:
+    """eval 依赖主 Agent 就位，前置步骤里必须含 create-main。"""
+    steps = setup_nexent.COMMAND_STEPS["eval"]
+    assert steps.index("eval") > steps.index("create-main")
+    assert steps[-1] == "eval"
+
+
+def test_eval_not_in_all_command() -> None:
+    """eval 要等 run 完成，不该塞进 all（all 是快速装配，eval 是长任务）。"""
+    assert "eval" not in setup_nexent.COMMAND_STEPS["all"]

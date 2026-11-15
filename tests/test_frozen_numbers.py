@@ -129,6 +129,15 @@ ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
     ): (1, "章节号「2.5 工具契约」被正则当成工具数，不是总数"),
     (
         "tools",
+        "docs/competition/skills-mcp-design.md",
+        12,
+    ): (
+        1,
+        "「把 12 个工具全挂上主 Agent」是 2026-11-03 的历史反例（导致 8/8 掉到 0/8），"
+        "不是当前工具总数",
+    ),
+    (
+        "tools",
         "docs/赛道3-组件边界与推进路径-v0.1.md",
         48,
     ): (1, "「Nexent 工具表共 48 个工具」指平台全量工具库（含 local 类），不是本 MCP 服务的工具数"),
@@ -142,6 +151,11 @@ ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
         "docs/competition/video-storyboard-v0.1.md",
         2,
     ): (1, "旧版分镜里「（2 工具）」同样指主 Agent 挂载数"),
+    (
+        "tools",
+        "docs/competition/four-dimensions-mapping.md",
+        3,
+    ): (1, "「主 Agent 挂 3 工具」是主 Agent 挂载数，不是工具总数"),
     ("selfcheck", "README.md", 8): (2, "两处「8/8 项一致」都是平台真机一致性，不是自检项数"),
     (
         "selfcheck",
