@@ -39,6 +39,107 @@ def _read_csv(name: str) -> list[dict]:
         return list(csv.DictReader(f))
 
 
+def _agent_log(payload: dict) -> list[list[dict]]:
+    """推演日志：每一步「读了哪本账、依据哪条规则、算出什么」，供大屏滚动显示。
+
+    为什么放数据层而不是写死在 JS 里：每一行的数字都要能在台账或 payload 里指回出处，
+    现场被问「这行哪来的」，要能立刻翻到对应字段。所以件数、缺口、在途时延、恢复时刻
+    一律从 payload 取，取不到就整句不写，不猜一个好看的数字。
+
+    级别只决定颜色，措辞固定六类：
+      read 读取台账 · rule 规则 · model 模型 · clash 冲突 · plan 决策 · check 校验
+    """
+    dec = payload.get("decision") or {}
+    sig = dec.get("signals") or {}
+    tp = payload.get("timeline") or {}
+    hydro = payload.get("hydro") or {}
+    counts = (
+        len(payload.get("work_orders") or []),
+        len(payload.get("facilities") or []),
+        len(payload.get("departments") or []),
+        len(payload.get("pipelines") or []),
+    )
+    peak = float((hydro.get("peak_depth_m") or 0.30)) * 100
+    samples = hydro.get("samples") or []
+
+    def depth_at(k: int) -> str | None:
+        if len(samples) <= k:
+            return None
+        return f"{peak * float(samples[k]):.0f} cm"
+
+    transfer_min = ""
+    transfers = dec.get("transfers") or []
+    if transfers:
+        transfer_min = str(transfers[0].get("delay_min") or "")
+    a03 = sig.get("A-03") or {}
+    b01 = sig.get("B-01") or {}
+    alloc = dec.get("allocation") or {}
+    need = a03.get("demand")
+    local = a03.get("local")
+    gap = (need - local) if isinstance(need, int) and isinstance(local, int) else None
+    restore = (tp.get("limits") or {}).get("restore_by_clock") or ""
+    crew = tp.get("crew_at_clock") or ""
+    notice = tp.get("closure_notice") or ""
+
+    def line(kind: str, tag: str, text: str) -> dict:
+        return {"k": kind, "t": tag, "s": text}
+
+    log: list[list[dict]] = [
+        [
+            line("read", "读取", f"台账装载：工单 {counts[0]} · 设施 {counts[1]} · "
+                              f"部门 {counts[2]} · 管线 {counts[3]}"),
+            # 没有定量层就别念模型参数：页面别处已经写了「示意节奏」，
+            # 这里再说 ψ / Puls 就是两个口径同屏，等于自相矛盾。
+            line("model", "模型",
+                 "雨量 60 mm/3h · ψ=0.70（GB 50014）· 修正 Puls 演进" if samples
+                 else "未接入定量层：水位按示意节奏演进，不参与定量结论"),
+            line("rule", "规则", "淤塞 1 处在册（09-30 巡检）→ 过水能力不足"),
+        ],
+        [
+            line("read", "读取", f"封路通告{(' ' + notice) if notice else ''} 生效 → 半幅封闭"),
+            line("rule", "规则", "职责匹配：区道路管理中心 + 交警支队一大队联合发布"),
+            line("check", "校验", "通告时刻与首条积水工单时刻一致，无时间冲突"),
+        ],
+        [
+            # 没有定量层时整行不写：下面那条规则已经说了「未过封路阈值」，
+            # 再补一句同样的话，读起来像重复渲染而不是补充信息。
+            *([line("model", "模型", f"第 3 步水深 {depth_at(2)}，持续上涨")] if depth_at(2) else []),
+            line("rule", "规则", "未过封路阈值，暂不扩大管制；先清掏淤积雨水口"),
+        ],
+        [
+            line("read", "读取", "设施台账：兴华路 1# 泵组电机故障未修复"),
+            line("model", "模型", "抽排能力 1200 → 800 m³/h（设计值 → 实际可用）"),
+            line("clash", "冲突",
+                 f"需 {need if need is not None else '—'} 台 · 本区在库 "
+                 f"{local if local is not None else '—'} 台"
+                 + (f" → 缺 {gap} 台" if gap else "")
+                 + "，触发资源缺口告警"),
+        ],
+        [
+            line("read", "读取",
+                 f"工单回报：兴华路 {a03.get('depth_cm') or '—'} cm · "
+                 f"滨河路 {b01.get('depth_cm') or '—'} cm"),
+            line("clash", "冲突", "只能保一处：兴华路已过封路阈值，且地下有燃气基坑 → 优先"),
+            line("plan", "决策", f"兴华路分配 {alloc.get('A-03') or '—'} 台、滨河路 "
+                                f"{alloc.get('B-01') or '—'} 台，从滨河路调入 1 台"),
+            line("model", "模型", f"跨区调泵在途 {transfer_min or '40'} 分钟，峰值前赶不到 → 先封控"),
+        ],
+        [
+            line("plan", "决策", "泵站全开" + (f"，移动泵 {crew} 到位补位" if crew else "，移动泵到位补位")),
+            line("read", "读取", "09:35 燃气上报基坑沉陷 → 封路维持"),
+            line("check", "校验", f"决策依据 {len(dec.get('basis') or [])} 条逐条命中台账条款"),
+        ],
+        [
+            line("model", "模型",
+                 (f"退水至阈值以下 → 按作业指引 {restore} 前恢复通行" if restore
+                  else "退水至阈值以下 → 按作业指引恢复通行")),
+            line("check", "校验", f"全程 {counts[0]} 条工单 · 1 份通告 · "
+                                 f"{len(dec.get('basis') or [])} 条依据，均可回溯"),
+        ],
+    ]
+    return log
+
+
 def build_payload() -> dict:
     d = load_layout()
     districts = [
@@ -328,7 +429,7 @@ def build_payload() -> dict:
         except (ValueError, KeyError, TypeError):
             timeline = None
 
-    return {
+    payload = {
         "bounds": d.get("bounds"),
         "nodes": d.get("nodes"),
         "districts": districts,
@@ -348,6 +449,8 @@ def build_payload() -> dict:
         "hydro": hydro,
         "timeline": timeline,
     }
+    payload["agent_log"] = _agent_log(payload)
+    return payload
 
 
 def main() -> None:
@@ -635,6 +738,93 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
 #srcpanel .sp-tools a:hover{text-decoration:underline}
 #srcpanel .sp-note{color:#a8630f;background:#fdf4e6;border:1px solid #f2ddba;border-radius:6px;
   padding:6px 9px;margin-top:6px;line-height:1.6}
+
+/* ===== 大屏层 =====
+   这一层只做「让人三秒看懂发生了什么」，不加任何数据。四件事：
+   ① 顶部一条扫光，说明这是活的画面而不是截图；② 舞台四角框 + 暗角，把视线收到中间；
+   ③ 泵站/积水点/封路的呼吸环，指出「现在哪儿在动」；④ 左上角推演日志，逐行说明依据。
+   全部是 CSS 动画，不改几何、不参与命中（pointer-events:none），关掉不影响任何结论。 */
+body::before{content:'';position:fixed;left:0;right:0;top:0;height:2px;z-index:90;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--blue) 28%,var(--cyan) 50%,var(--water-hi) 72%,transparent);
+  background-size:220% 100%;animation:sweep 7s linear infinite}
+@keyframes sweep{from{background-position:210% 0}to{background-position:-110% 0}}
+/* 舞台四角框：只画角、不画框，既指明「这块是主画面」，又不切割地图 */
+#hud{position:absolute;inset:0;z-index:4;pointer-events:none}
+#hud i{position:absolute;width:22px;height:22px;border:1.5px solid rgba(58,143,212,.42);border-radius:3px}
+#hud i:nth-child(1){left:9px;top:9px;border-right:0;border-bottom:0}
+#hud i:nth-child(2){right:9px;top:9px;border-left:0;border-bottom:0}
+#hud i:nth-child(3){left:9px;bottom:9px;border-right:0;border-top:0}
+#hud i:nth-child(4){right:9px;bottom:9px;border-left:0;border-top:0}
+/* 暗角：边缘压 13%，中间不压。2.5D 俯视图本来四角就空，压一点立刻有「屏幕」感 */
+#st-vig{position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(118% 96% at 50% 45%,transparent 54%,rgba(24,38,58,.14) 100%)}
+/* 呼吸环：设施/积水点的「此刻在这儿」。用 scale 而不是改 r——r 只有 Chromium 认，
+   transform 全浏览器都行。fill-box 让缩放以元素自身中心为原点。 */
+@keyframes breathe{0%{transform:scale(.62);opacity:.62}68%{transform:scale(1.6);opacity:0}100%{transform:scale(1.6);opacity:0}}
+.fac-ring,.water-ring{transform-box:fill-box;transform-origin:center;fill:none;
+  animation:breathe 2.8s ease-out infinite;pointer-events:none}
+.fac-ring.d2,.water-ring.d2{animation-delay:.95s}
+.fac-ring.d3,.water-ring.d3{animation-delay:1.9s}
+/* 水面流动：虚线沿积水边缘走，读作「水在动」，比静止色块有生气 */
+@keyframes flow{to{stroke-dashoffset:-34}}
+.water-sheen{stroke-dasharray:7 9;animation:flow 1.9s linear infinite}
+/* KPI 数值一变就闪一下：让「数据在变」这件事被看见，而不是只有播放条在走 */
+@keyframes kpi-upd{0%{box-shadow:inset 0 0 0 40px rgba(58,143,212,.14)}100%{box-shadow:inset 0 0 0 40px transparent}}
+.kpi-card.upd{animation:kpi-upd .6s ease-out}
+/* 左上角推演日志（现场叫「大屏弹幕」）。深色半透明压在浅色地图上，
+   一眼能看出这是机器在输出，不是页面正文。宽 352、最多 6 行——
+   再高就会压住兴华路片区的片区名，那是这条巷子的主角。 */
+#agentlog{position:absolute;left:14px;top:12px;z-index:6;width:352px;
+  background:linear-gradient(180deg,rgba(17,26,39,.93),rgba(17,26,39,.85));
+  border:1px solid rgba(120,160,200,.26);border-radius:9px;overflow:hidden;
+  box-shadow:0 8px 28px rgba(12,22,36,.3);pointer-events:none}
+#agentlog .lg-h{display:flex;align-items:center;gap:7px;padding:6px 11px;
+  border-bottom:1px solid rgba(255,255,255,.08);font-size:11px;color:#93a9c0;letter-spacing:.3px}
+#agentlog .lg-h b{color:#e6f0fa;font-weight:600;font-size:11.5px;letter-spacing:.4px}
+#agentlog .lg-h .live{margin-left:auto;display:flex;align-items:center;gap:5px;color:#7fd8a8;font-size:10.5px}
+#agentlog .lg-h .live i{width:5px;height:5px;border-radius:50%;background:#4fe08f;
+  box-shadow:0 0 7px #4fe08f;animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{50%{opacity:.28}}
+#agentlog .lg-b{padding:5px 0 6px;max-height:126px;display:flex;flex-direction:column;justify-content:flex-end;
+  font:11.5px/1.6 ui-monospace,"Cascadia Mono",Consolas,"Microsoft YaHei",monospace;
+  /* 上边界渐隐：滚出去的旧行会被裁掉半行，硬裁像「字被切了」，
+     淡出才是控制台该有的样子（-webkit- 前缀给 Chromium 老版本） */
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 16px);
+  mask-image:linear-gradient(to bottom,transparent 0,#000 16px)}
+#agentlog .ln{display:flex;gap:7px;padding:1px 11px;color:#c6d4e3;animation:ln-in .3s ease-out both}
+@keyframes ln-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#agentlog .ln .tag{flex-shrink:0;padding:0 5px;border-radius:3px;font-size:10px;line-height:16px;
+  margin-top:1px;letter-spacing:.4px}
+#agentlog .ln.read .tag{color:#93afcb;background:rgba(255,255,255,.09)}
+#agentlog .ln.rule .tag{color:#8dbdf0;background:rgba(58,143,212,.2)}
+#agentlog .ln.model .tag{color:#63d3c6;background:rgba(16,125,133,.28)}
+#agentlog .ln.clash .tag{color:#f2a866;background:rgba(217,83,47,.26)}
+#agentlog .ln.plan .tag{color:#7cdd9e;background:rgba(76,175,125,.22)}
+#agentlog .ln.check .tag{color:#bfa4ef;background:rgba(107,70,193,.26)}
+#agentlog .ln .txt{color:#cbd8e6;min-width:0;word-break:break-word}
+#agentlog .ln.clash .txt{color:#f6c79a}
+#agentlog .ln .cur{display:inline-block;width:6px;height:12px;background:#7fd8a8;vertical-align:-2px;
+  margin-left:2px;animation:blink 1.1s steps(2,end) infinite}
+/* 焦点卡与字幕各加一层极淡外发光：光不是装饰，它把「这一步」从满屏文字里挑出来 */
+#focuscard{box-shadow:0 4px 22px rgba(10,18,32,.32),0 0 0 1px rgba(58,143,212,.22)}
+#narration{box-shadow:0 2px 14px rgba(15,23,42,.26),0 0 0 1px rgba(255,255,255,.06)}
+/* dock 一行要放下七个控件，按钮文字不许换行——「重置」被压成竖排两个字，
+   现场看着像布局坏了 */
+#dock button{white-space:nowrap;flex-shrink:0}
+#dock .t{flex-shrink:0}
+@media(max-width:1440px){
+  #agentlog{width:298px}
+  #agentlog .lg-b{max-height:112px;font-size:11px}
+  #agentlog .ln{padding:1px 9px}
+}
+@media(max-width:1200px){#agentlog{display:none}}
+/* 1366 投影上 dock 一行放不下七个控件 + 提示语，提示语先让位（键盘用法在 hint 的 title 里） */
+@media(max-width:1400px){#dock .hint{display:none}}
+/* 尊重系统的「减少动态效果」：所有无限动画停掉，静态版信息一样全 */
+@media(prefers-reduced-motion:reduce){
+  body::before,.fac-ring,.water-ring,.water-sheen,#agentlog .lg-h .live i,#agentlog .ln .cur{animation:none}
+  #agentlog .ln{animation:none}
+}
 </style>
 <body>
 <div id=map-tip></div>
@@ -666,6 +856,12 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
 <div id=wrap>
   <div id=stage>
     <svg id=map viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id=st-vig></div>
+    <div id=hud aria-hidden=true><i></i><i></i><i></i><i></i></div>
+    <div id=agentlog>
+      <div class=lg-h><b>推演日志</b><span>逐行可回溯</span><span class=live><i></i>运行中</span></div>
+      <div class=lg-b id=agentlog-body></div>
+    </div>
     <div id="rain-layer"></div>
     <div id=legend>
       <h3>图例</h3>
@@ -1554,6 +1750,17 @@ function buildBase(){
     const g = svgNS('g');
     const px = cx(f.xy.x), py = cy(f.xy.y);
     if(f.type==='pump_station'){
+      // 呼吸环：泵站是「此刻水在往哪儿走」的答案，静态圆点在满屏路网里找不到。
+      // 环画在圆点之前（下层），两档延迟错开，看上去像有节奏地往外扩。
+      [0, 1].forEach(d=>{
+        const ring = svgNS('circle');
+        ring.setAttribute('class', 'fac-ring' + (d ? ' d2' : ''));
+        ring.setAttribute('cx', px.toFixed(1)); ring.setAttribute('cy', py.toFixed(1));
+        ring.setAttribute('r', '9');
+        ring.setAttribute('stroke', '#4caf7d'); ring.setAttribute('stroke-width', '1.6');
+        ring.setAttribute('stroke-opacity', d ? '0.5' : '0.85');
+        g.appendChild(ring);
+      });
       const c = svgNS('circle');
       c.setAttribute('cx',px); c.setAttribute('cy',py); c.setAttribute('r','9');
       c.setAttribute('fill', facColor(f)); c.setAttribute('stroke','#ffffff'); c.setAttribute('stroke-width','2');
@@ -1596,10 +1803,42 @@ function buildBase(){
   // 而积水那块恰恰是最想问「这是哪儿」的地方。深度信息在上方指标与事件卡里，不缺。
   waterLayer.setAttribute('pointer-events','none');
   D.water.forEach(w=>{
+    // 一个积水点建五个元素，全部只建一次：
+    //   whalo 影响范围（最底）· wbody 水面 · wsheen 流动虚线 · water-ring 呼吸环 · 深度数字
+    // 原来 halo 是每帧新建再删掉——60 帧里建删 60 个 <polygon>，既费 CPU，
+    // 又让虚线动画每帧从头开始（CSS 动画随元素重建而重置），永远看不出「在流」。
+    let cxs=0, cys=0;
+    w.polygon.forEach(p=>{ cxs+=p.x; cys+=p.y; });
+    cxs/=w.polygon.length; cys/=w.polygon.length;
+
+    const halo = svgNS('polygon');
+    halo.setAttribute('class','whalo'); halo.dataset.water = w.id; halo.dataset.halo='1';
+    halo.setAttribute('fill','rgba(16,125,133,0.06)');
+    halo.setAttribute('stroke','#5db6b0'); halo.setAttribute('stroke-width','1');
+    halo.setAttribute('stroke-dasharray','4 4');
+    waterLayer.appendChild(halo);
+
     const poly = svgNS('polygon');
+    poly.setAttribute('class','wbody');
     poly.dataset.water = w.id;
     poly.dataset.depth = w.depth_cm;
     waterLayer.appendChild(poly);
+
+    const sheen = svgNS('polygon');
+    sheen.setAttribute('class','wsheen water-sheen');
+    sheen.dataset.water = w.id; sheen.dataset.halo='1';
+    sheen.setAttribute('fill','none');
+    sheen.setAttribute('stroke','#8ef0e4'); sheen.setAttribute('stroke-width','1.6');
+    sheen.setAttribute('stroke-linejoin','round'); sheen.setAttribute('stroke-linecap','round');
+    waterLayer.appendChild(sheen);
+
+    const ring = svgNS('circle');
+    ring.setAttribute('class','water-ring d3');
+    ring.dataset.water = w.id; ring.dataset.halo='1';
+    ring.setAttribute('cx', cx(cxs).toFixed(1)); ring.setAttribute('cy', cy(cys).toFixed(1));
+    ring.setAttribute('stroke','#0e7d85'); ring.setAttribute('stroke-width','1.8');
+    waterLayer.appendChild(ring);
+
     // 深度数字只建一次（文字随水位改，位置不变）。原来每帧重建，
     // 标签避让给的位移下一帧就没了；而且每帧都新建 8 个 <text> 也没必要。
     let lx=0, ly=1e9;
@@ -1817,10 +2056,11 @@ function declutterLabels(){
     }
     return true;
   };
-  // 浮层是禁区：事件卡在正中上方、图例在左下、解说条在底部。
-  // 它们是 HTML，不在 SVG 的排版里，标签不会自动躲开。
+  // 浮层是禁区：事件卡在正中上方、图例在左下、解说条在底部、推演日志在左上。
+  // 它们是 HTML，不在 SVG 的排版里，标签不会自动躲开。日志框尤其要列进来——
+  // 它压住的是「兴华路片区」这种主角标签，遮掉三个字比遮一片楼严重得多。
   const blocked = [];
-  ['focuscard','legend','narration'].forEach(id=>{
+  ['focuscard','narration','legend','agentlog'].forEach(id=>{
     const el = document.getElementById(id);
     if(!el || !el.getBoundingClientRect) return;
     const b = rectOf(el);
@@ -2211,62 +2451,88 @@ function renderRain(t){
   el.style.opacity = (0.26 * Math.max(0, Math.min(1, v.rain || 0))).toFixed(3);
 }
 
+let _waterEls = null;
+function cacheWaterEls(){
+  const wl = document.getElementById('water-layer');
+  if(!wl || !D.water) return;
+  _waterEls = D.water.map(w=>{
+    let sxs=0, sys=0;
+    w.polygon.forEach(p=>{ sxs+=p.x; sys+=p.y; });
+    sxs/=w.polygon.length; sys/=w.polygon.length;
+    return {
+      w: w, cx: sxs, cy: sys,
+      poly:  wl.querySelector('polygon.wbody[data-water="'+w.id+'"]'),
+      halo:  wl.querySelector('polygon.whalo[data-water="'+w.id+'"]'),
+      sheen: wl.querySelector('polygon.wsheen[data-water="'+w.id+'"]'),
+      ring:  wl.querySelector('circle.water-ring[data-water="'+w.id+'"]'),
+      lab:   wl.querySelector('text.depth-lab[data-water="'+w.id+'"]'),
+    };
+  });
+}
+
 function renderWater(t){
   const v = lerpJump(t);
-  const wl = document.getElementById('water-layer');
-  [...wl.children].forEach(c=>{ if(c.dataset.halo) c.remove(); });
-  [...wl.children].forEach(poly=>{
-    // 只处理水洼多边形。深度数字也是 water-layer 的子节点，放过会被当成水洼改属性。
-    if(poly.tagName !== 'polygon') return;
-    const depth = Number(poly.dataset.depth);
-    const dNow = depth * v.water;
-    const w = D.water.find(x=>x.id===poly.dataset.water);
-    // 积水蔓延：围绕质心随水位从中心向外生长（水位低→小、高→满幅）。
-    // 这样才有"漫延过程"，而不是满幅改色。生长系数 k：水位 0→0.35（几乎不可见），1→1（满幅）。
-    let gx=0, gy=0; w.polygon.forEach(p=>{gx+=p.x;gy+=p.y;}); gx/=w.polygon.length; gy/=w.polygon.length;
-    const k = 0.35 + 0.65 * Math.min(1, Math.max(0, (v.water-0.02)/0.6));
-    const pp = w.polygon.map(p=>`${cx(gx+(p.x-gx)*k).toFixed(1)},${cy(gy+(p.y-gy)*k).toFixed(1)}`).join(' ');
-    poly.setAttribute('points', pp);
-    poly.setAttribute('fill', waterColor(dNow));
+  if(!_waterEls) cacheWaterEls();
+  if(!_waterEls) return;
+  const e = Math.max(0, Math.min(1, v.water));
+  // 水位→漫延面积：线性映射在 0.62 就封顶，而定量层最后两跳是 1.00 → 0.681 → 0.019，
+  // 等于「前 2/3 就长满、后 1/3 面积不动」，退水段看着像卡住。改成 smoothstep，
+  // 并且把满幅点推到 0.74（退水从峰值 1.0 一路缩到 0.74 才开始掉面积，接近真实现象）。
+  const f = Math.min(1, Math.max(0, (e - 0.02) / 0.72));
+  const k = 0.34 + 0.66 * (f * f * (3 - 2 * f));
+  // 完全退水那一下不硬切 display：0.006→0.036 之间线性淡出，路面是「渐渐露出来」的。
+  const fade = Math.min(1, Math.max(0, (e - 0.006) / 0.03));
+  _waterEls.forEach(o=>{
+    if(!o.poly) return;
+    const w = o.w;
+    const dNow = Number(w.depth_cm) * e;
+    const pts = (scale)=> w.polygon
+      .map(p=>`${cx(o.cx+(p.x-o.cx)*scale).toFixed(1)},${cy(o.cy+(p.y-o.cy)*scale).toFixed(1)}`)
+      .join(' ');
+    const body = pts(k);
+    o.poly.setAttribute('points', body);
+    o.poly.setAttribute('fill', waterColor(dNow));
     // 下限从 0.30 提到 0.46：真实积水只有 94×167 米，在 2939 米宽的图上就是一小块。
     // 透明度给到 0.30 时，浅水期（3~5cm）那块淡青和底图的绿地几乎分不开，
     // 观众第一眼看不出「这里在积水」。宁可颜色重一点，也要让人认出是水。
-    poly.setAttribute('fill-opacity', (0.46 + 0.40*v.water).toFixed(2));
+    o.poly.setAttribute('fill-opacity', ((0.46 + 0.40 * e) * fade).toFixed(2));
     // 真实积水是「沿路的一条窄带」（A-03 那块约 56 米长、4 米宽），在这个比例下
     // 只有 2 个像素宽 —— 对着原多边形描边，画出来就是一根线，读者不认为那是水面。
     // 用「粗半透明描边」当水面外扩，视觉上有体量，但落点与范围仍然来自台账多边形。
-    poly.setAttribute('stroke','#0e7d85');
-    poly.setAttribute('stroke-width','11');
-    poly.setAttribute('stroke-opacity','0.42');
-    poly.setAttribute('stroke-linejoin','round');
-    poly.setAttribute('stroke-linecap','round');
-    poly.style.display = v.water>0.02 ? '' : 'none';
+    o.poly.setAttribute('stroke','#0e7d85');
+    o.poly.setAttribute('stroke-width','11');
+    o.poly.setAttribute('stroke-opacity',(0.42 * fade).toFixed(2));
+    o.poly.setAttribute('stroke-linejoin','round');
+    o.poly.setAttribute('stroke-linecap','round');
+    o.poly.style.display = fade > 0.02 ? '' : 'none';
+
+    if(o.halo){
+      o.halo.setAttribute('points', pts(1.6 + 1.2 * e));
+      o.halo.style.display = e > 0.1 ? '' : 'none';
+    }
+    if(o.sheen){
+      o.sheen.setAttribute('points', body);
+      o.sheen.setAttribute('stroke-opacity', (e > 0.25 ? 0.5 : 0).toFixed(2));
+      o.sheen.style.display = e > 0.25 ? '' : 'none';
+    }
+    if(o.ring){
+      // 呼吸环只在「深水」出现：3cm 也闪红圈，读起来像告警噪音。
+      o.ring.style.display = e > 0.55 ? '' : 'none';
+      o.ring.setAttribute('r', '11');
+    }
+
     // 颜色深浅读不出厘米数：真实积水范围只有 94×167 米，在 2939 米宽的图上就是一小块，
     // 光靠蓝色深浅既看不清也不知道多深。直接在积水下沿标数字（元素建在 buildScene，这里只改值）。
     // 标注放下沿外侧：水体中心往往正好是泵站点位，两个标签会叠在一条竖线上。
-    const lab = wl.querySelector(`text.depth-lab[data-water="${w.id}"]`);
-    if(lab){
+    if(o.lab){
       if(v.water>0.05){
         // 加「积水」两字：这个标签常被避让推到泵站名旁边，只写「20 cm」
         // 读起来像泵站的参数（机组 800 m³/h 旁边跟个 20 cm 说不通）。
-        lab.textContent = '积水 ' + (dNow>=1 ? Math.round(dNow) : Math.round(dNow*10)/10) + ' cm';
-        lab.style.display = '';
+        o.lab.textContent = '积水 ' + (dNow>=1 ? Math.round(dNow) : Math.round(dNow*10)/10) + ' cm';
+        o.lab.style.display = '';
       }else{
-        lab.style.display = 'none';
+        o.lab.style.display = 'none';
       }
-    }
-    // 外圈扩散：积水影响范围（浅青虚线），随水位扩大
-    if(v.water>0.1){
-      const k2 = 1.6 + 1.2*v.water;
-      const hp = w.polygon.map(p=>`${cx(gx+(p.x-gx)*k2).toFixed(1)},${cy(gy+(p.y-gy)*k2).toFixed(1)}`).join(' ');
-      const halo = svgNS('polygon');
-      halo.dataset.halo='1';
-      halo.setAttribute('points', hp);
-      halo.setAttribute('fill', 'rgba(16,125,133,0.06)');
-      halo.setAttribute('stroke', '#5db6b0');
-      halo.setAttribute('stroke-width','1');
-      halo.setAttribute('stroke-dasharray','4 4');
-      wl.appendChild(halo);
     }
   });
 }
@@ -2564,7 +2830,16 @@ function renderKPI(t){
   // KPI 却写「部门落位」，同一个画面上两个阶段名。
   const stageNow = (JUMP_VISUAL[Math.min(jumpIdx(t), JUMP_VISUAL.length-1)].title||'').split('：')[0];
   document.getElementById('k-phase').textContent = stageNow;
+  // 换步时让「推演积水深度」闪一下：数字变了但没人会盯着数字，
+  // 播放条成了唯一的进度信号。一次重排（读 offsetWidth）就能让 class 重新触发。
+  const _ki = jumpIdx(t);
+  if(_kpiStep !== _ki){
+    _kpiStep = _ki;
+    const card = document.getElementById('k-depth') && document.getElementById('k-depth').closest('.kpi-card');
+    if(card){ card.classList.remove('upd'); void card.offsetWidth; card.classList.add('upd'); }
+  }
 }
+let _kpiStep = -1;
 // 当前态势卡：随回放时刻切三句话。每一步只换文字，不重建节点——
 // 这块在首屏正中，重建会让整列闪一下。
 function renderNow(t){
@@ -2597,6 +2872,40 @@ function renderStatusBar(t){
     src.textContent = `依据：工单 ${wo} 条 · 通告 1 份 · 条款 ${basis} 条`;
     src.dataset.done = '1';
   }
+}
+// 推演日志：左上角滚动输出「读了什么账、依据哪条、算出什么」。
+// 为什么不是每帧重建：innerHTML 每帧重写会让每一行都重播入场动画（60 帧闪 60 次），
+// 也会把已经滚上去的行整段丢掉。所以按「已经输出到第几条」增量追加，
+// 往回拖进度条时才整段重建（行数变少）。
+let _logStep = -1, _logCount = 0, _logPlaying = null;
+function renderAgentLog(t){
+  const box = document.getElementById('agentlog-body');
+  if(!box || !D.agent_log || !D.agent_log.length) return;
+  const i = Math.min(jumpIdx(t), D.agent_log.length - 1);
+  if(i === _logStep && playing === _logPlaying) return;
+  const lines = [];
+  for(let k=0;k<=i;k++){ (D.agent_log[k]||[]).forEach(it=>lines.push(it)); }
+  if(lines.length < _logCount){ box.innerHTML=''; _logCount = 0; }
+  for(let n=_logCount;n<lines.length;n++){
+    const it = lines[n] || {};
+    const d = document.createElement('div');
+    d.className = 'ln ' + (it.k || 'read');
+    const tag = document.createElement('span'); tag.className='tag'; tag.textContent = it.t || '';
+    const txt = document.createElement('span'); txt.className='txt'; txt.textContent = it.s || '';
+    d.appendChild(tag); d.appendChild(txt);
+    box.appendChild(d);
+  }
+  _logCount = lines.length;
+  _logStep = i; _logPlaying = playing;
+  // 光标只留在最后一行：控制台的「还在往下敲」感就靠它
+  const old = box.querySelector('.cur');
+  if(old) old.remove();
+  const last = box.lastElementChild;
+  if(last && playing){
+    const cur = document.createElement('span'); cur.className='cur';
+    last.appendChild(cur);
+  }
+  // 容器是 flex-end + overflow hidden，新行自动把旧行顶出上边界，不需要算 scrollTop
 }
 // 步卡只有换步才重建。原来每帧写 innerHTML：点上去的一瞬间节点就被换掉，
 // 点击落空、悬停效果一直闪。同时省下每帧 7 段 HTML 的解析。
@@ -2726,7 +3035,7 @@ function tick(){
 function apply(t){
   t=Math.max(0,Math.min(1,t));
   renderRain(t);
-  renderWater(t); renderRoads(t); renderTrucks(t); renderDepts(t); renderKPI(t); renderEventline(t); renderDeptLanes(t); renderNarration(t); renderFocusCard(t); renderAlarm(t); renderNow(t); renderStatusBar(t); clock();
+  renderWater(t); renderRoads(t); renderTrucks(t); renderDepts(t); renderKPI(t); renderEventline(t); renderDeptLanes(t); renderNarration(t); renderFocusCard(t); renderAlarm(t); renderNow(t); renderStatusBar(t); renderAgentLog(t); clock();
   // 标签避让跟着跳次走：一步之内标签文字不变，没必要每帧重排。
   // 必须放在 renderFocusCard 之后——事件卡高度变了，禁区也跟着变。
   // 另外每 10 帧量一次舞台与卡片尺寸：首帧的布局还没稳定（滚动条出现/消失、
@@ -2738,7 +3047,7 @@ function apply(t){
     const box = (id)=>{ const e = document.getElementById(id); if(!e) return '0';
       const r = e.getBoundingClientRect();
       return `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)},${Math.round(r.height)}`; };
-    const sig = ['stage','focuscard','narration','legend'].map(box).join('|');
+    const sig = ['stage','focuscard','narration','legend','agentlog'].map(box).join('|');
     if(sig !== _lpSig){ _lpSig = sig; _lpStep = -1; }
   }
   if(_i !== _lpStep){ _lpStep = _i; declutterLabels(); }
@@ -2794,6 +3103,9 @@ document.getElementById('eventline').addEventListener('click', (e)=>{
 });
 // 键盘：←/→ 步进、空格播放暂停、Home 回开头。现场演示不必去够鼠标。
 document.addEventListener('keydown', (e)=>{
+  // 被 /show 演示页嵌进来时，播放状态由外层按节拍控制，本页不再抢键盘——
+  // 否则空格会同时「暂停」和「进下一幕」，两套节拍打架。
+  if(window.self !== window.top) return;
   const tag = (e.target && e.target.tagName) || '';
   // 按钮上按空格交给浏览器自己的 click：否则会「切换一次 + 我这边再切一次」，等于没动
   if(/input|textarea|select|button/i.test(tag)) return;
@@ -3143,6 +3455,7 @@ fitView(1.0);
 const qp = new URLSearchParams(location.search);
 const qT = parseFloat(qp.get('t'));
 const qStatic = qp.get('static');
+const qAuto = qp.get('auto');
 if(!isNaN(qT)){
   t = qT;
   playing = false;
@@ -3151,6 +3464,14 @@ if(!isNaN(qT)){
   fitView(1.0);           // static 模式用全景，方便看整体状态
   apply(qT);
   if(autoCam) applyCam(qT);   // 静帧核对：t 决定镜头，天然没有中间态
+}else if(qAuto === '0'){
+  // 停在第 0 步等指令：/show 演示页自己按节拍 seek，不能一上来就跑。
+  playing = false;
+  autoCam = true;
+  fitView(1.0);
+  apply(0);
+  applyCam(0);
+  document.getElementById('play').textContent = '▶ 播放';
 }else{
   playing = true;
   document.getElementById('play').textContent = '⏸ 暂停';
@@ -3194,6 +3515,25 @@ if(qEnt){
     // 不再另写一个路名：地图自己的路名标签已经在那条路上，叠两个只会打架。
     svg.appendChild(mk);
   }
+}
+// 对外控制口：演示页（/show）把这一页当底片，通过同源 iframe 调这几个方法推进剧情。
+// 只开「跳到第几步 / 播放暂停 / 问当前状态」，不给任何改数据或改结论的口子。
+window.__map2d = {
+  // seek 默认「只定位不播放」：seekStep 内部会顺手 setPlaying(true)（手动点步卡时
+  // 确实该接着播），但演示页要的是「定在这一步等解说」。autoplay 显式给才播。
+  seek: function(i, autoplay){
+    seekStep(i);
+    if(!autoplay){ setPlaying(false); apply(t); }
+  },
+  play: function(on){ setPlaying(!!on); if(on) setAutoCam(true); else apply(t); },
+  step: function(){ return jumpIdx(t); },
+  time: function(){ return t; },
+  jumpAt: function(k){ return jumpStart(k); },
+};
+// 没有日志数据就整块撤掉：留一个空黑框比没有更难看，也容易被当成加载失败。
+if(!D.agent_log || !D.agent_log.length){
+  const _lg = document.getElementById('agentlog');
+  if(_lg) _lg.style.display = 'none';
 }
 tick();
 </script>

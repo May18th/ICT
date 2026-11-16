@@ -26,6 +26,7 @@
 - [通用演进设计](superpowers/specs/2026-10-26-generic-evolution-kernel-design.md)：目标、边界、架构和验收范围。
 - [实施计划](superpowers/plans/2026-10-26-generic-evolution-kernel.md)：按任务拆分的实现记录。
 - [城市可移植性审计](city-portability-audit.md)：哪些城市常量是写死的、换成别的城市需要改哪里。
+- [赛道 3 组件边界与推进路径 v0.1](赛道3-组件边界与推进路径-v0.1.md)：四个外部组件各扮演什么角色、能借到哪一步、哪一步不能碰，以及先做什么后做什么、哪里会翻车。
 
 ## 2. 数据与场景契约
 
@@ -38,6 +39,7 @@
 - [P2 任务单：认知加工层](tasks/p2-cognition-task-order.md)：适配器、切片、表格标准化、区域标注、抽取基线。
 - [P2 回传报告](reports/p2-cognition-report.md)：解析与抽取统计、三类抽查样例、硬断言验证结果。
 - [P4 回传报告](reports/p4-graph-provenance-report.md)：时态语义层、引用闸门、哈希链篡改定位、跨版本血缘（locator 键）。
+- [定量口径固定：方案 A](quant-baseline-option-a.md)：需求折算 v1 与负荷 `load_state` 的裁决结论——为什么选这套口径、被否决的方案差在哪里。后续水文/水力改动以此为基准。
 
 ## 3. 运行与部署
 
@@ -53,6 +55,7 @@
 - [真实用户评分采集](real-feedback-channel.md)：真实用户评分（进化前后各一次）的采集/汇总/导出，以及「只汇总不进校验」与「带修正建议才进校验」两条通道的口径。
 - [P5 回传报告](reports/p5-mcp-report.md)：7 个 MCP 工具契约、stdio 协议实现、证据接口的权限收口、trace_id 与调用日志。
 - [P10 可视化工具层设计](p10-visualization-tools-design.md)：决策状态记录 → 渲染作业 → 引擎 ack 的异步流程、3 个 MCP 工具、工具分组 allowlist 与演示时序。
+- [渲染能力接入 Nexent 操作手册](nexent-mcp-render-integration.md)：让平台 Agent 推演完自己拿到可播放成片，且拿到的是那份结论对应的版本——同一次调用链里 `snapshot_id` 与成片 sha256 都可核对、重跑幂等。
 
 ## 4. 评测与证据
 
@@ -99,6 +102,22 @@
 - [P11 消融与锚定设计](superpowers/specs/2026-11-02-p11-ablation-and-anchoring-design.md)：五档能力子集、指标分母与确定性统计口径，以及 `H(o),H(Z),H(a*),meta` 锚定包与链下原文复核边界。
 - [P12 多智能体协同 + 场景 v2 设计](superpowers/specs/2026-11-02-p12-multi-agent-collaboration-and-scenario-v2-design.md)：1 总控 + 5 专业 Agent 的分层架构、三个现实问题→三项能力的映射、地下通道倒灌入六步、泵站负荷缺口公式。
 - [P13 简化水动力演进设计](superpowers/specs/2026-11-05-p13-simplified-hydrodynamics-design.md)：马斯京根汇流 + 修正 Puls 调蓄的公式、稳定条件与"不是圣维南"的边界。
+
+**已停用模块的历史记录**——保留是为了追溯"为什么删"，不要按它继续开发：
+
+- [Twin3D 完整业务闭环](twin3d-business-loop-todo.md)：**已废弃 2026-11-14**，`/twin3d` 页面下线（3D 沙盘与 `/map2d` 表达同一批数据，删页减入口）。关联层 `twin_links.py` 仍在使用，被 `/map2d` 与 `/workbench` 的对象卡片消费。
+- [UE 真实资产进度](ue-real-assets-progress.md)：Unreal 工程已停用且不入库，本文是当时的完成情况记录，不作为待办。
+
+**技术债与暂缓项**：
+
+- [水动力链路重构候选清单](hydro-integration-refactor-candidates.md)：只记死代码、重复逻辑和暂缓项。规则是「已删除项必须有行为测试，暂缓项不在本轮擅自删除」，不是想做就做的愿望清单。
+
+## 7 输入材料
+
+赛题原文与早期方案——属"给定"而非"产出"。改它们之前先确认你不是在改题目。
+
+- [赛题 3 任务单](ICT-赛题3-城市内涝事件推演-WorkBuddy任务单.md)：赛题下达时的原始任务书。里面写的是当时的验收口径，与当前数字不同属正常，不要拿它当依据。
+- [赛题 3 方案与实施计划](ICT-创新赛-赛题3-方案与实施计划.md)：立项时的阶段划分与交付设想；实际落地以 `reports/` 下的阶段报告为准。
 
 ## 文档维护规则
 

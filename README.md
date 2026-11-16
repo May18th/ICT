@@ -119,10 +119,12 @@ uv run python -m decision_poc.evidence_check   # 期望 108/108，核对值 06db
 | `src/decision_poc/` | 决策引擎：推演、溯源、策略演化、协同、定量、智能体接入、页面服务 |
 | `src/decision_poc/collab/` | 多智能体协同：角色、契约、协同板、编排器 |
 | `src/decision_poc/quant/` | 定量层：水文、水力、简化水动力、可靠性、不确定性 |
-| `deploy/nexent/` | 平台装配脚本：MCP 注册、工具同步、智能体创建、技能绑定、证据采集 |
-| `samples/` | 资产台账、规则库、评测用例、平台实测证据 |
-| `scripts/` | 复现、构建材料、证据核对、界面自动检查 |
+| `scripts/` | 生成器、证据核对、界面自动检查。入口是 `reproduce.py`，其余脚本都从它串起来；分组索引见 [`scripts/README.md`](scripts/README.md) |
 | `tests/` | 980 项收集 / 965 通过 / 15 项按设计跳过（干净 clone 实测，0 失败） |
+| `samples/` | 资产台账 `assets/`、规则库 `rules/`、评测用例 `eval/`、平台实测证据 `nexent/` |
+| `docs/` | 设计与验收文档。**先读 [`docs/README.md`](docs/README.md)** —— 它按阅读顺序编排，不按文件名字母序 |
+| `deploy/` | 三条部署路径，见 [`deploy/README.md`](deploy/README.md)：`nexent/` 平台装配、`offline/` 离线包、`mcp_sse/` MCP 容器 |
+| `.github/workflows/` | CI 五道闸：锁文件、编译、测试、对外数字自检、复现快检 |
 
 </details>
 

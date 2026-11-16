@@ -32,7 +32,7 @@ from . import web_llm
 from .collab import orchestrate
 from .counterfactual import Intervention, InterventionKind, rerun_with_interventions
 from .deduction import DeductionEngine, DistrictSignal
-from .evolution_demo import build_evolution_html, build_evolution_payload
+from .evolution_demo import build_contrast_html, build_evolution_html, build_evolution_payload
 from .flood_feedback import FloodFeedback, plan as feedback_plan, run_evolution, to_feedback_record
 from .road_graph import RoadGraph, RoadGraphUnavailable
 from .skills import SkillPipeline, SkillRuntime
@@ -4926,16 +4926,18 @@ def build_evolution_page() -> str:
     """进化页：首屏指标与评分汇总在服务端先填，页面打开即有内容。"""
     html = build_evolution_html()
     try:
+        payload = build_evolution_payload()
         html = html.replace(
             '<div class=metric><span>正在读取进化结果…</span></div>',
-            _evolution_metrics_html(build_evolution_payload()),
+            _evolution_metrics_html(payload),
         )
+        html = html.replace("__CONTRAST__", build_contrast_html(payload))
         html = html.replace(
             '<div id=reviewReal class=rvstat>加载中…</div>',
             '<div id=reviewReal class=rvstat>' + _reviews_summary_html(review_payload()) + '</div>',
         )
     except Exception:  # noqa: BLE001 - 填不上就让前端照旧去取
-        return html
+        return html.replace("__CONTRAST__", "<p class=dim>这一栏暂时取不到，前端读取后补齐。</p>")
     return html
 
 
@@ -5196,6 +5198,17 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
     <div><dt>适用范围</dt><dd>约 3 km 街区<span>单场景标定，未在其他城市验证</span></dd></div>
   </dl>
 
+  <!-- 数据性质分层：这一栏是本页最该被追问的地方。
+       数字来自 decision_poc.data_gate 的逐条来源分级（不是手写的概述）：
+       70 条事实里 4 条可追溯到原文，其余 66 条分别是推算、假设、演示数据。
+       主动摆出来，比被评委问「这数据真的假的」之后再解释要有力得多。 -->
+  <h3 class=sec>这份数据里，哪些是实测、哪些是假设<span>逐条分级统计，不是概述</span></h3>
+  <table>
+    <thead><tr><th>级别</th><th>条数</th><th>指什么</th><th>对外怎么表述</th></tr></thead>
+    <tbody>__PROV_ROWS__</tbody>
+  </table>
+  <div class=table-note>__PROV_NOTE__</div>
+
   <section class=grid3>
     <article class="g a">
       <span class=tag>A 组 · 基准组</span>
@@ -5280,6 +5293,33 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
       未经真实调度记录校准；可给出理由，但权重无历史数据支撑。</div>
   </div>
 
+  <!-- 「接入真实数据要改什么」：评委会问的下一个问题一定是「这套东西离能用还有多远」。
+       与其被问，不如把边界逐条摆出来——哪些是判断逻辑（换数据照跑），
+       哪些是本地标定（换地方必须重算）。 -->
+  <h3 class=sec>如果接入真实物联数据，哪些能留、哪些要重做<span>按模块分开说，不含糊</span></h3>
+  <div class=two>
+    <div class=panel>
+      <h4>与数据来源无关，可以直接留用</h4>
+      <div class=item><b>处置规则集</b>规则读的是字段（深度、泵组状态、路段通行能力），
+        不读数据来源。换一批数据进来，判定逻辑不用改。</div>
+      <div class=item><b>评测集与门禁</b>候选策略是否采纳，由固定的 12 例评测集偏差决定。
+        换成实测数据后只需重出这 12 例的参考答案，判定流程完全不变。</div>
+      <div class=item><b>版本、回滚与证据链</b>策略版本、回滚路径、每条结论的证据引用结构
+        与数据从哪来解耦；这也是本作把「数据层」和「判断层」分开写的直接原因。</div>
+    </div>
+    <div class=panel>
+      <h4>必须重做，做不了就是越界</h4>
+      <div class=item><b>来源标注</b>逐条来源表要换成采集系统写入的字段级来源。
+        现有 70 条里有 59 条未逐条标注，现在一律按「演示数据」计——补齐之前不得对外说成实测。</div>
+      <div class=item><b>本地标定值</b>径流系数 0.70、服务带 54 米、汇水面积 4.108 公顷
+        是这座城市的标定。<b>换片区必须重算</b>，直接沿用会重复滨河路那类结构性低估。</div>
+      <div class=item><b>片区阈值</b>两个片区的临界水深（30 / 18 厘米）目前取的是保守值，
+        接液位计之后应换成实测分位数，否则「超临界」这个判定本身就没有实据。</div>
+      <div class=item><b>时延参数</b>跨区调泵 40 分钟取自台账，是登记值不是实测行程时间；
+        接实时路况后这一项要改成动态估计。</div>
+    </div>
+  </div>
+
 </div>
 <footer>
   上述三组会话的原始记录随本次提交提供，可按会话编号在平台内查证。
@@ -5287,6 +5327,97 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
 </footer>
 </body></html>
 """
+
+
+_PROV_LEVEL_CN = {
+    "real": ("实测", "能定位到预案或台账原文的具体值", "可以作为依据引用"),
+    "derived": ("推算", "由真实值按明确公式算出，公式与输入都可查", "只能说「据此推算」，不能说实测"),
+    "assumption": ("假设", "没有公开口径，按量级假设，待核实", "必须标注「假设值，待核实」"),
+    "synthetic": ("演示数据", "为演示编制的场景数据，字段结构对齐真实单据", "不得当作实测值引用"),
+}
+
+
+def data_provenance_summary() -> dict[str, Any]:
+    """跑一次数据门禁（约 0.4 秒），把「70 条事实里几条实测」摊开。
+
+    缓存在模块级：演示期间这几份 CSV 不会变，每开一次页面重跑一遍没有意义。
+    门禁跑不起来就返回空字典——页面照实说「这一栏暂时取不到」，不编一组好看的数。
+    """
+    cached = _PROV_CACHE.get("value")
+    if cached is not None:
+        return cached
+    try:
+        from .data_gate import run_gate
+
+        report = run_gate()
+        value = {
+            "total": report.facts_total,
+            "by_level": dict(report.by_provenance),
+            "warns": [
+                {"id": item.check_id, "subject": item.subject, "message": item.message}
+                for item in report.findings
+                if item.severity.value == "warn"
+            ],
+            "errors": [item.check_id for item in report.findings if item.severity.value == "error"],
+        }
+    except Exception as exc:  # noqa: BLE001 - 门禁是加分项，跑不起来不影响本页其余内容
+        value = {"error": f"{type(exc).__name__}: {exc}"[:200]}
+    _PROV_CACHE["value"] = value
+    return value
+
+
+_PROV_CACHE: dict[str, Any] = {}
+
+
+def _prov_rows_html(summary: Mapping[str, Any]) -> str:
+    """来源分级表：级别顺序固定（实测→推算→假设→演示），空级别不编 0 行。"""
+    from html import escape as _esc
+
+    by_level = summary.get("by_level") or {}
+    out = []
+    for key in ("real", "derived", "assumption", "synthetic"):
+        if key not in by_level:
+            continue
+        label, what, how = _PROV_LEVEL_CN[key]
+        cls = {"real": "ok", "synthetic": "no"}.get(key, "")
+        out.append(
+            f'<tr><td class=k>{_esc(label)}</td>'
+            f'<td class="{cls}"><b>{int(by_level[key])}</b> 条</td>'
+            f'<td>{_esc(what)}</td><td>{_esc(how)}</td></tr>'
+        )
+    if out:
+        out.append(
+            f'<tr><td class=k>合计</td><td><b>{int(summary.get("total") or 0)}</b> 条</td>'
+            f'<td colspan=2>逐条分级由数据门禁（data_gate）统计得出，不是人工概述。</td></tr>'
+        )
+    return "".join(out)
+
+
+def _prov_note_html(summary: Mapping[str, Any]) -> str:
+    from html import escape as _esc
+
+    if not summary or summary.get("error"):
+        return "这一栏暂时取不到：数据门禁未跑通，因此不在这里给任何数字。"
+    total = int(summary.get("total") or 0)
+    by_level = summary.get("by_level") or {}
+    real = int(by_level.get("real") or 0)
+    synthetic = int(by_level.get("synthetic") or 0)
+    warns = summary.get("warns") or []
+    parts = [
+        f"结论建立在 <b>{total}</b> 条事实上：<b>{real}</b> 条可追溯到原文，"
+        f"其余 {total - real} 条分别是推算、假设与演示数据。"
+        f"对外引用时，只有第一类能说「实测」。"
+    ]
+    if synthetic:
+        parts.append(
+            f"另有 <b>{synthetic}</b> 条属演示数据，一律不当作实测引用；"
+            "其中多数未逐条标注来源（门禁计得 59 条），按数据集自述归入这一级——"
+            "宁可把能用的往下压一级，也不把出处不明的往上抬一级。"
+        )
+    if warns:
+        listed = "；".join(f'{_esc(item["id"])}　{item["subject"]}' for item in warns)
+        parts.append(f"门禁自身还有 <b>{len(warns)}</b> 项待确认：{listed}。")
+    return "".join(parts)
 
 
 def build_limits_html() -> str:
@@ -5313,6 +5444,10 @@ def build_limits_html() -> str:
     def num(value: Any, dash: str = "—") -> str:
         return dash if value is None else str(value)
 
+    prov = data_provenance_summary()
+    prov_rows = _prov_rows_html(prov)
+    prov_note = _prov_note_html(prov)
+
     return (
         _LIMITS_PAGE.replace("__A_PASSED__", num(a["passed"]))
         .replace("__A_TOTAL__", num(a["total"]))
@@ -5331,6 +5466,321 @@ def build_limits_html() -> str:
         .replace("__C_CLAIMED__", _esc(num(c["claimed_fingerprint"])))
         .replace("__C_REAL__", _esc(num(c["real_fingerprint"])))
         .replace("__ROWS__", rows)
+        .replace("__PROV_ROWS__", prov_rows)
+        .replace("__PROV_NOTE__", prov_note)
+    )
+
+
+# --- 一键演示页 ---------------------------------------------------------------
+#
+# 现场要解决的问题不是「页面好不好看」，是「8G 内存、断网、只有一个人解说」。
+# 所以这一页只做三件事：
+#   1. 把 /map2d 嵌进来当底片（同源 iframe，直接调它的 seek/play，不另写一套动画）；
+#   2. 在顶部用一条导引条按节拍推进 5 幕，每幕的动作与文案都来自后端真实接口；
+#   3. 一键跑完、可重复跑：演化走冷启动接口，不受上一次演示产生的记忆影响。
+# 页面本身不发任何外网请求，所有 fetch 都是 127.0.0.1 本机。
+
+_SHOW_PAGE = """<!doctype html><html lang=zh-CN><meta charset=utf-8>
+<meta name=viewport content='width=device-width,initial-scale=1'>
+<title>一键演示 · 城市内涝可进化决策智能体</title>
+<style>
+:root{--ink:#1b2330;--sub:#5b6472;--dim:#8b95a3;--line:#e2e7ee;
+  --blue:#2f7fb8;--teal:#0f766e;--amber:#b45309;--red:#b91c1c;--green:#15803d}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b1420;
+  font:14px/1.5 "Segoe UI","Microsoft YaHei",system-ui,sans-serif;color:#e8eef5}
+#bar{height:100px;display:flex;flex-direction:column;justify-content:center;gap:5px;
+  padding:0 22px;background:linear-gradient(180deg,#0e1a29,#0b1420);
+  border-bottom:1px solid rgba(120,160,200,.18);position:relative;z-index:2}
+#bar::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,#2f7fb8,#4fd1c5,transparent);
+  background-size:200% 100%;animation:sweep 6s linear infinite}
+@keyframes sweep{from{background-position:200% 0}to{background-position:-100% 0}}
+.r1{display:flex;align-items:center;gap:14px;min-width:0}
+.r1 .ttl{font-size:13px;font-weight:600;letter-spacing:.6px;color:#bcd3e8;
+  white-space:nowrap;flex-shrink:0}
+.chips{display:flex;align-items:center;gap:6px;flex:1;min-width:0;overflow:hidden}
+.chip{display:flex;align-items:center;gap:6px;padding:2px 10px;border-radius:99px;
+  border:1px solid rgba(140,175,210,.22);font-size:11.5px;color:#8fa6bd;white-space:nowrap;
+  transition:.35s}
+.chip i{width:14px;height:14px;border-radius:50%;border:1px solid currentColor;
+  font-size:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chip.on{color:#0b1420;background:#5fd0c4;border-color:#5fd0c4;box-shadow:0 0 14px rgba(95,208,196,.45)}
+.chip.done{color:#7fd8a8;border-color:rgba(127,216,168,.45)}
+.chip.done i{border-color:rgba(127,216,168,.6)}
+.keys{display:flex;gap:12px;font-size:11px;color:#7b8fa6;white-space:nowrap;flex-shrink:0}
+.keys kbd{font:11px ui-monospace,monospace;padding:1px 5px;border-radius:4px;
+  border:1px solid rgba(140,175,210,.3);color:#b9cbdd;background:rgba(255,255,255,.05)}
+.r2{display:flex;align-items:baseline;gap:14px;min-width:0}
+#beat{font-size:17px;font-weight:600;letter-spacing:.4px;white-space:nowrap;flex-shrink:0;
+  color:#eaf3fb}
+#detail{font-size:12.5px;color:#93a9c0;min-width:0;line-height:1.5;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+#detail b{color:#cfe6ff;font-weight:600}
+#detail em{font-style:normal;color:#f3c07b}
+#stagewrap{position:relative;height:calc(100% - 100px);background:#eef1f5}
+iframe{display:block;width:100%;height:100%;border:0}
+#kick{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;
+  background:rgba(8,16,26,.62);backdrop-filter:blur(2px);transition:opacity .35s}
+#kick.off{opacity:0;pointer-events:none}
+#kick .card{text-align:center;padding:26px 40px;border-radius:14px;
+  background:rgba(14,26,41,.9);border:1px solid rgba(120,160,200,.25);
+  box-shadow:0 18px 60px rgba(0,0,0,.45)}
+#kick h1{margin:0 0 6px;font-size:19px;font-weight:600;letter-spacing:.5px;color:#eaf3fb}
+#kick p{margin:0;font-size:12.5px;color:#93a9c0;line-height:1.8}
+#kick .go{margin-top:14px;font-size:12px;color:#0b1420;background:#5fd0c4;
+  display:inline-block;padding:5px 16px;border-radius:99px;font-weight:600;letter-spacing:.5px}
+#kick .go kbd{font:inherit;background:transparent;border:none;color:inherit;padding:0 2px}
+#kick .note{margin-top:10px;font-size:11px;color:#6f8399}
+</style>
+<body>
+<div id=bar>
+  <div class=r1>
+    <span class=ttl>一键演示 · 演示模式</span>
+    <div class=chips id=chips></div>
+    <span class=keys><span><kbd>空格</kbd> 下一步</span><span><kbd>R</kbd> 重播</span><span><kbd>F11</kbd> 全屏</span></span>
+  </div>
+  <div class=r2>
+    <span id=beat>准备就绪</span>
+    <span id=detail>按下空格开始；全程离线，本机服务，不请求任何外部接口。</span>
+  </div>
+</div>
+<div id=stagewrap>
+  <iframe id=board src="/map2d?auto=0" title="推演大屏"></iframe>
+  <div id=kick><div class=card>
+    <h1>一键演示：一条闭环，五幕演示</h1>
+    <p>收到工单 → 冲突曝光 → 策略进化 → 重新推演 → 大屏退水<br>
+       每一步的数字都来自本机接口，可以当场反问「这个数哪来的」。</p>
+    <div class=go>按 <kbd>空格</kbd> 开始</div>
+    <div class=note>断网也能跑；重复演示结果一致（演化走冷启动）</div>
+  </div></div>
+</div>
+<script>
+const BEATS = [
+  {chip:'收到工单', title:'① 收到工单 · WO-20261029-007',
+   detail:'兴华路低洼段现场核实积水 <b>30 cm</b>，滨河路 18 cm；气象橙色预警 08:00 生效。系统先读台账，再定级。',
+   map:{seek:0}, wait:5200},
+  {chip:'冲突曝光', title:'② 冲突曝光 · 三处',
+   detail:'', wait:6000, fetch:'event', map:{seek:3}},
+  {chip:'策略进化', title:'③ 策略进化 · 门禁判定',
+   detail:'', wait:6200, fetch:'evolve'},
+  {chip:'重新推演', title:'④ 重新推演 · 同一份台账，换策略',
+   detail:'', wait:6200, fetch:'evolution', map:{seek:4}},
+  {chip:'大屏退水', title:'⑤ 大屏推演 · 峰值 30 cm → 退水',
+   detail:'峰值时全幅封闭；疏通雨水口 + 泵站全开 + 移动泵到位后，积水退至阈值以下，按指引 12:30 前恢复通行。',
+   wait:13000, map:{seek:4, play:true}},
+  {chip:'结束', title:'演示结束 · 每个数都能回查',
+   detail:'边界在 <b>/limits</b>，逐字段口径在 <b>/data</b>，版本与回滚在 <b>/evolution</b>。按下 R 可重播。',
+   wait:0, map:{play:false}},
+];
+const frame = document.getElementById('board');
+const chipsBox = document.getElementById('chips');
+const elBeat = document.getElementById('beat');
+const elDetail = document.getElementById('detail');
+const kick = document.getElementById('kick');
+let idx = -1, running = false, busy = false, cache = {}, timer = null;
+let autoMode = false;
+
+BEATS.forEach((b,i)=>{
+  const d = document.createElement('span');
+  d.className = 'chip'; d.dataset.i = i;
+  d.innerHTML = '<i>' + (i+1) + '</i>' + b.chip;
+  chipsBox.appendChild(d);
+});
+
+const sleep = (ms)=> new Promise(r=> setTimeout(r, ms));
+// 维度名在引擎里是英文枚举（transfer / critical_unmet / …）。这一页是给人念的，
+// 所以当场翻成人话；原值不进画面——评委看到下划线命名只会觉得「这不是给我看的东西」。
+const DIM_CN = {
+  transfer:'调拨门槛与优先序', critical_unmet:'关键片区未满足量',
+  allocation_l1:'分配向量偏差', order:'处置优先序',
+};
+const dimCN = (d)=> DIM_CN[d] || d || '—';
+const mapApi = ()=>{
+  try { return frame.contentWindow.__map2d || null; } catch(e) { return null; }
+};
+function say(title, html){
+  elBeat.textContent = title;
+  elDetail.innerHTML = html || '';
+}
+
+async function getJSON(url, opt){
+  const r = await fetch(url, opt || {});
+  if(!r.ok){
+    let msg = r.status + '';
+    try { const j = await r.json(); msg = j.error || msg; } catch(e){}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
+// 每一幕的正文都从接口现取，不预先在页面里写死数字——
+// 写死的数字在现场改了台账之后就会自相矛盾，而现场最怕「页面和台账对不上」。
+const FETCH = {
+  async event(){
+    const d = await getJSON('/api/workbench/event', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({event_id:'WO-20261029-007'})
+    });
+    const cs = d.conflicts || [];
+    const gap = (d.resource_gaps || [])[0] || {};
+    const names = (d.labels || {});
+    const nm = (x)=> names[x] || x;
+    const parts = cs.map(c=>{
+      if(c.conflict_id === 'C1') return '封路权限重叠（' + nm('ORG-ROAD') + ' × ' + nm('ORG-TRAFFIC') + '）';
+      if(c.conflict_id === 'C2') return '泵站无人认领运维主体';
+      if(c.conflict_id === 'C3') return '移动泵争用：需 ' + gap.required + ' 台、可用 ' + gap.available +
+        ' 台（<em>缺 ' + gap.gap + ' ' + (gap.unit || '') + '</em>）';
+      return c.subject + '：' + c.detail;
+    });
+    return '检测到 <b>' + cs.length + ' 处冲突</b>：' + parts.join('；');
+  },
+  async evolve(){
+    const d = await getJSON('/api/show/evolve', {
+      method:'POST', headers:{'content-type':'application/json'}, body:'{}'
+    });
+    if(!d.triggered){
+      return '引擎判定：<b>本轮不触发调整</b>（' + (d.reason || '未达到触发条件') + '），版本保持不变。';
+    }
+    const tr = d.train || {}, ho = d.holdout || {};
+    cache.evolve = d;
+    return '反馈指向 <b>' + dimCN(d.dimension_hint) + '</b> → 候选 <b>' + (d.final_label || '') +
+      '</b>；训练偏差 <b>' + Number(tr.initial).toFixed(4) + ' → ' + Number(tr.final).toFixed(4) +
+      '</b>，留出集 ' + Number(ho.initial ?? 0).toFixed(4) + ' → ' + Number(ho.final ?? 0).toFixed(4) +
+      '（<b>未退化</b>）';
+  },
+  async evolution(){
+    const d = await getJSON('/api/evolution');
+    const f = d.first || {}, re = d.real_event || {};
+    const a = f.initial_train || {}, b = f.final_train || {};
+    const base = (re.baseline || {}).allocation_by_district || {};
+    const evd = (re.evolved || {}).allocation_by_district || {};
+    const fmt = (o)=> Object.keys(o).map(k=> k + ' ' + o[k] + ' 台').join(' · ');
+    return '关键片区未满足 <b>' + a.critical_unmet_units + ' → <em>' + b.critical_unmet_units +
+      '</em> 台</b>（8 个评测场景合计）｜ 方案偏差 ' + Number(a.deviation).toFixed(4) + ' → ' +
+      Number(b.deviation).toFixed(4) + ' ｜ 同一事件分配：' + fmt(base) + ' → <b>' + fmt(evd) + '</b>';
+  },
+};
+
+async function run(i){
+  const b = BEATS[i];
+  if(!b) return;
+  idx = i;
+  clearTimer();
+  [...chipsBox.children].forEach((c,k)=>{
+    c.className = 'chip' + (k === i ? ' on' : (k < i ? ' done' : ''));
+  });
+  say(b.title, b.detail || '正在读取本机接口…');
+  const api = mapApi();
+  if(b.map && api){
+    if(typeof b.map.seek === 'number') api.seek(b.map.seek, !!b.map.play);
+    if(b.map.play === false) api.play(false);
+  }
+  if(b.fetch){
+    try { say(b.title, await FETCH[b.fetch]()); }
+    catch(err){ say(b.title, '<em>本机接口未返回：' + String(err.message || err) + '</em>（其余几幕不受影响，可按空格继续）'); }
+  }
+  if(b.map && b.map.play && mapApi()){ mapApi().play(true); }
+  // 自动模式用定时器推进，而不是在这里 await：await 会把「按空格提前进下一幕」
+  // 挡在 busy 外面，讲快了只能干等；定时器则可以随时被空格打断。
+  if(autoMode && b.wait){ timer = setTimeout(function(){ next(); }, b.wait); }
+}
+function clearTimer(){ if(timer){ clearTimeout(timer); timer = null; } }
+
+async function next(){
+  if(busy) return;
+  if(idx >= BEATS.length - 1){ return restart(); }
+  busy = true;
+  kick.classList.add('off');
+  await run(idx + 1);
+  busy = false;
+}
+async function restart(){
+  if(busy) return;
+  busy = true;
+  clearTimer();
+  idx = -1;
+  const api = mapApi();
+  if(api){ api.play(false); api.seek(0); }
+  say('准备就绪', '按下空格重新开始；全程离线，本机服务，不请求任何外部接口。');
+  kick.classList.remove('off');
+  busy = false;
+}
+function onKey(e){
+  if(e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); next(); }
+  else if(e.key === 'r' || e.key === 'R'){ e.preventDefault(); restart(); }
+  else if(e.key === 'Escape'){ const api = mapApi(); if(api) api.play(false); }
+}
+document.addEventListener('keydown', onKey);
+// 同源 iframe：点过地图之后焦点在 iframe 里，父页收不到键盘。
+// 直接给子文档也挂一份（不依赖 postMessage，少一层跨文档握手）。
+frame.addEventListener('load', ()=>{
+  try { frame.contentDocument.addEventListener('keydown', onKey); } catch(e){}
+});
+// 大屏那边点「播放」会和演示节拍打架：进入演示后统一由这里控制播放状态。
+frame.addEventListener('load', ()=>{
+  const api = mapApi();
+  if(api) api.play(false);
+});
+// 全自动模式：/show?auto=1 加载即开跑，不用碰键盘。
+// 彩排过场用（连按空格容易点乱），正式答辩仍建议留一个空格，节奏由讲的人定。
+if(new URLSearchParams(location.search).get('auto') === '1'){
+  autoMode = true;
+  setTimeout(()=>{ next(); }, 900);
+}
+// 排练用：/show?beat=3 直接停在某一幕（1 起数，和顶栏上的序号一致），
+// 方便单独过一遍「这一幕要说什么」，也方便截图核对排版。不改任何数据。
+const qBeat = parseInt(new URLSearchParams(location.search).get('beat'), 10);
+if(!isNaN(qBeat) && qBeat >= 1 && qBeat <= BEATS.length){
+  setTimeout(()=>{ kick.classList.add('off'); run(qBeat - 1); }, 800);
+}
+</script>
+</body></html>
+"""
+
+
+def build_show_html() -> str:
+    """GET /show：一键演示页。静态外壳 + 前端按节拍调本机接口。"""
+    return _SHOW_PAGE
+
+
+def show_evolve() -> tuple[int, str, bytes]:
+    """POST /api/show/evolve：演示用的一次冷启动演化。
+
+    与 `/feedback` 只差一件事：**不读也不写运行期记忆**，每次都从 v1.0 起跑。
+    为什么必须这样：记忆一旦收敛（v1.2、训练偏差 0），第二次点演示就只有
+    「已收敛、无新版本」——同一个动作第一次好看、第二次空转，现场最容易翻车。
+    这一条要写在页面上（“演化走冷启动”），不能让人以为它每次都随机变好。
+
+    走的仍是同一条 `run_evolution`，参数只有 memory 两项不同，判定与门禁不变。
+    """
+    from . import flood_feedback as _ff
+
+    try:
+        feedback = _ff.FloodFeedback(
+            scenario_id="vd02",
+            t_min=45,
+            district="A-03",
+            water_depth_cm=34.0,
+            flooded_road_ids=["RD-A03-02", "RD-A03-05"],
+            pump_state="running",
+            source="synthetic",
+            note="演示：封路后仍超临界，两处同时失守",
+        )
+        result = _ff.run_evolution(feedback, use_memory=False, persist_memory=False)
+    except Exception as exc:  # noqa: BLE001 - 演示页不能因为引擎报错就整页白掉
+        return _json({"triggered": False, "reason": f"{type(exc).__name__}: {exc}"[:300]})
+    return _json(
+        {
+            "triggered": bool(result.get("triggered")),
+            "reason": result.get("reason"),
+            "dimension_hint": result.get("dimension_hint"),
+            "final_label": result.get("final_label"),
+            "train": result.get("train"),
+            "holdout": result.get("holdout"),
+            "promoted_rounds": result.get("promoted_rounds"),
+            "reviews": (result.get("reviews") or {}).get("items") or [],
+        }
     )
 
 
@@ -5451,6 +5901,13 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
         return 200, "text/html; charset=utf-8", build_status_html().encode("utf-8")
     if parsed.path == "/workbench":
         return 200, "text/html; charset=utf-8", build_workbench_html().encode("utf-8")
+    if parsed.path == "/show":
+        # 一键演示页：现场用，不进门户导航（和 /status 一样属于「讲的人用」的页）。
+        return 200, "text/html; charset=utf-8", build_show_html().encode("utf-8")
+    if segments[:3] == ["api", "show", "evolve"]:
+        if method.upper() != "POST":
+            return _error("只接受 POST", 405)
+        return show_evolve()
     if parsed.path == "/map2d":
         return build_map2d_html()
     if segments[:3] == ["api", "workbench", "events"]:
@@ -5775,6 +6232,8 @@ __all__ = [
     "EVOLVED_POLICY",
     "build_demo_payload",
     "build_html",
+    "build_show_html",
+    "show_evolve",
     "compare_scenes",
     "evolution_after_review",
     "evolution_dir",

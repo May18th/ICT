@@ -20,11 +20,12 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Mapping
 
 from .policy_evolution import (
     HOLDOUT_TOLERANCE,
     ShowcaseReport,
+    load_cases,
     run_showcase,
 )
 from .experience import load_reviews
@@ -74,6 +75,72 @@ def _real_event_plan(plan) -> dict[str, Any] | None:
         "unmet_by_district": dict(plan.unmet_by_district),
         "transfers": list(plan.transfers),
         "escalation": list(plan.escalation),
+    }
+
+
+def _transfer_delay_min() -> float:
+    """跨区调拨在途时延：取评测集里登记的调拨期望值（全部 40 分钟）。
+
+    不写死 40：这是台账登记值，改台账就该跟着变。取不到时退回 40 并在页面上
+    标明「按台账登记值」——成本折算依赖它，不能悄悄用一个来源不明的数。
+    """
+    delays: list[float] = []
+    try:
+        for case in load_cases():
+            expect = getattr(case, "expect", None)
+            for item in (getattr(expect, "transfers", None) or []):
+                value = getattr(item, "delay_min", None)
+                if value:
+                    delays.append(float(value))
+    except Exception:  # noqa: BLE001 - 评测集读不到不影响本块其余数字
+        delays = []
+    return max(delays) if delays else 40.0
+
+
+def _contrast_block(first) -> dict[str, Any]:
+    """V1 与 V2 的对照：只摆同一批评测场景上的成对数字，不混事件、不换口径。
+
+    「题面不可消除的缺口」取报告里的 expected_critical_unmet_units——
+    那是参考答案自身也填不平的部分。用它把总缺口拆成两半：
+      总缺口 = 题面不可消除 + 策略自己造出来的
+    这一拆是这段叙事的关键：15 → 6 不是「从很糟到还行」，
+    而是「策略自造的 9 台归零，剩下的 6 台本来就不该由策略负责」。
+    """
+    delay = _transfer_delay_min()
+
+    def pair(a, b, key: str) -> list[Any]:
+        return [getattr(a, key), getattr(b, key)]
+
+    def extra(report) -> int:
+        return max(0, int(report.critical_unmet_units) - int(report.expected_critical_unmet_units))
+
+    def hours(units: int) -> float:
+        return round(units * delay / 60.0, 1)
+
+    train_a, train_b = first.initial_train, first.final_train
+    hold_a, hold_b = first.initial_holdout, first.final_holdout
+    return {
+        "delay_min": delay,
+        # 训练集＝8 个评测场景，留出集＝4 个没参与调参的场景
+        "train": {
+            "cases": train_a.cases_total,
+            "deviation": pair(train_a, train_b, "deviation"),
+            "critical_unmet": pair(train_a, train_b, "critical_unmet_units"),
+            "floor": int(train_a.expected_critical_unmet_units),
+            "self_inflicted": [extra(train_a), extra(train_b)],
+            "missed_transfers": pair(train_a, train_b, "missed_transfers"),
+            "expected_transfers": int(train_a.expected_transfers),
+            "allocation_l1": pair(train_a, train_b, "allocation_l1_units"),
+            "order_hits": pair(train_a, train_b, "order_hits"),
+            "order_total": train_a.order_total,
+            "extra_hours": [hours(extra(train_a)), hours(extra(train_b))],
+        },
+        "holdout": {
+            "cases": hold_a.cases_total,
+            "critical_unmet": pair(hold_a, hold_b, "critical_unmet_units"),
+            "floor": int(hold_a.expected_critical_unmet_units),
+            "deviation": pair(hold_a, hold_b, "deviation"),
+        },
     }
 
 
@@ -137,6 +204,7 @@ def build_evolution_payload(showcase: ShowcaseReport | None = None) -> dict[str,
             "baseline": _real_event_plan(first.real_event_baseline),
             "evolved": _real_event_plan(first.real_event_evolved),
         },
+        "contrast": _contrast_block(first),
         "boundaries": [
             "反馈信号 = 固定的 ground truth + 人工评审结论（受控评测环境），不是真实市政数据回流",
             "人工评审为角色扮演，用于演示第二反馈通道，不代表真实部门批复",
@@ -145,8 +213,103 @@ def build_evolution_payload(showcase: ShowcaseReport | None = None) -> dict[str,
     }
 
 
-EVOLUTION_STYLE = """
-<style>
+def build_contrast_html(payload: Mapping[str, Any]) -> str:
+    """V1 / V2 对照块。服务端先渲染一遍，页面打开就是完整内容。
+
+    三条口径写在正文里而不是靠讲：
+      1. 两列是同一批评测场景上的成对结果，不是两次不同事件；
+      2. 缺口拆成「题面不可消除」与「策略自造」两半，6 台下限拿参考答案说话；
+      3. 成本只折算成泵台时（台数 × 在途分钟），不给钱数——真实结算口径我们手上没有。
+    """
+    from html import escape as _esc
+
+    c = (payload or {}).get("contrast") or {}
+    train = c.get("train") or {}
+    hold = c.get("holdout") or {}
+    if not train:
+        return "<p class=dim>这一栏暂时取不到：进化结果还没跑通，这里不给任何数字。</p>"
+
+    dev = train.get("deviation") or [0, 0]
+    unmet = train.get("critical_unmet") or [0, 0]
+    self_inf = train.get("self_inflicted") or [0, 0]
+    missed = train.get("missed_transfers") or [0, 0]
+    l1 = train.get("allocation_l1") or [0, 0]
+    hits = train.get("order_hits") or [0, 0]
+    floor = int(train.get("floor") or 0)
+    cases = int(train.get("cases") or 0)
+    order_total = int(train.get("order_total") or 0)
+    exp_tr = int(train.get("expected_transfers") or 0)
+    hours = train.get("extra_hours") or [0.0, 0.0]
+    delay = c.get("delay_min") or 40.0
+
+    drop = int(unmet[0]) - int(unmet[1])
+    pct = f"{drop / int(unmet[0]) * 100:.0f}%" if int(unmet[0]) else "—"
+
+    def row(name: str, a: str, b: str, delta: str, cls: str = "") -> str:
+        return (
+            f'<tr><td class=k>{_esc(name)}</td><td>{_esc(a)}</td>'
+            f'<td class="ok">{_esc(b)}</td><td class="{cls}">{_esc(delta)}</td></tr>'
+        )
+
+    rows = [
+        row("综合决策偏差", f"{float(dev[0]):.4f}", f"{float(dev[1]):.4f}", "归零"),
+        row("关键片区未满足（台）", str(unmet[0]), str(unmet[1]),
+            f"−{drop} 台（−{pct}）"),
+        row("　其中：题面本身无解", str(floor), str(floor), "未变"),
+        row("　其中：策略自己造出来的", str(self_inf[0]), str(self_inf[1]), "归零"),
+        row("应调拨未调拨（次）", str(missed[0]), str(missed[1]), "归零"),
+        row("分配向量差（台）", str(l1[0]), str(l1[1]), "归零"),
+        row("优先序命中", f"{hits[0]}/{order_total}", f"{hits[1]}/{order_total}",
+            f"+{int(hits[1]) - int(hits[0])}"),
+    ]
+    if hold:
+        hu = hold.get("critical_unmet") or [0, 0]
+        rows.append(row("留出集：关键片区未满足（台）", str(hu[0]), str(hu[1]),
+                        f"−{int(hu[0]) - int(hu[1])} 台（下限 {hold.get('floor')}）"))
+    table = (
+        '<table class=versus-table><thead><tr><th>看什么</th><th>V1 初始策略</th>'
+        f'<th>V2 进化后</th><th>变化</th></tr></thead><tbody>{"".join(rows)}</tbody></table>'
+    )
+
+    v1 = (
+        '<div class="vs-col v1"><h3>V1 · 初始策略</h3>'
+        '<div class=vtag>按片区顺序分配，不看「有没有过阈值、地下有没有风险」</div><ul>'
+        f"<li>关键片区缺 <b>{unmet[0]} 台</b>，其中 <b>{self_inf[0]} 台</b>是策略自己造出来的——"
+        "参考答案里本来填得平</li>"
+        f"<li>该调拨 <b>{exp_tr} 次</b>，实际调了 <b>0 次</b>：跨区运力一次都没用上</li>"
+        f"<li>优先序命中 {hits[0]}/{order_total}；方案偏差 {float(dev[0]):.4f}</li>"
+        "</ul><div class=vfoot>结果：关键片区告急，只能上报市级增援。</div></div>"
+    )
+    v2 = (
+        '<div class="vs-col v2"><h3>V2 · 进化后</h3>'
+        '<div class=vtag>先保「已过封路阈值 + 地下有风险」的片区，再谈平均</div><ul>'
+        f"<li>关键片区缺 <b>{unmet[1]} 台</b>，正好是参考答案也填不平的下限（{floor} 台）</li>"
+        f"<li>该调拨 <b>{exp_tr} 次</b>，实际调了 <b>{exp_tr - int(missed[1])} 次</b>："
+        "运力用在最急的片区上</li>"
+        f"<li>优先序命中 {hits[1]}/{order_total}；方案偏差 {float(dev[1]):.4f}</li>"
+        "</ul><div class=vfoot>代价不是零：非关键片区让出库存，需要市级补位。</div></div>"
+    )
+
+    cost = (
+        '<div class=costbox>'
+        f"<b>把缺口折成成本：</b>策略自造缺口 {self_inf[0]} 台 × 跨区在途 {delay:g} 分钟 = "
+        f"<b>{hours[0]} 泵台时</b>；V2 为 <b>{hours[1]} 泵台时</b>。"
+        "这 6 个台时不是天灾，是分配顺序造成的——同样的人、同样的泵、同样的路况。"
+        '<span class=src>折算口径：台数 × 台账登记的跨区在途时延（40 分钟），只把「台」换成同一单位便于比较，'
+        "<b>不是钱</b>。应急采购与市级调派的真实结算口径我们手上没有，不编这个数——要用请按实际考核口径替换。</span>"
+        "</div>"
+    )
+
+    note = (
+        f"<p class=dim style='margin:12px 0 0;font-size:12px'>口径：两列是"
+        f"<b>同一批 {cases} 个评测场景</b>上的成对结果（不是两次不同事件）；"
+        f"下限 {floor} 台取自参考答案自身的缺口，删不掉。"
+        "「事件级」的分配变化见下方「场景事件」一栏。</p>"
+    )
+    return f"<div class=versus>{v1}{v2}</div>{table}{cost}{note}"
+
+
+EVOLUTION_STYLE = """<style>
 :root{--page-bg:#eef2ef;--ink:#173238;--muted:#6c7e7f;--line:#d9e3e0;--surface:#fff;--accent:#0f766e;--accent-soft:#e2f1ed;--warning:#c56d45;--shadow:0 16px 42px rgba(25,55,57,.08)}
 *{box-sizing:border-box}
 html{background:var(--page-bg)}
@@ -159,7 +322,7 @@ main.evolution-page{max-width:1240px;margin:auto;padding:42px 34px 58px}
 .evolution-hero .sub{max-width:650px;margin:14px 0 0;color:var(--muted);font-size:16px}
 a.back{display:inline-flex;align-items:center;min-height:42px;padding:0 16px;border:1px solid #b7cbc5;border-radius:999px;background:rgba(255,255,255,.7);color:var(--accent);font-size:13px;font-weight:750;text-decoration:none;transition:background .18s ease,border-color .18s ease,transform .18s ease}
 a.back:hover{background:#fff;border-color:var(--accent);transform:translateY(-1px)}
-.evolution-metrics{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:24px 0}
+.evolution-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:24px 0}
 .evolution-metrics .metric{min-height:128px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
 .evolution-metrics .metric:first-child{background:var(--ink);border-color:var(--ink);color:#fff}
 .evolution-metrics .metric:first-child span{color:#bfd2ce}
@@ -190,7 +353,27 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px
 .rvstat{font-size:13px;color:var(--muted)}
 code{background:#eef4f1;color:#35605c;padding:2px 6px;border-radius:5px;font-size:12px;overflow-wrap:anywhere}
 .evolution-footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;margin-top:22px}
-@media(max-width:900px){main.evolution-page{padding:28px 20px 42px}.evolution-hero{align-items:flex-start;flex-direction:column}.evolution-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.evolution-grid{grid-template-columns:1fr}.comparison-card,.feedback-card{grid-column:auto}.evolution-card{overflow-x:auto}.story-flow{grid-template-columns:repeat(2,minmax(0,1fr))}.story-step:not(:last-child):after{display:none}}
+/* V1 / V2 对照：两块并排，颜色只用来区分「哪一版」，不用来表达好坏——
+   好坏交给数字和「自造缺口」那一行说，颜色说多了就把结论强加给读者了。 */
+.versus-card{grid-column:1/-1}
+.versus{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:2px 0 18px}
+.vs-col{border:1px solid var(--line);border-radius:14px;padding:6px 18px 14px;background:#fbfdfc}
+.vs-col.v1{border-top:3px solid var(--warning)}
+.vs-col.v2{border-top:3px solid var(--accent)}
+.vs-col h3{margin:14px 0 2px;font-size:16px;letter-spacing:-.01em}
+.vs-col .vtag{color:var(--muted);font-size:12px;margin-bottom:10px}
+.vs-col ul{margin:0;padding-left:17px;font-size:13.5px}
+.vs-col li{margin:6px 0;color:var(--ink)}
+.vs-col li b{font-weight:800;color:var(--accent)}
+.vs-col.v1 li b{color:var(--warning)}
+.vs-col .vfoot{margin-top:12px;padding-top:9px;border-top:1px dashed var(--line);
+  font-size:12px;color:var(--muted)}
+.versus-table td:nth-child(2),.versus-table td:nth-child(3){font-variant-numeric:tabular-nums;font-weight:700}
+.costbox{margin-top:14px;padding:13px 16px;border:1px solid #e6d4bf;background:#fdf7ef;
+  border-radius:12px;font-size:13px;line-height:1.7;color:#5c4630}
+.costbox b{color:#8a4b1d}
+.costbox .src{display:block;margin-top:6px;color:#8a745c;font-size:11.5px}
+@media(max-width:900px){main.evolution-page{padding:28px 20px 42px}.evolution-hero{align-items:flex-start;flex-direction:column}.evolution-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.evolution-grid{grid-template-columns:1fr}.comparison-card,.feedback-card{grid-column:auto}.evolution-card{overflow-x:auto}.story-flow{grid-template-columns:repeat(2,minmax(0,1fr))}.story-step:not(:last-child):after{display:none}.versus{grid-template-columns:1fr}}
 @media(max-width:560px){.evolution-metrics{grid-template-columns:1fr}.evolution-card{padding:17px}.rv{grid-template-columns:1fr}.rv input.wide,.rv button{grid-column:auto}.story-flow{grid-template-columns:1fr}table{min-width:620px}}
 </style>
 """
@@ -203,6 +386,7 @@ def build_evolution_html() -> str:
 <div class="grid evolution-metrics" id=metrics><div class=metric><span>正在读取进化结果…</span></div></div>
 <div class=evolution-grid>
 <section class="card evolution-card outcome-card"><h2>本轮结果</h2><div class=outcome-result>资源分配与人工建议一致</div><p>策略依据人工反馈调整了区域权重，本次推演的分配结果与人工建议一致；该策略已记录版本，可回滚。</p><div class=outcome-list><span>与人工建议差异 0</span><span>新场景未退化</span><span>版本可回滚</span></div></section>
+<section class="card evolution-card versus-card"><h2>V1 与 V2：差别就是这一组数字</h2><div id=versus>__CONTRAST__</div></section>
 <section class="card evolution-card flow-card"><h2>策略调整的四个环节</h2><div class=story-flow><div class=story-step><strong>1 · 原来的方案</strong><span>先按初始规则分配资源。</span></div><div class=story-step><strong>2 · 收到建议</strong><span>人工指出重点片区需要更多资源。</span></div><div class=story-step><strong>3 · 调整方案</strong><span>把资源从低优先区域转到重点区域。</span></div><div class=story-step><strong>4 · 下次复用</strong><span>相似事件可直接沿用已验证策略。</span></div></div></section>
 <section class="card evolution-card memory-card"><h2>第二会话：复用已验证经验</h2><div id=memory></div></section>
 <section class="card evolution-card review-panel"><h2>人工协同反馈：本次调整的采纳依据</h2><div id=review></div></section>
