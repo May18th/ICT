@@ -1308,6 +1308,8 @@ h1{font-size:22px;margin:0 0 6px}h1 span{color:#5eead4}
 h2{font-size:16px;margin:26px 0 8px}
 .sub{color:#89a2b8;margin-bottom:20px}
 .stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.stat-empty{flex:1 1 100%;background:#fff;border:1px dashed var(--line2);border-radius:10px;
+  padding:12px 14px;font-size:13px;color:var(--sub)}
 .stat{border:1px solid #1e3348;border-radius:10px;padding:10px 14px;background:#0f1e2e;min-width:112px}
 .stat small{display:block;color:#8aa3b8;font-size:11.5px}
 .stat b{font-size:19px;color:#e6f1fa;font-weight:600}
@@ -1421,8 +1423,16 @@ def build_review_html() -> str:
     body = "".join(rows) if rows else '<tr><td colspan="7" class="muted">还没有提交记录。</td></tr>'
     recent = f"<table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
 
+    if summary["total"]:
+        stats_html = "".join(stats)
+    else:
+        stats_html = (
+            '<div class="stat-empty">还没有评审记录：填一次下面的评分，这里会显示样本数、'
+            "前后均分与差值。评分只用于后续版本调整，不参与本次推演。</div>"
+        )
+
     return (
-        _REVIEW_PAGE.replace("__STATS__", "".join(stats))
+        _REVIEW_PAGE.replace("__STATS__", stats_html)
         .replace("__RECENT__", recent)
         .replace("__NOTE__", _esc(summary["note"]))
     )

@@ -2497,8 +2497,16 @@ function camFocus(fr){
   const pos = deptLayoutMap()[fr.focus] || deptPosition(fr.focus);
   return pos;
 }
-// 根据 t 插值出当前镜头并应用
-function applyCam(t){
+// 根据 t 插值出当前镜头并应用。
+// 运动设计（原来整段匀速滑动，画面一直在漂，看不出正在看什么）：
+// 1) 每段只滑 CAM_GLIDE 秒，剩下的时间停住——停下来才有时间读图；
+// 2) 缓入缓出（三次曲线），起手与落点都不生硬；
+// 3) 平移在屏幕坐标里插值：直接用世界坐标会出现「缩小时飞快、放大时爬行」；
+// 4) 缩放取对数等速，观感上每秒放大的倍数一致；
+// 5) 长距离平移先退半步再进（轻微拉远），避免贴着地面平移看不出位移。
+const CAM_GLIDE = 3.2;   // 每段滑动的秒数（其余时间定格）
+const CAM_EASE = u => u < 0.5 ? 4*u*u*u : 1 - Math.pow(-2*u + 2, 3)/2;
+function applyCam(t, snap){
   if(!autoCam) return;
   const rect = stage.getBoundingClientRect();
   const ar = (rect.width>0 && rect.height>0) ? rect.width/rect.height : VW/VH;
@@ -2509,16 +2517,23 @@ function applyCam(t){
   }
   if(a === c) c = a;
   const pa = camFocus(a), pc = camFocus(c);
-  // 在两帧之间线性插值（位置和视野宽度都用对数插值，zoom 更平滑）
   const span = c.t - a.t;
-  const f = span > 0 ? Math.min(1, Math.max(0, (t - a.t)/span)) : 0;
-  const x = pa.x + (pc.x - pa.x)*f;
-  const y = pa.y + (pc.y - pa.y)*f;
-  // 视野宽度是「世界单位」，要乘 scale 换算成 viewBox 单位（scale=世界→viewBox）。
-  const w = a.w * Math.pow(c.w/a.w, f) * scale;
-  const cxp = cx(x), cyp = cy(y);
-  const ww = w, hh = w / ar;
-  vb = { x: cxp - ww/2, y: cyp - hh/2, w: ww, h: hh };
+  const segSec = span * DURATION;
+  const glide = Math.min(CAM_GLIDE, segSec * 0.8);
+  let u = 1;
+  if(glide > 0){
+    u = Math.min(1, Math.max(0, ((t - a.t) * DURATION) / glide));
+  }
+  const e = snap ? 1 : CAM_EASE(u);
+  const ax = cx(pa.x), ay = cy(pa.y), bx = cx(pc.x), by = cy(pc.y);
+  const px = ax + (bx - ax) * e;
+  const py = ay + (by - ay) * e;
+  const wBase = a.w * Math.pow(c.w / a.w, e) * scale;
+  const dist = Math.hypot(bx - ax, by - ay);
+  const dip = Math.min(0.22, (dist / Math.max(1, wBase)) * 0.45);
+  const w = wBase * (1 + dip * Math.sin(Math.PI * e));
+  const h = w / ar;
+  vb = { x: px - w/2, y: py - h/2, w, h };
   commitView();
 }
 
@@ -2555,7 +2570,7 @@ if(!isNaN(qT)){
   document.getElementById('play').textContent = '▶ 播放';
   fitView(1.0);           // static 模式用全景，方便看整体状态
   apply(qT);
-  if(autoCam) applyCam(qT);
+  if(autoCam) applyCam(qT, true);   // 静帧核对：直接给落点，不要滑动中间态
 }else{
   playing = true;
   document.getElementById('play').textContent = '⏸ 暂停';
