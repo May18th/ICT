@@ -206,10 +206,10 @@ def build_evolution_html() -> str:
 <section class="card evolution-card flow-card"><h2>策略调整的四个环节</h2><div class=story-flow><div class=story-step><strong>1 · 原来的方案</strong><span>先按初始规则分配资源。</span></div><div class=story-step><strong>2 · 收到建议</strong><span>人工指出重点片区需要更多资源。</span></div><div class=story-step><strong>3 · 调整方案</strong><span>把资源从低优先区域转到重点区域。</span></div><div class=story-step><strong>4 · 下次复用</strong><span>相似事件可直接沿用已验证策略。</span></div></div></section>
 <section class="card evolution-card memory-card"><h2>第二会话：复用已验证经验</h2><div id=memory></div></section>
 <section class="card evolution-card review-panel"><h2>人工协同反馈：本次调整的采纳依据</h2><div id=review></div></section>
-<section class="card evolution-card allocation-card"><h2>真实事件：资源分配变化 · WO-20261029-007</h2><div id=realEvent></div></section>
+<section class="card evolution-card allocation-card"><h2>场景事件：资源分配变化 · WO-20261029-007</h2><div id=realEvent></div><p class=dim>口径：这条工单来自本站的演示台账（评测场景），不是真实发生过的处置记录；与全站「评测场景」口径一致，标题用「场景事件」。</p></section>
 <details class=secondary-details><summary>更多审计信息 <span>评分、版本与边界说明</span></summary><div class=details-body>
 <section class="card evolution-card comparison-card"><h2>第一会话：策略调整前后</h2><table id=firstTable></table></section>
-<section class="card evolution-card feedback-card"><h2>真实用户评分：收集意见并触发校验</h2>
+<section class="card evolution-card feedback-card"><h2>评审评分：收集意见并触发校验</h2>
 <div id=reviewReal class=rvstat>加载中…</div>
 <form class=rv id=rvForm>
   <input id=rvId placeholder='你的名字或编号（必填）' required>
@@ -222,7 +222,7 @@ def build_evolution_html() -> str:
 </form>
 <div id=rvMsg class=dim></div>
 <div id=gateLatest class=rvstat></div>
-<p class=dim>口径：评分只做汇总（样本/均分/前后差值），<b>不参与校验</b>；只有给出"建议分配"的提交才会转成评审用例，成为候选策略的硬约束。真实用户评分是个人意见，非部门批复。</p>
+<p class=dim>口径：评分只做汇总（样本/均分/前后差值），<b>不参与校验</b>；只有给出"建议分配"的提交才会转成评审用例，成为候选策略的硬约束。评审评分是个人意见，不代表真实部门批复，也不构成正式审批。</p>
 </section>
 <section class="card evolution-card history-panel"><h2>策略版本：可审计、可回滚</h2><table id=releases></table></section>
 <section class="card evolution-card platform-card"><h2>平台运行版本：策略所在的 Agent</h2><div id=platformVersions></div></section>
@@ -274,7 +274,7 @@ async function main(){
     realEvent.innerHTML='<p class=story-lead>把 <b>'+moved+' 台</b> 资源从 '+label(release||'其他片区')+' 调到 '+label(gain||'重点片区')+'。</p>'+
       '<p>这样做的目的，是先满足更紧急的片区，而不是平均分配。</p>'+
       '<p class=dim>需要额外上报增援：'+esc(real.evolved.escalation.join('；')||'无')+'</p>';
-  } else { realEvent.innerHTML='<p class=warn>真实事件未跑通</p>'; }
+  } else { realEvent.innerHTML='<p class=warn>场景事件未跑通</p>'; }
   boundaries.innerHTML='表述边界：'+p.boundaries.map(esc).join(' · ')+'。反馈校验值 <code>'+esc((p.case_digest||'').slice(0,16))+'</code>';
   loadReviews();
   loadGate();

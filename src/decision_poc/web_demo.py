@@ -1206,6 +1206,10 @@ button{grid-column:1/-1;justify-self:start;background:#1d7f6f;border:0;color:#ea
 #out{margin-top:20px;white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;
      background:#08131d;border:1px solid #1e3348;border-radius:10px;padding:14px;min-height:40px;color:#b7cadb}
 .k{color:#7dd3fc}.ok{color:#34d399}.warn{color:#fbbf24}
+.form-note{grid-column:1/-1;margin:0 0 4px;padding:9px 12px;border-radius:8px;
+  background:#2a2313;border:1px solid #5a4a2a;border-left:3px solid #fbbf24;
+  color:#f0e2c4;font-size:12.5px;line-height:1.65}
+.form-note b{color:#fde68a}
 a{color:#5eead4}
 </style></head><body><main>
 <h1>反馈注入 · <span>处置结果回写与策略调整</span></h1>
@@ -1214,6 +1218,8 @@ a{color:#5eead4}
 专家评审意见以角色扮演方式给出（非真实部门批复）；偏差超过阈值时，整轮候选作废。
 <a href="/">← 回推演页</a> · <a href="/evolution">进化对比 →</a></div>
 <form id="f">
+  <p class="form-note"><b>演示环境 · 评测数据。</b>下面填的是演示/评测用的场景值，提交后写入本次演示的运行期记录，
+  并据此触发一次策略调整；<b>不涉及真实部门的处置结果或批复</b>。要接真实反馈，需替换成对应部门的原始单据。</p>
   <label>场景 <input name="scenario_id" value="vd02"></label>
   <label>分钟 <input name="t_min" type="number" value="45" min="0"></label>
   <label>片区 <input name="district" value="A-03"></label>
@@ -1308,8 +1314,8 @@ h1{font-size:22px;margin:0 0 6px}h1 span{color:#5eead4}
 h2{font-size:16px;margin:26px 0 8px}
 .sub{color:#89a2b8;margin-bottom:20px}
 .stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
-.stat-empty{flex:1 1 100%;background:#fff;border:1px dashed var(--line2);border-radius:10px;
-  padding:12px 14px;font-size:13px;color:var(--sub)}
+.stat-empty{flex:1 1 100%;background:#0f1e2e;border:1px dashed #2a4257;border-radius:10px;
+  padding:12px 14px;font-size:13px;color:#9db4c8}
 .stat{border:1px solid #1e3348;border-radius:10px;padding:10px 14px;background:#0f1e2e;min-width:112px}
 .stat small{display:block;color:#8aa3b8;font-size:11.5px}
 .stat b{font-size:19px;color:#e6f1fa;font-weight:600}
@@ -1327,6 +1333,10 @@ table{width:100%;border-collapse:collapse;font-size:12.5px}
 th{text-align:left;padding:6px 8px;border-bottom:1px solid #24384e;color:#9db4c8;font-weight:500;white-space:nowrap}
 td{padding:6px 8px;border-bottom:1px solid #16273a;vertical-align:top}
 .muted{color:#7d95ab;font-size:12.5px}
+.form-note{grid-column:1/-1;margin:0 0 4px;padding:9px 12px;border-radius:8px;
+  background:#2a2313;border:1px solid #5a4a2a;border-left:3px solid #fbbf24;
+  color:#f0e2c4;font-size:12.5px;line-height:1.65}
+.form-note b{color:#fde68a}
 a{color:#5eead4}
 </style></head><body><main>
 <h1>方案评审 · <span>人工评分与修正建议</span></h1>
@@ -1335,6 +1345,9 @@ a{color:#5eead4}
 <a href="/">← 回推演页</a> · <a href="/feedback">反馈注入 →</a> · <a href="/evolution">进化对比 →</a></div>
 <div class="stats">__STATS__</div>
 <form id="f">
+  <p class="form-note"><b>演示环境 · 评测数据。</b>这里的四维评分与建议调拨只写入本次演示的运行期记录，
+  是评测样本，<b>不代表真实部门批复，也不构成正式审批</b>。要作为正式意见使用，需由对应部门在其自有流程中另行确认；
+  「用户评分」与「正式审批」是两件事，本页只做前者。</p>
   <label>评审人 <input name="reviewer_id" placeholder="如 zhang.water" required></label>
   <label>角色 <input name="reviewer_role" placeholder="如 水务调度负责人（角色扮演）"></label>
   <label>阶段

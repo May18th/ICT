@@ -607,7 +607,7 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
 /* 数据来源面板：归属、提取时间、覆盖范围、各层边界集中一处。
    汇报和审计被问「这个数哪来的」时，答案在这里而不是靠讲。 */
 #srcpanel{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
-  background:rgba(15,23,42,.34);padding:24px}
+  background:rgba(15,23,42,.44);padding:24px}
 #srcpanel.on{display:flex}
 #srcpanel .sp-card{width:min(780px,94vw);max-height:92vh;background:#fff;border-radius:10px;
   box-shadow:0 12px 40px rgba(15,23,42,.28);display:flex;flex-direction:column;overflow:hidden}
@@ -617,16 +617,24 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
 #srcpanel .sp-head button{background:none;border:none;font-size:20px;line-height:1;
   color:var(--dim);cursor:pointer;padding:0 4px}
 #srcpanel .sp-head button:hover{color:var(--ink)}
-#srcpanel .sp-body{padding:4px 18px 16px;overflow:auto;font-size:12px}
-#srcpanel section{padding:9px 0;border-bottom:1px solid var(--line)}
+#srcpanel .sp-body{padding:2px 18px 8px;overflow:auto;font-size:12px}
+#srcpanel section{padding:6px 0;border-bottom:1px solid var(--line)}
 #srcpanel section:last-child{border-bottom:none}
 #srcpanel h4{margin:0 0 5px;font-size:12.5px;display:flex;align-items:center;gap:7px}
 #srcpanel h4 .sq{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 #srcpanel table{border-collapse:collapse;width:100%}
 #srcpanel th{text-align:left;font-weight:400;color:var(--dim);width:76px;vertical-align:top;
-  padding:3px 8px 3px 0;white-space:nowrap}
-#srcpanel td{padding:3px 0;color:var(--sub);line-height:1.62}
+  padding:2px 8px 2px 0;white-space:nowrap}
+#srcpanel td{padding:2px 0;color:var(--sub);line-height:1.6}
 #srcpanel a{color:var(--blue)}
+/* 站内闭环：这一页只讲「图上这些数哪来的」，逐字段核对与「哪里不可信」
+   分别在 /data 与 /limits。把入口放在面板底部，比让人回门户找更省事。 */
+#srcpanel .sp-links{display:flex;gap:10px;padding-top:12px;margin-top:4px;border-top:1px solid var(--line)}
+#srcpanel .sp-links a{flex:1;text-decoration:none;border:1px solid var(--line);border-radius:8px;
+  padding:9px 12px;background:var(--panel2);color:var(--ink)}
+#srcpanel .sp-links a:hover{border-color:var(--blue);background:#f5f9fd}
+#srcpanel .sp-links b{display:block;font-size:12.5px;margin-bottom:2px;color:var(--ink)}
+#srcpanel .sp-links span{display:block;font-size:11px;color:var(--dim);line-height:1.55}
 #srcpanel .sp-note{color:#a8630f;background:#fdf4e6;border:1px solid #f2ddba;border-radius:6px;
   padding:6px 9px;margin-top:6px;line-height:1.6}
 </style>
@@ -735,7 +743,7 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
         <table>
           <tr><th>内容</th><td id=sp-ledger-cnt>—</td></tr>
           <tr><th>性质</th><td>按真实城市内涝处置流程编写的演示台账，字段结构对齐真实业务单据（工单、设施台账、物资库存、部门职责、封路通告）。<b>非实时物联接入</b>：本页没有对接 SCADA、积水监测站或视频，状态变化由时间轴驱动，不是现场传感器回传。</td></tr>
-          <tr><th>用途</th><td>演示「同样的输入怎么推出决策」，不作为某次真实事件的处置记录引用。</td></tr>
+          <tr><th>用途</th><td>演示「同样的输入怎么推出决策」，不作为任何一次真实处置的记录引用。</td></tr>
         </table>
       </section>
       <section>
@@ -764,6 +772,10 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
           <tr><th>边界</th><td>是规则推演结果，不是现场指挥记录；调拨数量与优先级可逐条回溯到信号、条款、输出三段。</td></tr>
         </table>
       </section>
+      <div class=sp-links>
+        <a href="/data"><b>数据来源与口径 →</b><span>逐项核对每个字段：真实底图 / 场景台账 / 示意数据 / 可重跑结果分层列出</span></a>
+        <a href="/limits"><b>它会错吗 →</b><span>三组工具同题对照、偏差与适用范围，说清哪些结论不能引用</span></a>
+      </div>
     </div>
   </div>
 </div>

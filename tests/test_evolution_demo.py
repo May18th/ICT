@@ -93,7 +93,7 @@ def test_html_contains_panels_and_api_route() -> None:
         "复用已验证经验",
         "人工协同反馈：本次调整的采纳依据",
         "策略版本：可审计、可回滚",
-        "真实事件：资源分配变化",
+        "场景事件：资源分配变化",
         "fetch('/api/evolution')",
         "返回推演面板",
     ]:
