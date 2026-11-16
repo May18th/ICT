@@ -147,17 +147,17 @@ cd deploy/docker/compose && docker compose -p nexent -f docker-compose.prod.yml 
 
 **症状**：用 `NEXENT_SUPER_ADMIN_PASSWORD` 登录返回 `401 Email or password error`。
 
-**根因**：`suadmin@nexent.com` 是更早一次部署创建的，`deploy.sh` 检测到已存在就跳过创建，
+**根因**：`<超级管理员账号>` 是更早一次部署创建的，`deploy.sh` 检测到已存在就跳过创建，
 之后改 `.env` 不会同步到认证库。
 
 **修法**（注意库名是 `supabase`，不是 `postgres`；pgcrypto 在 `extensions` schema）：
 
 ```bash
 docker exec -i supabase-db-mini psql -U postgres -d supabase -c \
-"update auth.users set encrypted_password = extensions.crypt('<新密码>', extensions.gen_salt('bf')) where email='suadmin@nexent.com';"
+"update auth.users set encrypted_password = extensions.crypt('<新密码>', extensions.gen_salt('bf')) where email='<超级管理员账号>';"
 ```
 
-另有 `admin@nexent.com`（镜像自带，口令未知），演示统一用 `suadmin@nexent.com`。
+另有 `<租户管理员账号>`（镜像自带，口令未知），演示统一用 `<超级管理员账号>`。
 
 ## 7 已知边界（文档里要写明，别等评委问）
 

@@ -66,8 +66,8 @@
 
 ## 5 权限与凭据边界（实测踩到的）
 
-- `suadmin@nexent.com`（平台总管理员）只能进「资源管理」，进 `workbench` 系列页面会报**无权限访问**；
-  截图必须用**租户用户**（`admin@nexent.com`，即 `urban_deduction_agent` 的创建者）。
+- `<超级管理员账号>`（平台总管理员）只能进「资源管理」，进 `workbench` 系列页面会报**无权限访问**；
+  截图必须用**租户用户**（`<租户管理员账号>`，即 `urban_deduction_agent` 的创建者）。
 - 口令只从环境变量 `NEXENT_ADMIN_EMAIL` / `NEXENT_ADMIN_PASSWORD` 读，脚本不打印、不入库；
   本轮曾按用户确认重置过一次租户管理员口令（平台状态变更，已当面告知新口令，未写入仓库）。
 - 界面里 MCP 卡片的"未连接"是**上次校验的状态记录**（容器重启后不会自动重测）；截图脚本会先点一次
@@ -94,7 +94,7 @@ docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/upload
 docker cp nexent-config:/tmp/skills_evidence.json samples/nexent/live/skills.json
 
 # 2) 平台界面截图（需要租户账号口令，只放环境变量）
-$env:NEXENT_ADMIN_EMAIL    = "admin@nexent.com"
+$env:NEXENT_ADMIN_EMAIL    = "<租户管理员账号>"
 $env:NEXENT_ADMIN_PASSWORD = "<平台密码>"
 uv run --with playwright python deploy/nexent/capture_platform_ui.py --out docs/reports/captures/nexent
 

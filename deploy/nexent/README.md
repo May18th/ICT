@@ -206,7 +206,7 @@ uv run --locked python deploy/nexent/capture_evidence.py
 
 ```powershell
 $env:NEXENT_WEB_URL        = "http://127.0.0.1:3000"
-$env:NEXENT_ADMIN_EMAIL    = "admin@nexent.com"   # Agent 所有者所在租户的用户
+$env:NEXENT_ADMIN_EMAIL    = "<租户管理员账号>"   # Agent 所有者所在租户的用户
 $env:NEXENT_ADMIN_PASSWORD = "<平台密码>"          # 只从环境变量读，脚本不打印、不入库
 uv run --with playwright python deploy/nexent/capture_platform_ui.py `
     --out docs/reports/captures/nexent --video
@@ -228,7 +228,7 @@ uv run --with playwright python deploy/nexent/capture_platform_ui.py `
 `evidence_check` 的 `platform_ui` 一项会重算这三张图的 sha256：**图被替换或重新截过却没重生成证据，自检失败**。
 
 > 权限坑：`suadmin@`（平台总管理员）进 `workbench` 系列页面会报"无权限访问"，只有租户用户
-> （如 `admin@nexent.com`）能看智能体/技能页；总管理员只能在「资源管理」里按租户看资源。
+> （如 `<租户管理员账号>`）能看智能体/技能页；总管理员只能在「资源管理」里按租户看资源。
 > 密码只放环境变量，不要写进仓库；忘记时可让平台管理员重置该账号。
 
 ## 4.2 导出平台作品包（初赛「配置能力」项）

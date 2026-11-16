@@ -63,7 +63,7 @@ docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/upload
 docker cp nexent-config:/tmp/skills_evidence.json samples/nexent/live/skills.json
 
 # 界面截图（需要租户账号口令，只放环境变量，不要写进仓库）
-$env:NEXENT_ADMIN_EMAIL    = "admin@nexent.com"
+$env:NEXENT_ADMIN_EMAIL    = "<租户管理员账号>"
 $env:NEXENT_ADMIN_PASSWORD = "<平台密码>"
 uv run --with playwright python deploy/nexent/capture_platform_ui.py --out docs/reports/captures/nexent
 ```
