@@ -1,5 +1,11 @@
 # 文档导航
 
+| 想看什么 | 去哪 |
+|---|---|
+| 项目主页（精简版） | 仓库根 [`README.md`](../README.md) |
+| 工程版说明（安装/部署/调试） | [`README-dev.md`](README-dev.md) |
+| 参赛材料与答辩口径 | [`competition/`](competition/)，先看 `交付交接包.md`（数字开卷表） |
+
 ## 当前实现
 
 - [技术基线与风险](technical-baseline.md)：固定通用场景、测量项和已知限制。
