@@ -1081,18 +1081,25 @@ function buildBase(){
     // 色相分配：绿地是绿、水体是青，所以公共服务避开绿、改用淡紫，
     // 商业用靛蓝（比水体的青蓝更紫），三个色系互不打架。
     osmBlds.forEach(b=>{
+      // 2.5D 拉伸：底面留在原处，屋面往上左抬一截，右下露出的那一窄条就是「墙」。
+      // 抬多高按 height_m 换算（0.42 是夸张系数：真实比例下 12 米楼只有 3 个像素，
+      // 看不出来；封顶 30 是防止 IFS 那种 248 米的楼把整条街盖住）。
+      // 光从左上来，所以屋面往左上移、墙露在右下，和原来的投影方向一致。
+      const hpx = Math.min(62, Math.max(3.0, (b.height_m || 10) * 1.15));
+      const dx = -hpx * 0.40, dy = -hpx;
       const pts = b.footprint.map(p=>`${cx(p.x).toFixed(1)},${cy(p.y).toFixed(1)}`).join(' ');
-      const sh = svgNS('polygon');
-      const shPts = b.footprint.map(p=>`${(cx(p.x)+1.6).toFixed(1)},${(cy(p.y)+1.6).toFixed(1)}`).join(' ');
-      sh.setAttribute('points', shPts);
-      sh.setAttribute('fill', '#d3dae3');
-      sh.setAttribute('stroke','none');
-      bg.appendChild(sh);
+      const roofPts = b.footprint.map(p=>`${(cx(p.x)+dx).toFixed(1)},${(cy(p.y)+dy).toFixed(1)}`).join(' ');
+      const wall = svgNS('polygon');
+      wall.setAttribute('points', pts);
+      wall.setAttribute('fill', '#b9c3d2');
+      wall.setAttribute('stroke','none');
+      bg.appendChild(wall);
       const poly = svgNS('polygon');
-      poly.setAttribute('points', pts);
+      poly.setAttribute('points', roofPts);
       poly.setAttribute('fill', BLD_TONE[toneOf(b)]);
       poly.setAttribute('stroke', '#bfc8d5');
-      poly.setAttribute('stroke-width','0.5');
+      poly.setAttribute('stroke-width','0.45');
+      poly.setAttribute('stroke-linejoin','round');
       bg.appendChild(poly);
       // 悬停给「名称 · 用途 · 高度（来源）」。高度是推定值时必须标出来：
       // 图上推定值和实测值长得一模一样，不标等于把推断当实测用。
