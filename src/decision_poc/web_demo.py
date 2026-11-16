@@ -4421,13 +4421,13 @@ _OSM_PREVIEW: dict[str, Any] = {}
 
 #: 地块底色。key 是 OSM 的 landuse/leisure/natural 细分值，没列的给中性灰。
 _AREA_FILL: dict[str, str] = {
-    "water": "#bedbf4", "fountain": "#bedbf4",
-    "wood": "#d3e9c6", "park": "#d9edcd", "garden": "#dfefd4", "grass": "#e4f2da",
-    "pitch": "#dcead6", "track": "#e2ecdd", "platform": "#eceef1",
-    "residential": "#f4f4f6", "commercial": "#f7efe8", "industrial": "#eef0f3",
-    "construction": "#f9ece4", "brownfield": "#f6efe7", "hospital": "#f4eef4",
-    "school": "#eef2f8", "university": "#eef2f8", "institutional": "#f1f2f5",
-    "military": "#eef0ef", "marketplace": "#f8f0e6", "parking": "#f0f2f5",
+    "water": "#b9d8ea", "fountain": "#b9d8ea",
+    "wood": "#d3e5c2", "park": "#d8e9c9", "garden": "#dcecd0", "grass": "#e0eed5",
+    "pitch": "#d5e6cd", "track": "#dcead4", "platform": "#e8e5df",
+    "residential": "#ede9e2", "commercial": "#f1e8dc", "industrial": "#e7e4df",
+    "construction": "#eee5d8", "brownfield": "#eee5d8", "hospital": "#ede7eb",
+    "school": "#e5e9ef", "university": "#e5e9ef", "institutional": "#eae7e2",
+    "military": "#e6e6e1", "marketplace": "#f0e6d8", "parking": "#e9e8e4",
 }
 
 
@@ -4540,7 +4540,7 @@ def _osm_preview_svg(width: int = 1000) -> str:
     parts: list[str] = [
         f'<svg viewBox="0 0 {width} {height}" width="100%" role="img" '
         f'aria-label="按真实坐标绘制的底图要素：地块、建筑、路网" '
-        f'style="display:block;background:#fbfcfd">'
+        f'style="display:block;background:#f4f1ea">'
     ]
     for fill, shapes in by_fill.items():
         parts.append(f'<path d="{" ".join(shapes)}" fill="{fill}" stroke="none"/>')
@@ -4551,27 +4551,30 @@ def _osm_preview_svg(width: int = 1000) -> str:
         if shape:
             shapes.append(shape)
     if shapes:
-        parts.append(f'<path d="{" ".join(shapes)}" fill="#dbe1e9" stroke="none"/>')
+        parts.append(
+            f'<path d="{" ".join(shapes)}" fill="#ded6cb" stroke="#cdc4b7" '
+            f'stroke-width="0.45" stroke-linejoin="round"/>'
+        )
 
     parts.append(f'<defs><clipPath id="osm-clip"><rect x="{pad}" y="{pad}" '
                  f'width="{width - pad * 2}" height="{height - pad * 2}"/></clipPath></defs>')
     parts.append('<g clip-path="url(#osm-clip)">')
-    for level, casing, core in ((1, "#b6c1d0", "#ffffff"), (0, "#c8d2df", "#f7fafc")):
+    for level, casing, core in ((1, "#c6beb0", "#ffffff"), (0, "#d6cfc4", "#fdfcf9")):
         seg = [line(row.get("polyline") or []) for row in roads if int(row.get("level") or 0) == level]
         seg = [x for x in seg if x]
         if not seg:
             continue
         d = " ".join(seg)
-        w = 4.4 if level == 1 else 3.0
+        w = 5.4 if level == 1 else 3.4
         parts.append(f'<path d="{d}" fill="none" stroke="{casing}" stroke-width="{w}" stroke-linecap="round"/>')
-        parts.append(f'<path d="{d}" fill="none" stroke="{core}" stroke-width="{w - 1.4}" stroke-linecap="round"/>')
+        parts.append(f'<path d="{d}" fill="none" stroke="{core}" stroke-width="{w - 1.6}" stroke-linecap="round"/>')
 
     rail = [line(row.get("polyline") or []) for row in ways]
     rail = [x for x in rail if x]
     if rail:
         parts.append(
-            f'<path d="{" ".join(rail)}" fill="none" stroke="#d3c6dd" stroke-width="1.1" '
-            f'stroke-dasharray="6 5"/>'
+            f'<path d="{" ".join(rail)}" fill="none" stroke="#ccbcd6" stroke-width="0.9" '
+            f'stroke-dasharray="5 6"/>'
         )
     # 示意路叠在底图上：项目处理的就这七条，只画骨架不画推演图层。
     sign = []
@@ -4580,11 +4583,12 @@ def _osm_preview_svg(width: int = 1000) -> str:
         if shape:
             sign.append((shape, row))
     for shape, _row in sign:
-        parts.append(f'<path d="{shape}" fill="none" stroke="#ffffff" stroke-width="6" '
+        parts.append(f'<path d="{shape}" fill="none" stroke="#ffffff" stroke-width="5.5" '
                      f'stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>')
     for shape, _row in sign:
-        parts.append(f'<path d="{shape}" fill="none" stroke="#c2410c" stroke-width="2.6" '
-                     f'stroke-dasharray="9 6" stroke-linecap="round" stroke-linejoin="round"/>')
+        parts.append(f'<path d="{shape}" fill="none" stroke="#c2410c" stroke-width="2.3" '
+                     f'stroke-dasharray="10 7" stroke-linecap="round" stroke-linejoin="round" '
+                     f'opacity="0.92"/>')
     # 命中区单独一层：透明粗线，不改变上面的绘制层次（否则白底会盖住别的路的虚线）
     for shape, row in sign:
         road_id = str(row.get("id") or "")
@@ -4634,6 +4638,14 @@ def _osm_preview_svg(width: int = 1000) -> str:
             f'<text x="{x0 + bar_w + 8:.0f}" y="{y0 + 4}" '
             f'font-size="11" fill="#7d8898">1 公里</text>'
         )
+    nx, ny = width - pad - 26, pad + 26
+    parts.append(
+        f'<g aria-label="指北针"><circle cx="{nx}" cy="{ny}" r="15" fill="#ffffff" '
+        f'fill-opacity="0.9" stroke="#c8cdd6" stroke-width="1"/>'
+        f'<path d="M{nx} {ny - 10}l4.5 9h-9z" fill="#8b3a12"/>'
+        f'<text x="{nx}" y="{ny + 11}" text-anchor="middle" font-size="9" '
+        f'fill="#7d8898">N</text></g>'
+    )
     parts.append("</svg>")
 
     svg = "".join(parts)

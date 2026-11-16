@@ -1026,7 +1026,7 @@ function buildBlocks(){
 // ---- 构建底图 ----
 // 建筑用途分类：渲染着色和悬停提示都要用同一套口径，放模块级只留一份。
 const BLD_TONE = {
-  res:'#e4e8ef', com:'#d3daf0', pub:'#e2d9ee', ind:'#ecdfc6', oth:'#e9ecf1'
+  res:'#dbe1e9', com:'#cfd7e8', pub:'#dbd0e2', ind:'#e6d5b2', oth:'#e0e5ea'
 };
 const BLD_CN = {res:'住宅', com:'商业办公', pub:'公共服务', ind:'工业仓储', oth:'未标注/其他'};
 // OSM 的 height 是贡献者填的，不是实测。叫「实测高度」是overclaim——
@@ -1085,13 +1085,13 @@ function buildBase(){
       const sh = svgNS('polygon');
       const shPts = b.footprint.map(p=>`${(cx(p.x)+1.6).toFixed(1)},${(cy(p.y)+1.6).toFixed(1)}`).join(' ');
       sh.setAttribute('points', shPts);
-      sh.setAttribute('fill', '#e3e8ee');
+      sh.setAttribute('fill', '#d3dae3');
       sh.setAttribute('stroke','none');
       bg.appendChild(sh);
       const poly = svgNS('polygon');
       poly.setAttribute('points', pts);
       poly.setAttribute('fill', BLD_TONE[toneOf(b)]);
-      poly.setAttribute('stroke', '#d3dae2');
+      poly.setAttribute('stroke', '#bfc8d5');
       poly.setAttribute('stroke-width','0.5');
       bg.appendChild(poly);
       // 悬停给「名称 · 用途 · 高度（来源）」。高度是推定值时必须标出来：
