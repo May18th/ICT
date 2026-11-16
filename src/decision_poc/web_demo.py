@@ -1226,8 +1226,8 @@ a{color:#5eead4}
     </select></label>
   <label>来源
     <select name="source">
-      <option value="synthetic">synthetic（仿真）</option><option value="assumption">assumption（假设）</option>
-      <option value="derived">derived（推算）</option><option value="real">real（实测）</option>
+      <option value="synthetic">仿真数据</option><option value="assumption">假设值</option>
+      <option value="derived">推算值</option><option value="real">实测值</option>
     </select></label>
   <label>预期水深 cm（可空）<input name="expected_depth_cm" type="number" step="0.1"></label>
   <label class="full">备注 <input name="note" placeholder="例如：封路后仍超临界，泵站单台运行"></label>
@@ -1483,14 +1483,12 @@ a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
 <h1>运行自检 · <span>内部核对页</span></h1>
 <div class="sub">本页为运行核对页：确认台账、平台版本、同步状态彼此对得上，不写任何状态。
   想看作品本身，<a href="/">回首页</a>；想看「它会不会错」的对照实验，去 <a href="/limits">同题对照</a>。
-  下面的命令是核对不通时的处理入口。
+  下面的入口用于交叉核对：
   <a href="/workbench">证据工作台 →</a> · <a href="/evolution">进化对比 →</a></div>
 <div class="verdict __VERDICT_CLS__">__VERDICT__</div>
 <div class="card"><table><thead><tr><th>检查项</th><th>状态</th><th>详情</th></tr></thead><tbody>__ROWS__</tbody></table></div>
 <div class="hint">检查时间：__WHEN__<br>
-发现告警时的处理入口：台账落后 → <code>deploy/nexent/sync_policy_ledger.py --apply</code>；
-平台状态缺失 → <code>deploy/nexent/snapshot_platform_versions.py</code>；
-同步状态未知 → <code>deploy/nexent/check_ledger_sync.py</code>。</div>
+本页只读，每次打开重算一遍；某项不通时，按该项详情里的文件与字段逐层核对。</div>
 </main></body></html>"""
 
 
@@ -1525,7 +1523,7 @@ def build_status_html() -> str:
     )
     from datetime import datetime, timezone
 
-    when = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    when = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
     return (
         _STATUS_PAGE.replace("__VERDICT__", verdict)
         .replace(
@@ -1644,7 +1642,6 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
   <h1>证据工作台</h1>
   <span class="tag">左侧提问，右侧核对；每条结论可定位到台账原文</span>
   <span class="spacer"></span>
-  <a class="link" href="__WEB_BASE__/zh/workbench" target="_blank" rel="noopener">在新窗口打开 ↗</a>
   <span class="tag" id="stat">就绪</span>
 </header>
 <main>
@@ -3847,7 +3844,7 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
   </div>
   <div class=plat>
     <span class=tag>Nexent v2.7.0</span><br>
-    3 个智能体 · 主智能体接 4 个工具<br>
+    本项目 3 个智能体（另 3 个同题对照）· 主智能体接 4 个工具<br>
     配置可整包带走 · 断网也能跑
   </div>
 </header>
@@ -4759,9 +4756,130 @@ def build_data_html() -> str:
     )
 
 
+def _portal_clock(iso: Any) -> str:
+    """快照时间戳写成与页面其他地方一致的本地时间。"""
+    from datetime import datetime
+
+    if not iso:
+        return "—"
+    try:
+        moment = datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
+    except ValueError:
+        return str(iso)
+    if moment.tzinfo is not None:
+        moment = moment.astimezone()
+    return moment.strftime("%Y-%m-%d %H:%M")
+
+
 def build_portal_html() -> str:
-    """门户首页。纯静态外壳，状态与跳次都由接口填——页面本身不碰数据。"""
-    return _PORTAL_PAGE
+    """门户首页。外壳静态；首屏状态在服务端先填一遍，打开就是有内容的。
+
+    只读快照与期望文件的字面值（毫秒级），不跑 evidence_check（那要两秒）。
+    前端仍会再拉一次 /api/portal 续订，这里填的值只影响首帧。
+    """
+    html = _PORTAL_PAGE
+    try:
+        payload = portal_payload()
+    except Exception:  # noqa: BLE001 - 首页缺这块也要能打开
+        return html
+
+    platform = payload.get("platform") or {}
+    agents = payload.get("agents") or []
+    tools = payload.get("tools") or []
+    audit = payload.get("audit") or {}
+
+    if platform.get("available"):
+        state = "与 Nexent 平台连通 · 配置同步于 " + _portal_clock(platform.get("generated_at"))
+        dot = "dot on"
+    else:
+        state = "暂时读不到平台配置（智能体版本未知）"
+        dot = "dot warn"
+
+    online = sum(1 for item in agents if item.get("found"))
+    chief = agents[0].get("version") if agents else None
+    agents_text = f"智能体 {online}/{len(agents)} 在线"
+    if chief is not None:
+        agents_text += f"（主智能体第 {chief} 版）"
+    tools_text = f"已接入 {len(tools)} 个工具"
+    audit_text = f"{audit['tests']} 项自动化测试通过" if audit.get("tests") else ""
+
+    return (
+        html.replace('<span id=s-dot class=dot></span>', f'<span id=s-dot class="{dot}"></span>')
+        .replace('<span id=s-state>读取平台状态…</span>', f'<span id=s-state>{state}</span>')
+        .replace('<span id=s-agents class=ag>—</span>', f'<span id=s-agents class=ag>{agents_text}</span>')
+        .replace('<span id=s-tools>—</span>', f'<span id=s-tools>{tools_text}</span>')
+        .replace('<span class=right id=s-audit></span>', f'<span class=right id=s-audit>{audit_text}</span>')
+    )
+
+
+def _f4(value: Any) -> str:
+    return f"{value:.4f}" if isinstance(value, (int, float)) else "-"
+
+
+def _evolution_metrics_html(payload: dict[str, Any]) -> str:
+    """进化页首屏四张指标卡在服务端算好，避免先显示「正在读取进化结果…」。"""
+    first = payload.get("first") or {}
+    second = payload.get("second") or {}
+    review = payload.get("review") or {}
+    cards = [
+        ("演练场景：方案偏差",
+         f'{_f4((first.get("initial_train") or {}).get("deviation"))} → '
+         f'{_f4((first.get("final_train") or {}).get("deviation"))}', "调整前 → 调整后", False),
+        ("新场景：方案偏差",
+         f'{_f4((first.get("initial_holdout") or {}).get("deviation"))} → '
+         f'{_f4((first.get("final_holdout") or {}).get("deviation"))}', "通过不退化校验", False),
+        ("复用经验后的起点", _f4((second.get("initial_train") or {}).get("deviation")), "第二次会话", True),
+        ("人工建议修正幅度",
+         f'{_f4(review.get("deviation_before"))} → {_f4(review.get("deviation_after"))}' if review else "-",
+         "第二反馈信号", False),
+    ]
+    return "".join(
+        f'<div class=metric><span>{title}</span><b{" class=ok" if ok else ""}>{value}</b>'
+        f'<span class=dim>{dim}</span></div>'
+        for title, value, dim, ok in cards
+    )
+
+
+def _reviews_summary_html(payload: dict[str, Any]) -> str:
+    """进化页评分汇总：没有样本就直说，不摆一排 0 与破折号。"""
+    summary = (payload or {}).get("summary") or {}
+    total = summary.get("total") or 0
+    if not total:
+        return "<p class=dim>还没有真实用户评分：这一项只影响后续版本调整，不影响上面的结果。</p>"
+    phases = summary.get("phases") or {}
+    before = phases.get("before") or {}
+    after = phases.get("after") or {}
+    meets = "是" if summary.get("meets_min_reviewers") else "否"
+    meets_cls = "ok" if summary.get("meets_min_reviewers") else "warn"
+    before_avg = before.get("overall")
+    after_avg = after.get("overall")
+    delta = summary.get("delta")
+    return (
+        f'<p>样本 <b>{total}</b> 条，评审人 <b>{summary.get("reviewer_count") or 0}</b> 位；'
+        f'满足最低样本（≥3 人且进化前后各有）：<b class="{meets_cls}">{meets}</b></p>'
+        f'<p>进化前均分 <b>{"-" if before_avg is None else before_avg}</b>（{before.get("count") or 0} 条）'
+        f' · 进化后均分 <b>{"-" if after_avg is None else after_avg}</b>（{after.get("count") or 0} 条）'
+        f' · 差值 <b class=ok>{"-" if delta is None else delta}</b></p>'
+        f'<p class=dim>带修正建议（可进校验）：{summary.get("gate_candidates") or 0} 条；'
+        f'最近提交 {summary.get("latest_at") or "-"}</p>'
+    )
+
+
+def build_evolution_page() -> str:
+    """进化页：首屏指标与评分汇总在服务端先填，页面打开即有内容。"""
+    html = build_evolution_html()
+    try:
+        html = html.replace(
+            '<div class=metric><span>正在读取进化结果…</span></div>',
+            _evolution_metrics_html(build_evolution_payload()),
+        )
+        html = html.replace(
+            '<div id=reviewReal class=rvstat>加载中…</div>',
+            '<div id=reviewReal class=rvstat>' + _reviews_summary_html(review_payload()) + '</div>',
+        )
+    except Exception:  # noqa: BLE001 - 填不上就让前端照旧去取
+        return html
+    return html
 
 
 # --- 「它会错吗」页 ---------------------------------------------------------
@@ -5011,7 +5129,7 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
       <div class=score>__A_PASSED__/__A_TOTAL__<span>与离线推演逐项一致</span></div>
       <p>模型调用工具取台账，再依据取到的数据生成结论。</p>
       <ul>
-        <li>调用工具 __A_CALLS__ 次，单次约 __A_LATENCY__ 毫秒</li>
+        <li>调用工具 __A_CALLS__ 次，单次约 __A_LATENCY__ 毫秒（读本地台账，不走外部接口）</li>
         <li>冲突编号、资源缺口、证据定位全部一致</li>
         <li>处置顺序一致：先隔离风险源，后抽排</li>
       </ul>
@@ -5039,7 +5157,7 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
       <ul>
         <li>模型报出的核对码：<code>__C_CLAIMED__</code></li>
         <li>按台账算出的核对码：<code>__C_REAL__</code>；动作卡 __C_CARDS__ 张，基准 __C_REAL_CARDS__ 张</li>
-        <li>核对码由台账内容算出，同一份台账只有一个值；两处对不上，说明方案不是由台账数据产生</li>
+        <li>核对码取六步推演的步骤、判定、结论与证据位置，排序后算摘要：同一份台账只对应一个值。两处对不上，说明方案不是从这份台账推出来的</li>
       </ul>
       <div class=conv>会话 #__C_CONV__ · 前一组 #__C_PLAIN__ 未给出方案，返回工作说明</div>
     </article>
@@ -5342,7 +5460,7 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
             return _error("hdr missing", 404)
         return 200, "application/octet-stream", f.read_bytes()
     if parsed.path == "/evolution":
-        return 200, "text/html; charset=utf-8", build_evolution_html().encode("utf-8")
+        return 200, "text/html; charset=utf-8", build_evolution_page().encode("utf-8")
     if segments[:3] == ["api", "platform", "versions"]:
         return _json(platform_versions_payload())
     if segments[:3] == ["api", "ledger", "sync"]:
