@@ -494,8 +494,10 @@ agent_poc/
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **971 项测试通过**（口径是**收集数**：其中 1 项需可选依赖 `openai`，
-未 `uv sync --group llm` 时该条在输出里显示为 `skipped`，所以默认环境看到的是 passed 与 skipped 两个数，合计仍是 971）；
+当前基线：`uv run --locked pytest -q` 共 **971 项收集 / 957 通过 / 14 项按设计跳过（0 失败）**。
+口径是**收集数**：跳过项全部是设计内——1 项需可选依赖 `openai`、1 项因仓库不分发 `.pptx`/`.docx`、
+2 项因 Blender 工具链停用、10 项因 Unreal 工程不入库，详见 `AGENTS.md`「测试口径」一节。
+**不要说"971 项全部通过"**；
 `python -m decision_poc.evidence_check` 108/108 项一致；
 城市内涝主链路 Nexent 平台校验 8/8（Agent v19 / DeepSeek-Chat，`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。

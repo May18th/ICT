@@ -41,7 +41,11 @@ DOCS_WITH_TEST_COUNT = (
     "docs/competition/preliminary-submission-draft.md",
 )
 TEST_COUNT_PATTERNS = (
+    # 旧写法：把收集数说成「N 项测试通过」。这句口径本身不准确（971 项里设计内要跳 14 项），
+    # 2026-11-16 起对外统一改成「N 项收集 / M 通过 / K 项按设计跳过」，因此下面两条必须同时认，
+    # 否则文档一改写法，这里就提取不到而报「文档声明的测试数 [] 与冻结值不一致」。
     re.compile(r"(\d+)\s*项(?:测试)?通过"),
+    re.compile(r"(\d+)\s*项收集"),
     re.compile(r"#\s*(\d+)\s*passed"),
 )
 SCHEMA_VERSION = "evidence-check-1"
