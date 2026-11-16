@@ -3832,12 +3832,20 @@ main{padding:24px 34px 0;max-width:1360px}
 .asks .hd{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap}
 .asks h3{margin:0;font-size:14px;font-weight:650}
 .asks .hd span{font-size:12px;color:var(--dim)}
-.ask-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.ask-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .ask{display:flex;flex-direction:column;gap:4px;background:#f9fbfd;border:1px solid var(--line);
   border-radius:9px;padding:11px 12px 12px;color:var(--ink);transition:.15s;min-width:0}
 .ask:hover{border-color:#bcd3ea;background:#f2f7fc;text-decoration:none;transform:translateY(-1px)}
 .ask b{font-size:13px;font-weight:650}
 .ask span{font-size:11.5px;color:var(--sub);line-height:1.5}
+/* 二级入口：参与类与技术类页面降为一行文字链接，不与四个主问题抢首屏。
+   原来五个入口等宽并列，工作台和进化页与「这是什么」同级，主叙事被摊平。 */
+.sub-links{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;font-size:12px}
+.sub-links .sub-hd{color:var(--dim);font-size:11.5px;margin-right:2px}
+.sub-links a{color:var(--sub);text-decoration:none;border-bottom:1px solid transparent;transition:.15s}
+.sub-links a::after{content:' →';color:var(--dim);font-size:11px}
+.sub-links a:hover{color:var(--teal);border-bottom-color:currentColor}
 @media(max-width:1080px){.ask-grid{grid-template-columns:1fr 1fr}}
 
 .facts{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -3883,25 +3891,31 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
 
 <main>
   <section class=asks>
-    <div class=hd><h3>五个问题</h3>
-      <span>每个入口对应一类问题，事件编号非必填</span></div>
+    <div class=hd><h3>四个问题</h3>
+      <span>看懂作品 → 理解推演 → 核对依据 → 认识边界</span></div>
     <div class=ask-grid>
       <a class=ask href="/map2d"><b>① 这是什么</b>
-        <span>积水范围与深度、责任部门、泵站运行状态</span></a>
-      <a class=ask href="/workbench"><b>② 它怎么一步步推的</b>
-        <span>六步推演：雨情 → 影响 → 责任 → 冲突 → 缺口 → 动作</span></a>
-      <a class=ask href="/workbench"><b>③ 凭什么信</b>
-        <span>每条结论附台账原文定位</span></a>
+        <span>积水范围与深度、封路、泵站状态、跨区调泵，一屏看完</span></a>
+      <a class=ask href="/map2d"><b>② 它怎么推</b>
+        <span>右侧 7 步事件链：降雨 → 堵塞 → 派单 → 缺口 → 增援 → 封路 → 退水</span></a>
+      <a class=ask href="/data"><b>③ 凭什么信</b>
+        <span>逐字段核对出处：真实底图 / 场景台账 / 示意数据 / 可重跑结果</span></a>
       <a class=ask href="/limits"><b>④ 它会错吗</b>
-        <span>同题三组对照：工具可用 8/8，工具不可用 2/8</span></a>
-      <a class=ask href="/data"><b>⑤ 换个地方能用吗</b>
-        <span>方案可迁移，标定参数不可迁移；适用范围见本页</span></a>
+        <span>同题三组对照：工具可用 8/8，不可用 2/8；已知偏差与适用范围</span></a>
+    </div>
+    <div class=sub-links>
+      <span class=sub-hd>参与与技术页</span>
+      <a href="/workbench">证据查询与台账定位</a>
+      <a href="/evolution">策略调整与版本回滚</a>
+      <a href="/feedback">反馈注入</a>
+      <a href="/review">方案评审</a>
+      <a href="/status">内部自检</a>
     </div>
   </section>
 
   <section class=cards>
-    <article class="card primary">
-      <div class=kicker>主入口 · 自然语言提问</div>
+    <article class=card>
+      <div class=kicker>问答式</div>
       <h2>证据工作台</h2>
       <p>支持「谁负责」「先做什么」这类提问，每条结论附台账原文定位。
         事实由本地规则计算，模型负责表述。</p>
@@ -3914,7 +3928,7 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
     </article>
 
     <article class=card>
-      <div class=kicker>态势</div>
+      <div class=kicker>态势式</div>
       <h2>2.5D 俯视大屏</h2>
       <p>一屏看现场：积水范围与深度、封路、泵站状态、跨区调泵。七步推演可播放。</p>
       <ul class=points>
@@ -5233,6 +5247,9 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
   <h3 class=sec>适用范围<span>超出以下范围的结论不成立</span></h3>
   <div class=panel>
     <div class=item><b>验证范围</b>一个约 3 公里的街区尺度场景（代号「兴华路片区」）。未在其他城市或片区验证，不推定适用。</div>
+    <div class=item><b>可迁移与不可迁移</b>可迁移的是方法：处置流程与条款依据、证据链结构、部门职责映射，
+      换一个城市只要替换台账。<b>不可迁移的是本地标定值</b>：产流系数 0.70、服务带宽度 54 米、汇水面积 4.108 公顷，
+      换地方必须重新标定；直接沿用会重复滨河路那类结构性低估（同参数对外样本低估 31%）。</div>
     <div class=item><b>数据时效</b>台账截取于 2026 年 10 月。接入实时数据需改造数据接入层。</div>
     <div class=item><b>处置偏好</b>「先封路还是先开泵」的优先级来自规范条款与经验规则，
       未经真实调度记录校准；可给出理由，但权重无历史数据支撑。</div>

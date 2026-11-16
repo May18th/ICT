@@ -17,7 +17,8 @@ OUT = Path(r"D:\华为ICT\agent_poc\out")
 # 我写进文档的断言，逐条核对
 CLAIMS = {
     "portal_entry_count": "门户首页应有 5 个入口方块",
-    "portal_titles": ["这是什么", "它怎么一步步推的", "凭什么信", "它会错吗", "换个地方能用吗"],
+    "portal_titles": ["这是什么", "它怎么推", "凭什么信", "它会错吗"],
+    "portal_secondary": ["证据查询与台账定位", "策略调整与版本回滚", "反馈注入", "方案评审", "内部自检"],
     "workbench_tabs": ["事件", "证据", "工具轨迹", "自检", "重跑"],
     "workbench_buttons": ["这地方积水了，该谁去处理？", "先封路还是先开泵？", "兴华路泵站设计流量多少？"],
     "workbench_big": ["A-03", "橙色", "30.0"],
@@ -45,6 +46,9 @@ async def main() -> None:
         (OUT / "chk_portal.txt").write_text(portal, encoding="utf-8")
         report["portal_has_entries"] = {
             t: (t in portal) for t in CLAIMS["portal_titles"]
+        }
+        report["portal_secondary"] = {
+            t: (t in portal) for t in CLAIMS["portal_secondary"]
         }
         # 入口方块的实际标题（抓 ask-grid 里的元素）
         entries = await pg.locator(".ask, .askcard, a.ask").all_inner_texts()

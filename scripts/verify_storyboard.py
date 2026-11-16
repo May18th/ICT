@@ -1,7 +1,8 @@
-"""核对门户 5 个入口的实际跳转目标，以及分镜字幕念不念得完。
+"""核对门户入口的实际跳转目标，以及分镜字幕念不念得完。
 
 两个未验证的假设：
-  1. 文档写「① → /map2d、②③ → /workbench、④ → /status、⑤ → /data」，实际是不是？
+  1. 文档写「① 这是什么 → /map2d、② 它怎么推 → /map2d、③ 凭什么信 → /data、
+     ④ 它会错吗 → /limits」，加上 5 个二级入口（工作台/进化/反馈/评审/自检），实际是不是？
   2. 7 个镜头的字幕在分配时长内念不念得完？
 """
 import asyncio
@@ -13,19 +14,27 @@ from playwright.async_api import async_playwright
 BASE = "http://127.0.0.1:8804"
 ROOT = Path(r"D:\华为ICT\agent_poc")
 
-# 文档里声称的目标
+# 首屏四个主问题的目标（2026-11-16 起从五个等价入口改为四主 + 五副）
 CLAIMED = {
-    "这是什么": "/map2d",
-    "它怎么一步步推的": "/workbench",
-    "凭什么信": "/workbench",
-    "它会错吗": "/status",
-    "换个地方能用吗": "/data",
+    "① 这是什么": "/map2d",
+    "② 它怎么推": "/map2d",
+    "③ 凭什么信": "/data",
+    "④ 它会错吗": "/limits",
+}
+
+# 二级入口：参与类与技术类页面，降为文字链接，不与主问题抢首屏
+SECONDARY = {
+    "证据查询与台账定位": "/workbench",
+    "策略调整与版本回滚": "/evolution",
+    "反馈注入": "/feedback",
+    "方案评审": "/review",
+    "内部自检": "/status",
 }
 
 
 async def check_links() -> None:
     print("=" * 62)
-    print("一、门户 5 个入口的实际去向")
+    print("一、门户 4 个主入口 + 5 个二级入口的实际去向")
     print("=" * 62)
     async with async_playwright() as p:
         b = await p.chromium.launch(channel="msedge", headless=True)
@@ -40,23 +49,26 @@ async def check_links() -> None:
             href = await a.get_attribute("href")
             if not txt or not href:
                 continue
-            # 只取 5 个问答入口
             for key in CLAIMED:
+                if key in txt:
+                    rows.append((key, href, txt[:38]))
+                    break
+            for key in SECONDARY:
                 if key in txt:
                     rows.append((key, href, txt[:38]))
                     break
 
         for key, href, txt in rows:
-            claim = CLAIMED[key]
+            claim = CLAIMED.get(key) or SECONDARY.get(key)
             hit = "OK  " if href.rstrip("/").endswith(claim.rstrip("/")) else "DIFF"
-            print(f"{hit} {key:<10} href={href:<16} 文档写={claim}")
+            print(f"{hit} {key:<12} href={href:<16} 文档写={claim}")
             print(f"     （原文：{txt}）")
 
         # 实际点一次第 ⑤ 个，看落地页标题
         print()
-        print("-- 实际点击第 ⑤ 个入口，看落地 --")
+        print("-- 实际点击第 ④ 个入口，看落地 --")
         try:
-            await pg.click("text=换个地方能用吗", timeout=8000)
+            await pg.click("text=④ 它会错吗", timeout=8000)
             await pg.wait_for_timeout(2500)
             print("   落地 URL:", pg.url)
             print("   页面标题:", await pg.title())

@@ -617,8 +617,8 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
 #srcpanel .sp-head button{background:none;border:none;font-size:20px;line-height:1;
   color:var(--dim);cursor:pointer;padding:0 4px}
 #srcpanel .sp-head button:hover{color:var(--ink)}
-#srcpanel .sp-body{padding:2px 18px 8px;overflow:auto;font-size:12px}
-#srcpanel section{padding:6px 0;border-bottom:1px solid var(--line)}
+#srcpanel .sp-body{padding:2px 18px 6px;overflow:auto;font-size:12px}
+#srcpanel section{padding:5px 0;border-bottom:1px solid var(--line)}
 #srcpanel section:last-child{border-bottom:none}
 #srcpanel h4{margin:0 0 5px;font-size:12.5px;display:flex;align-items:center;gap:7px}
 #srcpanel h4 .sq{width:8px;height:8px;border-radius:2px;flex-shrink:0}
@@ -628,13 +628,11 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
 #srcpanel td{padding:2px 0;color:var(--sub);line-height:1.6}
 #srcpanel a{color:var(--blue)}
 /* 站内闭环：这一页只讲「图上这些数哪来的」，逐字段核对与「哪里不可信」
-   分别在 /data 与 /limits。把入口放在面板底部，比让人回门户找更省事。 */
-#srcpanel .sp-links{display:flex;gap:10px;padding-top:12px;margin-top:4px;border-top:1px solid var(--line)}
-#srcpanel .sp-links a{flex:1;text-decoration:none;border:1px solid var(--line);border-radius:8px;
-  padding:9px 12px;background:var(--panel2);color:var(--ink)}
-#srcpanel .sp-links a:hover{border-color:var(--blue);background:#f5f9fd}
-#srcpanel .sp-links b{display:block;font-size:12.5px;margin-bottom:2px;color:var(--ink)}
-#srcpanel .sp-links span{display:block;font-size:11px;color:var(--dim);line-height:1.55}
+   分别在 /data 与 /limits。入口放**面板头部**而不是底部：768 高的屏幕上内容要滚
+   235px，放底部的链接根本露不出来，等于没有。头部常驻，说明走 title。 */
+#srcpanel .sp-tools{display:flex;align-items:center;gap:14px}
+#srcpanel .sp-tools a{font-size:11.5px;color:var(--blue);text-decoration:none;white-space:nowrap}
+#srcpanel .sp-tools a:hover{text-decoration:underline}
 #srcpanel .sp-note{color:#a8630f;background:#fdf4e6;border:1px solid #f2ddba;border-radius:6px;
   padding:6px 9px;margin-top:6px;line-height:1.6}
 </style>
@@ -725,7 +723,13 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
 </div>
 <div id=srcpanel aria-hidden=true>
   <div class=sp-card role=dialog aria-modal=true aria-label="数据来源与边界">
-    <div class=sp-head><h3>数据来源与边界</h3><button id=spclose aria-label=关闭>×</button></div>
+    <div class=sp-head><h3>数据来源与边界</h3>
+      <div class=sp-tools>
+        <a href="/data" title="逐项核对每个字段：真实底图 / 场景台账 / 示意数据 / 可重跑结果">数据来源与口径</a>
+        <a href="/limits" title="三组工具同题对照、已知偏差与适用范围">它会错吗</a>
+        <button id=spclose aria-label=关闭>×</button>
+      </div>
+    </div>
     <div class=sp-body>
       <section>
         <h4><i class="sq" style="background:#8a93a1"></i>底图 · OpenStreetMap 静态底图</h4>
@@ -772,10 +776,6 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
           <tr><th>边界</th><td>是规则推演结果，不是现场指挥记录；调拨数量与优先级可逐条回溯到信号、条款、输出三段。</td></tr>
         </table>
       </section>
-      <div class=sp-links>
-        <a href="/data"><b>数据来源与口径 →</b><span>逐项核对每个字段：真实底图 / 场景台账 / 示意数据 / 可重跑结果分层列出</span></a>
-        <a href="/limits"><b>它会错吗 →</b><span>三组工具同题对照、偏差与适用范围，说清哪些结论不能引用</span></a>
-      </div>
     </div>
   </div>
 </div>
