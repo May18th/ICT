@@ -50,6 +50,18 @@ uv run python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-
 uv run python -m decision_poc.evidence_check   # 期望 108/108，核对值 06db4f93ca0b53c7
 ```
 
+现场演示（断网可跑，不依赖任何云端接口）：
+
+```bash
+uv run python scripts/demo_tour.py            # 自检 → 起服务 → 打开 /show → 打印讲稿
+uv run python scripts/demo_tour.py --check    # 只自检：依赖文件、页面体积、六项页面与接口
+```
+
+Windows 上双击仓库根目录的 `一键演示.bat` 也可以：先逐项自检（缺底图会让大屏悄悄退回
+示意图，这条会当场报出来），再打开演示页。演示页 `/show` 把 `/map2d` 嵌进来当底片，
+按「收到工单 → 冲突曝光 → 策略进化 → 重新推演 → 大屏退水」五幕推进，数字全部取自本机
+接口；空格推进，`?beat=3` 可单独排练某一幕。
+
 > 只装 [uv](https://docs.astral.sh/uv/) 即可，不需要预装 Python。
 
 ---
