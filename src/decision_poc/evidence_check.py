@@ -35,17 +35,22 @@ EXPECTATIONS_PATH = REPO_ROOT / "samples" / "eval" / "evidence_expectations.json
 # 测试数同样是对外数字：文档里写了几种，根 pytest 真跑出来是几种，必须是同一个值。
 # 实测值由 tests/test_test_count_guard.py 用 `request.session.testscollected` 核对
 # （evidence_check 自己不能递归跑 pytest），这里只核对"文档之间没有漂"。
-DOCS_WITH_TEST_COUNT = (
-    "README.md",
-    "docs/competition-gap-audit.md",
-    "docs/competition/preliminary-submission-draft.md",
-)
+#
+# 只列**随仓库分发**的文档。这里曾列出 competition-gap-audit.md 与
+# preliminary-submission-draft.md，但两份都在 .gitignore 里（内部工作文档）：
+# 本地能扫到、CI 的干净 clone 扫不到，于是同一条自检在本地 108/108、在 CI 报
+# 「docs_declared 期望 [971]，实际 []」。扫描口径必须与分发范围一致，否则
+# 就是拿本地存在、别人拿不到的文件来自证。
+DOCS_WITH_TEST_COUNT = ("README.md",)
 TEST_COUNT_PATTERNS = (
     # 旧写法：把收集数说成「N 项测试通过」。这句口径本身不准确（971 项里设计内要跳 14 项），
     # 2026-11-16 起对外统一改成「N 项收集 / M 通过 / K 项按设计跳过」，因此下面两条必须同时认，
     # 否则文档一改写法，这里就提取不到而报「文档声明的测试数 [] 与冻结值不一致」。
     re.compile(r"(\d+)\s*项(?:测试)?通过"),
     re.compile(r"(\d+)\s*项收集"),
+    # 「971 项测试（970 通过 + 1 项因可选依赖跳过）」也是收集数口径，
+    # 而且是最容易写出来的一种。漏了它 → 文档明明写着 971，扫描结果却是 []。
+    re.compile(r"(\d+)\s*项测试"),
     re.compile(r"#\s*(\d+)\s*passed"),
 )
 SCHEMA_VERSION = "evidence-check-1"
