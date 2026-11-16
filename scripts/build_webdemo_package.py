@@ -53,6 +53,18 @@ SYNC_DIRS: tuple[tuple[str, Path], ...] = (
 SKIP_DIRS = {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
 SKIP_SUFFIXES = {".pyc", ".pyo"}
 
+#: 单文件同步：`/map2d` 在发布包里需要现场生成，这两个脚本缺一不可。
+#:
+#: 发布工具会排除构建产物目录（`dist/` 传不上去），所以线上必然是「无产物 →
+#: 现场生成」这条路径。`build_map2d.py` 生成页面，`build_event_timeline.py`
+#: 从台账重算 7 步时刻——缺后者时 `out/map2d/event_timeline.json` 不存在，
+#: 时标只能为 null，状态带会显示「回放 --:--」、7 步时刻全空（实测过）。
+#: 只带这两个，不整目录带 `scripts/`：其余脚本是文档/训练/审计工具，与页面无关。
+SYNC_FILES: tuple[tuple[str, Path], ...] = (
+    ("scripts/build_map2d.py", ROOT / "scripts" / "build_map2d.py"),
+    ("scripts/build_event_timeline.py", ROOT / "scripts" / "build_event_timeline.py"),
+)
+
 MAIN_PY = '''"""发布入口：读取沙箱注入的 PORT 环境变量，绑定 0.0.0.0 提供服务。
 
 可选：应用目录下的 .env 会加载进进程环境（用于 DEEPSEEK_API_KEY 等）。
@@ -92,11 +104,19 @@ def _ignore(directory: str, names: list[str]) -> set[str]:
 
 
 def count_files(base: Path) -> tuple[int, int]:
+    """统计文件数与体积，跳过不参与发布的缓存文件。
+
+    必须和 `_ignore` 用同一套规则：源目录里有 `__pycache__`、包内没有，
+    按全量数会永远「197 vs 93 不一致」，`--check` 就失去意义了。
+    """
     files = bytes_ = 0
     for path in base.rglob("*"):
-        if path.is_file():
-            files += 1
-            bytes_ += path.stat().st_size
+        if not path.is_file():
+            continue
+        if any(part in SKIP_DIRS for part in path.parts) or path.suffix in SKIP_SUFFIXES:
+            continue
+        files += 1
+        bytes_ += path.stat().st_size
     return files, bytes_
 
 
@@ -159,9 +179,21 @@ def main() -> int:
             drift += 1
         print(f"{mark}{rel:<14}{d_files:>7}{s_files:>7}   {_fmt(d_bytes):>10}{_fmt(s_bytes):>10}")
 
+    # 生成器脚本单独比：漏了时标脚本线上时刻会全空，只看目录 diff 发现不了
+    stale_files: list[str] = []
+    for rel, src in SYNC_FILES:
+        dst = OUT / rel
+        if not (src.is_file() and dst.is_file() and dst.read_bytes() == src.read_bytes()):
+            stale_files.append(rel)
+
     if args.check:
-        print(f"\n结论：{drift} 个目录与源码不一致" if drift else "\n结论：发布包与源码一致")
-        return 0 if drift == 0 else 1
+        parts = []
+        if drift:
+            parts.append(f"{drift} 个目录与源码不一致")
+        if stale_files:
+            parts.append("生成器需更新：" + "、".join(stale_files))
+        print("\n结论：" + ("；".join(parts) if parts else "发布包与源码一致"))
+        return 0 if not (drift or stale_files) else 1
 
     # 保留 .env：里面是密钥，且不在版本管理里，删了就没了
     env_backup = None
@@ -180,6 +212,15 @@ def main() -> int:
         shutil.copytree(src, dst, ignore=_ignore)
         print(f"  同步 {rel}")
 
+    for rel, src in SYNC_FILES:
+        if not src.is_file():
+            print(f"  [WARN] 源文件不存在：{src}")
+            continue
+        dst = OUT / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        print(f"  同步 {rel}")
+
     (OUT / "main.py").write_text(MAIN_PY, encoding="utf-8")
     (OUT / "requirements.txt").write_text(REQUIREMENTS, encoding="utf-8")
     if env_backup is not None:
@@ -194,8 +235,14 @@ def main() -> int:
         "files": total_files,
         "bytes": total_bytes,
         "dirs": [rel for rel, _ in SYNC_DIRS],
+        "generators": [rel for rel, _ in SYNC_FILES],
         "map2d_prebuilt": (OUT / "dist" / "map2d" / "index.html").is_file(),
-        "note": "发布包不带 scripts/，/map2d 直接返回预生成产物；见 web_demo.build_map2d_html",
+        "note": (
+            "线上走「无产物 → 现场生成」：发布工具排除 dist/，/map2d 由包内 "
+            "scripts/build_map2d.py + build_event_timeline.py 现算（时刻来自台账）。"
+            "包内不带 out/map2d/hydro_curve.json，水位无定量层，页面自动标注「示意节奏」。"
+            "见 web_demo.build_map2d_html"
+        ),
     }
     (OUT / "BUILD_INFO.json").write_text(json.dumps(info, ensure_ascii=False, indent=2), encoding="utf-8")
 
