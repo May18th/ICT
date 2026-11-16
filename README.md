@@ -47,7 +47,7 @@ uv run python -m decision_poc.web_demo --port 8790
 
 ```bash
 uv run python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00
-uv run python -m decision_poc.evidence_check   # 期望 108/108，核对值 0a629ba506a2a9b7
+uv run python -m decision_poc.evidence_check   # 期望 108/108，核对值 06db4f93ca0b53c7
 ```
 
 > 只装 [uv](https://docs.astral.sh/uv/) 即可，不需要预装 Python。
@@ -122,7 +122,7 @@ uv run python -m decision_poc.evidence_check   # 期望 108/108，核对值 0a62
 | `deploy/nexent/` | 平台装配脚本：MCP 注册、工具同步、智能体创建、技能绑定、证据采集 |
 | `samples/` | 资产台账、规则库、评测用例、平台实测证据 |
 | `scripts/` | 复现、构建材料、证据核对、界面自动检查 |
-| `tests/` | 971 项测试（970 通过 + 1 项因可选依赖跳过） |
+| `tests/` | 980 项收集 / 965 通过 / 15 项按设计跳过（干净 clone 实测，0 失败） |
 
 </details>
 

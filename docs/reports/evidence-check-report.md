@@ -2,7 +2,7 @@
 
 由 `python -m decision_poc.evidence_check --report <path>` 生成，**不要手改**。
 
-- 期望校验值：`37b13641193040e4`（期望文件被改动即换校验值）
+- 期望的校验值：`06db4f93ca0b53c7`（期望文件被改动即换值）
 - 检查项：108 项，通过 108，失败 0
 - 结论：全部一致
 
@@ -73,7 +73,7 @@
 | `p9_evolution.real_event.evolved_unmet.A-03` | `0` | `0` | 通过 |
 | `p9_evolution.real_event.evolved_unmet.B-01` | `2` | `2` | 通过 |
 | `p9_evolution.real_event.evolved_transfer_count` | `1` | `1` | 通过 |
-| `test_suite.docs_declared` | `[908]` | `[908]` | 通过 |
+| `test_suite.docs_declared` | `[980]` | `[980]` | 通过 |
 | `p11_ablation.configs` | `["rules_only", "semantic_only", "single_skill", "multi_skill", "full_audited"]` | `["rules_only", "semantic_only", "single_skill", "multi_skill", "full_audited"]` | 通过 |
 | `p11_ablation.metrics.rules_only.six_hop_rate` | `0.0` | `0.0` | 通过 |
 | `p11_ablation.metrics.rules_only.safety_rate` | `0.0` | `0.0` | 通过 |
