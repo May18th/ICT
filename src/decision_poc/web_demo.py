@@ -3895,9 +3895,9 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
       <span>看懂作品 → 理解推演 → 核对依据 → 认识边界</span></div>
     <div class=ask-grid>
       <a class=ask href="/map2d"><b>① 这是什么</b>
-        <span>积水范围与深度、封路、泵站状态、跨区调泵，一屏看完</span></a>
+        <span>积水深度、封路、泵站状态、跨区调泵，一屏看完</span></a>
       <a class=ask href="/map2d"><b>② 它怎么推</b>
-        <span>右侧 7 步事件链：降雨 → 堵塞 → 派单 → 缺口 → 增援 → 封路 → 退水</span></a>
+        <span>右侧 7 步事件链：降雨、堵塞、派单、缺口、增援、封路、退水</span></a>
       <a class=ask href="/data"><b>③ 凭什么信</b>
         <span>逐字段核对出处：真实底图 / 场景台账 / 示意数据 / 可重跑结果</span></a>
       <a class=ask href="/limits"><b>④ 它会错吗</b>
