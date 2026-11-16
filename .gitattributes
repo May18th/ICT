@@ -1,2 +1,5 @@
 # 证据文件按字节记录 sha256，行尾必须固定为 LF，否则 clone 后哈希对不上
 samples/nexent/skill/**/SKILL.md text eol=lf
+
+# 架构图源文件：跨平台保持 LF，重渲染结果才一致
+docs/competition/figures/*.html text eol=lf
