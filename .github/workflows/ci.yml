@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: 锁文件 / 编译 / 测试 / 数字自检
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # Python 版本由 pyproject 的 requires-python 决定，uv 会自己取，CI 不另钉版本，
+      # 避免和 uv.lock 里的解析结果分叉。
+      - name: 校验锁文件与 pyproject 一致
+        run: uv lock --check
+
+      - name: 按锁文件同步依赖
+        run: uv sync --locked
+
+      - name: 语法编译检查
+        run: uv run --locked python -m compileall -q src tests scripts
+
+      - name: 测试
+        run: uv run --locked pytest -q
+
+      # 对外数字的唯一权威口径。任何一处文档或产物漂移都会在这里失败，
+      # 不用靠人工比对 README / 报告 / 答辩材料。
+      - name: 对外数字自检
+        run: uv run --locked python -m decision_poc.evidence_check
+
+      # --fast 只核对数字、不重跑 pytest 与 P9 进化，避免和上一步重复。
+      - name: 复现脚本（快检）
+        run: uv run --locked python scripts/reproduce.py --fast
