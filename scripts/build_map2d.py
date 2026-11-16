@@ -1598,6 +1598,9 @@ function buildBase(){
     lab.setAttribute('text-anchor','middle');
     lab.setAttribute('paint-order','stroke');
     lab.setAttribute('stroke','#ffffff'); lab.setAttribute('stroke-width','2.6');
+    // 不要给这个标签挂 title：`#map text{pointer-events:none}` 是为了让光标穿到下面的
+    // 道路/地块上弹说明。给标签单独开 pointer-events 会把下方的 hover 挡掉，而
+    // 「这是推演值」已经由状态带（积水水位·模型估算）和 KPI 标签讲清楚了。
     lab.style.display = 'none';
     waterLayer.appendChild(lab);
   });
