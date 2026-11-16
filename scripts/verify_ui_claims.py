@@ -7,11 +7,13 @@
 """
 import asyncio
 import json
+import os
 from pathlib import Path
 
 from playwright.async_api import async_playwright
 
-BASE = "http://127.0.0.1:8803"
+# 端口可被 WB_BASE 覆盖：两个核对脚本经常要连同一个服务跑，改代码容易漏掉另一个
+BASE = os.environ.get("WB_BASE", "http://127.0.0.1:8803")
 OUT = Path(r"D:\华为ICT\agent_poc\out")
 
 # 我写进文档的断言，逐条核对

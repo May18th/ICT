@@ -6,12 +6,14 @@
   2. 7 个镜头的字幕在分配时长内念不念得完？
 """
 import asyncio
+import os
 import re
 from pathlib import Path
 
 from playwright.async_api import async_playwright
 
-BASE = "http://127.0.0.1:8804"
+# 端口可被 WB_BASE 覆盖：两个核对脚本经常要连同一个服务跑，改代码容易漏掉另一个
+BASE = os.environ.get("WB_BASE", "http://127.0.0.1:8804")
 ROOT = Path(r"D:\华为ICT\agent_poc")
 
 # 首屏四个主问题的目标（2026-11-16 起从五个等价入口改为四主 + 五副）
