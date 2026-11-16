@@ -62,7 +62,11 @@ TEXT_NODE = re.compile(r"<(?:a|w):t(?:\s[^>]*)?>(.*?)</(?:a|w):t>", re.S)
 
 #: 「发布 v19」「Agent v10」「（v10）」这类版本号。排除 `v2.7.0` 这种小节点版本：
 #: 数字后面紧跟 `.` 或数字就不算。
-VERSION_CLAIM = re.compile(r"v(\d{1,2})(?![\d.])")
+#:
+#: 前后再排除 `_` / `-`：**文件名里的版本号不是版本宣称**。
+#: `samples/nexent/live/collab_v9_retest.json` 曾被当成「Agent 版本 v9」报错，
+#: 而它只是协同 Agent 重测产物的文件名。
+VERSION_CLAIM = re.compile(r"(?<![_\-\d])v(\d{1,2})(?![\d._\-])")
 
 #: 低于这个数的 `vN` 不当 Agent 版本看。理由是 PPT/信息表里 `v1`/`v2` 常用于
 #: 本体版本、条目编号或"第 1 版"叙述（赛题任务单里就有「发布 v1、回滚到 v1」），
@@ -168,8 +172,13 @@ def _scan(rel: str) -> list[str]:
             claimed = int(match.group(1))
             if claimed < VERSION_CLAIM_FLOOR:
                 continue
+            # 次数要记：同一个文件里可能有多个智能体的版本号（主推演 v31、协同总控 v9、
+            # 台账问答 v10），豁免按"文件 + 值 + 次数"约定，不记就数不出偏差。
+            counts[("agent_version", rel, claimed)] = (
+                counts.get(("agent_version", rel, claimed), 0) + 1
+            )
             want, label = _wanted(rel, "agent_version")
-            if claimed != int(want):
+            if claimed != int(want) and ("agent_version", rel, claimed) not in ALLOWED_NON_TOTAL:
                 problems.append(
                     f"{rel} [agent_version] 实际 v{claimed}，{label} v{want}：{text.strip()[:80]}"
                 )

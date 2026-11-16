@@ -248,8 +248,18 @@ uv run --locked python -m decision_poc.mcp_server                  # 进入 stdi
 '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | uv run --locked python -m decision_poc.mcp_server
 ```
 
-十二个工具（9 个决策语义 + 3 个可视化）：`semantic_query`、`twin_neighbors`、`evidence_locate`、`claim_trace`、`provenance_verify`、
-`event_deduce`、`counterfactual_run`、`conflict_check`、`allocation_plan`、`scene_render`、`scene_compare`、`asset_lookup`。
+15 个工具，按 `TOOL_GROUPS` 分四个互斥分区（一个工具只属于一个分区）：
+
+| 分区 | 数量 | 用途 |
+| --- | --- | --- |
+| `decision` | 10 | 检索、取证、追溯、冲突、分配、反事实 |
+| `presentation` | 3 | 渲染作业、状态查询、结果对比 |
+| `bootstrap` | 1 | 装配期的资产查找 |
+| `collaboration` | 1 | 多智能体协同编排 |
+
+名称与分区**以 `samples/nexent/tools.json` 为准**，该文件与代码同源、由 `tests/test_nexent_tools.py` 锁死。
+本文不复述清单：手抄一份就会和代码各说一套（曾出现过文档写 "12 个"、实际 15 个的口径漂移）。
+需要看具体名字就打开该 JSON，或跑 `uv run python -m decision_poc.mcp_server --list-tools`（打印全部 schema 后退出）。
 全部返回既有 `ToolResult` 信封；失败返回 `status="error"` 且不返回伪造数据。
 可视化三个工具做工具分组隔离（`--groups decision|presentation|bootstrap`），推演循环里看不见渲染工具。
 `scene_render` 只接受状态记录 id 与策略参数（不接受位姿/材质/镜头），作业落盘即返回——引擎没起只体现为 `delivery=pending`，不算失败。

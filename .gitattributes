@@ -1,5 +1,37 @@
+# 为什么全局钉 LF
+# -----------------
+# 台账产物（samples/assets/urban/manifest.json、scene.json 等）里记着 `byte_size`
+# 与 `snapshot_hash`，算的是**工作树文件的真实字节**。行尾一旦随平台漂移，
+# 同样的输入会算出不同的 byte_size，进而让「两份 manifest 逐字节一致」
+# 「reproduce 产物与仓库一致」这类守卫测试在 Windows 上假失败。
+#
+# core.autocrlf=true 的机器上，未声明规则的文本文件检出为 CRLF：32 行的 md
+# 会多出 32 字节，manifest 里的 byte_size 就从 1152 变 1184。这不是数据变了，
+# 是换行符变了——但对按字节记账的台账来说，两者没有区别。
+#
+# 所以：默认全部 LF；只有 Windows 批处理这类「必须是 CRLF」的保留 CRLF。
+* text=auto eol=lf
+
+# Windows 批处理按 CRLF 解析，改成 LF 会出问题
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
 # 证据文件按字节记录 sha256，行尾必须固定为 LF，否则 clone 后哈希对不上
 samples/nexent/skill/**/SKILL.md text eol=lf
 
 # 架构图源文件：跨平台保持 LF，重渲染结果才一致
 docs/competition/figures/*.html text eol=lf
+
+# 二进制：显式声明，避免 text=auto 误判（图片、视频、docx、xlsx）
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.mp4 binary
+*.webm binary
+*.docx binary
+*.xlsx binary
+*.pptx binary
+*.pdf binary
+*.zip binary

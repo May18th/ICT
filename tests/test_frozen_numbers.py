@@ -108,6 +108,14 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("testcount", re.compile(r"(\d+)\s*测试(?![\u4e00-\u9fff])")),
     ("testcount", re.compile(r"测试\s*(\d+)\s*项")),
     ("fingerprint", re.compile(r"指纹\s*`?([0-9a-f]{16})")),
+    # `evidence_check`（108/108）这种写法两处都漏了：根 README 的「四个能当场核对的结果」
+    # 表格、以及 PPT 生成脚本里那句可复现命令。现有 `(\d+)/(\d+)\s*项一致` 要求后面紧跟
+    # 「项一致」，而它们的分数直接在括号里结束或接逗号，所以从来没被校验过——
+    # 自检项数从 106 涨到 108 时，这两处靠人 grep 才改。
+    # 只锚定 `evidence_check` 后面的分数：`(8/8)`、`(22/22)`、`(10/10)` 是别的模块的
+    # 通过率（平台真机一致性、评测用例、类型覆盖），泛化匹配会带来一堆误报，
+    # 它们本来也不该按自检项数校验。
+    ("selfcheck", re.compile(r"evidence_check`?\s*[（(](\d+)/(\d+)")),
 )
 
 #: 真实公开预案的份数（2020 / 2026 应急预案原件）。只在这里写一次：
@@ -136,6 +144,27 @@ ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
         "「把 12 个工具全挂上主 Agent」是 2026-11-03 的历史反例（导致 8/8 掉到 0/8），"
         "不是当前工具总数",
     ),
+    # 交付 docx 里的 v9 / v10 是**另外两个智能体**的版本号（协同总控、台账问答）。
+    # 扫描器只认 `v(\d+)`，分不清版本号属于哪个对象，只能按文件+次数豁免；
+    # 主推演 Agent 的 v31 仍按权威值校验（该文件里 4 处全部命中 31，未豁免）。
+    (
+        "agent_version",
+        "docs/competition/初赛开发设计文档-v2（模板原样）.docx",
+        9,
+    ): (3, "协同总控智能体的版本（v9），不是主推演 Agent 的 v31"),
+    (
+        "agent_version",
+        "docs/competition/初赛开发设计文档-v2（模板原样）.docx",
+        10,
+    ): (3, "台账问答智能体的版本（v10），不是主推演 Agent 的 v31"),
+    (
+        "tools",
+        "docs/competition/初赛开发设计文档-v2（模板原样）.docx",
+        12,
+    ): (
+        1,
+        "历史反例：曾把 12 个工具全部接入主智能体导致 8/8 掉到 0/8，不是当前工具总数",
+    ),
     (
         "tools",
         "docs/赛道3-组件边界与推进路径-v0.1.md",
@@ -156,7 +185,13 @@ ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
         "docs/competition/four-dimensions-mapping.md",
         3,
     ): (1, "「主 Agent 挂 3 工具」是主 Agent 挂载数，不是工具总数"),
-    ("selfcheck", "README.md", 8): (2, "两处「8/8 项一致」都是平台真机一致性，不是自检项数"),
+    (
+        "tools",
+        "README.md",
+        12,
+    ): (1, "历史对照：某次把当时的 12 个工具全接上导致 8/8 掉到 0/8，是失败实验的输入，不是当前工具数"),
+    # 工程版说明从根目录移到 docs/ 后，路径跟着改（否则豁免失效，两处 8/8 会被当成自检项数）。
+    ("selfcheck", "docs/README-dev.md", 8): (2, "两处「8/8 项一致」都是平台真机一致性，不是自检项数"),
     (
         "selfcheck",
         "docs/competition/preliminary-submission-draft.md",
@@ -350,9 +385,13 @@ def test_allowlist_entries_are_still_needed() -> None:
     seen = {(family, rel, value) for rel, family, value, _ in _scan()[0]}
     # 只对"仓库里确实存在的文件"判失效：留在本地、未随仓库分发的文档不参与扫描，
     # 它的条目自然命中不到，但那不算 allowlist 失效。
+    # 二进制交付物（.docx/.pptx）不在本文件的扫描范围内，它们的条目由
+    # `test_office_deliverables` 按同一张表校验次数——那里不报失效就等于这里误报。
     stale = [
         key for key in ALLOWED_NON_TOTAL
-        if key not in seen and (ROOT / key[1]).is_file()
+        if key not in seen
+        and (ROOT / key[1]).is_file()
+        and not key[1].lower().endswith((".docx", ".pptx"))
     ]
     assert not stale, f"allowlist 已失效，请删除这些条目：{stale}"
 
