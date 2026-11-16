@@ -139,7 +139,7 @@ PY
 | 工具清单与代码同源 | ✅ 自动化测试锁死 | `samples/nexent/tools.json` + `tests/test_nexent_tools.py` |
 | 渲染执行器端到端 | ✅ 7 条测试 | `tests/test_p10_render_worker.py` |
 | 实测调用链输出（pending→acked→reused） | ✅ 已固化 | `docs/competition/evidence/index.html` 第 02 节 |
-| 成片与 sha256 | ✅ | `docs/competition/evidence/VD02-B-incident-P9.mp4` |
+| 成片与 sha256 | ✅ | `docs/competition/video-clips/VD02-B-incident-P9.mp4`（唯一副本，证据页跨目录引用） |
 | 平台界面截图（技能仓库 / Agent 工具列表） | ⬜ 待补 | 需平台实例运行 |
 | 平台侧实测回归（Agent 自主调 `scene_status`） | ⬜ 待补 | 需平台实例运行 |
 
