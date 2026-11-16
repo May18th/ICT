@@ -2100,8 +2100,8 @@ function renderEvent(d, target){
   function H(s){ return humanWith(s, LABELS); }
   var line=el('div');
   line.style.fontSize='15px'; line.style.fontWeight='600';
-  // 已办结事件引擎会直接拒推（conclusion.refused），不硬编结论——这一屏要把这件事说出来，
-  // 而不是显示一排 0。判据就是 observed 里有没有 refused。
+  // 已办结事件直接拒推（conclusion.refused），不产出处置方案——这一屏显示拒推，
+  // 而不是显示一排 0。判断依据是 observed 里有没有 refused。
   if(ob.refused){
     line.textContent=d.event_id+' · 工单已结案，不给出处置方案';
     line.className='warn';
@@ -2391,7 +2391,7 @@ function renderReplay(d){
   // 重跑栏最该读的八项期望值反而看不清。
   t.style.tableLayout='fixed';
   var cg=document.createElement('colgroup');
-  // 只钉「判据」和「结果」两头，中间两列均分剩余宽度——给 31% 这种固定比例时，
+  // 只钉「检查项」和「结果」两头，中间两列均分剩余宽度——给 31% 这种固定比例时，
   // 「期望」列在窄侧栏里还是会被压到只剩两三个字一行。
   [['108px'],[],[],['56px']].forEach(function(w){
     var col=document.createElement('col'); if(w[0]){col.style.width=w[0];} cg.appendChild(col);
@@ -4030,7 +4030,7 @@ function renderStatus(d){
 
   var toolNote = document.createElement('div');
   toolNote.style.cssText = 'margin-top:8px;font-size:12px;color:#8b95a3;line-height:1.6';
-  toolNote.textContent = '工具只留给必需的几件：给多了模型会绕开推演，自己编一套听起来合理的答案。';
+  toolNote.textContent = '工具按用途切成最小集合：一次推演只调用该步需要的那几件，结论不跨工具拼接。';
   th.appendChild(toolNote);
 
   var chips = document.getElementById('f-chips');
