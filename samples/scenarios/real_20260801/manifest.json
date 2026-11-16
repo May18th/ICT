@@ -45,7 +45,7 @@
       "standard_refs": [],
       "locator": "A-03/construction_plan/v3",
       "checksum_sha256": "abbe33a803f0ebc2c7873e5ffb979f7c2bf4ba9b7ae9bfd41b25882d42045822",
-      "byte_size": 784,
+      "byte_size": 779,
       "summary": "表格资产：4 行 × 12 列，列名 plan_id、project_name、road_id、pipeline_id、work_type、excavation_depth_m 等",
       "structure": {
         "rows": 4,
@@ -93,7 +93,7 @@
       "standard_refs": [],
       "locator": "A-03/drainage_facility/v1",
       "checksum_sha256": "d09effd58e12e1b69a2e71c1c3c37417c8a32d2eec41661d05c5c4fff9ada06f",
-      "byte_size": 920,
+      "byte_size": 912,
       "summary": "表格资产：7 行 × 13 列，列名 facility_id、name、facility_type、road_id、drainage_zone、capacity_m3h 等",
       "structure": {
         "rows": 7,
@@ -248,7 +248,7 @@
       "standard_refs": [],
       "locator": "A-03/pipeline_ledger/v1",
       "checksum_sha256": "ef229ae4e2fc35505f9de947feb2b48189e0c976f085df874b7d5981550765e3",
-      "byte_size": 948,
+      "byte_size": 937,
       "summary": "表格资产：10 行 × 10 列，列名 pipeline_id、kind、road_id、depth_m、diameter_mm、material 等",
       "structure": {
         "rows": 10,
@@ -492,7 +492,7 @@
       "standard_refs": [],
       "locator": "A-03/underpass/v1",
       "checksum_sha256": "5a68cab1a3c791b056af2efe2a4ac4d3462166c39c8305706d57e7b9f3205904",
-      "byte_size": 548,
+      "byte_size": 545,
       "summary": "表格资产：2 行 × 13 列，列名 underpass_id、name、road_id、district、entry_sill_height_m、lowest_point_z_m 等",
       "structure": {
         "rows": 2,
@@ -587,7 +587,7 @@
       "standard_refs": [],
       "locator": "A-03/work_order/v1",
       "checksum_sha256": "4fa911d8c72841bc7420bc100d9d9437ee2b704c7156ace446b42e19aee387ee",
-      "byte_size": 1283,
+      "byte_size": 1274,
       "summary": "表格资产：8 行 × 10 列，列名 order_id、road_id、facility_id、pipeline_id、order_type、reported_at 等",
       "structure": {
         "rows": 8,
@@ -664,7 +664,7 @@
       "standard_refs": [],
       "locator": "CD-CITY/emergency_plan/2026",
       "checksum_sha256": "f656951779e025fd0957facd638c4bb1e47e3af02135f66d36fdf941d304ec3f",
-      "byte_size": 1975,
+      "byte_size": 1949,
       "summary": "文本资产：26 行，首段「四级响应（蓝色）：市气象台发布暴雨橙色预警。」",
       "structure": {
         "lines": 26,
