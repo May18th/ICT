@@ -18,6 +18,8 @@ visualization/
 .pytest-report.xml
 .pytest-uv.xml
 pytest-of-*/
+# torchinductor 在仓库根落盘的编译缓存（跑过一次算力相关用例就有），体积可达数百 MB
+torchinductor_*/
 .uecheck/
 
 # P10 渲染作业 / 快照 / 工具调用日志（本地运行时产物，可随时删）
@@ -112,6 +114,8 @@ docs/ue-real-assets-progress.md
 docs/twin3d-business-loop-todo.md
 
 # 3D 渲染素材与生产脚本（3D 沙盘已停用，2026-11-15 移出）
-assets/
+# 必须带前导斜杠：裸写 `assets/` 会连 `samples/assets/**` 一起吞掉（台账与 OSM 底图全在里面），
+# 已跟踪的文件不会消失，但以后新增的台账/底图会被 `git add samples/` 静默跳过。
+/assets/
 scripts/build_worker_char.py
 scripts/bake_worker_anim.py
