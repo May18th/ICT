@@ -241,7 +241,7 @@ async function main(){
   const first=p.first, second=p.second, review=p.review, real=p.real_event;
   const a=first.initial_train, b=first.final_train, c=first.initial_holdout, d=first.final_holdout;
   metrics.innerHTML=
-    '<div class=metric><span>演练场景：方案偏差</span><b>'+f4(a.deviation)+' → '+f4(b.deviation)+'</b><span class=dim>调整前 → 调整后</span></div>'+
+    '<div class=metric><span>评测场景：方案偏差</span><b>'+f4(a.deviation)+' → '+f4(b.deviation)+'</b><span class=dim>调整前 → 调整后</span></div>'+
     '<div class=metric><span>新场景：方案偏差</span><b>'+f4(c.deviation)+' → '+f4(d.deviation)+'</b><span class=dim>通过不退化校验</span></div>'+
     '<div class=metric><span>复用经验后的起点</span><b class=ok>'+f4(second.initial_train.deviation)+'</b><span class=dim>第二次会话</span></div>'+
     '<div class=metric><span>人工建议修正幅度</span><b>'+(review?f4(review.deviation_before)+' → '+f4(review.deviation_after):'-')+'</b><span class=dim>第二反馈信号</span></div>';

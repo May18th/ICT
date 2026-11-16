@@ -4871,7 +4871,7 @@ def _evolution_metrics_html(payload: dict[str, Any]) -> str:
     second = payload.get("second") or {}
     review = payload.get("review") or {}
     cards = [
-        ("演练场景：方案偏差",
+        ("评测场景：方案偏差",
          f'{_f4((first.get("initial_train") or {}).get("deviation"))} → '
          f'{_f4((first.get("final_train") or {}).get("deviation"))}', "调整前 → 调整后", False),
         ("新场景：方案偏差",
