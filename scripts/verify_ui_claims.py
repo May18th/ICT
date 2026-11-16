@@ -22,10 +22,13 @@ CLAIMS = {
     "workbench_buttons": ["这地方积水了，该谁去处理？", "先封路还是先开泵？", "兴华路泵站设计流量多少？"],
     "workbench_big": ["A-03", "橙色", "30.0"],
     "workbench_blocks": ["处置顺序", "跨部门冲突", "资源缺口"],
-    "map2d_metrics": ["当前积水深度", "封路路段", "堵塞雨水口", "泵站运行", "隧道深度"],
+    "map2d_metrics": ["推演积水深度", "封路路段", "堵塞雨水口", "泵站运行", "推演进度"],
     "map2d_legend": ["积水", "泵站", "道路"],
     "map2d_buttons": ["暂停", "重置"],
     "map2d_step_card": ["第 1/7 步"],
+    # 数据分层与来源标签：每条 KPI 都要能回答「这是台账、模型还是推演」
+    "map2d_provenance": ["模型估算", "封路通告", "巡检台账", "设施台账", "回放时钟",
+                         "OpenStreetMap 贡献者", "数据来源与边界"],
 }
 
 
@@ -65,6 +68,7 @@ async def main() -> None:
         report["map2d_metrics"] = {t: (t in mp) for t in CLAIMS["map2d_metrics"]}
         report["map2d_buttons"] = {t: (t in mp) for t in CLAIMS["map2d_buttons"]}
         report["map2d_step_card"] = {t: (t in mp) for t in CLAIMS["map2d_step_card"]}
+        report["map2d_provenance"] = {t: (t in mp) for t in CLAIMS["map2d_provenance"]}
 
         # ---- 其余页面是否能开、有什么标题 ----
         others: dict[str, str] = {}
