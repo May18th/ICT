@@ -1213,13 +1213,13 @@ button{grid-column:1/-1;justify-self:start;background:#1d7f6f;border:0;color:#ea
 a{color:#5eead4}
 </style></head><body><main>
 <h1>反馈注入 · <span>处置结果回写与策略调整</span></h1>
-<div class="sub">填入一次内涝处置结果，系统据此判定处置是否有效；有效性成立时，按评测集跑一轮策略调整。
+<div class="sub">填入一次内涝处置结果，系统据此评估处置效果；有效性成立时，按评测集跑一轮策略调整。
 评测集只读，策略调整写入运行期记录，不覆盖评测基线。
 专家评审意见以角色扮演方式给出（非真实部门批复）；偏差超过阈值时，整轮候选作废。
 <a href="/">← 回推演页</a> · <a href="/evolution">进化对比 →</a></div>
 <form id="f">
-  <p class="form-note"><b>演示环境 · 评测数据。</b>下面填的是演示/评测用的场景值，提交后写入本次演示的运行期记录，
-  并据此触发一次策略调整；<b>不涉及真实部门的处置结果或批复</b>。要接真实反馈，需替换成对应部门的原始单据。</p>
+  <p class="form-note"><b>演示环境 · 评测数据。</b>下面填的是演示用的场景值，提交后写入本次演示的运行期记录，
+  并据此触发一次策略调整；<b>不涉及真实部门的处置结果或批复</b>。</p>
   <label>场景 <input name="scenario_id" value="vd02"></label>
   <label>分钟 <input name="t_min" type="number" value="45" min="0"></label>
   <label>片区 <input name="district" value="A-03"></label>
@@ -1237,9 +1237,9 @@ a{color:#5eead4}
     </select></label>
   <label>预期水深 cm（可空）<input name="expected_depth_cm" type="number" step="0.1"></label>
   <label class="full">备注 <input name="note" placeholder="例如：封路后仍超临界，泵站单台运行"></label>
-  <button type="submit">提交反馈并评估</button>
+  <button type="submit">提交反馈并运行评估</button>
 </form>
-<div id="out">等待提交…</div>
+<div id="out">尚无反馈记录</div>
 <h2 style="font-size:16px;margin:26px 0 8px">反馈流水 <span style="color:#7d95ab;font-weight:400;font-size:12.5px">（最近 30 条，倒序）</span></h2>
 <div id="hist" style="color:#7d95ab;font-size:12.5px">加载中…</div>
 </main><script>
@@ -1345,9 +1345,7 @@ a{color:#5eead4}
 <a href="/">← 回推演页</a> · <a href="/feedback">反馈注入 →</a> · <a href="/evolution">进化对比 →</a></div>
 <div class="stats">__STATS__</div>
 <form id="f">
-  <p class="form-note"><b>演示环境 · 评测数据。</b>这里的四维评分与建议调拨只写入本次演示的运行期记录，
-  是评测样本，<b>不代表真实部门批复，也不构成正式审批</b>。要作为正式意见使用，需由对应部门在其自有流程中另行确认；
-  「用户评分」与「正式审批」是两件事，本页只做前者。</p>
+  <p class="form-note"><b>演示环境 · 评测数据。</b>本页评分代表个人评审意见，<b>不代表部门审批</b>。</p>
   <label>评审人 <input name="reviewer_id" placeholder="如 zhang.water" required></label>
   <label>角色 <input name="reviewer_role" placeholder="如 水务调度负责人（角色扮演）"></label>
   <label>阶段
@@ -1363,7 +1361,7 @@ a{color:#5eead4}
   <label class="full">备注 <textarea name="comment" rows="3" placeholder="写清为什么这样评；要提修正意见就填上面的建议调拨"></textarea></label>
   <button type="submit">提交评审</button>
 </form>
-<div id="out">等待提交…</div>
+<div id="out">尚无评审记录</div>
 <h2>最近提交 <span class="muted">（最新 8 条）</span></h2>
 __RECENT__
 </main><script>
@@ -1670,13 +1668,13 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
 <main>
   <section class="panel">
     <div class="switch">
-      <span class="sw on">直接问（能点原文）</span>
-      <a class="sw" style="text-decoration:none" href="__WEB_BASE__/zh/workbench" target="_blank" rel="noopener">打开平台原窗口 ↗</a>
+      <span class="sw on">台账问答 · 结论可定位原文</span>
+      <a class="sw" style="text-decoration:none" href="__WEB_BASE__/zh/workbench" target="_blank" rel="noopener">打开平台原生界面 ↗</a>
       <span class="spacer"></span>
       <select id="agentSel" title="问哪个智能体"><option value="deduction">推演（事件事实）</option><option value="asset_qa">台账问答</option></select>
     </div>
-    <div class="hint">「直接问」打开就能用，回答中的定位可跳转台账原文。
-    想看平台原生对话界面，点上面「打开平台原窗口 ↗」——新标签页打开，需要已登录平台。</div>
+    <div class="hint">「台账问答」打开就能用，回答中的定位可跳转台账原文。
+    想看平台原生对话界面，点上面「打开平台原生界面 ↗」——新标签页打开，需要已登录平台。</div>
     <div id="chatpane">
       <div id="feed"><div class="msg ai">可用自然语言提问，例如「谁负责」「先做什么」「依据哪条」。
 需要指定事件时，把事件编号写进问题（例如 WO-20261029-009）。
@@ -1689,7 +1687,7 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
     <div class="tabs">
       <button class="tab on" data-tab="event">事件</button>
       <button class="tab" data-tab="evidence">证据</button>
-      <button class="tab" data-tab="tools">工具轨迹</button>
+      <button class="tab" data-tab="tools">取证过程</button>
       <button class="tab" data-tab="selfcheck">自检</button>
       <button class="tab" data-tab="replay">重跑</button>
     </div>
@@ -4217,6 +4215,10 @@ header{padding:26px 40px 16px;display:flex;align-items:flex-start;gap:20px}
 header .grow{flex:1;min-width:0}
 h1{margin:0;font-size:21px;letter-spacing:.2px}
 .lead{margin:6px 0 0;color:var(--sub);font-size:13px;max-width:820px}
+.purpose{grid-column:1/-1;margin:14px 0 4px;padding:11px 16px;border-radius:9px;
+  background:#f1f7fd;border:1px solid #d6e6f5;border-left:3px solid var(--blue);
+  color:#33506b;font-size:12.5px;line-height:1.7;max-width:1100px}
+.purpose b{color:var(--ink)}
 .back{font-size:12.5px;color:var(--dim);white-space:nowrap;padding-top:4px}
 main{padding:6px 40px 34px;display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:1480px}
 section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
@@ -4263,8 +4265,8 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
 <header>
   <div class=grow>
     <h1>数据来源与口径</h1>
-    <p class=lead>数据分三类：真实数据（开放地图与台账结构）、场景设定（明确标为示意）、
-      算出来的结果（可重跑核对）。每类下方注明来源、许可与生成方式。</p>
+    <p class=lead>数据分三类：开放地图底图（真实路网，可核验）、场景设定（明确标为示意）、
+      计算结果（可按规则重跑）。每类下方注明来源、许可与生成方式。</p>
     <p class=lead style="font-size:12px;color:var(--dim);margin-top:5px;max-width:900px">
       术语关系：<b>评测场景</b>是整个虚构情境（一块街区、一场雨、一套台账）；
       <b>演示台账</b>是其中的原始单据集（工单、设施、库存、职责、通告）；
@@ -4273,8 +4275,10 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
   <div class=back><a href="/">← 回到首页</a></div>
 </header>
 <main>
+  <div class=purpose>本系统使用开放地图底图、演示台账和可重跑规则，展示城市内涝事件中的跨部门推演过程；
+    结果用于评测与演示，<b>不代表真实处置记录或正式审批</b>。</div>
   <section class=wide id=osm>
-    <h2>真实数据 · 开放地图<span class="tag real">可核对</span></h2>
+    <h2>开放地图底图<span class="tag real">可核验</span></h2>
     <p class=note id=osm-origin>__OSM_ORIGIN__</p>
     <p class=note>这是本项目所在区域的真实街道图：浅蓝是河道，灰块是建筑，白线是道路；
       取景框约 3.2 × 1.1 公里，按要素分布裁出，<b>不是行政区或项目边界</b>。
@@ -4322,7 +4326,7 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
   </section>
 
   <section class=wide>
-    <h2>由台账算出<span class="tag">可重跑</span></h2>
+    <h2>计算结果<span class="tag">可按规则重跑</span></h2>
     <ul class=set id=computed>__COMPUTED__</ul>
   </section>
 </main>
@@ -5104,7 +5108,7 @@ def limits_payload() -> dict[str, Any]:
 _LIMITS_PAGE = """<!DOCTYPE html>
 <html lang=zh-CN><meta charset=utf-8>
 <meta name=viewport content='width=device-width,initial-scale=1'>
-<title>它会错吗 · 三组同题对照</title>
+<title>能力边界与误差对照 · 三组同题对照</title>
 <style>
 :root{--bg:#f5f7fa;--panel:#fff;--line:#e5e9ef;--line2:#d8dee7;
   --ink:#1b2330;--sub:#5b6472;--dim:#8b95a3;
@@ -5122,6 +5126,7 @@ h1{margin:0;font-size:22px;font-weight:650;letter-spacing:.2px}
 .judge{background:#f2f9f4;border:1px solid #cfe6d7;border-left:3px solid var(--teal);
   border-radius:10px;padding:14px 18px;font-size:14px;margin:16px 0 18px}
 .judge b{font-size:15.5px}
+.kicker{margin:14px 0 -2px;font-size:11.5px;letter-spacing:.6px;color:var(--dim)}
 /* 顶部四项摘要：本页长，先给结论再给论证。四个数字都是下方正文里已有的，
    不新增口径，只是提前摆出来，免得要读到第三屏才知道这页到底说了什么。 */
 .sum4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 18px}
@@ -5174,7 +5179,8 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
 <body>
 <header>
   <a class=back href="/">← 回首页</a>
-  <h1>它会错吗</h1>
+  <p class=kicker>它会错吗</p>
+  <h1>能力边界与误差对照</h1>
   <p class=lede>同一道题、同一个模型、同一套提示词，<b>唯一变量是工具是否可用</b>。
     三组对话均在 Nexent 平台内产生，会话编号可在平台内回查。</p>
 </header>
