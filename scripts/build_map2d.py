@@ -644,11 +644,11 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
   <button id=srcbtn title="数据来源、覆盖范围与证据边界">数据来源与边界</button>
 </header>
 <div id=statusbar>
-  <span class=sb><i class=dot id=sb-dot></i><span id=sb-state>推演中</span></span>
+  <span class=sb><i class=dot id=sb-dot></i><span id=sb-state aria-live=polite>推演中</span></span>
   <span class=sb-sep></span>
   <span class=sb>回放 <b id=clock>--:--</b></span>
   <span class=sb-sep></span>
-  <span class=sb id=sb-step>第 1/7 步 · 降雨前奏</span>
+  <span class=sb id=sb-step role=status aria-live=polite aria-atomic=true>第 1/7 步 · 降雨前奏</span>
   <span class=layers>
     <span class="ly ly-osm" id=ly-osm><b>底图</b>© OpenStreetMap 贡献者（ODbL 1.0）· 静态</span>
     <span class="ly ly-ledger"><b>事件工单</b>演示台账</span>
@@ -657,11 +657,11 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
   </span>
 </div>
 <div id=kpibar>
-  <div class=kpi-card style="--kpi:var(--blue)"><div class=k><span>推演积水深度</span><i class="src-tag t-model" id=k-depth-src>模型估算</i></div><div class=v><span id=k-depth>0</span><span class=u>cm</span></div><div class=n id=k-depth-note>台账核实峰值 30 cm</div></div>
-  <div class=kpi-card style="--kpi:var(--red)"><div class=k><span>封路路段</span><i class="src-tag t-ledger">封路通告</i></div><div class=v><span id=k-block>0</span><span class=u>条</span></div><div class=n id=k-block-note>—</div></div>
-  <div class=kpi-card style="--kpi:var(--amber)"><div class=k><span>堵塞雨水口</span><i class="src-tag t-ledger">巡检台账</i></div><div class=v><span id=k-clog>0</span><span class=u>处</span></div><div class=n id=k-clog-note>—</div></div>
-  <div class=kpi-card style="--kpi:var(--green)"><div class=k><span>泵站运行</span><i class="src-tag t-ledger">设施台账</i></div><div class=v><span id=k-pump>0</span><span class=u id=k-pump-total>/ 3</span></div><div class=n id=k-pump-note>—</div></div>
-  <div class=kpi-card style="--kpi:var(--cyan)"><div class=k><span>推演进度</span><i class="src-tag t-time">回放时钟</i></div><div class=v><span id=k-prog>0</span><span class=u>%</span></div><div class=n id=k-phase>降雨前奏</div></div>
+  <div class=kpi-card style="--kpi:var(--blue)"><div class=k><span>推演积水深度</span><i class="src-tag t-model" id=k-depth-src>模型估算</i></div><div class=v><span id=k-depth>—</span><span class=u>cm</span></div><div class=n id=k-depth-note>台账核实峰值 30 cm</div></div>
+  <div class=kpi-card style="--kpi:var(--red)"><div class=k><span>封路路段</span><i class="src-tag t-ledger">封路通告</i></div><div class=v><span id=k-block>—</span><span class=u>条</span></div><div class=n id=k-block-note>—</div></div>
+  <div class=kpi-card style="--kpi:var(--amber)"><div class=k><span>堵塞雨水口</span><i class="src-tag t-ledger">巡检台账</i></div><div class=v><span id=k-clog>—</span><span class=u>处</span></div><div class=n id=k-clog-note>—</div></div>
+  <div class=kpi-card style="--kpi:var(--green)"><div class=k><span>泵站运行</span><i class="src-tag t-ledger">设施台账</i></div><div class=v><span id=k-pump>—</span><span class=u id=k-pump-total>/ 3</span></div><div class=n id=k-pump-note>—</div></div>
+  <div class=kpi-card style="--kpi:var(--cyan)"><div class=k><span>推演进度</span><i class="src-tag t-time">回放时钟</i></div><div class=v><span id=k-prog>—</span><span class=u>%</span></div><div class=n id=k-phase>降雨前奏</div></div>
 </div>
 <div id=wrap>
   <div id=stage>
@@ -751,14 +751,21 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
         </table>
       </section>
       <section>
-        <h4><i class="sq" style="background:#107d85"></i>积水水位 · 模型估算</h4>
-        <table>
+        <h4><i class="sq" id=sp-hydro-sq style="background:#107d85"></i><span id=sp-hydro-hd>积水水位 · 模型估算</span></h4>
+        <!-- 两套正文，按定量层是否存在二选一（initNotes 切换）。原来只有「模型估算」一套，
+             线上没有定量层时状态带与 KPI 都写「示意节奏」，唯独面板还在讲 ψ 与 29.3 cm 的标定，
+             同一屏两个口径。 -->
+        <table id=sp-hydro-model>
           <tr><th>算法</th><td>推理公式产流（GB 50014，径流系数 ψ=0.70）＋ 修正 Puls 法调蓄演进</td></tr>
           <tr><th>输入</th><td>预警雨量上限 60 mm/3h；实际施加 38.2 mm（150 分钟过程），不是实测雨量</td></tr>
           <tr><th>标定</th><td>峰值 30 cm 取台账现场核实值，用于反算汇水面积 4.108 ha；回算峰值 29.3 cm，偏差 −2.4%</td></tr>
           <tr><th>边界</th><td><b>一个标定点、零验证点</b>，可行域是一条斜带。2.4% 是回代偏差，不是模型精度，不能当作预测误差对外引用。页面上的深度是<b>推演值</b>，不是此刻实测水深。</td></tr>
         </table>
-        <div class=sp-note id=sp-hydro-warn hidden></div>
+        <table id=sp-hydro-alt hidden>
+          <tr><th>当前状态</th><td>本次部署<b>未包含定量层文件</b>（降雨产流曲线与标定结果），页面上的水位按<b>示意节奏</b>演进，不参与任何定量结论。</td></tr>
+          <tr><th>离线口径</th><td>完整版用推理公式产流（GB 50014，ψ=0.70）＋修正 Puls 法演进，峰值按台账现场核实 30 cm 标定、回算 29.3 cm（回代偏差 −2.4%）。<b>这组参数不在本次部署内，未参与页面数值。</b></td></tr>
+          <tr><th>边界</th><td>页面上的深度是<b>示意值</b>，既不是模拟结果，也不是此刻实测水深；决策卡里的积水深度取自台账字段，与这里的示意水位不是同一层。</td></tr>
+        </table>
       </section>
       <section>
         <h4><i class="sq" style="background:#e08a2e"></i>时间线 · 台账反推</h4>
@@ -2432,6 +2439,16 @@ function renderRoads(t){
 // KPI 副标题原来写死「DF-IN-101」「兴华路泵站待修」：界面上不该出现代号，
 // 换事件后也不该还显示上一个事件的设施。台账里有名字，一律按数据填。
 function initNotes(){
+  // 来源面板的「积水水位」段与状态带、KPI 标签共用同一个判断（D.hydro 在不在），
+  // 三处口径必须一起变——只改一处就会出现「卡上说示意、面板说模型」。
+  const hydModel = document.getElementById('sp-hydro-model');
+  const hydAlt = document.getElementById('sp-hydro-alt');
+  if(hydModel && hydAlt && !D.hydro){
+    hydModel.hidden = true;
+    hydAlt.hidden = false;
+    document.getElementById('sp-hydro-hd').textContent = '积水水位 · 示意节奏';
+    document.getElementById('sp-hydro-sq').style.background = '#c98a1e';
+  }
   const roadName = (id)=>((D.roads.find(r=>r.id===id)||{}).name||id);
   const closed = (D.states&&D.states.closed_roads)||[];
   document.getElementById('k-block-note').textContent =
@@ -3089,17 +3106,24 @@ renderDecision();
       + NL + `提取时间 ${meta.extracted_at || '—'}`
       + NL + `点右上角「数据来源与边界」看完整口径`;
   }
-  const open = ()=>{
+  // 焦点要还回去：面板是模态，关掉之后焦点不能掉到 body 上，
+  // 否则键盘用户得从头 Tab 一遍才能回到「数据来源与边界」。
+  let opener = null;
+  const open = (e)=>{
     const p = document.getElementById('srcpanel');
     if(!p) return;
+    opener = (e && e.currentTarget) || document.activeElement;
     p.classList.add('on');
     p.setAttribute('aria-hidden', 'false');
+    const c = document.getElementById('spclose');
+    if(c) c.focus();
   };
   const close = ()=>{
     const p = document.getElementById('srcpanel');
-    if(!p) return;
+    if(!p || !p.classList.contains('on')) return;
     p.classList.remove('on');
     p.setAttribute('aria-hidden', 'true');
+    if(opener && opener.focus){ opener.focus(); opener = null; }
   };
   ['srcbtn','nc-srcbtn'].forEach(id=>{
     const e = document.getElementById(id);

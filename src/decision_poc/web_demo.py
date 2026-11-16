@@ -4265,6 +4265,10 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
     <h1>数据来源与口径</h1>
     <p class=lead>数据分三类：真实数据（开放地图与台账结构）、场景设定（明确标为示意）、
       算出来的结果（可重跑核对）。每类下方注明来源、许可与生成方式。</p>
+    <p class=lead style="font-size:12px;color:var(--dim);margin-top:5px;max-width:900px">
+      术语关系：<b>评测场景</b>是整个虚构情境（一块街区、一场雨、一套台账）；
+      <b>演示台账</b>是其中的原始单据集（工单、设施、库存、职责、通告）；
+      <b>场景事件</b>是从台账里取出的一次推演事件。三者都不指真实发生过的处置。</p>
   </div>
   <div class=back><a href="/">← 回到首页</a></div>
 </header>
@@ -5118,6 +5122,14 @@ h1{margin:0;font-size:22px;font-weight:650;letter-spacing:.2px}
 .judge{background:#f2f9f4;border:1px solid #cfe6d7;border-left:3px solid var(--teal);
   border-radius:10px;padding:14px 18px;font-size:14px;margin:16px 0 18px}
 .judge b{font-size:15.5px}
+/* 顶部四项摘要：本页长，先给结论再给论证。四个数字都是下方正文里已有的，
+   不新增口径，只是提前摆出来，免得要读到第三屏才知道这页到底说了什么。 */
+.sum4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 18px}
+.sum4 div{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 13px}
+.sum4 dt{font-size:11px;color:var(--dim);margin:0 0 3px}
+.sum4 dd{margin:0;font-size:15px;font-weight:650;letter-spacing:-.2px;font-variant-numeric:tabular-nums}
+.sum4 dd span{display:block;font-size:11.5px;font-weight:400;color:var(--sub);margin-top:2px;letter-spacing:0}
+.sum4 .warn{color:var(--amber)}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 .g{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:16px 18px}
 .g.a{border-top:3px solid var(--green)}
@@ -5170,6 +5182,13 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
 
   <div class=judge><b>结果：</b>工具可用时，结论与台账逐项一致；工具不可用时，模型只能复述结构，
     给不出台账中的具体事实。</div>
+
+  <dl class=sum4>
+    <div><dt>工具可用</dt><dd>__A_PASSED__/__A_TOTAL__<span>与离线推演逐项一致</span></dd></div>
+    <div><dt>工具不可用</dt><dd>__B_PASSED__/__B_TOTAL__<span>只剩结构，没有台账事实</span></dd></div>
+    <div><dt>已知偏差</dt><dd class=warn>−2.4%<span>回代偏差，不是模型精度；对外样本低估 31%</span></dd></div>
+    <div><dt>适用范围</dt><dd>约 3 km 街区<span>单场景标定，未在其他城市验证</span></dd></div>
+  </dl>
 
   <section class=grid3>
     <article class="g a">
