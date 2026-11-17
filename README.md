@@ -142,10 +142,14 @@ uv run python scripts/demo_tour.py --check      # 只自检：依赖文件、页
 |---|---|
 | 官方提交的开发设计文档 | `docs/competition/初赛开发设计文档-v2（模板原样）.docx` |
 | 面向评委的证据与口径 | `docs/competition/`（答辩主线、8 问答法、业务价值） |
-| 平台实测证据（会话号/耗时/校验值） | `samples/nexent/live/` |
+| **全部文档的阅读顺序** | [`docs/README.md`](docs/README.md)（六步读法 + 七类分层） |
 | 技术设计与边界分析 | `docs/`（`nexent-*` 系列、`technical-baseline.md`） |
-| 完整的工程说明（安装、部署、调试） | [`docs/README-dev.md`](docs/README-dev.md) |
+| 平台实测证据（会话号/耗时/校验值） | `samples/nexent/live/` |
+| **数据目录与性质分类** | [`samples/README.md`](samples/README.md) |
+| **脚本索引（A–H 分组）** | [`scripts/README.md`](scripts/README.md) |
+| **部署三条路径** | [`deploy/README.md`](deploy/README.md) |
 | 平台装配与复现 | `deploy/nexent/README.md` |
+| 完整的工程说明（安装、部署、调试） | [`docs/README-dev.md`](docs/README-dev.md) |
 
 <details>
 <summary>仓库结构</summary>
