@@ -1218,7 +1218,7 @@ a{color:#5eead4}
 专家评审意见以角色扮演方式给出（非真实部门批复）；偏差超过阈值时，整轮候选作废。
 <a href="/">← 回推演页</a> · <a href="/evolution">进化对比 →</a></div>
 <form id="f">
-  <p class="form-note"><b>演示环境 · 评测数据。</b>下面填的是演示用的场景值，提交后写入本次演示的运行期记录，
+  <p class="form-note"><b>演示环境 · 评测数据。</b>以下为演示用场景值，提交后写入本次演示的运行期记录，
   并据此触发一次策略调整；<b>不涉及真实部门的处置结果或批复</b>。</p>
   <label>场景 <input name="scenario_id" value="vd02"></label>
   <label>分钟 <input name="t_min" type="number" value="45" min="0"></label>
@@ -1358,7 +1358,7 @@ a{color:#5eead4}
   <label>时效性 1-5 <input name="timeliness" type="number" min="1" max="5" step="1" value="4"></label>
   <label>安全性/风险提示 1-5 <input name="safety" type="number" min="1" max="5" step="1" value="4"></label>
   <label>可解释性/可溯源 1-5 <input name="explainability" type="number" min="1" max="5" step="1" value="4"></label>
-  <label class="full">备注 <textarea name="comment" rows="3" placeholder="写清为什么这样评；要提修正意见就填上面的建议调拨"></textarea></label>
+  <label class="full">备注 <textarea name="comment" rows="3" placeholder="填写评分理由；如需提出修正意见，请填上方「建议调拨」"></textarea></label>
   <button type="submit">提交评审</button>
 </form>
 <div id="out">尚无评审记录</div>
@@ -1503,7 +1503,7 @@ a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
 </style></head><body><main>
 <h1>运行自检 · <span>内部核对页</span></h1>
 <div class="sub">本页为运行核对页：确认台账、平台版本、同步状态彼此对得上，不写任何状态。
-  想看作品本身，<a href="/">回首页</a>；想看「它会不会错」的对照实验，去 <a href="/limits">同题对照</a>。
+  作品本体见 <a href="/">推演首页</a>；误差对照实验见 <a href="/limits">同题对照</a>。
   下面的入口用于交叉核对：
   <a href="/workbench">证据工作台 →</a> · <a href="/evolution">进化对比 →</a></div>
 <div class="verdict __VERDICT_CLS__">__VERDICT__</div>
@@ -3891,16 +3891,16 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
 
 <main>
   <section class=asks>
-    <div class=hd><h3>四个问题</h3>
-      <span>看懂作品 → 理解推演 → 核对依据 → 认识边界</span></div>
+    <div class=hd><h3>四个入口</h3>
+      <span>系统概览 → 推演流程 → 证据依据 → 能力边界</span></div>
     <div class=ask-grid>
-      <a class=ask href="/map2d"><b>① 这是什么</b>
-        <span>积水深度、封路、泵站状态、跨区调泵，一屏看完</span></a>
-      <a class=ask href="/map2d"><b>② 它怎么推</b>
+      <a class=ask href="/map2d"><b>① 系统概览</b>
+        <span>积水深度、封路、泵站状态、跨区调泵，一屏呈现</span></a>
+      <a class=ask href="/map2d"><b>② 推演流程</b>
         <span>右侧 7 步事件链：降雨、堵塞、派单、缺口、增援、封路、退水</span></a>
-      <a class=ask href="/data"><b>③ 凭什么信</b>
+      <a class=ask href="/data"><b>③ 证据依据</b>
         <span>逐字段核对出处：真实底图 / 场景台账 / 示意数据 / 可重跑结果</span></a>
-      <a class=ask href="/limits"><b>④ 它会错吗</b>
+      <a class=ask href="/limits"><b>④ 能力边界</b>
         <span>同题三组对照：工具可用 8/8，不可用 2/8；已知偏差与适用范围</span></a>
     </div>
     <div class=sub-links>
@@ -4042,7 +4042,7 @@ function renderStatus(d){
     var ver = (x.version==null) ? '未读到' : ('第 ' + x.version + ' 版');
     factsRow(host, x.role, ver, x.version_name || '', false, !x.found);
   });
-  // 对照组不进这张表：它们不是交付物，是第 ④ 题（它会错吗）的实验组。
+  // 对照组不进这张表：它们不是交付物，是第 ④ 项（能力边界）的实验组。
   // 摆在这里只会让评委多问一句"这两个是干什么的"，去 /limits 一次说清。
   var controls = d.controls || [];
   if(controls.length){
@@ -4086,7 +4086,7 @@ fetch('/api/portal').then(function(r){ return r.json(); }).then(renderStatus)
 """
 
 
-#: OSM 产物：(文件名, 中文说明, 取条数的键, 生成脚本, 页面上的「怎么来的」)。
+#: OSM 产物：(文件名, 中文说明, 取条数的键, 生成脚本, 页面上的「生成方式」)。
 #: 脚本名只留在 payload 里供内部核对；页面印的是第 5 项——评委要看的是
 #: 「这份数据被怎么处理过」，不是仓库里哪个文件跑出来的。
 _OSM_ARTIFACTS: tuple[tuple[str, str, str, str, str], ...] = (
@@ -4299,7 +4299,7 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
         <span><i style="background:none;border-color:#d3c6dd"></i>地铁线</span>
       </span></div>
     <table>
-      <tr><th>文件</th><th>内容</th><th class=num>条数</th><th class=num>大小</th><th>生成时间</th><th>怎么来的</th></tr>
+      <tr><th>文件</th><th>内容</th><th class=num>条数</th><th class=num>大小</th><th>生成时间</th><th>生成方式</th></tr>
       <tbody id=osm-rows>__OSM_ROWS__</tbody>
     </table>
     <div class=lic id=osm-lic>__OSM_LIC__</div>
@@ -4944,7 +4944,7 @@ def build_evolution_page() -> str:
     return html
 
 
-# --- 「它会错吗」页 ---------------------------------------------------------
+# --- 「能力边界」页 ---------------------------------------------------------
 #
 # 评委最想验的一件事：这套东西是不是只会顺着自己说。所以这一页不放形容词，
 # 只放**同题对照的原始记录**——同一道题、同一个模型、同一套提示词，唯一变量是
@@ -5184,7 +5184,7 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
 <body>
 <header>
   <a class=back href="/">← 回首页</a>
-  <p class=kicker>它会错吗</p>
+  <p class=kicker>④ 能力边界</p>
   <h1>能力边界与误差对照</h1>
   <p class=lede>同一道题、同一个模型、同一套提示词，<b>唯一变量是工具是否可用</b>。
     三组对话均在 Nexent 平台内产生，会话编号可在平台内回查。</p>
@@ -5299,7 +5299,7 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
   <!-- 「接入真实数据要改什么」：评委会问的下一个问题一定是「这套东西离能用还有多远」。
        与其被问，不如把边界逐条摆出来——哪些是判断逻辑（换数据照跑），
        哪些是本地标定（换地方必须重算）。 -->
-  <h3 class=sec>如果接入真实物联数据，哪些能留、哪些要重做<span>按模块分开说，不含糊</span></h3>
+  <h3 class=sec>如果接入真实物联数据，哪些能留、哪些要重做<span>按模块分别说明</span></h3>
   <div class=two>
     <div class=panel>
       <h4>与数据来源无关，可以直接留用</h4>
@@ -5311,7 +5311,7 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
         与数据从哪来解耦；这也是本作把「数据层」和「判断层」分开写的直接原因。</div>
     </div>
     <div class=panel>
-      <h4>必须重做，做不了就是越界</h4>
+      <h4>必须重做，否则超出适用边界</h4>
       <div class=item><b>来源标注</b>逐条来源表要换成采集系统写入的字段级来源。
         现有 70 条里有 59 条未逐条标注，现在一律按「演示数据」计——补齐之前不得对外说成实测。</div>
       <div class=item><b>本地标定值</b>径流系数 0.70、服务带 54 米、汇水面积 4.108 公顷
@@ -5890,7 +5890,7 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
     if parsed.path == "/data":
         return 200, "text/html; charset=utf-8", build_data_html().encode("utf-8")
     if parsed.path == "/limits":
-        # 「它会错吗」：同题三组对照 + 自己交代的偏差。内容全部服务端渲染。
+        # 「能力边界」：同题三组对照 + 自己交代的偏差。内容全部服务端渲染。
         return 200, "text/html; charset=utf-8", build_limits_html().encode("utf-8")
     if parsed.path == "/api/limits":
         return _json(limits_payload())

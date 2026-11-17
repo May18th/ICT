@@ -386,7 +386,7 @@ def build_evolution_html() -> str:
 <div class="grid evolution-metrics" id=metrics><div class=metric><span>正在读取进化结果…</span></div></div>
 <div class=evolution-grid>
 <section class="card evolution-card outcome-card"><h2>本轮结果</h2><div class=outcome-result>资源分配与人工建议一致</div><p>策略依据人工反馈调整了区域权重，本次推演的分配结果与人工建议一致；该策略已记录版本，可回滚。</p><div class=outcome-list><span>与人工建议差异 0</span><span>新场景未退化</span><span>版本可回滚</span></div></section>
-<section class="card evolution-card versus-card"><h2>V1 与 V2：差别就是这一组数字</h2><div id=versus>__CONTRAST__</div></section>
+<section class="card evolution-card versus-card"><h2>V1 与 V2：关键指标对照</h2><div id=versus>__CONTRAST__</div></section>
 <section class="card evolution-card flow-card"><h2>策略调整的四个环节</h2><div class=story-flow><div class=story-step><strong>1 · 原来的方案</strong><span>先按初始规则分配资源。</span></div><div class=story-step><strong>2 · 收到建议</strong><span>人工指出重点片区需要更多资源。</span></div><div class=story-step><strong>3 · 调整方案</strong><span>把资源从低优先区域转到重点区域。</span></div><div class=story-step><strong>4 · 下次复用</strong><span>相似事件可直接沿用已验证策略。</span></div></div></section>
 <section class="card evolution-card memory-card"><h2>第二会话：复用已验证经验</h2><div id=memory></div></section>
 <section class="card evolution-card review-panel"><h2>人工协同反馈：本次调整的采纳依据</h2><div id=review></div></section>
@@ -438,7 +438,7 @@ async function main(){
     '<tr><td>最终策略标签</td><td colspan=4>'+label(first.final_label)+' 轮次 '+first.rounds.length+'（采纳 '+first.rounds.filter(x=>x.action==='promoted').length+' / 拒绝 '+first.rounds.filter(x=>x.action==='rejected').length+'）</td></tr>';
   const w=second.warm_start;
   memory.innerHTML=w?
-    '<p class=story-lead>下次遇到相似事件，可以直接沿用 '+label(w.label)+'。</p>'+
+    '<p class=story-lead>后续相似事件可直接复用该策略 '+label(w.label)+'。</p>'+
     '<p>这套策略已经验证过，第二次推演一开始就得到更好的结果；相似度 <b>'+f4(w.similarity)+'</b>。</p>'+
     '<p class=dim>记录编号 '+label(w.entry_id)+'，用于审计和回滚。</p>'
     :'<p class=warn>未命中记忆</p>';

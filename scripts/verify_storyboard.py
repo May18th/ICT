@@ -1,8 +1,8 @@
 """核对门户入口的实际跳转目标，以及分镜字幕念不念得完。
 
 两个未验证的假设：
-  1. 文档写「① 这是什么 → /map2d、② 它怎么推 → /map2d、③ 凭什么信 → /data、
-     ④ 它会错吗 → /limits」，加上 5 个二级入口（工作台/进化/反馈/评审/自检），实际是不是？
+  1. 文档写「① 系统概览 → /map2d、② 推演流程 → /map2d、③ 证据依据 → /data、
+     ④ 能力边界 → /limits」，加上 5 个二级入口（工作台/进化/反馈/评审/自检），实际是不是？
   2. 7 个镜头的字幕在分配时长内念不念得完？
 """
 import asyncio
@@ -16,12 +16,13 @@ from playwright.async_api import async_playwright
 BASE = os.environ.get("WB_BASE", "http://127.0.0.1:8804")
 ROOT = Path(r"D:\华为ICT\agent_poc")
 
-# 首屏四个主问题的目标（2026-11-16 起从五个等价入口改为四主 + 五副）
+# 首屏四个主入口的目标（2026-11-16 从五个等价入口改为四主 + 五副；
+# 2026-11-17 入口标题从问句改为名词短语，面向正式评审）
 CLAIMED = {
-    "① 这是什么": "/map2d",
-    "② 它怎么推": "/map2d",
-    "③ 凭什么信": "/data",
-    "④ 它会错吗": "/limits",
+    "① 系统概览": "/map2d",
+    "② 推演流程": "/map2d",
+    "③ 证据依据": "/data",
+    "④ 能力边界": "/limits",
 }
 
 # 二级入口：参与类与技术类页面，降为文字链接，不与主问题抢首屏
@@ -70,7 +71,7 @@ async def check_links() -> None:
         print()
         print("-- 实际点击第 ④ 个入口，看落地 --")
         try:
-            await pg.click("text=④ 它会错吗", timeout=8000)
+            await pg.click("text=④ 能力边界", timeout=8000)
             await pg.wait_for_timeout(2500)
             print("   落地 URL:", pg.url)
             print("   页面标题:", await pg.title())

@@ -922,7 +922,7 @@ body::before{content:'';position:fixed;left:0;right:0;top:0;height:2px;z-index:9
     <div class=sp-head><h3>数据来源与边界</h3>
       <div class=sp-tools>
         <a href="/data" title="逐项核对每个字段：真实底图 / 场景台账 / 示意数据 / 可重跑结果">数据来源与口径</a>
-        <a href="/limits" title="三组工具同题对照、已知偏差与适用范围">它会错吗</a>
+        <a href="/limits" title="三组工具同题对照、已知偏差与适用范围">能力边界与已知误差</a>
         <button id=spclose aria-label=关闭>×</button>
       </div>
     </div>

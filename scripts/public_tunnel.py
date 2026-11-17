@@ -95,7 +95,7 @@ def _write_url(url: str, first: bool) -> None:
     print(f"  门户        {url}/")
     print(f"  大地图      {url}/map2d")
     print(f"  证据工作台  {url}/workbench")
-    print(f"  它会错吗    {url}/limits")
+    print(f"  能力边界    {url}/limits")
     print(f"\n  已写入 out/public_url.txt")
     print(f"{bar}\n", flush=True)
 
