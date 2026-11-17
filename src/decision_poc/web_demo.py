@@ -1611,12 +1611,12 @@ h1{font-size:17px;margin:0;font-weight:600}
 .tag{font-size:12px;color:#6b7280}
 .spacer{flex:1}
 select,button,input,textarea{font:inherit;color:inherit}
-select{background:#fff;border:1px solid #d8dbe0;border-radius:6px;padding:4px 8px;font-size:12.5px}
+select{background:#fff;border:1px solid #d8dbe0;border-radius:6px;padding:4px 8px;font-size:12.5px;max-width:100%}
 .link{color:#0f766e;text-decoration:none;font-size:12.5px;border-bottom:1px dashed #9fd3cb}
 main{display:grid;grid-template-columns:minmax(380px,48%) 1fr;gap:14px;padding:14px 18px 20px;height:calc(100vh - 57px)}
-.panel{background:#fff;border:1px solid #e5e7eb;border-radius:10px;display:flex;flex-direction:column;min-height:0}
+.panel{background:#fff;border:1px solid #e5e7eb;border-radius:10px;display:flex;flex-direction:column;min-height:0;min-width:0}
 .panel>h2{font-size:12px;font-weight:600;color:#6b7280;letter-spacing:.4px;margin:0;padding:9px 14px;border-bottom:1px solid #eef0f3}
-.switch{display:flex;align-items:center;gap:4px;padding:8px 12px 0;border-bottom:1px solid #eef0f3}
+.switch{display:flex;align-items:center;gap:4px;padding:8px 12px 0;border-bottom:1px solid #eef0f3;flex-wrap:wrap;min-width:0}
 .switch select{margin-bottom:6px}
 .sw{background:none;border:0;padding:6px 10px;font-size:13px;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent}
 .sw.on{color:#0f766e;border-bottom-color:#0f766e}
@@ -1638,11 +1638,11 @@ main{display:grid;grid-template-columns:minmax(380px,48%) 1fr;gap:14px;padding:1
 .ask:disabled{opacity:.45;cursor:default}
 .chip:hover{background:#e8f4f1}
 form{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #eef0f3}
-textarea{flex:1;resize:none;height:42px;border:1px solid #d8dbe0;border-radius:8px;padding:9px 10px;font-size:13px}
+textarea{flex:1;resize:none;height:42px;border:1px solid #d8dbe0;border-radius:8px;padding:9px 10px;font-size:13px;min-width:0}
 textarea:focus{outline:2px solid #cde7e1}
 .send{background:#0f766e;color:#fff;border:0;border-radius:8px;padding:0 16px;cursor:pointer;font-size:13px}
 .send:disabled{opacity:.5;cursor:default}
-.tabs{display:flex;gap:4px;padding:8px 12px 0;border-bottom:1px solid #eef0f3}
+.tabs{display:flex;gap:4px;padding:8px 12px 0;border-bottom:1px solid #eef0f3;flex-wrap:wrap;min-width:0}
 .tab{background:none;border:0;padding:6px 10px;font-size:13px;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent}
 .tab.on{color:#0f766e;border-bottom-color:#0f766e}
 .body{flex:1;overflow:auto;padding:14px}
@@ -1657,7 +1657,7 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
 .ok{color:#0f766e}.warn{color:#b45309}.bad{color:#b91c1c}
 .mono{font-family:ui-monospace,Consolas,monospace}
 .row{padding:7px 0;border-bottom:1px solid #f3f4f6;font-size:13px}
-@media(max-width:900px){main{grid-template-columns:1fr;height:auto}#feed{max-height:42vh}}
+@media(max-width:900px){main{grid-template-columns:1fr;height:auto;padding:12px 12px 16px}main>*{min-width:0}#feed{max-height:42vh}}
 </style></head><body>
 <header>
   <h1>证据工作台</h1>
@@ -2014,7 +2014,9 @@ function loadEvent(){
   bar.style.display='flex'; bar.style.gap='8px'; bar.style.alignItems='center';
   bar.style.marginBottom='10px'; bar.style.flexWrap='wrap';
   var sel=document.createElement('select');
-  sel.id='eventSel'; sel.style.maxWidth='340px';
+  // 340 是「事件标题最长时读起来不别扭」的上限，但不该成为窄屏的下限：
+  // 用 min() 让它在容器更窄时跟着收缩（内联样式优先级高于样式表里的 select{max-width}）。
+  sel.id='eventSel'; sel.style.maxWidth='min(340px,100%)';
   sel.onchange=function(){
     var o=this.options[this.selectedIndex];
     curEvent={id:o.value, asOf:o.dataset.asof||''};

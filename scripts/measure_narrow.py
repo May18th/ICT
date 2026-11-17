@@ -147,12 +147,19 @@ def summarize(records: list[dict]) -> str:
         if "error" in r:
             lines.append(f"{r['page']:<14}{r['width']:>5}  ERROR {r['error'][:40]}")
             continue
+        if not r.get("loaded", True):
+            lines.append(
+                f"{r['page']:<14}{r['width']:>5}  ERROR 页面没加载成功"
+                f"（body {r.get('bodyLen', 0)} 字符）——这张表不可用"
+            )
+            continue
         over = r["scrollW"] - r["clientW"]
         items = r.get("items") or []
         # 祖先设了 overflow-x:auto 且自身可滚 —— 用户可以横向滑动看到，属设计内行为
         hosted = [i for i in items if (i.get("host") or {}).get("canScroll")]
         clipped = [i for i in items if not (i.get("host") or {}).get("canScroll")]
         svg = r.get("svg")
+        inner = r.get("clippedInside") or []
         if svg and "map" in r["page"]:
             note = f"地图 {svg['cssW']}px"
         elif over > 1:
@@ -161,6 +168,8 @@ def summarize(records: list[dict]) -> str:
             note = f"内容被裁 {len(clipped)} 处"
         elif hosted:
             note = f"卡内可滚 {len(hosted)} 处（可用）"
+        elif inner:
+            note = f"文字被容器裁 {len(inner)} 处"
         else:
             note = "正常"
         flag = "是" if over > 1 else "-"
@@ -191,6 +200,18 @@ def main(argv: list[str] | None = None) -> int:
     measure_url = f"http://127.0.0.1:{args.port}/measure"
     print(f"测量页：{measure_url}  →  {args.target}")
 
+    # 先确认目标服务在跑。服务没起时 iframe 加载空白页，所有页面都会「无溢出」，
+    # 静默产出一张全绿的表——比直接报错危险得多。
+    try:
+        with urllib.request.urlopen(args.target, timeout=10) as probe:
+            if probe.status != 200:
+                print(f"目标服务返回 {probe.status}：{args.target}", file=sys.stderr)
+                return 2
+    except Exception as exc:  # noqa: BLE001
+        print(f"目标服务不可达：{args.target}（{type(exc).__name__}: {exc}）", file=sys.stderr)
+        print("先把演示服务起起来：python -m decision_poc.web_demo --port 8901", file=sys.stderr)
+        return 2
+
     if args.serve_only:
         print("只起转发模式，Ctrl+C 结束。")
         try:
@@ -214,6 +235,16 @@ def main(argv: list[str] | None = None) -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(records, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"\n已写入 {out}（{len(records)} 组）")
+
+    failed = [r for r in records if not r.get("loaded", True)]
+    if failed:
+        pages = sorted({f"{r['page']}@{r['width']}" for r in failed})
+        print(
+            f"\n{len(failed)} 组页面没加载成功（{', '.join(pages[:6])}…），"
+            "这次的结论不可用。检查服务与转发端口。",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 

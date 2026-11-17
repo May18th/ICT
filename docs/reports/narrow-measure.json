@@ -2,6 +2,9 @@
  {
   "page": "/",
   "width": 320,
+  "loaded": true,
+  "bodyLen": 5969,
+  "title": "城市内涝跨部门决策 · 可核查推演",
   "scrollW": 305,
   "clientW": 305,
   "bodyScrollW": 305,
@@ -9,11 +12,15 @@
   "overflowX": false,
   "bodyFont": "14px",
   "svg": null,
+  "clippedInside": [],
   "items": []
  },
  {
   "page": "/",
   "width": 375,
+  "loaded": true,
+  "bodyLen": 5969,
+  "title": "城市内涝跨部门决策 · 可核查推演",
   "scrollW": 360,
   "clientW": 360,
   "bodyScrollW": 360,
@@ -21,11 +28,15 @@
   "overflowX": false,
   "bodyFont": "14px",
   "svg": null,
+  "clippedInside": [],
   "items": []
  },
  {
   "page": "/",
   "width": 414,
+  "loaded": true,
+  "bodyLen": 5969,
+  "title": "城市内涝跨部门决策 · 可核查推演",
   "scrollW": 399,
   "clientW": 399,
   "bodyScrollW": 399,
@@ -33,11 +44,15 @@
   "overflowX": false,
   "bodyFont": "14px",
   "svg": null,
+  "clippedInside": [],
   "items": []
  },
  {
   "page": "/",
   "width": 768,
+  "loaded": true,
+  "bodyLen": 5969,
+  "title": "城市内涝跨部门决策 · 可核查推演",
   "scrollW": 753,
   "clientW": 753,
   "bodyScrollW": 753,
@@ -45,11 +60,15 @@
   "overflowX": false,
   "bodyFont": "14px",
   "svg": null,
+  "clippedInside": [],
   "items": []
  },
  {
   "page": "/",
   "width": 1280,
+  "loaded": true,
+  "bodyLen": 5969,
+  "title": "城市内涝跨部门决策 · 可核查推演",
   "scrollW": 1265,
   "clientW": 1265,
   "bodyScrollW": 1265,
@@ -57,239 +76,47 @@
   "overflowX": false,
   "bodyFont": "14px",
   "svg": null,
+  "clippedInside": [],
   "items": []
  },
  {
   "page": "/workbench",
   "width": 320,
-  "scrollW": 388,
+  "loaded": true,
+  "bodyLen": 41953,
+  "title": "证据工作台 · 城市内涝决策",
+  "scrollW": 305,
   "clientW": 305,
-  "bodyScrollW": 388,
+  "bodyScrollW": 305,
   "innerW": 320,
-  "overflowX": true,
+  "overflowX": false,
   "bodyFont": "14px",
   "svg": null,
-  "items": [
-   {
-    "sel": "section.panel",
-    "over": 83,
-    "left": 18,
-    "w": 370,
-    "host": null,
-    "text": "台账问答 · 结论可定位原文\n      打开平台原生界"
-   },
-   {
-    "sel": "div.switch",
-    "over": 82,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "台账问答 · 结论可定位原文\n      打开平台原生界"
-   },
-   {
-    "sel": "div.hint",
-    "over": 82,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "「台账问答」打开就能用，回答中的定位可跳转台账原文。\n "
-   },
-   {
-    "sel": "div#chatpane",
-    "over": 82,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "可用自然语言提问，例如「谁负责」「先做什么」「依据哪条」"
-   },
-   {
-    "sel": "div#feed",
-    "over": 82,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "可用自然语言提问，例如「谁负责」「先做什么」「依据哪条」"
-   },
-   {
-    "sel": "div#asks.askbar",
-    "over": 82,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "常用问法：这地方积水了，该谁去处理？先封路还是先开泵？兴"
-   },
-   {
-    "sel": "form#f",
-    "over": 82,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "发送"
-   },
-   {
-    "sel": "div.tabs",
-    "over": 82,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "事件\n      证据\n      取证过程\n     "
-   },
-   {
-    "sel": "div#pane.body",
-    "over": 82,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "WO-20261029-007 · 兴华路 · K0+3"
-   },
-   {
-    "sel": "select#agentSel",
-    "over": 70,
-    "left": 237,
-    "w": 138,
-    "host": null,
-    "text": "推演（事件事实）台账问答"
-   },
-   {
-    "sel": "button#go.send",
-    "over": 70,
-    "left": 317,
-    "w": 58,
-    "host": null,
-    "text": "发送"
-   },
-   {
-    "sel": "div",
-    "over": 68,
-    "left": 33,
-    "w": 340,
-    "host": {
-     "sel": "div#pane.body",
-     "canScroll": false,
-     "scrollW": 368,
-     "clientW": 368
-    },
-    "text": "WO-20261029-007 · 兴华路 · K0+3"
-   }
-  ]
+  "clippedInside": [],
+  "items": []
  },
  {
   "page": "/workbench",
   "width": 375,
-  "scrollW": 388,
+  "loaded": true,
+  "bodyLen": 41953,
+  "title": "证据工作台 · 城市内涝决策",
+  "scrollW": 360,
   "clientW": 360,
-  "bodyScrollW": 388,
+  "bodyScrollW": 360,
   "innerW": 375,
-  "overflowX": true,
+  "overflowX": false,
   "bodyFont": "14px",
   "svg": null,
-  "items": [
-   {
-    "sel": "section.panel",
-    "over": 28,
-    "left": 18,
-    "w": 370,
-    "host": null,
-    "text": "台账问答 · 结论可定位原文\n      打开平台原生界"
-   },
-   {
-    "sel": "div.switch",
-    "over": 27,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "台账问答 · 结论可定位原文\n      打开平台原生界"
-   },
-   {
-    "sel": "div.hint",
-    "over": 27,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "「台账问答」打开就能用，回答中的定位可跳转台账原文。\n "
-   },
-   {
-    "sel": "div#chatpane",
-    "over": 27,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "可用自然语言提问，例如「谁负责」「先做什么」「依据哪条」"
-   },
-   {
-    "sel": "div#feed",
-    "over": 27,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "可用自然语言提问，例如「谁负责」「先做什么」「依据哪条」"
-   },
-   {
-    "sel": "div#asks.askbar",
-    "over": 27,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "常用问法：这地方积水了，该谁去处理？先封路还是先开泵？兴"
-   },
-   {
-    "sel": "form#f",
-    "over": 27,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "发送"
-   },
-   {
-    "sel": "div.tabs",
-    "over": 27,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "事件\n      证据\n      取证过程\n     "
-   },
-   {
-    "sel": "div#pane.body",
-    "over": 27,
-    "left": 19,
-    "w": 368,
-    "host": null,
-    "text": "WO-20261029-007 · 兴华路 · K0+3"
-   },
-   {
-    "sel": "select#agentSel",
-    "over": 15,
-    "left": 237,
-    "w": 138,
-    "host": null,
-    "text": "推演（事件事实）台账问答"
-   },
-   {
-    "sel": "button#go.send",
-    "over": 15,
-    "left": 317,
-    "w": 58,
-    "host": null,
-    "text": "发送"
-   },
-   {
-    "sel": "div",
-    "over": 13,
-    "left": 33,
-    "w": 340,
-    "host": {
-     "sel": "div#pane.body",
-     "canScroll": false,
-     "scrollW": 368,
-     "clientW": 368
-    },
-    "text": "WO-20261029-007 · 兴华路 · K0+3"
-   }
-  ]
+  "clippedInside": [],
+  "items": []
  },
  {
   "page": "/workbench",
   "width": 414,
+  "loaded": true,
+  "bodyLen": 41953,
+  "title": "证据工作台 · 城市内涝决策",
   "scrollW": 399,
   "clientW": 399,
   "bodyScrollW": 399,
@@ -297,11 +124,15 @@
   "overflowX": false,
   "bodyFont": "14px",
   "svg": null,
+  "clippedInside": [],
   "items": []
  },
  {
   "page": "/workbench",
   "width": 768,
+  "loaded": true,
+  "bodyLen": 41953,
+  "title": "证据工作台 · 城市内涝决策",
   "scrollW": 753,
   "clientW": 753,
   "bodyScrollW": 753,
@@ -309,11 +140,15 @@
   "overflowX": false,
   "bodyFont": "14px",
   "svg": null,
+  "clippedInside": [],
   "items": []
  },
  {
   "page": "/workbench",
   "width": 1280,
+  "loaded": true,
+  "bodyLen": 41953,
+  "title": "证据工作台 · 城市内涝决策",
   "scrollW": 1280,
   "clientW": 1280,
   "bodyScrollW": 1280,
@@ -321,11 +156,15 @@
   "overflowX": false,
   "bodyFont": "14px",
   "svg": null,
+  "clippedInside": [],
   "items": []
  },
  {
   "page": "/map2d",
   "width": 320,
+  "loaded": true,
+  "bodyLen": 737815,
+  "title": "城市内涝可进化决策智能体 · 排水防涝推演",
   "scrollW": 320,
   "clientW": 320,
   "bodyScrollW": 543,
@@ -337,6 +176,48 @@
    "cssW": 4,
    "cssH": 615
   },
+  "clippedInside": [
+   {
+    "sel": "span.layers",
+    "diff": 613,
+    "text": "底图© OpenStreetMap 贡献者（OD"
+   },
+   {
+    "sel": "div.kpi-card.upd",
+    "diff": 24,
+    "text": "推演积水深度模型估算3cm回算峰值 30 cm "
+   },
+   {
+    "sel": "span",
+    "diff": 69,
+    "text": "推演积水深度"
+   },
+   {
+    "sel": "div#k-depth-note.n",
+    "diff": 131,
+    "text": "回算峰值 30 cm · 台账核实同值"
+   },
+   {
+    "sel": "div.kpi-card",
+    "diff": 24,
+    "text": "封路路段封路通告0条兴华路 · 未管制"
+   },
+   {
+    "sel": "span",
+    "diff": 46,
+    "text": "封路路段"
+   },
+   {
+    "sel": "div#k-block-note.n",
+    "diff": 54,
+    "text": "兴华路 · 未管制"
+   },
+   {
+    "sel": "div.kpi-card",
+    "diff": 24,
+    "text": "堵塞雨水口巡检台账1处兴华路雨水口组（台账登记）"
+   }
+  ],
   "items": [
    {
     "sel": "span#ly-time.ly.ly-time",
@@ -511,6 +392,9 @@
  {
   "page": "/map2d",
   "width": 375,
+  "loaded": true,
+  "bodyLen": 737815,
+  "title": "城市内涝可进化决策智能体 · 排水防涝推演",
   "scrollW": 375,
   "clientW": 375,
   "bodyScrollW": 543,
@@ -522,6 +406,48 @@
    "cssW": 59,
    "cssH": 639
   },
+  "clippedInside": [
+   {
+    "sel": "span.layers",
+    "diff": 558,
+    "text": "底图© OpenStreetMap 贡献者（OD"
+   },
+   {
+    "sel": "div.kpi-card.upd",
+    "diff": 13,
+    "text": "推演积水深度模型估算3cm回算峰值 30 cm "
+   },
+   {
+    "sel": "span",
+    "diff": 69,
+    "text": "推演积水深度"
+   },
+   {
+    "sel": "div#k-depth-note.n",
+    "diff": 120,
+    "text": "回算峰值 30 cm · 台账核实同值"
+   },
+   {
+    "sel": "div.kpi-card",
+    "diff": 13,
+    "text": "封路路段封路通告0条兴华路 · 未管制"
+   },
+   {
+    "sel": "span",
+    "diff": 46,
+    "text": "封路路段"
+   },
+   {
+    "sel": "div#k-block-note.n",
+    "diff": 43,
+    "text": "兴华路 · 未管制"
+   },
+   {
+    "sel": "div.kpi-card",
+    "diff": 13,
+    "text": "堵塞雨水口巡检台账1处兴华路雨水口组（台账登记）"
+   }
+  ],
   "items": [
    {
     "sel": "span#ly-time.ly.ly-time",
@@ -696,6 +622,9 @@
  {
   "page": "/map2d",
   "width": 414,
+  "loaded": true,
+  "bodyLen": 737815,
+  "title": "城市内涝可进化决策智能体 · 排水防涝推演",
   "scrollW": 414,
   "clientW": 414,
   "bodyScrollW": 543,
@@ -707,6 +636,48 @@
    "cssW": 98,
    "cssH": 639
   },
+  "clippedInside": [
+   {
+    "sel": "span.layers",
+    "diff": 519,
+    "text": "底图© OpenStreetMap 贡献者（OD"
+   },
+   {
+    "sel": "div.kpi-card.upd",
+    "diff": 5,
+    "text": "推演积水深度模型估算3cm回算峰值 30 cm "
+   },
+   {
+    "sel": "span",
+    "diff": 69,
+    "text": "推演积水深度"
+   },
+   {
+    "sel": "div#k-depth-note.n",
+    "diff": 112,
+    "text": "回算峰值 30 cm · 台账核实同值"
+   },
+   {
+    "sel": "div.kpi-card",
+    "diff": 5,
+    "text": "封路路段封路通告0条兴华路 · 未管制"
+   },
+   {
+    "sel": "span",
+    "diff": 46,
+    "text": "封路路段"
+   },
+   {
+    "sel": "div#k-block-note.n",
+    "diff": 35,
+    "text": "兴华路 · 未管制"
+   },
+   {
+    "sel": "div.kpi-card",
+    "diff": 5,
+    "text": "堵塞雨水口巡检台账1处兴华路雨水口组（台账登记）"
+   }
+  ],
   "items": [
    {
     "sel": "span#ly-time.ly.ly-time",
@@ -881,6 +852,9 @@
  {
   "page": "/map2d",
   "width": 768,
+  "loaded": true,
+  "bodyLen": 737815,
+  "title": "城市内涝可进化决策智能体 · 排水防涝推演",
   "scrollW": 768,
   "clientW": 768,
   "bodyScrollW": 768,
@@ -892,6 +866,43 @@
    "cssW": 452,
    "cssH": 639
   },
+  "clippedInside": [
+   {
+    "sel": "span.layers",
+    "diff": 165,
+    "text": "底图© OpenStreetMap 贡献者（OD"
+   },
+   {
+    "sel": "span",
+    "diff": 15,
+    "text": "推演积水深度"
+   },
+   {
+    "sel": "div#k-depth-note.n",
+    "diff": 41,
+    "text": "回算峰值 30 cm · 台账核实同值"
+   },
+   {
+    "sel": "span",
+    "diff": 4,
+    "text": "堵塞雨水口"
+   },
+   {
+    "sel": "div#k-clog-note.n",
+    "diff": 33,
+    "text": "兴华路雨水口组（台账登记）"
+   },
+   {
+    "sel": "div#k-pump-note.n",
+    "diff": 71,
+    "text": "兴华路 1 台机组故障 · 800/1200 m"
+   },
+   {
+    "sel": "div#stage",
+    "diff": 39,
+    "text": "成都地铁10号线（在建轨道）成都地铁17号线（地"
+   }
+  ],
   "items": [
    {
     "sel": "path",
@@ -1052,6 +1063,9 @@
  {
   "page": "/map2d",
   "width": 1280,
+  "loaded": true,
+  "bodyLen": 737815,
+  "title": "城市内涝可进化决策智能体 · 排水防涝推演",
   "scrollW": 1280,
   "clientW": 1280,
   "bodyScrollW": 1280,
@@ -1063,6 +1077,7 @@
    "cssW": 964,
    "cssH": 639
   },
+  "clippedInside": [],
   "items": [
    {
     "sel": "path",
@@ -1153,6 +1168,9 @@
  {
   "page": "/evolution",
   "width": 320,
+  "loaded": true,
+  "bodyLen": 13453,
+  "title": "决策进化对比",
   "scrollW": 305,
   "clientW": 305,
   "bodyScrollW": 305,
@@ -1160,6 +1178,7 @@
   "overflowX": false,
   "bodyFont": "15px",
   "svg": null,
+  "clippedInside": [],
   "items": [
    {
     "sel": "tr",
@@ -1322,6 +1341,9 @@
  {
   "page": "/evolution",
   "width": 375,
+  "loaded": true,
+  "bodyLen": 13453,
+  "title": "决策进化对比",
   "scrollW": 360,
   "clientW": 360,
   "bodyScrollW": 360,
@@ -1329,6 +1351,7 @@
   "overflowX": false,
   "bodyFont": "15px",
   "svg": null,
+  "clippedInside": [],
   "items": [
    {
     "sel": "tr",
@@ -1491,6 +1514,9 @@
  {
   "page": "/evolution",
   "width": 414,
+  "loaded": true,
+  "bodyLen": 13453,
+  "title": "决策进化对比",
   "scrollW": 399,
   "clientW": 399,
   "bodyScrollW": 399,
@@ -1498,6 +1524,7 @@
   "overflowX": false,
   "bodyFont": "15px",
   "svg": null,
+  "clippedInside": [],
   "items": [
    {
     "sel": "tr",
@@ -1660,6 +1687,9 @@
  {
   "page": "/evolution",
   "width": 768,
+  "loaded": true,
+  "bodyLen": 13453,
+  "title": "决策进化对比",
   "scrollW": 753,
   "clientW": 753,
   "bodyScrollW": 753,
@@ -1667,11 +1697,15 @@
   "overflowX": false,
   "bodyFont": "15px",
   "svg": null,
+  "clippedInside": [],
   "items": []
  },
  {
   "page": "/evolution",
   "width": 1280,
+  "loaded": true,
+  "bodyLen": 13453,
+  "title": "决策进化对比",
   "scrollW": 1265,
   "clientW": 1265,
   "bodyScrollW": 1265,
@@ -1679,11 +1713,15 @@
   "overflowX": false,
   "bodyFont": "15px",
   "svg": null,
+  "clippedInside": [],
   "items": []
  },
  {
   "page": "/data",
   "width": 320,
+  "loaded": true,
+  "bodyLen": 5778,
+  "title": "数据来源与口径 · 城市内涝跨部门决策",
   "scrollW": 507,
   "clientW": 305,
   "bodyScrollW": 507,
@@ -1695,6 +1733,7 @@
    "cssW": 427,
    "cssH": 156
   },
+  "clippedInside": [],
   "items": [
    {
     "sel": "path",
@@ -1809,6 +1848,9 @@
  {
   "page": "/data",
   "width": 375,
+  "loaded": true,
+  "bodyLen": 5778,
+  "title": "数据来源与口径 · 城市内涝跨部门决策",
   "scrollW": 507,
   "clientW": 360,
   "bodyScrollW": 507,
@@ -1820,6 +1862,7 @@
    "cssW": 427,
    "cssH": 156
   },
+  "clippedInside": [],
   "items": [
    {
     "sel": "path",
@@ -1934,6 +1977,9 @@
  {
   "page": "/data",
   "width": 414,
+  "loaded": true,
+  "bodyLen": 5778,
+  "title": "数据来源与口径 · 城市内涝跨部门决策",
   "scrollW": 507,
   "clientW": 399,
   "bodyScrollW": 507,
@@ -1945,6 +1991,7 @@
    "cssW": 427,
    "cssH": 156
   },
+  "clippedInside": [],
   "items": [
    {
     "sel": "path",
@@ -2059,6 +2106,9 @@
  {
   "page": "/data",
   "width": 768,
+  "loaded": true,
+  "bodyLen": 5778,
+  "title": "数据来源与口径 · 城市内涝跨部门决策",
   "scrollW": 753,
   "clientW": 753,
   "bodyScrollW": 753,
@@ -2070,6 +2120,7 @@
    "cssW": 633,
    "cssH": 232
   },
+  "clippedInside": [],
   "items": [
    {
     "sel": "path",
@@ -2104,6 +2155,9 @@
  {
   "page": "/data",
   "width": 1280,
+  "loaded": true,
+  "bodyLen": 5778,
+  "title": "数据来源与口径 · 城市内涝跨部门决策",
   "scrollW": 1265,
   "clientW": 1265,
   "bodyScrollW": 1265,
@@ -2115,6 +2169,7 @@
    "cssW": 1145,
    "cssH": 419
   },
+  "clippedInside": [],
   "items": [
    {
     "sel": "path",

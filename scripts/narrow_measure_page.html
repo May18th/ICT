@@ -71,6 +71,20 @@ function overflowItems(doc, win) {
   return [...seen.values()].sort((a, b) => b.over - a.over).slice(0, 12);
 }
 
+// 内容撑破自身容器（inline 文本换行不掉的场景）。元素外边界可能还在视口内，
+// 但文字已经被父级裁掉——这类问题光看 rect 是看不出来的。
+function selfOverflow(doc, win) {
+  const out = [];
+  for (const el of doc.querySelectorAll("body *")) {
+    const cs = win.getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") continue;
+    if (cs.overflowX !== "hidden" && cs.overflowX !== "clip") continue;
+    const diff = el.scrollWidth - el.clientWidth;
+    if (diff > 2) out.push({ sel: describe(el), diff, text: (el.textContent || "").trim().slice(0, 24) });
+  }
+  return out.slice(0, 8);
+}
+
 function fontSize(doc, win) {
   return win.getComputedStyle(doc.body).fontSize;
 }
@@ -106,16 +120,24 @@ function hScroll(doc, win) {
       let rec;
       try {
         const d = f.contentDocument, win = f.contentWindow;
+        // iframe 加载失败（服务没起、端口转发挂了）时，空白页也会「无溢出」，
+        // 静默给出一张全绿的假表比报错更糟。所以把加载证据一起记下来。
+        const bodyLen = d.body ? d.body.textContent.trim().length : 0;
+        const loaded = bodyLen > 60 && !!d.querySelector("main,body>*");
         rec = {
           page, width: w,
+          loaded: loaded,
+          bodyLen: bodyLen,
+          title: (d.title || "").slice(0, 40),
           ...hScroll(d, win),
           overflowX: d.documentElement.scrollWidth > d.documentElement.clientWidth + 1,
           bodyFont: fontSize(d, win),
           svg: svgInfo(d),
-          items: overflowItems(d, win),
+          clippedInside: loaded ? selfOverflow(d, win) : [],
+          items: loaded ? overflowItems(d, win) : [],
         };
       } catch (e) {
-        rec = { page, width: w, error: String(e) };
+        rec = { page, width: w, loaded: false, error: String(e) };
       }
       out.push(rec);
       document.getElementById("log").textContent = page + " @" + w + " done (" + out.length + "/" + (PAGES.length * WIDTHS.length) + ")";
