@@ -6,7 +6,16 @@
 
 > **边界先讲清楚**：这是语义孪生层 + 情景推演，**不是实时物联**。没有 SCADA，没有控制回路。底图与预案是真实公开数据，设施台账是合成数据。
 
-<p align="center"><img src="docs/competition/figures/arch2.png" width="820" alt="系统架构：Nexent 智能体层、MCP 工具层、确定性决策引擎、数据与出口"></p>
+<p align="center"><img src="docs/competition/figures/arch2.png" width="880" alt="系统架构：发起 → Nexent 智能体编排 → MCP 工具层 → 确定性决策引擎 → 数据 → 出口，底部为反馈回流与回退"></p>
+
+<p align="center"><sub>
+<a href="#一键跑起来">怎么跑</a> &nbsp;·&nbsp;
+<a href="#四个能当场核对的结果">核结果</a> &nbsp;·&nbsp;
+<a href="#它解决什么问题">解决什么问题</a> &nbsp;·&nbsp;
+<a href="#可进化是怎么落地的">策略进化</a> &nbsp;·&nbsp;
+<a href="docs/competition/">评委材料</a> &nbsp;·&nbsp;
+<a href="docs/README-dev.md">完整工程说明</a>
+</sub></p>
 
 ---
 
@@ -19,50 +28,45 @@
 | **策略演化** | **v1.0 → v1.2**，偏差 `0.2264 → 0.0000`，含 1 轮被拒与回退验证 | `uv run python -m decision_poc.policy_evolution` |
 | **溯源** | 引用完整率 **100%**，每条结论定位到台账原文的具体行 | `uv run python -m decision_poc.evidence_check`（108/108） |
 
-**关于"不编造"，我们不用"0 幻觉"这种说法**——它没法证明。能给的是三组对照实验：
+---
+
+## 一键跑起来
+
+```bash
+uv sync --locked                                       # 约 11 秒，自动取对版本 Python
+uv run python -m decision_poc.web_demo --port 8790     # 浏览器开 http://127.0.0.1:8790
+```
+
+想一次跑完测试 + 推演 + 策略演化 + 自检：`uv run python scripts/reproduce.py`（约 30 秒）。
+
+现场演示（断网可跑，不依赖任何云端接口）：双击仓库根目录的 `一键演示.bat`，或 `uv run python scripts/demo_tour.py`。
+演示页 `/show` 把 `/map2d` 嵌进来当底片，按「收到工单 → 冲突曝光 → 策略进化 → 重新推演 → 大屏退水」五幕推进，
+数字全部取自本机接口；空格推进，`?beat=3` 可单独排练某一幕。缺底图时大屏会悄悄退回示意图，自检会当场报出来。
+
+> 只装 [uv](https://docs.astral.sh/uv/) 即可，不需要预装 Python。
+
+<details>
+<summary>更多单点命令</summary>
+
+```bash
+uv run python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00
+uv run python -m decision_poc.evidence_check    # 期望 108/108，核对值 06db4f93ca0b53c7
+uv run python scripts/demo_tour.py --check      # 只自检：依赖文件、页面体积、六项页面与接口
+```
+
+</details>
+
+---
+
+## 不编造，靠三组对照证明
+
+**我们不用"0 幻觉"这种说法**——它没法证明。能给的是三组对照实验：
 
 - 同一提示词、**不接工具**：只完成 **2/8**，主动说明"无法取证，不输出结论"；
 - 要求它**凭经验出方案**：编出一个格式完全正确、但数值是假的编排结果（动作卡 8 张，真实 26 张）；
 - 结论**必须带原文出处**，缺一段引用就降级为"无法支撑"，不允许补解释。
 
 这三组比任何"零幻觉"的宣称都更能说明问题：**不让模型裁决，是审计要求，不是能力不足。**
-
----
-
-## 一键跑起来
-
-```bash
-uv sync --locked                        # 约 11 秒，自动取对版本 Python
-uv run python scripts/reproduce.py      # 约 30 秒，测试 + 推演 + 演化 + 自检全跑
-```
-
-看页面：
-
-```bash
-uv run python -m decision_poc.web_demo --port 8790
-# 浏览器打开 http://127.0.0.1:8790
-```
-
-单点验证：
-
-```bash
-uv run python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00
-uv run python -m decision_poc.evidence_check   # 期望 108/108，核对值 06db4f93ca0b53c7
-```
-
-现场演示（断网可跑，不依赖任何云端接口）：
-
-```bash
-uv run python scripts/demo_tour.py            # 自检 → 起服务 → 打开 /show → 打印讲稿
-uv run python scripts/demo_tour.py --check    # 只自检：依赖文件、页面体积、六项页面与接口
-```
-
-Windows 上双击仓库根目录的 `一键演示.bat` 也可以：先逐项自检（缺底图会让大屏悄悄退回
-示意图，这条会当场报出来），再打开演示页。演示页 `/show` 把 `/map2d` 嵌进来当底片，
-按「收到工单 → 冲突曝光 → 策略进化 → 重新推演 → 大屏退水」五幕推进，数字全部取自本机
-接口；空格推进，`?beat=3` 可单独排练某一幕。
-
-> 只装 [uv](https://docs.astral.sh/uv/) 即可，不需要预装 Python。
 
 ---
 
@@ -86,7 +90,8 @@ Windows 上双击仓库根目录的 `一键演示.bat` 也可以：先逐项自�
 
 ---
 
-## 三个智能体 + 三个对照
+<details>
+<summary>三个智能体 + 三个对照（平台实测）</summary>
 
 | 智能体 | 版本 | 接入工具 | 职责 |
 |---|---|---|---|
@@ -96,6 +101,8 @@ Windows 上双击仓库根目录的 `一键演示.bat` 也可以：先逐项自�
 | 对照 ×3 | v2 | 0 | 无工具版 ×2、模型直决策 ×1，用于证明工具链的必要性 |
 
 模型统一 DeepSeek-Chat。**工具接得越多越强是错觉**：曾把 12 个工具全接上，8/8 直接掉到 0/8——工具清单本身就是模型读的提示词，收窄到 4 个才恢复。
+
+</details>
 
 ---
 
@@ -112,19 +119,8 @@ Windows 上双击仓库根目录的 `一键演示.bat` 也可以：先逐项自�
 
 ---
 
-## 目录导航
-
-| 想找什么 | 去哪 |
-|---|---|
-| 官方提交的开发设计文档 | `docs/competition/初赛开发设计文档-v2（模板原样）.docx` |
-| 面向评委的证据与口径 | `docs/competition/`（答辩主线、8 问答法、业务价值） |
-| 平台实测证据（会话号/耗时/校验值） | `samples/nexent/live/` |
-| 技术设计与边界分析 | `docs/`（`nexent-*` 系列、`technical-baseline.md`） |
-| 完整的工程说明（安装、部署、调试） | [`docs/README-dev.md`](docs/README-dev.md) |
-| 平台装配与复现 | `deploy/nexent/README.md` |
-
 <details>
-<summary><b>仓库结构</b></summary>
+<summary>仓库结构</summary>
 
 | 目录 | 内容 |
 |---|---|
@@ -141,7 +137,21 @@ Windows 上双击仓库根目录的 `一键演示.bat` 也可以：先逐项自�
 </details>
 
 <details>
-<summary><b>数据来源与真实性边界</b></summary>
+<summary>文档去哪找</summary>
+
+| 想找什么 | 去哪 |
+|---|---|
+| 官方提交的开发设计文档 | `docs/competition/初赛开发设计文档-v2（模板原样）.docx` |
+| 面向评委的证据与口径 | `docs/competition/`（答辩主线、8 问答法、业务价值） |
+| 平台实测证据（会话号/耗时/校验值） | `samples/nexent/live/` |
+| 技术设计与边界分析 | `docs/`（`nexent-*` 系列、`technical-baseline.md`） |
+| 完整的工程说明（安装、部署、调试） | [`docs/README-dev.md`](docs/README-dev.md) |
+| 平台装配与复现 | `deploy/nexent/README.md` |
+
+</details>
+
+<details>
+<summary>数据来源与真实性边界</summary>
 
 | 数据 | 来源 | 性质 |
 |---|---|---|
@@ -155,7 +165,7 @@ Windows 上双击仓库根目录的 `一键演示.bat` 也可以：先逐项自�
 </details>
 
 <details>
-<summary><b>已知限制</b></summary>
+<summary>已知限制</summary>
 
 1. 单片区（成都兴华路约 3 公里）做到逐行可核对；方案可迁移，**标定参数不可迁移**。
 2. 资源缺口当前按"额定能力 × 0.8 保守折算"，属折算口径，**不是水力模型测算值**。
