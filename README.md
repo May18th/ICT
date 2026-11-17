@@ -12,10 +12,21 @@
 <a href="#一键跑起来">怎么跑</a> &nbsp;·&nbsp;
 <a href="#四个能当场核对的结果">核结果</a> &nbsp;·&nbsp;
 <a href="#它解决什么问题">解决什么问题</a> &nbsp;·&nbsp;
-<a href="#可进化是怎么落地的">策略进化</a> &nbsp;·&nbsp;
-<a href="docs/competition/">评委材料</a> &nbsp;·&nbsp;
-<a href="docs/README-dev.md">完整工程说明</a>
+<a href="#可进化是怎么落地的">策略进化</a>
 </sub></p>
+
+---
+
+## 文档去哪找
+
+| 想找什么 | 去哪 |
+|---|---|
+| 官方提交的开发设计文档 | `docs/competition/初赛开发设计文档-v2（模板原样）.docx` |
+| 面向评委的证据与口径 | `docs/competition/`（答辩主线、8 问答法、业务价值） |
+| 平台实测证据（会话号/耗时/校验值） | `samples/nexent/live/` |
+| 技术设计与边界分析 | `docs/`（`nexent-*` 系列、`technical-baseline.md`） |
+| 完整的工程说明（安装、部署、调试） | [`docs/README-dev.md`](docs/README-dev.md) |
+| 平台装配与复现 | `deploy/nexent/README.md` |
 
 ---
 
@@ -133,20 +144,6 @@ uv run python scripts/demo_tour.py --check      # 只自检：依赖文件、页
 | `docs/` | 设计与验收文档。**先读 [`docs/README.md`](docs/README.md)** —— 它按阅读顺序编排，不按文件名字母序 |
 | `deploy/` | 三条部署路径，见 [`deploy/README.md`](deploy/README.md)：`nexent/` 平台装配、`offline/` 离线包、`mcp_sse/` MCP 容器 |
 | `.github/workflows/` | CI 五道闸：锁文件、编译、测试、对外数字自检、复现快检 |
-
-</details>
-
-<details>
-<summary>文档去哪找</summary>
-
-| 想找什么 | 去哪 |
-|---|---|
-| 官方提交的开发设计文档 | `docs/competition/初赛开发设计文档-v2（模板原样）.docx` |
-| 面向评委的证据与口径 | `docs/competition/`（答辩主线、8 问答法、业务价值） |
-| 平台实测证据（会话号/耗时/校验值） | `samples/nexent/live/` |
-| 技术设计与边界分析 | `docs/`（`nexent-*` 系列、`technical-baseline.md`） |
-| 完整的工程说明（安装、部署、调试） | [`docs/README-dev.md`](docs/README-dev.md) |
-| 平台装配与复现 | `deploy/nexent/README.md` |
 
 </details>
 
