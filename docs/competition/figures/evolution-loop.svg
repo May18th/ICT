@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 420" width="680" height="420" font-family="-apple-system,'Noto Sans SC','Microsoft YaHei',sans-serif">
+  <defs>
+    <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5b6b78"/>
+    </marker>
+    <marker id="arwDash" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9aa7b2"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="680" height="420" fill="#ffffff"/>
+
+  <!-- 中心 -->
+  <ellipse cx="340" cy="210" rx="78" ry="42" fill="#f4f7f9" stroke="#dde5ea"/>
+  <text x="340" y="205" text-anchor="middle" font-size="13" font-weight="700" fill="#20313d">策略版本</text>
+  <text x="340" y="223" text-anchor="middle" font-size="11" fill="#6b7d8b">一次只升一个 minor</text>
+
+  <!-- 节点 1 顶部：实战数据 -->
+  <rect x="232" y="40" width="216" height="64" rx="10" fill="#fdf8ec" stroke="#c8a45c"/>
+  <text x="248" y="63" font-size="12.5" font-weight="700" fill="#20313d">① 实战数据</text>
+  <text x="248" y="80" font-size="10.5" fill="#6b7d8b">执行台账 · 积水反馈 · 人工评审</text>
+  <text x="248" y="95" font-size="10.5" fill="#9a6f1e">半实现：线上运行数据未回流</text>
+
+  <!-- 节点 2 右侧：记忆 -->
+  <rect x="466" y="176" width="192" height="68" rx="10" fill="#f2f9f4" stroke="#7fb494"/>
+  <text x="482" y="199" font-size="12.5" font-weight="700" fill="#20313d">② 记忆沉淀</text>
+  <text x="482" y="216" font-size="10.5" fill="#6b7d8b">分层决策记忆</text>
+  <text x="482" y="231" font-size="10.5" fill="#6b7d8b">知识版本变更提案</text>
+
+  <!-- 节点 3 底部：候选策略 -->
+  <rect x="232" y="316" width="216" height="64" rx="10" fill="#f2f9f4" stroke="#7fb494"/>
+  <text x="248" y="339" font-size="12.5" font-weight="700" fill="#20313d">③ 候选策略</text>
+  <text x="248" y="356" font-size="10.5" fill="#6b7d8b">单维扰动 · 探测 · 组合</text>
+  <text x="248" y="371" font-size="10.5" fill="#6b7d8b">不直接生效，只进入评测</text>
+
+  <!-- 节点 4 左侧：评测门控 -->
+  <rect x="22" y="176" width="192" height="68" rx="10" fill="#f2f9f4" stroke="#7fb494"/>
+  <text x="38" y="199" font-size="12.5" font-weight="700" fill="#20313d">④ 评测门控</text>
+  <text x="38" y="216" font-size="10.5" fill="#6b7d8b">通过才升 active</text>
+  <text x="38" y="231" font-size="10.5" fill="#6b7d8b">失败保留旧版 + 留痕</text>
+
+  <!-- 环上箭头 -->
+  <path d="M 340 104 C 340 128, 420 150, 468 176" fill="none" stroke="#5b6b78" stroke-width="1.6" marker-end="url(#arw)"/>
+  <path d="M 562 244 C 562 288, 500 310, 452 330" fill="none" stroke="#5b6b78" stroke-width="1.6" marker-end="url(#arw)"/>
+  <path d="M 232 348 C 182 348, 140 320, 122 248" fill="none" stroke="#5b6b78" stroke-width="1.6" marker-end="url(#arw)"/>
+
+  <!-- 回流箭头 4 -> 1（虚线 = 规划中） -->
+  <path d="M 122 176 C 130 116, 190 84, 228 72" fill="none" stroke="#9aa7b2" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arwDash)"/>
+  <text x="96" y="120" font-size="10.5" fill="#8a97a2" transform="rotate(-24 96 120)">实战数据回流</text>
+  <text x="96" y="134" font-size="10" fill="#a6b1ba" transform="rotate(-24 96 134)">规划中</text>
+
+  <!-- 图例 -->
+  <g transform="translate(22,392)">
+    <rect x="0" y="-8" width="10" height="10" rx="2" fill="#f2f9f4" stroke="#7fb494"/>
+    <text x="16" y="1" font-size="10.5" fill="#5b6b78">已实现</text>
+    <rect x="76" y="-8" width="10" height="10" rx="2" fill="#fdf8ec" stroke="#c8a45c"/>
+    <text x="92" y="1" font-size="10.5" fill="#5b6b78">半实现</text>
+    <line x1="152" y1="-3" x2="176" y2="-3" stroke="#9aa7b2" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <text x="182" y="1" font-size="10.5" fill="#5b6b78">规划中</text>
+  </g>
+</svg>

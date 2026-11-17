@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>narrow measure</title>
+<style>body{margin:0;font:12px monospace;background:#fff;color:#000}
+iframe{border:1px solid #ccc;display:block;margin:2px 0;background:#fff}</style>
+<div id="log">running…</div>
+<pre id="R"></pre>
+<script>
+const PAGES = ["/", "/workbench", "/map2d", "/evolution", "/data"];
+const WIDTHS = [320, 375, 414, 768, 1280];
+const HOLD = 1400;
+
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function describe(el) {
+  const id = el.id ? "#" + el.id : "";
+  const cls = el.className && typeof el.className === "string"
+    ? "." + el.className.trim().split(/\s+/).slice(0, 2).join(".")
+    : "";
+  return el.tagName.toLowerCase() + id + cls;
+}
+
+// 元素超出视口，不等于用户看不见：祖先若设了 overflow-x:auto 且自身可滚，
+// 那就是「卡内可横向滚动」，属于设计内行为。不区分这两者会把正常页判成破版。
+function scrollHost(el, win, doc) {
+  let p = el.parentElement;
+  while (p && p !== doc.documentElement) {
+    const cs = win.getComputedStyle(p);
+    if (cs.overflowX === "auto" || cs.overflowX === "scroll") {
+      return {
+        sel: describe(p),
+        canScroll: p.scrollWidth > p.clientWidth + 1,
+        scrollW: p.scrollWidth,
+        clientW: p.clientWidth,
+      };
+    }
+    if (cs.overflowX === "hidden") {
+      return { sel: describe(p), canScroll: false, scrollW: p.scrollWidth, clientW: p.clientWidth, clipped: true };
+    }
+    p = p.parentElement;
+  }
+  return null;
+}
+
+function overflowItems(doc, win) {
+  const cw = doc.documentElement.clientWidth;
+  const bad = [];
+  const all = doc.querySelectorAll("body *");
+  for (const el of all) {
+    const cs = win.getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden" || cs.position === "fixed") continue;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) continue;
+    const over = Math.round(r.right - cw);
+    if (over > 2 || r.left < -2) {
+      bad.push({
+        sel: describe(el),
+        over: over,
+        left: Math.round(r.left),
+        w: Math.round(r.width),
+        host: scrollHost(el, win, doc),
+        text: (el.textContent || "").trim().slice(0, 28)
+      });
+    }
+  }
+  // 同一个选择器只留最严重的一条
+  const seen = new Map();
+  for (const b of bad) {
+    if (!seen.has(b.sel) || seen.get(b.sel).over < b.over) seen.set(b.sel, b);
+  }
+  return [...seen.values()].sort((a, b) => b.over - a.over).slice(0, 12);
+}
+
+function fontSize(doc, win) {
+  return win.getComputedStyle(doc.body).fontSize;
+}
+
+function svgInfo(doc) {
+  const svg = doc.querySelector("#map svg") || doc.querySelector("svg");
+  if (!svg) return null;
+  const vb = svg.getAttribute("viewBox");
+  const r = svg.getBoundingClientRect();
+  return { viewBox: vb, cssW: Math.round(r.width), cssH: Math.round(r.height) };
+}
+
+function hScroll(doc, win) {
+  return {
+    scrollW: doc.documentElement.scrollWidth,
+    clientW: doc.documentElement.clientWidth,
+    bodyScrollW: doc.body ? doc.body.scrollWidth : 0,
+    innerW: win.innerWidth,
+  };
+}
+
+(async () => {
+  const out = [];
+  for (const page of PAGES) {
+    for (const w of WIDTHS) {
+      const f = document.createElement("iframe");
+      f.style.width = w + "px";
+      f.style.height = "820px";
+      f.src = page;
+      document.body.appendChild(f);
+      await new Promise(res => { f.onload = res; });
+      await wait(HOLD);
+      let rec;
+      try {
+        const d = f.contentDocument, win = f.contentWindow;
+        rec = {
+          page, width: w,
+          ...hScroll(d, win),
+          overflowX: d.documentElement.scrollWidth > d.documentElement.clientWidth + 1,
+          bodyFont: fontSize(d, win),
+          svg: svgInfo(d),
+          items: overflowItems(d, win),
+        };
+      } catch (e) {
+        rec = { page, width: w, error: String(e) };
+      }
+      out.push(rec);
+      document.getElementById("log").textContent = page + " @" + w + " done (" + out.length + "/" + (PAGES.length * WIDTHS.length) + ")";
+      f.remove();
+      await wait(60);
+    }
+  }
+  document.getElementById("R").textContent = btoa(unescape(encodeURIComponent(JSON.stringify(out))));
+  document.getElementById("log").textContent = "DONE " + out.length;
+})();
+</script>

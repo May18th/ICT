@@ -1,0 +1,2149 @@
+[
+ {
+  "page": "/",
+  "width": 320,
+  "scrollW": 305,
+  "clientW": 305,
+  "bodyScrollW": 305,
+  "innerW": 320,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": null,
+  "items": []
+ },
+ {
+  "page": "/",
+  "width": 375,
+  "scrollW": 360,
+  "clientW": 360,
+  "bodyScrollW": 360,
+  "innerW": 375,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": null,
+  "items": []
+ },
+ {
+  "page": "/",
+  "width": 414,
+  "scrollW": 399,
+  "clientW": 399,
+  "bodyScrollW": 399,
+  "innerW": 414,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": null,
+  "items": []
+ },
+ {
+  "page": "/",
+  "width": 768,
+  "scrollW": 753,
+  "clientW": 753,
+  "bodyScrollW": 753,
+  "innerW": 768,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": null,
+  "items": []
+ },
+ {
+  "page": "/",
+  "width": 1280,
+  "scrollW": 1265,
+  "clientW": 1265,
+  "bodyScrollW": 1265,
+  "innerW": 1280,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": null,
+  "items": []
+ },
+ {
+  "page": "/workbench",
+  "width": 320,
+  "scrollW": 388,
+  "clientW": 305,
+  "bodyScrollW": 388,
+  "innerW": 320,
+  "overflowX": true,
+  "bodyFont": "14px",
+  "svg": null,
+  "items": [
+   {
+    "sel": "section.panel",
+    "over": 83,
+    "left": 18,
+    "w": 370,
+    "host": null,
+    "text": "台账问答 · 结论可定位原文\n      打开平台原生界"
+   },
+   {
+    "sel": "div.switch",
+    "over": 82,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "台账问答 · 结论可定位原文\n      打开平台原生界"
+   },
+   {
+    "sel": "div.hint",
+    "over": 82,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "「台账问答」打开就能用，回答中的定位可跳转台账原文。\n "
+   },
+   {
+    "sel": "div#chatpane",
+    "over": 82,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "可用自然语言提问，例如「谁负责」「先做什么」「依据哪条」"
+   },
+   {
+    "sel": "div#feed",
+    "over": 82,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "可用自然语言提问，例如「谁负责」「先做什么」「依据哪条」"
+   },
+   {
+    "sel": "div#asks.askbar",
+    "over": 82,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "常用问法：这地方积水了，该谁去处理？先封路还是先开泵？兴"
+   },
+   {
+    "sel": "form#f",
+    "over": 82,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "发送"
+   },
+   {
+    "sel": "div.tabs",
+    "over": 82,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "事件\n      证据\n      取证过程\n     "
+   },
+   {
+    "sel": "div#pane.body",
+    "over": 82,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "WO-20261029-007 · 兴华路 · K0+3"
+   },
+   {
+    "sel": "select#agentSel",
+    "over": 70,
+    "left": 237,
+    "w": 138,
+    "host": null,
+    "text": "推演（事件事实）台账问答"
+   },
+   {
+    "sel": "button#go.send",
+    "over": 70,
+    "left": 317,
+    "w": 58,
+    "host": null,
+    "text": "发送"
+   },
+   {
+    "sel": "div",
+    "over": 68,
+    "left": 33,
+    "w": 340,
+    "host": {
+     "sel": "div#pane.body",
+     "canScroll": false,
+     "scrollW": 368,
+     "clientW": 368
+    },
+    "text": "WO-20261029-007 · 兴华路 · K0+3"
+   }
+  ]
+ },
+ {
+  "page": "/workbench",
+  "width": 375,
+  "scrollW": 388,
+  "clientW": 360,
+  "bodyScrollW": 388,
+  "innerW": 375,
+  "overflowX": true,
+  "bodyFont": "14px",
+  "svg": null,
+  "items": [
+   {
+    "sel": "section.panel",
+    "over": 28,
+    "left": 18,
+    "w": 370,
+    "host": null,
+    "text": "台账问答 · 结论可定位原文\n      打开平台原生界"
+   },
+   {
+    "sel": "div.switch",
+    "over": 27,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "台账问答 · 结论可定位原文\n      打开平台原生界"
+   },
+   {
+    "sel": "div.hint",
+    "over": 27,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "「台账问答」打开就能用，回答中的定位可跳转台账原文。\n "
+   },
+   {
+    "sel": "div#chatpane",
+    "over": 27,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "可用自然语言提问，例如「谁负责」「先做什么」「依据哪条」"
+   },
+   {
+    "sel": "div#feed",
+    "over": 27,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "可用自然语言提问，例如「谁负责」「先做什么」「依据哪条」"
+   },
+   {
+    "sel": "div#asks.askbar",
+    "over": 27,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "常用问法：这地方积水了，该谁去处理？先封路还是先开泵？兴"
+   },
+   {
+    "sel": "form#f",
+    "over": 27,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "发送"
+   },
+   {
+    "sel": "div.tabs",
+    "over": 27,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "事件\n      证据\n      取证过程\n     "
+   },
+   {
+    "sel": "div#pane.body",
+    "over": 27,
+    "left": 19,
+    "w": 368,
+    "host": null,
+    "text": "WO-20261029-007 · 兴华路 · K0+3"
+   },
+   {
+    "sel": "select#agentSel",
+    "over": 15,
+    "left": 237,
+    "w": 138,
+    "host": null,
+    "text": "推演（事件事实）台账问答"
+   },
+   {
+    "sel": "button#go.send",
+    "over": 15,
+    "left": 317,
+    "w": 58,
+    "host": null,
+    "text": "发送"
+   },
+   {
+    "sel": "div",
+    "over": 13,
+    "left": 33,
+    "w": 340,
+    "host": {
+     "sel": "div#pane.body",
+     "canScroll": false,
+     "scrollW": 368,
+     "clientW": 368
+    },
+    "text": "WO-20261029-007 · 兴华路 · K0+3"
+   }
+  ]
+ },
+ {
+  "page": "/workbench",
+  "width": 414,
+  "scrollW": 399,
+  "clientW": 399,
+  "bodyScrollW": 399,
+  "innerW": 414,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": null,
+  "items": []
+ },
+ {
+  "page": "/workbench",
+  "width": 768,
+  "scrollW": 753,
+  "clientW": 753,
+  "bodyScrollW": 753,
+  "innerW": 768,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": null,
+  "items": []
+ },
+ {
+  "page": "/workbench",
+  "width": 1280,
+  "scrollW": 1280,
+  "clientW": 1280,
+  "bodyScrollW": 1280,
+  "innerW": 1280,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": null,
+  "items": []
+ },
+ {
+  "page": "/map2d",
+  "width": 320,
+  "scrollW": 320,
+  "clientW": 320,
+  "bodyScrollW": 543,
+  "innerW": 320,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": {
+   "viewBox": "-6.32688927943758 -52117.73946738918 680.3358719000195 104577.72224663151",
+   "cssW": 4,
+   "cssH": 615
+  },
+  "items": [
+   {
+    "sel": "span#ly-time.ly.ly-time",
+    "over": 593,
+    "left": 802,
+    "w": 111,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 30,
+     "clipped": true
+    },
+    "text": "时间线台账反推"
+   },
+   {
+    "sel": "span#ly-time-v",
+    "over": 584,
+    "left": 860,
+    "w": 44,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 30,
+     "clipped": true
+    },
+    "text": "台账反推"
+   },
+   {
+    "sel": "b",
+    "over": 535,
+    "left": 822,
+    "w": 33,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 30,
+     "clipped": true
+    },
+    "text": "时间线"
+   },
+   {
+    "sel": "span#ly-model.ly.ly-model",
+    "over": 478,
+    "left": 676,
+    "w": 122,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 30,
+     "clipped": true
+    },
+    "text": "积水水位模型估算"
+   },
+   {
+    "sel": "span#ly-model-v",
+    "over": 469,
+    "left": 745,
+    "w": 44,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 30,
+     "clipped": true
+    },
+    "text": "模型估算"
+   },
+   {
+    "sel": "span.ly.ly-ledger",
+    "over": 352,
+    "left": 550,
+    "w": 122,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 30,
+     "clipped": true
+    },
+    "text": "事件工单演示台账"
+   },
+   {
+    "sel": "span#ly-osm.ly.ly-osm",
+    "over": 226,
+    "left": 270,
+    "w": 276,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 30,
+     "clipped": true
+    },
+    "text": "底图© OpenStreetMap 贡献者（ODbL 1"
+   },
+   {
+    "sel": "button#srcbtn",
+    "over": 223,
+    "left": 437,
+    "w": 107,
+    "host": {
+     "sel": "body",
+     "canScroll": false,
+     "scrollW": 543,
+     "clientW": 320,
+     "clipped": true
+    },
+    "text": "数据来源与边界"
+   },
+   {
+    "sel": "span.scope",
+    "over": 105,
+    "left": 228,
+    "w": 197,
+    "host": {
+     "sel": "body",
+     "canScroll": false,
+     "scrollW": 543,
+     "clientW": 320,
+     "clipped": true
+    },
+    "text": "语义孪生层 · 情景推演，非实时物联"
+   },
+   {
+    "sel": "i.src-tag.t-time",
+    "over": 3,
+    "left": 273,
+    "w": 50,
+    "host": {
+     "sel": "div.kpi-card",
+     "canScroll": false,
+     "scrollW": 70,
+     "clientW": 46,
+     "clipped": true
+    },
+    "text": "回放时钟"
+   },
+   {
+    "sel": "div#dock",
+    "over": -53,
+    "left": -263,
+    "w": 529,
+    "host": {
+     "sel": "div#stage",
+     "canScroll": false,
+     "scrollW": 267,
+     "clientW": 4,
+     "clipped": true
+    },
+    "text": "⏸ 暂停\n      重置\n      ‹\n      "
+   },
+   {
+    "sel": "input#prog",
+    "over": -124,
+    "left": -24,
+    "w": 220,
+    "host": {
+     "sel": "div#stage",
+     "canScroll": false,
+     "scrollW": 267,
+     "clientW": 4,
+     "clipped": true
+    },
+    "text": ""
+   }
+  ]
+ },
+ {
+  "page": "/map2d",
+  "width": 375,
+  "scrollW": 375,
+  "clientW": 375,
+  "bodyScrollW": 543,
+  "innerW": 375,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": {
+   "viewBox": "-6.32688927943758 -3513.070057159122 680.3358719000195 7368.383426171397",
+   "cssW": 59,
+   "cssH": 639
+  },
+  "items": [
+   {
+    "sel": "span#ly-time.ly.ly-time",
+    "over": 538,
+    "left": 802,
+    "w": 111,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 85,
+     "clipped": true
+    },
+    "text": "时间线台账反推"
+   },
+   {
+    "sel": "span#ly-time-v",
+    "over": 529,
+    "left": 860,
+    "w": 44,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 85,
+     "clipped": true
+    },
+    "text": "台账反推"
+   },
+   {
+    "sel": "b",
+    "over": 480,
+    "left": 822,
+    "w": 33,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 85,
+     "clipped": true
+    },
+    "text": "时间线"
+   },
+   {
+    "sel": "span#ly-model.ly.ly-model",
+    "over": 423,
+    "left": 676,
+    "w": 122,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 85,
+     "clipped": true
+    },
+    "text": "积水水位模型估算"
+   },
+   {
+    "sel": "span#ly-model-v",
+    "over": 414,
+    "left": 745,
+    "w": 44,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 85,
+     "clipped": true
+    },
+    "text": "模型估算"
+   },
+   {
+    "sel": "span.ly.ly-ledger",
+    "over": 297,
+    "left": 550,
+    "w": 122,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 85,
+     "clipped": true
+    },
+    "text": "事件工单演示台账"
+   },
+   {
+    "sel": "span#ly-osm.ly.ly-osm",
+    "over": 171,
+    "left": 270,
+    "w": 276,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 85,
+     "clipped": true
+    },
+    "text": "底图© OpenStreetMap 贡献者（ODbL 1"
+   },
+   {
+    "sel": "button#srcbtn",
+    "over": 168,
+    "left": 437,
+    "w": 107,
+    "host": {
+     "sel": "body",
+     "canScroll": false,
+     "scrollW": 543,
+     "clientW": 375,
+     "clipped": true
+    },
+    "text": "数据来源与边界"
+   },
+   {
+    "sel": "span.scope",
+    "over": 50,
+    "left": 228,
+    "w": 197,
+    "host": {
+     "sel": "body",
+     "canScroll": false,
+     "scrollW": 543,
+     "clientW": 375,
+     "clipped": true
+    },
+    "text": "语义孪生层 · 情景推演，非实时物联"
+   },
+   {
+    "sel": "div#dock",
+    "over": -81,
+    "left": -235,
+    "w": 529,
+    "host": {
+     "sel": "div#stage",
+     "canScroll": false,
+     "scrollW": 294,
+     "clientW": 59,
+     "clipped": true
+    },
+    "text": "⏸ 暂停\n      重置\n      ‹\n      "
+   },
+   {
+    "sel": "g#area-layer",
+    "over": -230,
+    "left": -58,
+    "w": 202,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 59,
+     "clientW": 59,
+     "clipped": true
+    },
+    "text": "成都地铁10号线（在建轨道）成都地铁17号线（地铁）成都"
+   },
+   {
+    "sel": "path",
+    "over": -244,
+    "left": -58,
+    "w": 189,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 59,
+     "clientW": 59,
+     "clipped": true
+    },
+    "text": "成都地铁13号线（地铁）"
+   }
+  ]
+ },
+ {
+  "page": "/map2d",
+  "width": 414,
+  "scrollW": 414,
+  "clientW": 414,
+  "bodyScrollW": 543,
+  "innerW": 414,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": {
+   "viewBox": "-6.32688927943758 -2046.9121305229764 680.3358719000195 4436.067572899106",
+   "cssW": 98,
+   "cssH": 639
+  },
+  "items": [
+   {
+    "sel": "span#ly-time.ly.ly-time",
+    "over": 499,
+    "left": 802,
+    "w": 111,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 124,
+     "clipped": true
+    },
+    "text": "时间线台账反推"
+   },
+   {
+    "sel": "span#ly-time-v",
+    "over": 490,
+    "left": 860,
+    "w": 44,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 124,
+     "clipped": true
+    },
+    "text": "台账反推"
+   },
+   {
+    "sel": "b",
+    "over": 441,
+    "left": 822,
+    "w": 33,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 124,
+     "clipped": true
+    },
+    "text": "时间线"
+   },
+   {
+    "sel": "span#ly-model.ly.ly-model",
+    "over": 384,
+    "left": 676,
+    "w": 122,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 124,
+     "clipped": true
+    },
+    "text": "积水水位模型估算"
+   },
+   {
+    "sel": "span#ly-model-v",
+    "over": 375,
+    "left": 745,
+    "w": 44,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 124,
+     "clipped": true
+    },
+    "text": "模型估算"
+   },
+   {
+    "sel": "span.ly.ly-ledger",
+    "over": 258,
+    "left": 550,
+    "w": 122,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 124,
+     "clipped": true
+    },
+    "text": "事件工单演示台账"
+   },
+   {
+    "sel": "span#ly-osm.ly.ly-osm",
+    "over": 132,
+    "left": 270,
+    "w": 276,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 124,
+     "clipped": true
+    },
+    "text": "底图© OpenStreetMap 贡献者（ODbL 1"
+   },
+   {
+    "sel": "button#srcbtn",
+    "over": 129,
+    "left": 437,
+    "w": 107,
+    "host": {
+     "sel": "body",
+     "canScroll": false,
+     "scrollW": 543,
+     "clientW": 414,
+     "clipped": true
+    },
+    "text": "数据来源与边界"
+   },
+   {
+    "sel": "span.scope",
+    "over": 11,
+    "left": 228,
+    "w": 197,
+    "host": {
+     "sel": "body",
+     "canScroll": false,
+     "scrollW": 543,
+     "clientW": 414,
+     "clipped": true
+    },
+    "text": "语义孪生层 · 情景推演，非实时物联"
+   },
+   {
+    "sel": "div#dock",
+    "over": -100,
+    "left": -216,
+    "w": 529,
+    "host": {
+     "sel": "div#stage",
+     "canScroll": false,
+     "scrollW": 314,
+     "clientW": 98,
+     "clipped": true
+    },
+    "text": "⏸ 暂停\n      重置\n      ‹\n      "
+   },
+   {
+    "sel": "g#area-layer",
+    "over": -174,
+    "left": -96,
+    "w": 336,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 98,
+     "clientW": 98,
+     "clipped": true
+    },
+    "text": "成都地铁10号线（在建轨道）成都地铁17号线（地铁）成都"
+   },
+   {
+    "sel": "path",
+    "over": -196,
+    "left": -96,
+    "w": 313,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 98,
+     "clientW": 98,
+     "clipped": true
+    },
+    "text": "成都地铁13号线（地铁）"
+   }
+  ]
+ },
+ {
+  "page": "/map2d",
+  "width": 768,
+  "scrollW": 768,
+  "clientW": 768,
+  "bodyScrollW": 768,
+  "innerW": 768,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": {
+   "viewBox": "-6.32688927943758 -309.779474763813 680.3358719000195 961.8022613807798",
+   "cssW": 452,
+   "cssH": 639
+  },
+  "items": [
+   {
+    "sel": "path",
+    "over": 340,
+    "left": 508,
+    "w": 600,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 452,
+     "clientW": 452,
+     "clipped": true
+    },
+    "text": "成都地铁2号线（地铁）"
+   },
+   {
+    "sel": "g#area-layer",
+    "over": 340,
+    "left": -441,
+    "w": 1549,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 452,
+     "clientW": 452,
+     "clipped": true
+    },
+    "text": "成都地铁10号线（在建轨道）成都地铁17号线（地铁）成都"
+   },
+   {
+    "sel": "span#ly-time.ly.ly-time",
+    "over": 145,
+    "left": 802,
+    "w": 111,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 478,
+     "clipped": true
+    },
+    "text": "时间线台账反推"
+   },
+   {
+    "sel": "span#ly-time-v",
+    "over": 136,
+    "left": 860,
+    "w": 44,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 478,
+     "clipped": true
+    },
+    "text": "台账反推"
+   },
+   {
+    "sel": "b",
+    "over": 87,
+    "left": 822,
+    "w": 33,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 478,
+     "clipped": true
+    },
+    "text": "时间线"
+   },
+   {
+    "sel": "span#ly-model.ly.ly-model",
+    "over": 30,
+    "left": 676,
+    "w": 122,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 478,
+     "clipped": true
+    },
+    "text": "积水水位模型估算"
+   },
+   {
+    "sel": "span#ly-model-v",
+    "over": 21,
+    "left": 745,
+    "w": 44,
+    "host": {
+     "sel": "span.layers",
+     "canScroll": false,
+     "scrollW": 643,
+     "clientW": 478,
+     "clipped": true
+    },
+    "text": "模型估算"
+   },
+   {
+    "sel": "g#osm-layer",
+    "over": -110,
+    "left": -112,
+    "w": 770,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 452,
+     "clientW": 452,
+     "clipped": true
+    },
+    "text": ""
+   },
+   {
+    "sel": "div#dock",
+    "over": -277,
+    "left": -39,
+    "w": 529,
+    "host": {
+     "sel": "div#stage",
+     "canScroll": false,
+     "scrollW": 491,
+     "clientW": 452,
+     "clipped": true
+    },
+    "text": "⏸ 暂停\n      重置\n      ‹\n      "
+   },
+   {
+    "sel": "polygon",
+    "over": -680,
+    "left": -26,
+    "w": 114,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 452,
+     "clientW": 452,
+     "clipped": true
+    },
+    "text": ""
+   },
+   {
+    "sel": "button#play.primary",
+    "over": -719,
+    "left": -24,
+    "w": 73,
+    "host": {
+     "sel": "div#stage",
+     "canScroll": false,
+     "scrollW": 491,
+     "clientW": 452,
+     "clipped": true
+    },
+    "text": "⏸ 暂停"
+   }
+  ]
+ },
+ {
+  "page": "/map2d",
+  "width": 1280,
+  "scrollW": 1280,
+  "clientW": 1280,
+  "bodyScrollW": 1280,
+  "innerW": 1280,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": {
+   "viewBox": "-6.32688927943758 -54.363106596303055 680.3358719000195 450.9695250457598",
+   "cssW": 964,
+   "cssH": 639
+  },
+  "items": [
+   {
+    "sel": "path",
+    "over": 1083,
+    "left": 1082,
+    "w": 1280,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 964,
+     "clientW": 964,
+     "clipped": true
+    },
+    "text": "成都地铁2号线（地铁）"
+   },
+   {
+    "sel": "g#area-layer",
+    "over": 1083,
+    "left": -941,
+    "w": 3303,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 964,
+     "clientW": 964,
+     "clipped": true
+    },
+    "text": "成都地铁10号线（在建轨道）成都地铁17号线（地铁）成都"
+   },
+   {
+    "sel": "polygon",
+    "over": 125,
+    "left": 1186,
+    "w": 218,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 964,
+     "clientW": 964,
+     "clipped": true
+    },
+    "text": ""
+   },
+   {
+    "sel": "g#osm-layer",
+    "over": 124,
+    "left": -239,
+    "w": 1643,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 964,
+     "clientW": 964,
+     "clipped": true
+    },
+    "text": ""
+   },
+   {
+    "sel": "g#bldg-layer",
+    "over": 69,
+    "left": 70,
+    "w": 1279,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 964,
+     "clientW": 964,
+     "clipped": true
+    },
+    "text": ""
+   },
+   {
+    "sel": "g#bldg-sm",
+    "over": 45,
+    "left": 99,
+    "w": 1226,
+    "host": {
+     "sel": "svg#map",
+     "canScroll": false,
+     "scrollW": 964,
+     "clientW": 964,
+     "clipped": true
+    },
+    "text": ""
+   }
+  ]
+ },
+ {
+  "page": "/evolution",
+  "width": 320,
+  "scrollW": 305,
+  "clientW": 305,
+  "bodyScrollW": 305,
+  "innerW": 320,
+  "overflowX": false,
+  "bodyFont": "15px",
+  "svg": null,
+  "items": [
+   {
+    "sel": "tr",
+    "over": 372,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 225
+    },
+    "text": "指标训练集 前训练集 后留出集 前留出集 后"
+   },
+   {
+    "sel": "th",
+    "over": 372,
+    "left": 571,
+    "w": 106,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 225
+    },
+    "text": "留出集 后"
+   },
+   {
+    "sel": "tbody",
+    "over": 372,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 225
+    },
+    "text": "指标训练集 前训练集 后留出集 前留出集 后综合决策偏差"
+   },
+   {
+    "sel": "td",
+    "over": 372,
+    "left": 253,
+    "w": 424,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 225
+    },
+    "text": "flood-response-v1.2 轮次 3（采纳 "
+   },
+   {
+    "sel": "td.ok",
+    "over": 372,
+    "left": 571,
+    "w": 106,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 225
+    },
+    "text": "0.0000"
+   },
+   {
+    "sel": "table#firstTable",
+    "over": 372,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 225
+    },
+    "text": "指标训练集 前训练集 后留出集 前留出集 后综合决策偏差"
+   },
+   {
+    "sel": "table#releases",
+    "over": 372,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 225
+    },
+    "text": "策略标签版本父标签触发反馈触发评审参数变更预期改善flo"
+   },
+   {
+    "sel": "table",
+    "over": 372,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 637,
+     "clientW": 225
+    },
+    "text": "Agent当前版本版本名模型状态urban_asset_"
+   },
+   {
+    "sel": "span.ok",
+    "over": 362,
+    "left": 641,
+    "w": 26,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 637,
+     "clientW": 225
+    },
+    "text": "可用"
+   },
+   {
+    "sel": "table.versus-table",
+    "over": 353,
+    "left": 38,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 637,
+     "clientW": 263
+    },
+    "text": "看什么V1 初始策略V2 进化后变化综合决策偏差0.22"
+   },
+   {
+    "sel": "thead",
+    "over": 353,
+    "left": 38,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 637,
+     "clientW": 263
+    },
+    "text": "看什么V1 初始策略V2 进化后变化"
+   },
+   {
+    "sel": "code",
+    "over": 291,
+    "left": 476,
+    "w": 120,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 225
+    },
+    "text": "{\"weight_closure\":1,\"transfe"
+   }
+  ]
+ },
+ {
+  "page": "/evolution",
+  "width": 375,
+  "scrollW": 360,
+  "clientW": 360,
+  "bodyScrollW": 360,
+  "innerW": 375,
+  "overflowX": false,
+  "bodyFont": "15px",
+  "svg": null,
+  "items": [
+   {
+    "sel": "tr",
+    "over": 317,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 280
+    },
+    "text": "指标训练集 前训练集 后留出集 前留出集 后"
+   },
+   {
+    "sel": "th",
+    "over": 317,
+    "left": 571,
+    "w": 106,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 280
+    },
+    "text": "留出集 后"
+   },
+   {
+    "sel": "tbody",
+    "over": 317,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 280
+    },
+    "text": "指标训练集 前训练集 后留出集 前留出集 后综合决策偏差"
+   },
+   {
+    "sel": "td",
+    "over": 317,
+    "left": 253,
+    "w": 424,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 280
+    },
+    "text": "flood-response-v1.2 轮次 3（采纳 "
+   },
+   {
+    "sel": "td.ok",
+    "over": 317,
+    "left": 571,
+    "w": 106,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 280
+    },
+    "text": "0.0000"
+   },
+   {
+    "sel": "table#firstTable",
+    "over": 317,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 280
+    },
+    "text": "指标训练集 前训练集 后留出集 前留出集 后综合决策偏差"
+   },
+   {
+    "sel": "table#releases",
+    "over": 317,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 280
+    },
+    "text": "策略标签版本父标签触发反馈触发评审参数变更预期改善flo"
+   },
+   {
+    "sel": "table",
+    "over": 317,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 637,
+     "clientW": 280
+    },
+    "text": "Agent当前版本版本名模型状态urban_asset_"
+   },
+   {
+    "sel": "span.ok",
+    "over": 307,
+    "left": 641,
+    "w": 26,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 637,
+     "clientW": 280
+    },
+    "text": "可用"
+   },
+   {
+    "sel": "table.versus-table",
+    "over": 298,
+    "left": 38,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 637,
+     "clientW": 318
+    },
+    "text": "看什么V1 初始策略V2 进化后变化综合决策偏差0.22"
+   },
+   {
+    "sel": "thead",
+    "over": 298,
+    "left": 38,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 637,
+     "clientW": 318
+    },
+    "text": "看什么V1 初始策略V2 进化后变化"
+   },
+   {
+    "sel": "code",
+    "over": 236,
+    "left": 476,
+    "w": 120,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 280
+    },
+    "text": "{\"weight_closure\":1,\"transfe"
+   }
+  ]
+ },
+ {
+  "page": "/evolution",
+  "width": 414,
+  "scrollW": 399,
+  "clientW": 399,
+  "bodyScrollW": 399,
+  "innerW": 414,
+  "overflowX": false,
+  "bodyFont": "15px",
+  "svg": null,
+  "items": [
+   {
+    "sel": "tr",
+    "over": 278,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 319
+    },
+    "text": "指标训练集 前训练集 后留出集 前留出集 后"
+   },
+   {
+    "sel": "th",
+    "over": 278,
+    "left": 571,
+    "w": 106,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 319
+    },
+    "text": "留出集 后"
+   },
+   {
+    "sel": "tbody",
+    "over": 278,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 319
+    },
+    "text": "指标训练集 前训练集 后留出集 前留出集 后综合决策偏差"
+   },
+   {
+    "sel": "td",
+    "over": 278,
+    "left": 253,
+    "w": 424,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 319
+    },
+    "text": "flood-response-v1.2 轮次 3（采纳 "
+   },
+   {
+    "sel": "td.ok",
+    "over": 278,
+    "left": 571,
+    "w": 106,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 319
+    },
+    "text": "0.0000"
+   },
+   {
+    "sel": "table#firstTable",
+    "over": 278,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 319
+    },
+    "text": "指标训练集 前训练集 后留出集 前留出集 后综合决策偏差"
+   },
+   {
+    "sel": "table#releases",
+    "over": 278,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 319
+    },
+    "text": "策略标签版本父标签触发反馈触发评审参数变更预期改善flo"
+   },
+   {
+    "sel": "table",
+    "over": 278,
+    "left": 57,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 637,
+     "clientW": 319
+    },
+    "text": "Agent当前版本版本名模型状态urban_asset_"
+   },
+   {
+    "sel": "span.ok",
+    "over": 268,
+    "left": 641,
+    "w": 26,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 637,
+     "clientW": 319
+    },
+    "text": "可用"
+   },
+   {
+    "sel": "table.versus-table",
+    "over": 259,
+    "left": 38,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 637,
+     "clientW": 357
+    },
+    "text": "看什么V1 初始策略V2 进化后变化综合决策偏差0.22"
+   },
+   {
+    "sel": "thead",
+    "over": 259,
+    "left": 38,
+    "w": 620,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 637,
+     "clientW": 357
+    },
+    "text": "看什么V1 初始策略V2 进化后变化"
+   },
+   {
+    "sel": "code",
+    "over": 197,
+    "left": 476,
+    "w": 120,
+    "host": {
+     "sel": "section.card.evolution-card",
+     "canScroll": true,
+     "scrollW": 654,
+     "clientW": 319
+    },
+    "text": "{\"weight_closure\":1,\"transfe"
+   }
+  ]
+ },
+ {
+  "page": "/evolution",
+  "width": 768,
+  "scrollW": 753,
+  "clientW": 753,
+  "bodyScrollW": 753,
+  "innerW": 768,
+  "overflowX": false,
+  "bodyFont": "15px",
+  "svg": null,
+  "items": []
+ },
+ {
+  "page": "/evolution",
+  "width": 1280,
+  "scrollW": 1265,
+  "clientW": 1265,
+  "bodyScrollW": 1265,
+  "innerW": 1280,
+  "overflowX": false,
+  "bodyFont": "15px",
+  "svg": null,
+  "items": []
+ },
+ {
+  "page": "/data",
+  "width": 320,
+  "scrollW": 507,
+  "clientW": 305,
+  "bodyScrollW": 507,
+  "innerW": 320,
+  "overflowX": true,
+  "bodyFont": "14px",
+  "svg": {
+   "viewBox": "0 0 1000 366",
+   "cssW": 427,
+   "cssH": 156
+  },
+  "items": [
+   {
+    "sel": "path",
+    "over": 556,
+    "left": -320,
+    "w": 1181,
+    "host": {
+     "sel": "svg",
+     "canScroll": false,
+     "scrollW": 427,
+     "clientW": 427,
+     "clipped": true
+    },
+    "text": ""
+   },
+   {
+    "sel": "g",
+    "over": 556,
+    "left": -320,
+    "w": 1181,
+    "host": {
+     "sel": "svg",
+     "canScroll": false,
+     "scrollW": 427,
+     "clientW": 427,
+     "clipped": true
+    },
+    "text": "在大屏上定位 兴华路在大屏上定位 建设大道在大屏上定位 "
+   },
+   {
+    "sel": "div.purpose",
+    "over": 202,
+    "left": 40,
+    "w": 467,
+    "host": null,
+    "text": "本系统使用开放地图底图、演示台账和可重跑规则，展示城市内"
+   },
+   {
+    "sel": "section#osm.wide",
+    "over": 202,
+    "left": 40,
+    "w": 467,
+    "host": null,
+    "text": "开放地图底图可核验\n    数据来源：OpenStree"
+   },
+   {
+    "sel": "section",
+    "over": 202,
+    "left": 40,
+    "w": 467,
+    "host": null,
+    "text": "业务台账结构真实 · 内容为评测场景\n    表结构与字"
+   },
+   {
+    "sel": "section.wide",
+    "over": 202,
+    "left": 40,
+    "w": 467,
+    "host": null,
+    "text": "场景路网的位置参照沿路取点比对\n    七条路使用场景代"
+   },
+   {
+    "sel": "h2",
+    "over": 183,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "开放地图底图可核验"
+   },
+   {
+    "sel": "p#osm-origin.note",
+    "over": 183,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "数据来源：OpenStreetMap 四川省域摘录（11"
+   },
+   {
+    "sel": "p.note",
+    "over": 183,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "这是本项目所在区域的真实街道图：浅蓝是河道，灰块是建筑，"
+   },
+   {
+    "sel": "div.osm-prev",
+    "over": 183,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "在大屏上定位 兴华路在大屏上定位 建设大道在大屏上定位 "
+   },
+   {
+    "sel": "table",
+    "over": 183,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "文件内容条数大小生成时间生成方式\n      cheng"
+   },
+   {
+    "sel": "tbody",
+    "over": 183,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "文件内容条数大小生成时间生成方式"
+   }
+  ]
+ },
+ {
+  "page": "/data",
+  "width": 375,
+  "scrollW": 507,
+  "clientW": 360,
+  "bodyScrollW": 507,
+  "innerW": 375,
+  "overflowX": true,
+  "bodyFont": "14px",
+  "svg": {
+   "viewBox": "0 0 1000 366",
+   "cssW": 427,
+   "cssH": 156
+  },
+  "items": [
+   {
+    "sel": "path",
+    "over": 501,
+    "left": -320,
+    "w": 1181,
+    "host": {
+     "sel": "svg",
+     "canScroll": false,
+     "scrollW": 427,
+     "clientW": 427,
+     "clipped": true
+    },
+    "text": ""
+   },
+   {
+    "sel": "g",
+    "over": 501,
+    "left": -320,
+    "w": 1181,
+    "host": {
+     "sel": "svg",
+     "canScroll": false,
+     "scrollW": 427,
+     "clientW": 427,
+     "clipped": true
+    },
+    "text": "在大屏上定位 兴华路在大屏上定位 建设大道在大屏上定位 "
+   },
+   {
+    "sel": "div.purpose",
+    "over": 147,
+    "left": 40,
+    "w": 467,
+    "host": null,
+    "text": "本系统使用开放地图底图、演示台账和可重跑规则，展示城市内"
+   },
+   {
+    "sel": "section#osm.wide",
+    "over": 147,
+    "left": 40,
+    "w": 467,
+    "host": null,
+    "text": "开放地图底图可核验\n    数据来源：OpenStree"
+   },
+   {
+    "sel": "section",
+    "over": 147,
+    "left": 40,
+    "w": 467,
+    "host": null,
+    "text": "业务台账结构真实 · 内容为评测场景\n    表结构与字"
+   },
+   {
+    "sel": "section.wide",
+    "over": 147,
+    "left": 40,
+    "w": 467,
+    "host": null,
+    "text": "场景路网的位置参照沿路取点比对\n    七条路使用场景代"
+   },
+   {
+    "sel": "h2",
+    "over": 128,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "开放地图底图可核验"
+   },
+   {
+    "sel": "p#osm-origin.note",
+    "over": 128,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "数据来源：OpenStreetMap 四川省域摘录（11"
+   },
+   {
+    "sel": "p.note",
+    "over": 128,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "这是本项目所在区域的真实街道图：浅蓝是河道，灰块是建筑，"
+   },
+   {
+    "sel": "div.osm-prev",
+    "over": 128,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "在大屏上定位 兴华路在大屏上定位 建设大道在大屏上定位 "
+   },
+   {
+    "sel": "table",
+    "over": 128,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "文件内容条数大小生成时间生成方式\n      cheng"
+   },
+   {
+    "sel": "tbody",
+    "over": 128,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "文件内容条数大小生成时间生成方式"
+   }
+  ]
+ },
+ {
+  "page": "/data",
+  "width": 414,
+  "scrollW": 507,
+  "clientW": 399,
+  "bodyScrollW": 507,
+  "innerW": 414,
+  "overflowX": true,
+  "bodyFont": "14px",
+  "svg": {
+   "viewBox": "0 0 1000 366",
+   "cssW": 427,
+   "cssH": 156
+  },
+  "items": [
+   {
+    "sel": "path",
+    "over": 462,
+    "left": -320,
+    "w": 1181,
+    "host": {
+     "sel": "svg",
+     "canScroll": false,
+     "scrollW": 427,
+     "clientW": 427,
+     "clipped": true
+    },
+    "text": ""
+   },
+   {
+    "sel": "g",
+    "over": 462,
+    "left": -320,
+    "w": 1181,
+    "host": {
+     "sel": "svg",
+     "canScroll": false,
+     "scrollW": 427,
+     "clientW": 427,
+     "clipped": true
+    },
+    "text": "在大屏上定位 兴华路在大屏上定位 建设大道在大屏上定位 "
+   },
+   {
+    "sel": "div.purpose",
+    "over": 108,
+    "left": 40,
+    "w": 467,
+    "host": null,
+    "text": "本系统使用开放地图底图、演示台账和可重跑规则，展示城市内"
+   },
+   {
+    "sel": "section#osm.wide",
+    "over": 108,
+    "left": 40,
+    "w": 467,
+    "host": null,
+    "text": "开放地图底图可核验\n    数据来源：OpenStree"
+   },
+   {
+    "sel": "section",
+    "over": 108,
+    "left": 40,
+    "w": 467,
+    "host": null,
+    "text": "业务台账结构真实 · 内容为评测场景\n    表结构与字"
+   },
+   {
+    "sel": "section.wide",
+    "over": 108,
+    "left": 40,
+    "w": 467,
+    "host": null,
+    "text": "场景路网的位置参照沿路取点比对\n    七条路使用场景代"
+   },
+   {
+    "sel": "h2",
+    "over": 89,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "开放地图底图可核验"
+   },
+   {
+    "sel": "p#osm-origin.note",
+    "over": 89,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "数据来源：OpenStreetMap 四川省域摘录（11"
+   },
+   {
+    "sel": "p.note",
+    "over": 89,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "这是本项目所在区域的真实街道图：浅蓝是河道，灰块是建筑，"
+   },
+   {
+    "sel": "div.osm-prev",
+    "over": 89,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "在大屏上定位 兴华路在大屏上定位 建设大道在大屏上定位 "
+   },
+   {
+    "sel": "table",
+    "over": 89,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "文件内容条数大小生成时间生成方式\n      cheng"
+   },
+   {
+    "sel": "tbody",
+    "over": 89,
+    "left": 59,
+    "w": 429,
+    "host": null,
+    "text": "文件内容条数大小生成时间生成方式"
+   }
+  ]
+ },
+ {
+  "page": "/data",
+  "width": 768,
+  "scrollW": 753,
+  "clientW": 753,
+  "bodyScrollW": 753,
+  "innerW": 768,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": {
+   "viewBox": "0 0 1000 366",
+   "cssW": 633,
+   "cssH": 232
+  },
+  "items": [
+   {
+    "sel": "path",
+    "over": 496,
+    "left": -503,
+    "w": 1752,
+    "host": {
+     "sel": "svg",
+     "canScroll": false,
+     "scrollW": 633,
+     "clientW": 633,
+     "clipped": true
+    },
+    "text": ""
+   },
+   {
+    "sel": "g",
+    "over": 496,
+    "left": -503,
+    "w": 1752,
+    "host": {
+     "sel": "svg",
+     "canScroll": false,
+     "scrollW": 633,
+     "clientW": 633,
+     "clipped": true
+    },
+    "text": "在大屏上定位 兴华路在大屏上定位 建设大道在大屏上定位 "
+   }
+  ]
+ },
+ {
+  "page": "/data",
+  "width": 1280,
+  "scrollW": 1265,
+  "clientW": 1265,
+  "bodyScrollW": 1265,
+  "innerW": 1280,
+  "overflowX": false,
+  "bodyFont": "14px",
+  "svg": {
+   "viewBox": "0 0 1000 366",
+   "cssW": 1145,
+   "cssH": 419
+  },
+  "items": [
+   {
+    "sel": "path",
+    "over": 945,
+    "left": -959,
+    "w": 3169,
+    "host": {
+     "sel": "svg",
+     "canScroll": false,
+     "scrollW": 1145,
+     "clientW": 1145,
+     "clipped": true
+    },
+    "text": ""
+   },
+   {
+    "sel": "g",
+    "over": 945,
+    "left": -959,
+    "w": 3169,
+    "host": {
+     "sel": "svg",
+     "canScroll": false,
+     "scrollW": 1145,
+     "clientW": 1145,
+     "clipped": true
+    },
+    "text": "在大屏上定位 兴华路在大屏上定位 建设大道在大屏上定位 "
+   }
+  ]
+ }
+]
