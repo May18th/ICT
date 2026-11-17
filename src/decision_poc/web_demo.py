@@ -3903,6 +3903,7 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
     </div>
     <div class=sub-links>
       <span class=sub-hd>参与与技术页</span>
+      <a href="/show">一键演示（五幕）</a>
       <a href="/workbench">证据查询与台账定位</a>
       <a href="/evolution">策略调整与版本回滚</a>
       <a href="/feedback">反馈注入</a>
