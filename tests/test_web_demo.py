@@ -11,6 +11,7 @@ from decision_poc.web_demo import (
     build_html,
     build_review_html,
     build_workbench_html,
+    data_provenance_summary,
     render_snapshot,
     route,
 )
@@ -49,6 +50,40 @@ def test_pages_and_existing_routes_still_serve():
     assert route("/evolution")[0] == 200, "进化对比页是并行会话的产出，不能被路由改造丢掉"
     assert route("/api/evolution")[0] == 200
     assert route("/api/demo")[0] == 200
+
+    # 现场演示入口。顺序即讲稿顺序，改顺序等于改讲稿，所以这里锁的是「顺序」而不只是「存在」。
+    status, _, body = route("/show")
+    assert status == 200, "/show 是现场唯一入口，404 就只能靠手点页面"
+    show_html = body.decode("utf-8")
+    beats = ["收到工单", "冲突曝光", "策略进化", "重新推演", "大屏退水"]
+    found = [show_html.find(f"chip:'{name}'") for name in beats]
+    assert all(pos >= 0 for pos in found), (
+        f"演示五幕缺了：{[n for n, pos in zip(beats, found) if pos < 0]}"
+    )
+    assert found == sorted(found), "五幕顺序变了：讲稿说到第几幕、大屏跳到第几步会错位"
+
+    # 冷启动演化：现场每次点「策略进化」都必须跑完同一条完整路径。
+    # 走记忆暖启动的话，第二次演示只会说「无新版本」——同一动作第一次好看、第二次空转。
+    status, _, body = route("/api/show/evolve", "POST", b"{}")
+    assert status == 200
+    evolved = json.loads(body)
+    assert evolved["triggered"] is True, "冷启动必须真跑一轮，不能被记忆判定跳过"
+    assert evolved["final_label"] == "flood-response-v1.2"
+    assert evolved["promoted_rounds"] >= 1
+    assert evolved["train"]["final"] == 0.0
+
+    # /limits 的数据性质分层直接来自数据门禁，页面上不能是手写的数。
+    status, _, body = route("/limits")
+    assert status == 200
+    limits_html = body.decode("utf-8")
+    summary = data_provenance_summary()
+    assert "error" not in summary, f"数据门禁没跑通：{summary.get('error')}"
+    assert "哪些是实测、哪些是假设" in limits_html
+    assert f"<b>{summary['total']}</b> 条" in limits_html, "合计条数与门禁实测值不一致"
+    for level, count in summary["by_level"].items():
+        assert f"<b>{int(count)}</b> 条" in limits_html, f"{level} 级条数没渲染出来"
+    # 门禁自己承认的待确认项也要露出来：只报数不报疑点，等于把「主动交代」做成摆设。
+    assert f"门禁自身还有 <b>{len(summary['warns'])}</b> 项待确认" in limits_html
 
 
 def test_unknown_route_is_404():

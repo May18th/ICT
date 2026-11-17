@@ -26,6 +26,26 @@ def test_payload_mirrors_the_showcase_numbers(payload: dict) -> None:
     ]
     assert [item["action"] for item in first["rounds"]] == ["promoted", "promoted", "rejected"]
 
+    # V1/V2 对照：缺口必须能拆成「题面不可消除 + 策略自造」，成本必须能从台账推回来。
+    # 页面上的「15 → 6」只是一个差值；拆开才是可辩护的结论——6 台是参考答案自己也
+    # 填不平的下限，9 台是 V1 自己造出来的，这两者混在一起说就会被问穿。
+    contrast = payload["contrast"]
+    train = contrast["train"]
+    assert train["critical_unmet"] == [15, 6]
+    # 恒等式：总缺口 = 题面下限 + 策略自造。两侧同时成立才算账算平了。
+    for total, floor, self_made in zip(
+        train["critical_unmet"], [train["floor"]] * 2, train["self_inflicted"]
+    ):
+        assert total == floor + self_made, f"缺口拆账不平：{total} ≠ {floor} + {self_made}"
+    assert train["self_inflicted"][1] == 0, "V2 不该再有自己造出来的缺口"
+    # 留出集同一条恒等式：策略收敛后剩下的缺口应当正好等于题面下限。
+    holdout = contrast["holdout"]
+    assert holdout["critical_unmet"][1] == holdout["floor"]
+    # 成本只折算泵台时，且必须能从「自造缺口 × 台账在途」推回来，不能是手写常数。
+    assert contrast["delay_min"] == pytest.approx(40.0)
+    for hours, self_made in zip(train["extra_hours"], train["self_inflicted"]):
+        assert hours == pytest.approx(self_made * contrast["delay_min"] / 60, abs=0.05)
+
 
 def test_payload_shows_memory_warm_start(payload: dict) -> None:
     second = payload["second"]
