@@ -285,7 +285,7 @@ def collab_review(*, event_id: str = EVENT_ID, as_of: str = AS_OF) -> dict[str, 
 INTERVENTIONS: dict[str, dict[str, Any]] = {
     "pump-minus-one": {
         "label": "少调一台移动泵",
-        "hint": "A-03 台账 4 台只放行 3 台（真减 1 台），缺口 2 → 3，看方案怎么重排",
+        "hint": "A-03 台账 4 台仅放行 3 台（净减 1 台），缺口 2 → 3，观察方案重排结果",
         "plain": "把 A-03 可用移动泵从 4 台改为 3 台",
         "kind": "resource",
         "interventions": [
@@ -318,7 +318,7 @@ INTERVENTIONS: dict[str, dict[str, Any]] = {
     },
     "pump-b01-off": {
         "label": "B-01 跨区泵全调不过来",
-        "hint": "B-01 的 2 台库存置 0（跨区 40 分钟且车队被堵），看缺口怎么变",
+        "hint": "B-01 的 2 台库存置 0（跨区 40 分钟且车队受阻），观察缺口变化",
         "plain": "把 B-01 跨区备用移动泵从 2 台改为 0 台",
         "kind": "resource",
         "interventions": [
@@ -530,8 +530,8 @@ def build_html() -> str:
 <section class=card style='margin-top:16px'><h2>人工协同 vs 智能体辅助 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（只比算得出来的项；人工耗时未实测就留空，不填估算值）</span></h2><div id=baseline class=sub>加载中</div><div id=basefoot class=sub style='margin-top:10px'></div></section>
 <section class=card style='margin-top:16px'><h2>推理链路与证据</h2><div id=trace></div></section>
 <section class=card style='margin-top:16px'><h2>微调度台 · 决策事件流 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（六类事件同源派生，每条都能对回推演字段）</span></h2><div class=toolbar style='margin:0 0 10px'><button onclick="playTimeline()">回放事件流</button><span id=tlstatus class=sub>未加载</span></div><div id=cats class=cats></div><ol id=timeline class=tl></ol><div id=tlfoot class=sub style='margin-top:10px'></div></section>
-<section class=card style='margin-top:16px'><h2>人工干预 · 重新推演 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（改一个条件，系统重算并说明改了什么）</span></h2><div id=ivbtns class=toolbar style='margin:0 0 10px'></div><div id=ivout class=sub>点上面任一项，观察推演结果怎么变</div></section>
-<section class=card style='margin-top:16px'><h2>协同复核 · 谁接哪张卡 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（1 总控 + 5 部门，只读复核、不改推演数字）</span></h2><div id=cvsum class=sub>未加载</div><div id=cvcards style='margin-top:10px'></div><div id=cvhand class=sub style='margin-top:10px'></div></section>
+<section class=card style='margin-top:16px'><h2>人工干预 · 重新推演 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（修改单一条件后系统重算，并说明变更项）</span></h2><div id=ivbtns class=toolbar style='margin:0 0 10px'></div><div id=ivout class=sub>选择任一项干预，观察推演结果变化</div></section>
+<section class=card style='margin-top:16px'><h2>协同复核 · 部门认领 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（1 名总控 + 5 个部门，只读复核，不修改推演数值）</span></h2><div id=cvsum class=sub>未加载</div><div id=cvcards style='margin-top:10px'></div><div id=cvhand class=sub style='margin-top:10px'></div></section>
 <section class=card id=exec-section style='margin-top:16px'><h2>执行账本 <span style='font-weight:400;font-size:12px;color:#9fb1c8'>（计划 vs 实际 · 演示执行账本：无真实身份系统，actor 由服务端固定）</span></h2><div id=exec-summary class=sub>加载中</div><div id=exec-cards style='margin-top:10px'></div><div id=exec-close></div><div id=exec-msg class=exmsg></div><details style='margin-top:10px'><summary class=sub style='cursor:pointer'>最近事件（账本原始记录，只追加不改写）</summary><div id=exec-events class=sub style='margin-top:8px'></div></details></section>
 <style>.ghost{background:#1e3a55;color:#bae6fd}#log{max-height:360px;overflow:auto;font:12px ui-monospace,monospace}.logrow{padding:6px 8px;border-bottom:1px solid #1e3250;white-space:nowrap}.logrow .mcp{color:#86efac}.logrow .manual{color:#fbbf24}#panel{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}#comparebody{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#cfe3f7}.tl{list-style:none;padding:0;margin:0}.tl li{border-left:2px solid #263a55;padding:8px 0 8px 14px;opacity:.2;transition:opacity .35s,border-color .35s}.tl li.on{opacity:1;border-left-color:#38bdf8}.tl .hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.tl .seq{color:#64748b;font:12px ui-monospace,monospace}.tl .ttl{font-weight:700;color:#bae6fd}.tl .dsc{color:#cfe3f7;font-size:13px;margin-top:3px}.tl .mt{color:#7f93ab;font:11px ui-monospace,monospace;margin-top:5px;word-break:break-all}.tl ul.basis{margin:7px 0 0;padding-left:16px;color:#b8c7d9;font-size:12px}.tl ul.basis li{margin:2px 0;border:0;padding:0;opacity:1}.tag{font-size:11px;padding:1px 6px;border-radius:4px;background:#20344d;color:#9fb1c8}.k-conflict{color:#fbbf24}.k-gap{color:#fca5a5}.k-audit{color:#86efac}.ivbtn{background:#1e3a55;color:#bae6fd;border:0;border-radius:6px;padding:10px 14px;font-weight:700;cursor:pointer;text-align:left;max-width:330px;min-width:0;white-space:normal;overflow-wrap:anywhere;flex:1 1 280px}.ivbtn small{display:block;font-weight:400;color:#8fa4bd;font-size:11px;margin-top:4px;line-height:1.4}.row{display:flex;gap:12px;padding:5px 0;border-bottom:1px dashed #1e3250;font-size:13px}.row>span:first-child{flex:1 1 auto;min-width:0}.row b{margin-left:auto;color:#7dd3fc;flex:0 0 auto;padding-left:12px;white-space:nowrap}.chain{display:flex;flex-direction:column;gap:0}.lnk{display:grid;grid-template-columns:26px 140px minmax(0,1fr) minmax(0,200px);gap:12px;padding:9px 0 9px 14px;border-left:2px solid #263a55;opacity:.32;transition:opacity .3s,border-color .3s}.lnk.on{opacity:1;border-left-color:#38bdf8}.lnk .no{color:#64748b;font:12px ui-monospace,monospace}.lnk .who{font:11px ui-monospace,monospace;color:#8fa4bd;line-height:1.55}.lnk .what{min-width:0}.lnk .what b{color:#bae6fd}.lnk .what div{font-size:12px;color:#b8c7d9;margin-top:3px}.lnk .tool{font:11px ui-monospace,monospace;color:#86efac;text-align:right;word-break:break-all}.ord{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:7px 0;border-bottom:1px dashed #1e3250;font-size:13px}.ord .id{font:11px ui-monospace,monospace;color:#8fa4bd}.ord .ds{grid-column:1/3;color:#b8c7d9;font-size:12px}.ord.ev{background:#14283d;border-left:2px solid #38bdf8;padding-left:8px}.ord .sev{padding:1px 6px;border-radius:4px;font-size:11px;background:#20344d}.sev.high{color:#fca5a5}.sev.medium{color:#fbbf24}.plan{display:grid;grid-template-columns:1fr 1fr;gap:14px}.plan .col{background:#101d30;border:1px solid #22344d;border-radius:8px;padding:12px}.plan .col h3{margin:0 0 8px;font-size:14px;color:#bae6fd}.plan .col.now{border-color:#2b6f8f}.plan .col.alt{border-color:#7c5a1f}.plan .kv{display:flex;font-size:13px;padding:3px 0}.plan .kv b{margin-left:auto;color:#7dd3fc}.ent{cursor:pointer}.ent:hover{filter:brightness(1.35)}.ent.selected{filter:brightness(1.45);stroke:#fff;stroke-width:3}.cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.cat{background:#1e3a55;color:#bae6fd;border:0;border-radius:99px;padding:5px 11px;font-size:12px;cursor:pointer}.cat.sel{background:#38bdf8;color:#0b1220;font-weight:700}@media(max-width:800px){.grid{grid-template-columns:1fr}.plan{grid-template-columns:1fr}.lnk{grid-template-columns:26px minmax(0,1fr);row-gap:3px}.lnk .who{grid-column:2}.lnk .what{grid-column:2}.lnk .tool{grid-column:2;text-align:left}}</style>
 <details class=tech><summary>技术附录（开发调试用：渲染记录、工具原始日志、模型对照）</summary><div>
@@ -564,11 +564,13 @@ function zh(m,v){return (v==null||v==='')?'—':(m[v]||String(v))}
 function tools(v){return String(v||'').split('、').filter(Boolean).map(t=>TOOLCN[t]||t).join('、')||'—'}
 // 证据引用形如 AS-A-03-work_order-6a1282a1#A-03/work_order/v1#row:2，评委读不懂，翻成「A-03 工单台账 v1 第 2 行」。
 const TBL={'construction_plan':'施工方案','drainage_facility':'排水设施台账','duty_list':'部门职责表','emergency_plan':'应急预案','pipeline_ledger':'管线台账','procedure':'处置规程','resource_inventory':'资源台账','road_network':'路网台账','underpass':'下穿隧道台账','work_order':'工单台账'};
-const CLAIM={'CL-S1-observed':'发生了什么','CL-S2-affected':'影响了哪些对象','CL-S3-owner':'该谁负责','CL-S4-conflict':'暴露了哪些冲突','CL-S5-resource':'资源缺多少'};
+const CLAIM={'CL-S1-observed':'事件观测','CL-S2-affected':'影响对象','CL-S3-owner':'责任主体','CL-S4-conflict':'跨部门冲突','CL-S5-resource':'资源缺口'};
 function claimName(id){const s=String(id||'');if(CLAIM[s])return CLAIM[s];const m=s.match(/^CL-S6-action-(\\d+)$/);return m?'处置动作第 '+(+m[1])+' 条':s}
 function refCn(x){const parts=String(x||'').split('#');if(parts.length<2)return x;
  const p=parts[1].split('/');const m=String(parts[2]||'').match(/(?:row|line):(\\d+)/);
- return (p[0]||'')+' '+(TBL[p[1]]||p[1])+(p[2]?' '+p[2]:'')+(m?' 第 '+m[1]+' 行':'')}
+ const doc=(typeof DOC_CN!=='undefined'&&DOC_CN[p[1]])||TBL[p[1]]||p[1];
+ const ver=(p[2]&&!/^(row|line|region):/.test(p[2]))?p[2]:'';
+ return (p[0]||'')+' '+doc+(ver?' '+ver:'')+(m?' 第 '+m[1]+' 行':'')}
 function drawFloodMap(){const scene=SCHED&&SCHED.scene;if(!scene||!scene.entities)return;const fm=document.getElementById('flood-map');if(!fm)return;const parts=[];(scene.entities||[]).filter(e=>e.kind==='district').forEach(e=>{const r=Math.min(e.r,96);parts.push('<circle class="fm-zone" id="fm-'+esc(e.id)+'" cx="'+e.cx+'" cy="'+e.cy+'" r="'+r+'"/>');parts.push('<text class="fm-lbl" x="'+e.cx+'" y="'+(e.cy-r-6)+'" text-anchor="middle">'+esc(e.label)+' 片区</text>')});(scene.entities||[]).filter(e=>e.kind==='road').forEach(e=>{parts.push('<polyline class="fm-road'+(/已封/.test(e.label||'')?' fm-road-closed':'')+'" id="fm-'+esc(e.id)+'" points="'+e.points+'" fill="none"/>')});(scene.entities||[]).filter(e=>e.kind==='facility').forEach(e=>{const ps=e.id.indexOf('DF-PS')===0;
   if(ps){parts.push('<rect class="fm-node fm-node-ps" id="fm-'+esc(e.id)+'" x="'+(Number(e.cx)-7)+'" y="'+(Number(e.cy)-7)+'" width="14" height="14" rx="3"/>')}
   else{parts.push('<circle class="fm-node fm-node-in" id="fm-'+esc(e.id)+'" cx="'+e.cx+'" cy="'+e.cy+'" r="6"/>')}
@@ -611,7 +613,7 @@ async function runLLM(){status.textContent='LLM 决策中…（约 4-8 秒）';
 async function loadPlatform(){try{const r=await fetch('/api/platform-evidence');const d=await r.json();
  if(!d.available){return}
  const p=d.record;const NL=String.fromCharCode(10);
- const agree=p.selected_match?'<span class=ok>与参照一致</span>':'<span class=warn>与参照不一致（实际调用时温度未固定会漂移，说明优先级得靠推演定）</span>';
+ const agree=p.selected_match?'<span class=ok>与参照一致</span>':'<span class=warn>与参照不一致（实际调用时温度未固定会漂移，说明优先级需由推演确定）</span>';
  llmcard.style.display='';
  llmbody.innerHTML='<b>Nexent 平台实测验证</b>（Agent '+esc(p.agent_name)+' · '+esc(p.case_id)+' · schema '+(p.schema_valid?'<span class=ok>合法</span>':'<span class=warn>失败</span>')+'）<br>选中 <b>'+esc(p.selected_option_id||'-')+'</b>（参照 '+esc(p.expected_option_id)+'）· '+agree+' · 时延 '+esc(p.latency_ms)+'ms<br><span class=evidence>'+esc(p.method||'')+'</span>';}catch(e){}}
 let STREAM=null,STREAMCAT='all';
@@ -652,7 +654,7 @@ async function doIntervene(id){ivout.innerHTML='<span class=warn>重推演中：
  const travelHtml=(tv&&tv.available)?'<div class=row><span>封路后到场时间（'+esc(tv.origin)+' → '+esc(tv.target)+'）</span><b>'+esc(tv.baseline.minutes)+' → '+esc(tv.after_closure.minutes)+' 分钟</b></div><div class=row><span>绕行距离增量</span><b>+'+esc(tv.delta_meters)+' m</b></div><div style="margin-top:6px;font-size:11px;color:#8fa4bd">封路只改路网到场时间，不改移动泵缺口——缺口由库存与需求折算决定，两件事必须分开说</div>':'';
  const stmts='<ul style="margin:10px 0 0;padding-left:18px;font-size:13px;color:#cfe3f7">'+c.statements.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>';
  const moved=c.moved_actions.length?'<div style="margin-top:10px;font-size:12px;color:#8fa4bd">挪位：'+c.moved_actions.map(m=>'#'+m.order).join('、')+'</div>':'';
- ivout.innerHTML='<b style="color:#7dd3fc">'+esc(d.label)+'</b><div style="color:#b8c7d9;font-size:13px;margin:6px 0 10px">改了什么：'+esc(d.plain||d.patches.join(' · '))+'</div>'+rows.map(x=>'<div class=row><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join('')+travelHtml+stmts+moved+'<div style="margin-top:10px;font-size:11px;color:#7f93ab">'+esc(d.mechanism)+'</div>'}
+ ivout.innerHTML='<b style="color:#7dd3fc">'+esc(d.label)+'</b><div style="color:#b8c7d9;font-size:13px;margin:6px 0 10px">变更项：'+esc(d.plain||d.patches.join(' · '))+'</div>'+rows.map(x=>'<div class=row><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join('')+travelHtml+stmts+moved+'<div style="margin-top:10px;font-size:11px;color:#7f93ab">'+esc(d.mechanism)+'</div>'}
 async function loadCollab(){const r=await fetch('/api/collab-review');const d=await r.json();
  if(d.status!=='ok'){cvsum.innerHTML='<span class=warn>'+esc(d.error||'复核不可用')+'</span>';return}
  const c=d.counts;
@@ -1676,10 +1678,10 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
     <div class="hint">「台账问答」打开就能用，回答中的定位可跳转台账原文。
     想看平台原生对话界面，点上面「打开平台原生界面 ↗」——新标签页打开，需要已登录平台。</div>
     <div id="chatpane">
-      <div id="feed"><div class="msg ai">可用自然语言提问，例如「谁负责」「先做什么」「依据哪条」。
-需要指定事件时，把事件编号写进问题（例如 WO-20261029-009）。
+      <div id="feed"><div class="msg ai">支持自然语言提问，示例：「责任主体」「处置顺序」「依据条款」。
+需要指定事件时，在问题中写入事件编号（例如 WO-20261029-009）。
 事实由本地规则计算，模型负责表述；带定位的结论可展开台账原文。</div></div>
-      <div class="askbar" id="asks"><span class="lbl">常用问法：</span><button type="button" class="ask" data-agent="deduction">这地方积水了，该谁去处理？</button><button type="button" class="ask" data-agent="deduction">先封路还是先开泵？</button><button type="button" class="ask" data-agent="asset_qa">兴华路泵站设计流量多少？</button></div>
+      <div class="askbar" id="asks"><span class="lbl">常用问法：</span><button type="button" class="ask" data-agent="deduction">查询某路段积水 30 cm 时的首要处置责任部门</button><button type="button" class="ask" data-agent="deduction">查询封路与开泵的处置顺序及规则依据</button><button type="button" class="ask" data-agent="asset_qa">查询兴华路泵站的设计流量</button></div>
       <form id="f"><textarea id="q" placeholder="Enter 发送 · Shift+Enter 换行"></textarea><button class="send" id="go">发送</button></form>
     </div>
   </section>
@@ -1748,7 +1750,7 @@ function send(){
       var refs=res.d.evidence_refs||[];
       if(refs.length){
         var box=el('div','chips');
-        refs.forEach(function(ref){var c=el('span','chip',ref); c.title='点击查看原文'; c.onclick=function(){locate(ref);}; box.appendChild(c);});
+        refs.forEach(function(ref){var c=el('span','chip',refCn(ref)); c.title=ref+'（点击查看原文）'; c.onclick=function(){locate(ref);}; box.appendChild(c);});
         n.appendChild(box);
       }
       var cites=res.d.citations||[];
@@ -1762,7 +1764,7 @@ function send(){
         });
         n.appendChild(cbox);
       }
-      note(res.d.agent+' · 会话 '+(conv||'-')+(refs.length?(' · '+refs.length+' 条可定位引用'):'')+(cites.length?(' · '+cites.length+' 条知识库引用'):''));
+      note((res.d.agent||'本地规则引擎')+' · 会话 '+(conv||'-')+(refs.length?(' · '+refs.length+' 条可定位引用'):'')+(cites.length?(' · '+cites.length+' 条知识库引用'):''));
       if(refs.length||cites.length){ verifyAll(refs,cites,n); }
       stat.textContent='已连接';
     })
@@ -1815,7 +1817,7 @@ function renderVerify(d){
       box.appendChild(meta);
       box.appendChild(el('pre','excerpt',it.excerpt||''));
       var target=it.resolved_ref||it.input;
-      var c=el('span','chip',target); c.style.marginTop='6px'; c.style.display='inline-block'; c.title='点击查看原文';
+      var c=el('span','chip',refCn(target)); c.style.marginTop='6px'; c.style.display='inline-block'; c.title=target+'（点击查看原文）';
       c.onclick=function(){ locate(target); };
       box.appendChild(c);
     }else{
@@ -1823,7 +1825,7 @@ function renderVerify(d){
       why.style.marginTop='4px';
       box.appendChild(why);
       if(it.resolved_ref){
-        var r=el('span','chip',it.resolved_ref); r.style.marginTop='6px'; r.style.display='inline-block'; r.title='这条切片本身可定位，点开看原文';
+        var r=el('span','chip',refCn(it.resolved_ref)); r.style.marginTop='6px'; r.style.display='inline-block'; r.title=it.resolved_ref+'（该切片可定位，展开查看原文）';
         r.onclick=function(){ locate(it.resolved_ref); };
         box.appendChild(r);
       }
@@ -1891,7 +1893,7 @@ function searchRef(text){
         box.appendChild(head);
         box.appendChild(el('pre','excerpt',h.excerpt||''));
         if(h.evidence_ref){
-          var c=el('span','chip',humanRef(h.evidence_ref)); c.style.marginTop='8px'; c.style.display='inline-block';
+          var c=el('span','chip',refCn(h.evidence_ref)); c.style.marginTop='8px'; c.style.display='inline-block';
           c.title=h.evidence_ref+'（点击查看原文）';
           c.onclick=function(){locate(h.evidence_ref);};
           box.appendChild(c);
@@ -2070,7 +2072,7 @@ function refChips(refs, limit){
   var box=el('div','chips');
   var shown=(limit&&refs.length>limit)?refs.slice(0,limit):refs;
   shown.forEach(function(ref){
-    var c=el('span','chip',humanRef(ref)); c.title=ref+'（点击查看原文）';
+    var c=el('span','chip',refCn(ref)); c.title=ref+'（点击查看原文）';
     c.onclick=function(){locate(ref);};
     box.appendChild(c);
   });
@@ -2081,7 +2083,7 @@ function refChips(refs, limit){
     more.onclick=function(){
       var rest=el('div','chips');
       refs.slice(limit).forEach(function(ref){
-        var c=el('span','chip',humanRef(ref)); c.title=ref+'（点击查看原文）';
+        var c=el('span','chip',refCn(ref)); c.title=ref+'（点击查看原文）';
         c.onclick=function(){locate(ref);};
         rest.appendChild(c);
       });
@@ -2147,7 +2149,7 @@ function renderEvent(d, target){
       host.appendChild(el('div','empty','本次没有推断：'+names.join('、')));
     }
     var refs0=d.evidence_refs||[];
-    host.appendChild(blockTitle('依据','共 '+refs0.length+' 条，点开看原文'));
+    host.appendChild(blockTitle('依据','共 '+refs0.length+' 条，展开查看原文'));
     if(!refs0.length){host.appendChild(el('div','empty','无'));}
     host.appendChild(refChips(refs0, 12));
     var foot0=el('div','empty');
@@ -2252,7 +2254,7 @@ function renderEvent(d, target){
   }
 
   var refs=d.evidence_refs||[];
-  host.appendChild(blockTitle('依据','共 '+refs.length+' 条，点开看原文'));
+  host.appendChild(blockTitle('依据','共 '+refs.length+' 条，展开查看原文'));
   if(!refs.length){host.appendChild(el('div','empty','无'));}
   host.appendChild(refChips(refs, 12));
 
@@ -2274,14 +2276,14 @@ function loadReplay(){
   btn.id='replayBtn'; btn.style.height='32px'; btn.style.borderRadius='8px';
   btn.onclick=function(){runReplay(this);};
   bar.appendChild(btn);
-  bar.appendChild(el('span','empty','只跑 WO-20261029-007（期望值只对这一个事件定过）：点一下，实际调用一遍主智能体，八项当场重算，并与上一轮逐项比。约 10–30 秒。'));
+  bar.appendChild(el('span','empty','仅针对 WO-20261029-007（期望值仅对该事件定标）：点击后实际调用主智能体，八项指标当场重算，并与上一轮逐项比对，耗时约 10–30 秒。'));
   pane.appendChild(bar);
   var host=el('div'); host.id='replayResult'; pane.appendChild(host);
   host.appendChild(el('div','empty','读取历史…'));
   fetch('/api/workbench/replay').then(function(r){return r.json();}).then(function(d){
     host.innerHTML='';
     var runs=d.runs||[];
-    if(!runs.length){host.appendChild(el('div','empty','还没有重跑记录。点上面的按钮跑第一次。'));return;}
+    if(!runs.length){host.appendChild(el('div','empty','暂无重跑记录，点击上方按钮执行首次重跑。'));return;}
     if(d.latest){ renderReplay({current:d.latest, diff:d.diff||{}, labels:d.labels||{}}); }
     var sep=el('div','empty','最近 '+runs.length+' 轮');
     sep.style.margin='16px 0 6px'; sep.style.paddingTop='10px'; sep.style.borderTop='1px solid #f3f4f6';
@@ -2418,7 +2420,7 @@ function renderReplay(d){
   });
   t.appendChild(cg);
   var head=el('tr');
-  ['看什么','应该是什么','实际答成什么','结果'].forEach(function(h){head.appendChild(el('th',null,h));});
+  ['核验项','期望值','实际回答','判定'].forEach(function(h){head.appendChild(el('th',null,h));});
   t.appendChild(head);
   (c.checks||[]).forEach(function(item){
     var tr=el('tr');
@@ -2474,7 +2476,7 @@ function loadTools(){
     var rows=(d.entries||[]).slice().reverse();
     if(!rows.length){pane.appendChild(el('div','empty','还没有工具调用记录。'));return;}
     var t=el('table'), head=el('tr');
-    ['时间','做了什么','结果','耗时','数据标识'].forEach(function(h){head.appendChild(el('th',null,h));});
+    ['时间','动作','结果','耗时','数据标识'].forEach(function(h){head.appendChild(el('th',null,h));});
     t.appendChild(head);
     rows.forEach(function(r){
       var tr=el('tr');
@@ -3875,8 +3877,8 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
   </div>
   <div class=plat>
     <span class=tag>Nexent v2.7.0</span><br>
-    本项目 3 个智能体（另 3 个同题对照）· 主智能体接 4 个工具<br>
-    配置可整包带走 · 断网也能跑
+    本项目 3 个智能体（另 3 个同题对照）· 主智能体接入 4 个工具<br>
+    配置可整包迁移 · 支持断网运行
   </div>
 </header>
 
@@ -3895,7 +3897,7 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
       <span>系统概览 → 推演流程 → 证据依据 → 能力边界</span></div>
     <div class=ask-grid>
       <a class=ask href="/map2d"><b>① 系统概览</b>
-        <span>积水深度、封路、泵站状态、跨区调泵，一屏呈现</span></a>
+        <span>积水深度、封路、泵站状态、跨区调泵，单屏呈现</span></a>
       <a class=ask href="/map2d"><b>② 推演流程</b>
         <span>右侧 7 步事件链：降雨、堵塞、派单、缺口、增援、封路、退水</span></a>
       <a class=ask href="/data"><b>③ 证据依据</b>
@@ -3918,11 +3920,11 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
     <article class=card>
       <div class=kicker>问答式</div>
       <h2>证据工作台</h2>
-      <p>支持「谁负责」「先做什么」这类提问，每条结论附台账原文定位。
+      <p>支持「责任主体」「处置顺序」这类提问，每条结论附台账原文定位。
         事实由本地规则计算，模型负责表述。</p>
       <ul class=points>
         <li>完整推演：雨情定级 → 影响对象 → 责任部门 → 跨部门冲突 → 资源缺口 → 处置动作</li>
-        <li>每一步都能查依据：用了哪几份台账、取的是哪一行</li>
+        <li>每一步均可追溯依据：使用哪几份台账、取第几行</li>
         <li>同一个问题可以重跑，重跑结果与上一轮逐条比对</li>
       </ul>
       <div class=go><a href="/workbench">进入工作台 →</a></div>
@@ -3931,7 +3933,7 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
     <article class=card>
       <div class=kicker>态势式</div>
       <h2>2.5D 俯视大屏</h2>
-      <p>一屏看现场：积水范围与深度、封路、泵站状态、跨区调泵。七步推演可播放。</p>
+      <p>现场态势单屏呈现：积水范围与深度、封路、泵站状态、跨区调泵；七步推演支持回放。</p>
       <ul class=points>
         <li>台账尺寸按真实米数画，平面布局为示意坐标</li>
         <li>示意路按真实道路走向画，与真实位置偏差中位 42 米（<a href="/data#osm">对照表</a>）</li>
@@ -3945,7 +3947,7 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
 
   <section class=facts>
     <div class=block>
-      <h3>平台上发布了什么</h3>
+      <h3>平台上发布的内容</h3>
       <div id=f-agents></div>
     </div>
     <div class=block>
@@ -4049,19 +4051,19 @@ function renderStatus(d){
     var note = document.createElement('div');
     note.style.cssText = 'margin-top:10px;padding-top:9px;border-top:1px dashed #eef1f5;' +
       'font-size:12px;color:#8b95a3;line-height:1.6';
-    note.innerHTML = '另有 ' + controls.length + ' 个对照组智能体（同一道题、同样模型，' +
-      '只是拿掉工具），用于对比"有工具和没工具差多少"，见 <a href="/limits">第 ④ 题</a>。';
+    note.innerHTML = '另有 ' + controls.length + ' 个对照智能体（同题、同模型，仅移除工具），' +
+      '用于对比工具可用性差异，详见 <a href="/limits">④ 能力边界</a>。';
     host.appendChild(note);
   }
 
   var th = document.getElementById('f-tools');
   th.innerHTML = '';
-  factsRow(th, '主智能体接了',
+  factsRow(th, '主智能体接入',
     (tools.length ? tools.length + ' 个工具' : '未读到'), '', false, false);
-  factsRow(th, '谁在说话', 'DeepSeek-Chat（决策不由它做）', '', false, false);
-  factsRow(th, '谁来算', '规则算事实，模型说人话', '', false, false);
-  factsRow(th, '能不能断网跑', '12 个容器，不依赖外网', '', false, false);
-  factsRow(th, '配置能不能带走', 'agent.json + skills 整包导出', '', false, false);
+  factsRow(th, '决策模型', 'DeepSeek-Chat（仅负责表述）', '', false, false);
+  factsRow(th, '事实计算', '规则计算事实，模型生成表述', '', false, false);
+  factsRow(th, '断网运行', '12 个容器，不依赖外网', '', false, false);
+  factsRow(th, '配置迁移', 'agent.json + skills 整包导出', '', false, false);
 
   var toolNote = document.createElement('div');
   toolNote.style.cssText = 'margin-top:8px;font-size:12px;color:#8b95a3;line-height:1.6';
@@ -5207,7 +5209,7 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
        主动摆出来，比被评委问「这数据真的假的」之后再解释要有力得多。 -->
   <h3 class=sec>这份数据里，哪些是实测、哪些是假设<span>逐条分级统计，不是概述</span></h3>
   <table>
-    <thead><tr><th>级别</th><th>条数</th><th>指什么</th><th>对外怎么表述</th></tr></thead>
+    <thead><tr><th>级别</th><th>条数</th><th>含义</th><th>对外表述口径</th></tr></thead>
     <tbody>__PROV_ROWS__</tbody>
   </table>
   <div class=table-note>__PROV_NOTE__</div>
@@ -5255,7 +5257,7 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
 
   <h3 class=sec>八项逐条对照<span>前六项依赖台账，后两项不依赖</span></h3>
   <table>
-    <thead><tr><th>看什么</th><th>台账中的取值</th><th>对照组答成</th><th>是否依赖台账</th></tr></thead>
+    <thead><tr><th>核验项</th><th>台账中的取值</th><th>对照组回答</th><th>是否依赖台账</th></tr></thead>
     <tbody>__ROWS__</tbody>
   </table>
   <div class=table-note>对照组一致的两项，均为不依赖台账的项；依赖台账的六项全部为空。
@@ -5303,8 +5305,8 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
   <div class=two>
     <div class=panel>
       <h4>与数据来源无关，可以直接留用</h4>
-      <div class=item><b>处置规则集</b>规则读的是字段（深度、泵组状态、路段通行能力），
-        不读数据来源。换一批数据进来，判定逻辑不用改。</div>
+      <div class=item><b>处置规则集</b>规则读取字段（深度、泵组状态、路段通行能力），
+        不依赖数据来源；更换数据集时判定逻辑无需修改。</div>
       <div class=item><b>评测集与门禁</b>候选策略是否采纳，由固定的 12 例评测集偏差决定。
         换成实测数据后只需重出这 12 例的参考答案，判定流程完全不变。</div>
       <div class=item><b>版本、回滚与证据链</b>策略版本、回滚路径、每条结论的证据引用结构
@@ -5333,10 +5335,10 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
 
 
 _PROV_LEVEL_CN = {
-    "real": ("实测", "能定位到预案或台账原文的具体值", "可以作为依据引用"),
-    "derived": ("推算", "由真实值按明确公式算出，公式与输入都可查", "只能说「据此推算」，不能说实测"),
-    "assumption": ("假设", "没有公开口径，按量级假设，待核实", "必须标注「假设值，待核实」"),
-    "synthetic": ("演示数据", "为演示编制的场景数据，字段结构对齐真实单据", "不得当作实测值引用"),
+    "real": ("实测", "可定位至预案或台账原文的具体值", "可作为依据引用"),
+    "derived": ("推算", "由真实值按明确公式计算，公式与输入均可查", "仅可标注「据此推算」，不得标注实测"),
+    "assumption": ("假设", "无公开口径，按量级假设，待核实", "必须标注「假设值，待核实」"),
+    "synthetic": ("演示数据", "为演示编制的场景数据，字段结构对齐真实单据", "不得作为实测值引用"),
 }
 
 
@@ -5409,7 +5411,7 @@ def _prov_note_html(summary: Mapping[str, Any]) -> str:
     parts = [
         f"结论建立在 <b>{total}</b> 条事实上：<b>{real}</b> 条可追溯到原文，"
         f"其余 {total - real} 条分别是推算、假设与演示数据。"
-        f"对外引用时，只有第一类能说「实测」。"
+        f"对外引用时，仅第一类可标注为「实测」。"
     ]
     if synthetic:
         parts.append(
@@ -5553,9 +5555,9 @@ iframe{display:block;width:100%;height:100%;border:0}
   <div id=kick><div class=card>
     <h1>一键演示：一条闭环，五幕演示</h1>
     <p>收到工单 → 冲突曝光 → 策略进化 → 重新推演 → 大屏退水<br>
-       每一步的数字都来自本机接口，可以当场反问「这个数哪来的」。</p>
+       每一步的数字均来自本机接口，可当场核对其来源。</p>
     <div class=go>按 <kbd>空格</kbd> 开始</div>
-    <div class=note>断网也能跑；重复演示结果一致（演化走冷启动）</div>
+    <div class=note>支持断网运行；重复演示结果一致（演化走冷启动）</div>
   </div></div>
 </div>
 <script>

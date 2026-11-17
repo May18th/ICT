@@ -267,13 +267,13 @@ def build_contrast_html(payload: Mapping[str, Any]) -> str:
         rows.append(row("留出集：关键片区未满足（台）", str(hu[0]), str(hu[1]),
                         f"−{int(hu[0]) - int(hu[1])} 台（下限 {hold.get('floor')}）"))
     table = (
-        '<table class=versus-table><thead><tr><th>看什么</th><th>V1 初始策略</th>'
+        '<table class=versus-table><thead><tr><th>核验项</th><th>V1 初始策略</th>'
         f'<th>V2 进化后</th><th>变化</th></tr></thead><tbody>{"".join(rows)}</tbody></table>'
     )
 
     v1 = (
         '<div class="vs-col v1"><h3>V1 · 初始策略</h3>'
-        '<div class=vtag>按片区顺序分配，不看「有没有过阈值、地下有没有风险」</div><ul>'
+        '<div class=vtag>按片区顺序分配，不判断阈值是否超限、地下空间是否存在风险</div><ul>'
         f"<li>关键片区缺 <b>{unmet[0]} 台</b>，其中 <b>{self_inf[0]} 台</b>是策略自己造出来的——"
         "参考答案里本来填得平</li>"
         f"<li>该调拨 <b>{exp_tr} 次</b>，实际调了 <b>0 次</b>：跨区运力一次都没用上</li>"
@@ -294,9 +294,9 @@ def build_contrast_html(payload: Mapping[str, Any]) -> str:
         '<div class=costbox>'
         f"<b>把缺口折成成本：</b>策略自造缺口 {self_inf[0]} 台 × 跨区在途 {delay:g} 分钟 = "
         f"<b>{hours[0]} 泵台时</b>；V2 为 <b>{hours[1]} 泵台时</b>。"
-        "这 6 个台时不是天灾，是分配顺序造成的——同样的人、同样的泵、同样的路况。"
-        '<span class=src>折算口径：台数 × 台账登记的跨区在途时延（40 分钟），只把「台」换成同一单位便于比较，'
-        "<b>不是钱</b>。应急采购与市级调派的真实结算口径我们手上没有，不编这个数——要用请按实际考核口径替换。</span>"
+        "该泵台时差异由分配顺序导致，人员、泵组与路况条件相同。"
+        '<span class=src>折算口径：台数 × 台账登记的跨区在途时延（40 分钟），仅将「台」换算为统一单位以便比较，'
+        "<b>非资金口径</b>。应急采购与市级调派的真实结算数据未取得，此处不作估算；实际使用按运行考核口径替换。</span>"
         "</div>"
     )
 
