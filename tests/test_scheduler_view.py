@@ -237,7 +237,7 @@ def test_page_translates_backend_enums_for_humans():
     from decision_poc.web_demo import build_html
 
     html = build_html()
-    for marker in ("橙色预警", "各片区自理", "职责重叠", "参与本次", "第 '+m[1]+' 行", "发生了什么"):
+    for marker in ("橙色预警", "各片区自理", "职责重叠", "参与本次", "第 '+m[1]+' 行", "事件观测"):
         assert marker in html, f"页面缺中文映射 {marker}"
     # 链路栅格只允许一套列定义：再出现 grid-column 强推，工具名会挤到第一列
     assert "grid-column:2/4" not in html
