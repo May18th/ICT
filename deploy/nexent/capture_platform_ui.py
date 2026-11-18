@@ -20,7 +20,7 @@
     $env:NEXENT_ADMIN_EMAIL    = "admin@nexent.com"        # Agent 所有者所在租户的用户
     $env:NEXENT_ADMIN_PASSWORD = "<平台密码>"               # 只从环境变量读，不写进仓库
     uv run --with playwright python deploy/nexent/capture_platform_ui.py \
-        --out docs/reports/captures/nexent --video
+        --out artifacts/reports/captures/nexent --video
 
 边界（必须如实说明）：
     - 脚本只截图、不改平台数据；录屏是页面浏览过程，不是"问答全过程"。
@@ -44,7 +44,7 @@ from typing import Any, Dict, List
 
 DEFAULT_WEB_URL = "http://127.0.0.1:3000"
 DEFAULT_LOCALE = "zh"
-DEFAULT_OUT = "docs/reports/captures/nexent"
+DEFAULT_OUT = "artifacts/reports/captures/nexent"
 
 # 每页：页面名 → (路径, 必须出现的文字, 说明)。文字按"页面上真能看到"来写，
 # 不写只有 API 才查得到的东西，避免截图证据与断言脱节。

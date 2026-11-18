@@ -3,7 +3,7 @@
 默认只跑离线 provider（rule / test），不联网：
 
     $env:PYTHONPATH = "src"
-    uv run --locked python scripts/llm_ab_eval.py --report docs/reports/p8-llm-ab-report.md
+    uv run --locked python scripts/llm_ab_eval.py --report artifacts/reports/p8-llm-ab-report.md
 
 加真实模型（会消耗 API 额度）：
 

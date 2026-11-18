@@ -21,7 +21,7 @@
     # 只出测量页，自己拿浏览器打开（调试用）
     .venv/Scripts/python.exe scripts/measure_narrow.py --serve-only
 
-产出：`docs/reports/narrow-measure.json`（每页每宽一条记录，含溢出元素明细）。
+产出：`artifacts/reports/narrow-measure.json`（每页每宽一条记录，含溢出元素明细）。
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = Path(__file__).resolve().parent / "narrow_measure_page.html"
-DEFAULT_OUT = ROOT / "docs" / "reports" / "narrow-measure.json"
+DEFAULT_OUT = ROOT / "artifacts" / "reports" / "narrow-measure.json"
 
 #: 浏览器位置。Edge 优先——Windows 上几乎必然存在，且版本比 Chrome 统一。
 BROWSERS = (

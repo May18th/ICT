@@ -6,7 +6,7 @@
 
 > **范围先讲清楚**：本系统提供语义孪生层与情景推演能力，面向**离线与回放**的决策验证；实时物联接入、SCADA 与设备控制回路属于当前范围之外。底图与预案是真实公开数据，设施台账是合成数据。
 
-<p align="center"><img src="docs/competition/figures/arch2.png" width="880" alt="系统架构：发起 → Nexent 智能体编排 → MCP 工具层 → 确定性决策引擎 → 数据 → 出口，底部为反馈回流与回退"></p>
+<p align="center"><img src="docs/figures/arch2.png" width="880" alt="系统架构：发起 → Nexent 智能体编排 → MCP 工具层 → 确定性决策引擎 → 数据 → 出口，底部为反馈回流与回退"></p>
 
 <p align="center"><sub>
 <a href="#四个能当场核对的结果">核结果</a> &nbsp;·&nbsp;
