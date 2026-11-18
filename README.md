@@ -106,7 +106,7 @@ uv run python -m decision_poc.web_demo --port 8790     # 浏览器开 http://127
 
 ```bash
 uv run python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00
-uv run python -m decision_poc.evidence_check    # 期望 108/108，核对值 06db4f93ca0b53c7
+uv run python -m decision_poc.evidence_check    # 期望 108/108，核对值 3ef6d8d8539d40dc
 ```
 
 </details>
@@ -140,8 +140,6 @@ uv run python -m decision_poc.evidence_check    # 期望 108/108，核对值 06d
 
 | 想找什么 | 去哪 |
 |---|---|
-| 官方提交的开发设计文档 | `docs/competition/初赛开发设计文档-v2（模板原样）.docx` |
-| 面向评委的证据与口径 | `docs/competition/`（答辩主线、8 问答法、业务价值） |
 | **全部文档的阅读顺序** | [`docs/README.md`](docs/README.md)（六步读法 + 七类分层） |
 | 技术设计与边界分析 | `docs/`（`nexent-*` 系列、`technical-baseline.md`） |
 | 平台实测证据（会话号/耗时/校验值） | `samples/nexent/live/` |
@@ -160,7 +158,7 @@ uv run python -m decision_poc.evidence_check    # 期望 108/108，核对值 06d
 | `src/decision_poc/collab/` | 多智能体协同：角色、契约、协同板、编排器 |
 | `src/decision_poc/quant/` | 定量层：水文、水力、简化水动力、可靠性、不确定性 |
 | `scripts/` | 生成器、证据核对、界面自动检查。入口是 `reproduce.py`，其余脚本都从它串起来；分组索引见 [`scripts/README.md`](scripts/README.md) |
-| `tests/` | 980 项收集 / 965 通过 / 15 项按设计跳过（干净 clone 实测，0 失败） |
+| `tests/` | 976 项收集 / 961 通过 / 15 项按设计跳过（干净 clone 实测，0 失败） |
 | `samples/` | 资产台账 `assets/`、规则库 `rules/`、评测用例 `eval/`、平台实测证据 `nexent/` |
 | `docs/` | 设计与验收文档。**先读 [`docs/README.md`](docs/README.md)** —— 它按阅读顺序编排，不按文件名字母序 |
 | `deploy/` | 三条部署路径，见 [`deploy/README.md`](deploy/README.md)：`nexent/` 平台装配、`offline/` 离线包、`mcp_sse/` MCP 容器 |

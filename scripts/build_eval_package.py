@@ -22,7 +22,6 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "dist" / "eval-package"
 
 COPIES = [
-    (Path("docs/competition/eval-dataset-spec.md"), Path("README.md")),
     (Path("samples/eval/urban_cases.json"), Path("cases/urban_cases.json")),
     (Path("samples/eval/allocation_cases.json"), Path("cases/allocation_cases.json")),
     (Path("samples/eval/latest.json"), Path("results/latest.json")),

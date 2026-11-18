@@ -2,7 +2,7 @@
 
 由 `python -m decision_poc.evidence_check --report <path>` 生成，**不要手改**。
 
-- 期望的校验值：`06db4f93ca0b53c7`（期望文件被改动即换值）
+- 期望的校验值：`3ef6d8d8539d40dc`（期望文件被改动即换值）
 - 检查项：108 项，通过 108，失败 0
 - 结论：全部一致
 

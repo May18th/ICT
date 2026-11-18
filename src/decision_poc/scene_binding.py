@@ -9,7 +9,7 @@ P10 的渲染契约是：
 
 `highlights` 里是决策层真源的 `TW-*`，UE 侧只认 `twin:<id>`。但 3D 生产侧历史留下的
 `semantic_entities.json` 用的是 `RD-` / `TN-` / `FAC-` 另一套命名空间，与决策层零交集
-（见 `docs/competition/technical-breadth-and-presentation-boundary.md` §4.1）。结果是
+。结果是
 "作业落盘、引擎在跑、画面却没变"。
 
 本模块不新增任何推理，只把已经在算的东西对齐：

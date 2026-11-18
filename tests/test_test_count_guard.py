@@ -37,7 +37,7 @@ def test_docs_declare_one_test_count(expectations: dict) -> None:
     counted = docs_declared_test_counts()
     assert counted == [frozen], (
         f"文档声明的测试数 {counted} 与冻结值 {frozen} 不一致；"
-        "统一 README / docs/competition-gap-audit.md / preliminary-submission-draft.md 后再改期望"
+        "先统一 README 的声明，再改冻结期望（两处必须同批改）"
     )
 
 

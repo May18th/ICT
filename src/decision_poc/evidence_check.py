@@ -36,11 +36,8 @@ EXPECTATIONS_PATH = REPO_ROOT / "samples" / "eval" / "evidence_expectations.json
 # 实测值由 tests/test_test_count_guard.py 用 `request.session.testscollected` 核对
 # （evidence_check 自己不能递归跑 pytest），这里只核对"文档之间没有漂"。
 #
-# 只列**随仓库分发**的文档。这里曾列出 competition-gap-audit.md 与
-# preliminary-submission-draft.md，但两份都在 .gitignore 里（内部工作文档）：
-# 本地能扫到、CI 的干净 clone 扫不到，于是同一条自检在本地 108/108、在 CI 报
-# 「docs_declared 期望 [971]，实际 []」。扫描口径必须与分发范围一致，否则
-# 就是拿本地存在、别人拿不到的文件来自证。
+# 只列**随仓库分发**的文档，且必须与分发范围一致：本地能扫到、别人拿不到的文件
+# 不能用来自证，否则同一条自检在本地全绿、在干净 clone 上直接报「实际 []」。
 DOCS_WITH_TEST_COUNT = ("README.md",)
 TEST_COUNT_PATTERNS = (
     # 旧写法：把收集数说成「N 项测试通过」。这句口径本身不准确（971 项里设计内要跳 14 项），

@@ -329,7 +329,7 @@ class QuantResult(StrictModel):
 | 固定期望 | `samples/eval/evidence_expectations.json`（含 `checks.*`、校验值） |
 | 评测用例 | `samples/eval/*.json`、`urban_eval` 22 用例期望 |
 | P9 进化 | `allocation_cases.json`（8 训练 + 4 留出）、`p9-policy-evolution-report.md` |
-| 五处同步 | `README.md`、`docs/competition-gap-audit.md`、`docs/competition/preliminary-submission-draft.md`、`docs/demo-runbook.md`、`scripts/reproduce.py` 的 `expect` |
+| 同步位置 | `README.md`、`docs/demo-runbook.md`、`scripts/reproduce.py` 的 `expect` |
 | 自检报告 | `docs/reports/evidence-check-report.md`（重生成，不手改） |
 
 新增 `docs/reports/p12-scenario-v2-changelog.md`：逐条列 v1 → v2 的数值变化与原因（新增通道、泵站口径）。

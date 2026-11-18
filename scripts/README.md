@@ -31,7 +31,6 @@
 | `verify_ui_claims.py` | 把文档里写过的界面断言逐条拿真实页面验证 |
 | `visual_check.py` | 界面可读性检查，把"人工看截图"变成可失败的断言 |
 | `label_overlap.py` | 地图标签重叠的自动检测 |
-| `verify_storyboard.py` | 核对门户入口的实际跳转目标，以及分镜字幕念不念得完 |
 | `smoke_pages.py` | 逐路由调 `route()`，查状态码 + 关键 DOM 标记 |
 | `probe_platform_qa.py` | 平台问答质量探针：固定几问打到北向接口，摊开工具链与最终答案 |
 

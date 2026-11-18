@@ -2,7 +2,7 @@
 
 为什么不做成"我们省了 30 分钟"
 ------------------------------
-耗时必须真人测（`docs/competition/value-evidence.md` §4 有 15 分钟的做法），
+耗时必须真人测（无法从推演结果推算），
 没测就不能写进文档——这是本仓库的硬规矩。但"人工要逐个确认几个部门、要翻几行台账、
 要读多少字规程"是从数据里算出来的，不依赖任何人计时，也不怕评委追问。
 
@@ -93,7 +93,7 @@ def build_manual_baseline(root: Path | str | None = None) -> dict[str, Any]:
         "traceability": "无强制留痕：结论依赖个人经验与会议记录，抽查才追溯",
         # 算不出来的就别算。这一栏保持 None，等 §4 的实测回填。
         "duration_minutes": None,
-        "duration_note": "未实测。3 人各做一次、记录首条动作与完整方案时间，方法见 docs/competition/value-evidence.md §4",
+        "duration_note": "未实测。3 人各做一次、记录首条动作与完整方案时间",
     }
 
 

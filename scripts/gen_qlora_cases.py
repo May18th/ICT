@@ -7,7 +7,7 @@
 而 24 步训练的失败结论是「瓶颈在数据规模与 schema 对齐」。要验证「数据量上去后
 schema 对齐是否可学」，需要 100 条量级的训练样本。
 
-但冻结集是命中口径的源头：`docs/competition/eval-dataset-spec.md` 写死「12 例」，
+但冻结集是命中口径的源头：`samples/eval/allocation_cases.json` 固定「12 例」，
 `policy_evolution.py` 拿它当冻结反馈信号，`build_eval_package.py` 把它打进提交物。
 往里面追加用例会同时打断这四条链路，所以扩充数据**必须另存新文件**。
 

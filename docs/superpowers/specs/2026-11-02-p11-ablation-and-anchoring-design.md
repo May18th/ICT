@@ -1,7 +1,7 @@
 # P11 设计：消融阶梯评测 + 决策锚定包（2026-11-02）
 
 - 目的：把"改进前后对比"升级为**逐组件归因**，并补上"一次决策周期打包成可核验锚定元组"的能力。
-- 依据：`docs/competition/technical-breadth-and-presentation-boundary.md`（呈现口径）、
+- 依据：技术广度与展示边界的评审意见（呈现口径）、
   `docs/reports/p8-evaluation-report.md`（现有评测基线）、`samples/eval/urban_cases.json`（22 例）。
 - 外部参考（只借方法论，不借数字）：Syed T A, et al. Agentic AI-enhanced digital twins for smart city civil
   infrastructure[J]. PLoS One, 2026, 21(7): e0353610. 其 §6.1 的五档消融、§6.2 的四项指标、§4.6 的锚定元组。

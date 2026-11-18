@@ -59,10 +59,9 @@
 已按 `AGENTS.md`「单一 owner + 一次性同步」执行：
 
 - `samples/eval/evidence_expectations.json`：`test_baseline.collected`、`checks.test_suite.docs_declared`；
-- 三份文档测试数：`README.md`、`docs/competition-gap-audit.md`、`docs/competition/preliminary-submission-draft.md`；
+- 测试数声明只有一处：`README.md`；
 - 全部"106/106 + 校验值"位置：README、`docs/demo-runbook.md`、
-  `docs/competition/technical-breadth-and-presentation-boundary.md`、
-  `docs/competition/presentation-closure-report.md`、`scripts/build_preliminary_docx.py`、`AGENTS.md`；
+  `AGENTS.md`；
 - `docs/reports/evidence-check-report.md` 由命令重生成（勿手改）；
 - 初赛内容稿 `.docx` 已用 bundled python 重新生成（`scripts/build_preliminary_docx.py`）。
 

@@ -56,7 +56,7 @@ REPO = Path(__file__).resolve().parents[2]
 #: 为什么按工单而不是按 scenario 索引：一段片子拍的是**某个具体工单的现场**，
 #: 同一个 scenario 下不同工单的画面并不通用，按 scenario 复用等于拿别的现场糊弄。
 PRERENDERED_EVENTS: dict[str, str] = {
-    "WO-20261029-007": "docs/competition/video-clips/VD02-B-incident-P9.mp4",
+    "WO-20261029-007": "docs/media/VD02-B-incident-P9.mp4",
 }
 
 #: `scenario` → 成片（只在该场景确实只有一套片子时使用，避免张冠李戴）

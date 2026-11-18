@@ -125,46 +125,9 @@ REAL_PUBLIC_PLAN_ASSETS = 2
 #: 合法但**不是总数**的命中：(family, 文件, 值) -> (允许出现次数, 理由)。
 #: 次数不是装饰：同一文件里同值若出现两次而只登记一次，说明有一处没解释，必须红。
 ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
-    (
-        "tools",
-        "docs/competition/skills-mcp-design.md",
-        2,
-    ): (1, "章节号「2.2 工具分区」被正则当成工具数，不是总数"),
-    (
-        "tools",
-        "docs/competition/skills-mcp-design.md",
-        5,
-    ): (1, "章节号「2.5 工具契约」被正则当成工具数，不是总数"),
-    (
-        "tools",
-        "docs/competition/skills-mcp-design.md",
-        12,
-    ): (
-        1,
-        "「把 12 个工具全挂上主 Agent」是 2026-11-03 的历史反例（导致 8/8 掉到 0/8），"
-        "不是当前工具总数",
-    ),
     # 交付 docx 里的 v9 / v10 是**另外两个智能体**的版本号（协同总控、台账问答）。
     # 扫描器只认 `v(\d+)`，分不清版本号属于哪个对象，只能按文件+次数豁免；
     # 主推演 Agent 的 v31 仍按权威值校验（该文件里 4 处全部命中 31，未豁免）。
-    (
-        "agent_version",
-        "docs/competition/初赛开发设计文档-v2（模板原样）.docx",
-        9,
-    ): (3, "协同总控智能体的版本（v9），不是主推演 Agent 的 v31"),
-    (
-        "agent_version",
-        "docs/competition/初赛开发设计文档-v2（模板原样）.docx",
-        10,
-    ): (3, "台账问答智能体的版本（v10），不是主推演 Agent 的 v31"),
-    (
-        "tools",
-        "docs/competition/初赛开发设计文档-v2（模板原样）.docx",
-        12,
-    ): (
-        1,
-        "历史反例：曾把 12 个工具全部接入主智能体导致 8/8 掉到 0/8，不是当前工具总数",
-    ),
     (
         "tools",
         "docs/赛道3-组件边界与推进路径-v0.1.md",
@@ -172,31 +135,11 @@ ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
     ): (1, "「Nexent 工具表共 48 个工具」指平台全量工具库（含 local 类），不是本 MCP 服务的工具数"),
     (
         "tools",
-        "docs/competition/winning-gap-audit.md",
-        6,
-    ): (1, "「6 工具协同 Agent」是协同 Agent 的挂载数，不是工具总数"),
-    (
-        "tools",
-        "docs/competition/video-storyboard-v0.1.md",
-        2,
-    ): (1, "旧版分镜里「（2 工具）」同样指主 Agent 挂载数"),
-    (
-        "tools",
-        "docs/competition/four-dimensions-mapping.md",
-        3,
-    ): (1, "「主 Agent 挂 3 工具」是主 Agent 挂载数，不是工具总数"),
-    (
-        "tools",
         "README.md",
         12,
     ): (1, "历史对照：某次把当时的 12 个工具全接上导致 8/8 掉到 0/8，是失败实验的输入，不是当前工具数"),
     # 工程版说明从根目录移到 docs/ 后，路径跟着改（否则豁免失效，两处 8/8 会被当成自检项数）。
     ("selfcheck", "docs/README-dev.md", 8): (2, "两处「8/8 项一致」都是平台真机一致性，不是自检项数"),
-    (
-        "selfcheck",
-        "docs/competition/preliminary-submission-draft.md",
-        8,
-    ): (1, "「8/8 项一致」是平台真机一致性，不是自检项数"),
     (
         "selfcheck",
         "docs/nexent-urban-integration-design.md",
@@ -213,31 +156,6 @@ ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
         370,
     ): (1, "赛题任务单记录的是当时验收（370 项），属于任务书原文，不改写成当前值"),
     # 以下是子系统/历史验收的用例数，不是全仓总数。补上「N 测试」「N 项测试」两种写法后才显形。
-    (
-        "testcount",
-        "docs/competition/answer-mainline.md",
-        32,
-    ): (1, "「32 项测试已落地」是多智能体协同子系统的用例数，不是全仓总数"),
-    (
-        "testcount",
-        "docs/competition/answer-mainline.md",
-        93,
-    ): (1, "「93 项测试」是物理/数学定量层的用例数，不是全仓总数"),
-    (
-        "testcount",
-        "docs/competition/delivery-status.md",
-        93,
-    ): (1, "同上，定量层自身的用例数"),
-    (
-        "testcount",
-        "docs/competition/delivery-status.md",
-        521,
-    ): (1, "引用真机报告「写死 521 项测试」的缺陷描述，不是当前口径"),
-    (
-        "testcount",
-        "docs/competition/video-storyboard-3min.md",
-        745,
-    ): (1, "引述任务简报里的旧测试数「测试 745 项」，用于说明口径冲突"),
     (
         "testcount",
         "docs/hydro-integration-refactor-candidates.md",

@@ -69,45 +69,8 @@ vc-*/
 lp-profile-*/
 
 
-# 内部工作文档（2026-11-15 移出公开仓库）：分工、差距审计、答辩主线、交付状态、预演问答等
-# 本地文件保留；副本见 out/internal-docs-2026-11-15/
+# 本机 agent 规则文件（不入库）
 AGENTS.md
-docs/competition-gap-audit.md
-docs/competition/winning-gap-audit.md
-docs/competition/三人分工.md
-docs/competition/交付交接包.md
-docs/competition/内部词替换清单.md
-docs/competition/qa-8-questions.md
-docs/competition/delivery-status.md
-docs/competition/presentation-closure-report.md
-docs/competition/answer-mainline.md
-docs/competition/ppt-outline-10p.md
-docs/competition/video-storyboard-3min.md
-docs/competition/video-storyboard-v0.1.md
-docs/competition/release-checklist.md
-docs/competition/technical-breadth-and-presentation-boundary.md
-docs/competition/平台配置快照.md
-docs/competition/录屏分镜.md
-docs/competition/线上评审动线.md
-docs/competition/队友A-材料线.md
-docs/competition/队友B-录屏线.md
-docs/competition/队友说明书.md
-docs/competition/nexent-issue-draft.md
-docs/competition/nexent-issue-draft-2.md
-docs/competition/nexent-pr-draft.md
-
-# 交付材料（2026-11-15 移出公开仓库）：初赛 PPT、信息收集表、提交稿正文
-# 本地文件保留；副本见 out/internal-docs-2026-11-15/
-docs/competition/初赛答辩-PPT-v0.1.pptx
-docs/competition/初赛作品信息收集表-内容稿-v0.1.docx
-docs/competition/preliminary-submission-draft.md
-
-# 材料生产线脚本（2026-11-15 移出公开仓库）
-scripts/build_answer_ppt.py
-scripts/build_preliminary_docx.py
-scripts/build_handoff_package.py
-scripts/delivery_check.py
-scripts/check_internal_words.py
 
 # 已停用功能的进度记录（UE / 3D 沙盘）
 docs/ue-real-assets-progress.md
