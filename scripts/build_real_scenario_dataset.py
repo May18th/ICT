@@ -108,15 +108,22 @@ def build_weather_csv() -> str:
 
 
 def main() -> None:
-    if TARGET_DIR.exists():
-        shutil.rmtree(TARGET_DIR)
-    TARGET_DIR.mkdir(parents=True)
+    # 原地覆盖而不是先 rmtree：受管环境里批量删除会被拦（fail-closed），
+    # 一次 rmtree 失败就整个步骤中止；原地写回同样幂等，且不会留下半个目录。
+    TARGET_DIR.mkdir(parents=True, exist_ok=True)
+    mirrored = {item.name for item in SOURCE_DIR.iterdir() if item.is_file()}
     for item in sorted(SOURCE_DIR.iterdir()):
         if item.is_file():
             shutil.copy2(item, TARGET_DIR / item.name)
 
+    # urban 侧删掉的资产要跟着消失，否则两侧文件清单不一致（守卫测试比的是同一集合）
+    for stale in sorted(TARGET_DIR.iterdir()):
+        if stale.is_file() and stale.name not in mirrored:
+            stale.unlink()
+
+    # 显式指定 \n：Windows 默认写 CRLF，会让"两侧逐字节一致"在工作树里假失败
     (TARGET_DIR / "weather_alerts.csv").write_text(
-        build_weather_csv(), encoding="utf-8"
+        build_weather_csv(), encoding="utf-8", newline="\n"
     )
     (TARGET_DIR / "README.md").write_text(
         README.format(
@@ -125,6 +132,7 @@ def main() -> None:
             peak=REAL_STORM["peak_mm_h"],
         ),
         encoding="utf-8",
+        newline="\n",
     )
     print(f"overlay -> {TARGET_DIR} ({len(list(TARGET_DIR.iterdir()))} files)")
 

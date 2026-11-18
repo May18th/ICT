@@ -155,7 +155,10 @@ def main(argv: list[str] | None = None) -> int:
 
     tagged, counts = tag(scene)
     Path(args.out).write_text(
-        json.dumps(tagged, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        # 钉 \n：Windows 默认 CRLF 会让 scene.json 与场景覆盖目录逐字节比对假失败
+        json.dumps(tagged, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
     )
     print(render(counts, len(objects), wrote=True))
     print(f"\n写入 {args.out}")

@@ -104,12 +104,34 @@ def build_steps(*, include_slow: bool) -> list[Step]:
 
     steps.append(
         Step(
+            # 用收集数对齐 TEST_TOTAL，而不是拿它去匹配 "N passed"：
+            # Blender/Unreal/openai/dist 这些条件跳过会让 passed 数随环境浮动
+            # （干净副本 961 passed / 15 skipped，装齐依赖的本机 975 passed / 1 skipped），
+            # 只有收集数才是与登记的 976 一一对应的量。
+            "测试收集数",
+            [
+                py,
+                "-m",
+                "pytest",
+                "--collect-only",
+                "-q",
+                "--basetemp",
+                str(ROOT / "artifacts" / "tmp" / f"collect-{uuid.uuid4().hex[:8]}"),
+            ],
+            expect=[rf"\b{TEST_TOTAL} tests collected\b"],
+            slow=True,
+            timeout=600,
+        )
+    )
+    steps.append(
+        Step(
             "单元测试",
             # --basetemp 指向一个本次独有的空目录：pytest 创建后保留、退出不做批量清理。
             # 否则 pytest 会在退出时批量删除旧的 pytest-of-* 临时目录，在受限沙箱里触发
             # 批量删除拦截（fail-closed），把退出码改成 1 并吞掉末尾的 "N passed" 汇总行。
             [py, "-m", "pytest", "-q", "--basetemp", str(ROOT / "artifacts" / "tmp" / f"pytest-{uuid.uuid4().hex[:8]}")],
-            expect=[rf"\b{TEST_TOTAL} passed"],
+            # 通过/失败由退出码裁决；这里只要确认它真的跑出了汇总行（没被中途吞掉）
+            expect=[r"\d+ passed"],
             slow=True,
             timeout=1800,
         )
@@ -146,8 +168,40 @@ def build_steps(*, include_slow: bool) -> list[Step]:
     )
     steps.append(
         Step(
+            "生成定量层水位过程线",
+            # out/ 在 .gitignore 里，克隆下来就是空的。缺这份过程线时 /map2d 不报错，
+            # 而是静默退回 build_map2d.py 里手写的 7 个水位系数（KPI 卡的来源标签
+            # 会从「模型估算」变成「示意节奏」），demo_tour 自检也会报缺文件。
+            # 0.8 秒的活儿，别让克隆下来的人只看得到降级版。
+            [py, str(ROOT / "scripts" / "build_hydro_curve.py")],
+            expect=[r"written: "],
+            writes=["out/map2d/hydro_curve.json"],
+        )
+    )
+    steps.append(
+        Step(
+            "从台账反推事件时标",
+            # 与上面同理：缺它时 /map2d 退回手写的 7 跳开关，观感还在、台账依据没了。
+            [py, str(ROOT / "scripts" / "build_event_timeline.py")],
+            expect=[r"written: "],
+            writes=["out/map2d/event_timeline.json"],
+        )
+    )
+    steps.append(
+        Step(
             "生成场景导出（Blender/UE 取数）",
             [py, "-m", "decision_poc.scene_export", "--out", "samples/assets/urban/scene.json"],
+            writes=["samples/assets/urban/scene.json"],
+        )
+    )
+    steps.append(
+        Step(
+            "标注场景对象来源",
+            # scene_export 只写台账字段，不带 provenance；来源标注是独立后处理，
+            # 必须在导出之后跑，否则 scene.json 会丢掉 real/synthetic 标注
+            # （tag_scene_provenance 自己的说明里就写了「导出后需要再跑一次本脚本」）。
+            [py, str(ROOT / "scripts" / "tag_scene_provenance.py")],
+            expect=[r"已写入 \d+ 个对象的来源标注"],
             writes=["samples/assets/urban/scene.json"],
         )
     )
@@ -165,6 +219,18 @@ def build_steps(*, include_slow: bool) -> list[Step]:
             [py, "-m", "decision_poc.scene_binding"],
             expect=[r"实体 \d+", r"指纹 proj-"],
             writes=["samples/assets/urban/semantic_entities.json"],
+        )
+    )
+    steps.append(
+        Step(
+            "同步真实暴雨情景覆盖目录",
+            # 覆盖目录是 urban 的全量副本 + 换装一条真实预警行，必须排在所有 urban 产物之后。
+            # 少了这一步，重现数据集后两侧会在 scene.json / scene_layout.json / semantic_entities.json
+            # 上分叉（快照指纹不再相等），test_scenario_consistency 与 test_scenario_toggle
+            # 两个守卫会红——CLI 顺序是 pytest 在前，所以只在"先跑 reproduce 再回头跑测试"时暴露。
+            [py, str(ROOT / "scripts" / "build_real_scenario_dataset.py")],
+            expect=[r"overlay -> "],
+            writes=["samples/scenarios/real_20260801/"],
         )
     )
     steps.append(
@@ -385,11 +451,20 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print("\n产物清单：")
+    seen: set[str] = set()
     for step in steps:
         for rel in step.writes:
+            if rel in seen:  # 同一条产物可能被多步写入（如 scene.json：导出 + 打标）
+                continue
+            seen.add(rel)
             path = ROOT / rel
             if path.is_file():
                 print(f"  {rel:<58} {path.stat().st_size:>9,} B")
+            elif path.is_dir():
+                # 目录型产物（如情景覆盖目录）：资产数会随数据集增删变化，
+                # 所以只报"文件数 / 总字节"，不在这里写死清单。
+                files = [p for p in path.rglob("*") if p.is_file()]
+                print(f"  {rel:<58} {len(files):>3} 个文件 / {sum(p.stat().st_size for p in files):>7,} B")
             else:
                 print(f"  {rel:<58} 缺失（该命令本次未产出）")
     print(f"\n结果：{len(steps)}/{len(steps)} 步通过。明细 {OUT_DIR / 'summary.json'}")

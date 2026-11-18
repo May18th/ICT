@@ -36,12 +36,12 @@ uv run --locked python -m decision_poc.web_demo --port 18765
 一条命令生成并核对全部对外说明（测试、数据集、数据核对、布局、回放、实体表、推演、反事实、Skill 编排、P8 评测、MCP 契约、P9 进化、P11 消融与锚定、108 项自检）：
 
 ```powershell
-uv run --locked python scripts/reproduce.py            # 全量，约 40 秒（本机实测 20/20 步通过）
+uv run --locked python scripts/reproduce.py            # 全量，约 45 秒（本机实测 23/23 步通过）
 uv run --locked python scripts/reproduce.py --fast     # 跳过 pytest 与 P9 进化，只核对数字
 uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步骤
 ```
 
-期望末行 `结果：20/20 步通过`；明细写 `artifacts/reproduce/summary.json`（已被 .gitignore 忽略）。
+期望末行 `结果：23/23 步通过`（`--fast` 为 20/20）；明细写 `artifacts/reproduce/summary.json`（已被 .gitignore 忽略）。
 脚本只比对、不改数字：任一期望不成立即退出码 1，并把失败步骤的原始输出打出来。
 
 一条命令核对全部对外宣称数字（六步、P8 评测、P9 双会话进化、MCP 工具数；任一项漂移即失败）：
