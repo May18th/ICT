@@ -128,6 +128,9 @@ CONSTRAINT_PROMPT = (
 )
 
 VERSION_NAME = "urban-asset-qa-v3"
+#: 输出预算。留空会回落平台硬编码的 4096（同 setup_nexent.py 对主/协同的说明），
+#: 三个 Agent 统一给 8192，避免口径不一致时排查"为什么只有问答 Agent 被截断"。
+ASSET_QA_REQUESTED_OUTPUT_TOKENS = int(os.getenv("NEXENT_ASSET_QA_OUTPUT_TOKENS", "8192"))
 RELEASE_NOTE = "列举类问题专项：禁代码、top_k 提到 10、max_steps 收到 8（修 conv 229 吐代码）"
 
 GREETING = """我是内涝资产台账问答助手。
@@ -208,6 +211,7 @@ def main() -> int:
         # 12 是此前稳定值。2026-11-14 试过收到 8，随后一次"查单台泵站状态"只回了
         # 19 字的主体前缀就断（conv 232），没有证据支持收窄，改回 12。
         "max_steps": 12,
+        "requested_output_tokens": ASSET_QA_REQUESTED_OUTPUT_TOKENS,
         "duty_prompt": DUTY_PROMPT,
         "constraint_prompt": CONSTRAINT_PROMPT,
         "greeting_message": GREETING,

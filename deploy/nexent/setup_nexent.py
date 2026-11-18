@@ -105,6 +105,10 @@ MAIN_TOOLS = {"event_deduce", "evidence_locate", "doc_search", "collab_run"}
 #: 数据库对着 `version_no` 反推。改提示词/工具集时同步改这里。
 MAIN_VERSION_NAME = "urban-mcp-v5"
 
+#: 协同 Agent 的发布版本名。与主 Agent 同理：写死字面量会让「改了提示词、版本名还是旧值」
+#: 这件事在协同链路上重演（`publish_collab` 原本就是这么写的）。改协同提示词时同步改这里。
+COLLAB_VERSION_NAME = "urban-collab-v1"
+
 DUTY_PROMPT = """你是城市内涝跨部门决策智能体。用户给出事件编号与时点后，严格按两步执行：
 
 第零步：**先确认事件编号，绝不自己挑一个工单号顶上**（2026-11-14 实测踩过：用户问"天府广场附近会不会积水"，
@@ -400,7 +404,7 @@ class Platform(PlatformClient):
         status, body = self.call(
             f"/api/agent/{agent_id}/publish",
             method="POST",
-            payload={"version_name": "urban-collab-v1", "release_note": "两步式提示词：先 collab_run 再转述动作卡"},
+            payload={"version_name": COLLAB_VERSION_NAME, "release_note": "两步式提示词：先 collab_run 再转述动作卡"},
         )
         print(f"[collab] publish: {status} {str(body)[:200]}")
 
