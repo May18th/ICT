@@ -142,6 +142,15 @@ ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
     ("selfcheck", "docs/README-dev.md", 8): (2, "两处「8/8 项一致」都是平台真机一致性，不是自检项数"),
     (
         "selfcheck",
+        "docs/demo-runbook.md",
+        8,
+    ): (
+        2,
+        "两处都是平台主链路一致性：1.5 节第三层的判定行照抄 `nexent_urban` 的真实输出，"
+        "状态声明复述同一次实测的结论，都不是自检项数",
+    ),
+    (
+        "selfcheck",
         "docs/nexent-urban-integration-design.md",
         8,
     ): (1, "验收期望行里的「8/8 项一致」是平台主链路一致性，不是自检项数"),

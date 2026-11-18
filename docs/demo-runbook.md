@@ -24,7 +24,7 @@
 Set-Location D:/华为ICT/agent_poc
 $env:PYTHONPATH = "src"
 $env:NEXENT_BASE_URL   = "http://localhost:5013"
-$env:NEXENT_AGENT_NAME = "workbench_main"
+$env:NEXENT_AGENT_NAME = "urban_deduction_agent"
 $env:NEXENT_API_KEY = (docker exec nexent-postgresql psql -U root -d nexent -t -A `
   -c "select access_key from nexent.user_token_info_t where token_id=2 and delete_flag='N';").Trim()
 
@@ -35,6 +35,26 @@ Invoke-RestMethod "$env:NEXENT_BASE_URL/nb/v1/health"
 
 期望：健康检查返回 `{"status":"healthy","service":"northbound-api"}`；第二条返回 `200`。
 两项都过才继续，否则查第 5 节。
+
+## 1.5 平台验收顺序
+
+平台链路分三层，必须按层一 → 层二 → 层三依次过：**前一层没通，后一层的结果不可信**（失败会被误判成"模型不行"）。
+
+| 层 | 检查 | 命令 | 通过标准 |
+| --- | --- | --- | --- |
+| 一 | 北向健康 + 鉴权 | 第 1 节两条 Invoke 命令 | `{"status":"healthy",...}` 且 `/nb/v1/agents` 返回 200 |
+| 二 | MCP 容器挂上 15 个工具 | `docker compose -f deploy/docker-compose.mcp.yml ps`；`(Invoke-RestMethod "http://127.0.0.1:18000/health").tools_count` | State=running、Health=healthy，`tools_count` 为 `15` |
+| 三 | Agent → MCP → 六跳结论 | `uv run --locked python -m decision_poc.nexent_urban --json artifacts/nexent/urban_main_check.json` | 末行 `Nexent 城市内涝主链路：8/8 项一致`，退出码 0，落盘 JSON 内 `attempts_used=1` |
+
+第二层的前提是第 0 节的 `nexent_network` 已存在；容器起来但工具没注册时，平台侧只表现为"智能体变笨"，不会报错，所以判据取 `tools_count` 而非进程存活。
+
+第三层不能用第 3 节的 `nexent_smoke` 代替：那个脚本的案例是设备振动，只验证"平台调得通、能回出可解析 JSON"，与六跳结论无关。两者的失败码也不同——`nexent_urban` 退出码 3 表示"链路通了但结论不一致"，2 表示缺配置。
+
+**状态声明（2026-11-18 实测）**：三层已逐层验证通过——北向 `{"status":"healthy"}` 且 `/nb/v1/agents` 返回 200；`urban-twin-mcp` 为 healthy 且 `tools_count=15`；主链路 `8/8 项一致`（conversation 257、`attempts_used=1`、`errors=[]`）。协同链路另有 2/2（`kernel_fingerprint=d7fa402fe22e596c`，26 卡 / 15 序 / 6 角色）。正式证据：`samples/eval/nexent_urban_v32_retest.json`、`samples/nexent/live/collab_v10_retest.json`。
+
+这一轮跑在**按新数据重建的镜像**上。`deploy/mcp_sse/Dockerfile` 用 `COPY samples/` 把数据固化进镜像，改了 `samples/` 之后不重建镜像，平台侧与离线就会出现"结构全对、指纹不一致"的假失败（表现为协同判 0/2，但 26 卡 / 15 序 / 6 角色完整）。判断这一轮用的是哪份数据，看 `artifacts/visual/tool_log.jsonl` 每条调用的 `snapshot_hash` 是否等于宿主机 `samples/assets/urban/scene.json` 的 `snapshot_hash`。
+
+`samples/nexent/live/` 里更早的 JSON 是各自采集时点的记录（如 2026-11-14 主 Agent v26 8/8），按采集日期引用，不要表述为"已通过自动化验收"。
 
 ## 2. 清记忆（每次演示前必做，约 10 秒）
 
@@ -89,6 +109,9 @@ echo "exit=$LASTEXITCODE"
 ```
 
 期望：`"status": "accepted"`、有 `conversation_id`、`decision` 不为 `null`、`exit=0`。
+
+> 这一条只证明"平台能调通、能回出可解析 JSON"，案例是设备振动，不是本项目的城市内涝六跳。
+> 要跑六跳结论请看 1.5 节第三层（`decision_poc.nexent_urban`）。
 
 ## 4. 结果判读（三看）
 
@@ -154,7 +177,7 @@ uv run --locked python -m decision_poc.anchoring --tamper-demo
 | HTTP 400，提示 `allow_chat_metadata` | 请求体带了 `metadata` | 传输层已改用 `meta_data`，勿手改回 |
 | `X-Stream-Status: conflict` / 429 | 上一轮还在跑或触发限流 | 等 10 秒重试，不要自动重试 |
 | `NexentStreamError: 未产生 final_answer` | 模型/工具链中断 | 看 `events`，整轮重跑一次 |
-| `decision_error: JSONDecodeError` | Agent 回了自然语言 | 确认用的是 `workbench_main`，不是 `equipment_decision_agent`（已下线） |
+| `decision_error: JSONDecodeError` | Agent 回了自然语言 | 确认用的是 `urban_deduction_agent`（挂了 15 个 MCP 工具），不是 `urban_control_no_tools`（对照组，不挂工具） |
 | `decision_error: ValidationError` | 字段缺失或多余 | 看 error 明细，必要时收紧 query 结构 |
 
 ## 6. 演示收尾（可选）
@@ -164,8 +187,10 @@ uv run --locked python -m decision_poc.anchoring --tamper-demo
 docker exec nexent-postgresql psql -U root -d nexent -c "delete from nexent.user_token_info_t where token_id=2;"
 ```
 
-- 换 Agent 只改 `$env:NEXENT_AGENT_NAME`：`equipment_decision_agent`（已于 2026-11-05 从平台下线，此处为历史用法）输出四段式中文报告，
-  **不是** JSON，不会产生 `decision`。
+- 换 Agent 只改 `$env:NEXENT_AGENT_NAME`。平台当前注册 6 个：`urban_deduction_agent`（主链路，挂 15 个 MCP 工具）、
+  `urban_collab_agent`（协同总控）、`urban_asset_qa`（台账问答）、`urban_control_no_tools` 与
+  `urban_collab_control_no_tools`（对照组，不挂工具）、`urban_llm_decision_agent`（LLM 决策对照）。
+  历史名 `equipment_decision_agent` 已于 2026-11-05 下线，它输出四段式中文报告而非 JSON，不会产生 `decision`，仅作历史记录。
 - 想把记忆彻底留空，演示结束再跑一次第 2 节。
 
 ## 7. 手工验收项（无自动化守卫）
@@ -320,6 +345,10 @@ verdict：策略 v1 → v4；分配变化 A-03 4→5 台，B-01 2→1 台；跨�
 
 ### 3. 让 UE 跟着变（不用手敲 show_step）
 
+> 前提：`visualization/`（Blender/Unreal 工程与 `urban_twin_state.py`）**不入仓库**，只保留在持有工程副本的机器上。
+> 从远端 clone 的目录没有它，本节命令只能在工程所在机器执行；仓库内自动验证的只有 `tests/test_unreal_twin_state.py`
+> （用 stub 替换 `unreal` 模块，断言切换、高亮、面板、ack 的调用序列），它证明调用契约，不证明画面。
+
 **优先用文件总线**：
 
 ```python
@@ -356,6 +385,9 @@ UnrealEditor-Cmd.exe UrbanTwinDemo.uproject -run=pythonscript `
 3. 对比是策略差异的出口：v1 与进化版在同一事件上跑，分配向量不同即得差异，数字与 P9 报告逐位一致。
 
 ### 材质资产：Blender 只在离线跑
+
+`generate_urban_twin.py` 随 `visualization/` 一起不入库，下面第二条命令仅在本机工程上可执行；
+第一条 `scene_layout` 是仓库内的生成器，任何机器都能跑。
 
 ```powershell
 # 重生成 4 套场景 + 预览图（离线，约 30 秒）
