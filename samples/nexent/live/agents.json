@@ -148,7 +148,7 @@
       "is_main_agent": true,
       "group_ids": "2",
       "permission": "EDIT",
-      "current_version_no": 9,
+      "current_version_no": 10,
       "version_name": "urban-collab-v1",
       "greeting_message": "我是城市内涝应急协同总控。负责跨部门分工、抽排资源调拨与处置顺序裁决，输出各部门动作卡与联合发布对。",
       "example_questions": [
@@ -187,7 +187,7 @@
       "is_main_agent": true,
       "group_ids": "2",
       "permission": "EDIT",
-      "current_version_no": 31,
+      "current_version_no": 32,
       "version_name": "urban-mcp-v5",
       "greeting_message": "我是城市内涝跨部门决策智能体。给我一个工单号（如 WO-20261029-007），我按「事件现象 → 受影响设施 → 责任部门 → 资源需求 → 处置动作 → 后续风险」六跳推演，每个结论都标注依据来源与版本。",
       "example_questions": [
@@ -209,5 +209,5 @@
       "tags": []
     }
   ],
-  "requestId": "29b6cf2d-d775-489b-ac08-a7744c461484"
+  "requestId": "f7b5dc03-1733-41c8-8758-9f901751698c"
 }

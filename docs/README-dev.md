@@ -205,7 +205,7 @@ powershell -ExecutionPolicy Bypass -File scripts\start_demo.ps1 -CheckOnly
 - Nexent 北向传输层（SSE 聚合、幂等键、401/429/冲突错误映射，默认不联网）；
 - Nexent SDK 传输层（无平台环境时的内嵌路径，可选依赖）；
 - 北向链路实测验证（本机 Nexent v2.7.0，SSE → 结构化决策）；
-- 城市内涝主链路 Nexent 集成实测：MCP-over-SSE（15 工具）+ Agent 发布 v31（DeepSeek-Chat）+ 8/8 结论一致性校验（v24 加 doc_search 后重跑仍 8/8；历史实测留痕 conversation_id=120）；
+- 城市内涝主链路 Nexent 集成实测：MCP-over-SSE（15 工具）+ Agent 发布 v32（DeepSeek-Chat）+ 8/8 结论一致性校验（v24 加 doc_search 后重跑仍 8/8；历史实测留痕 conversation_id=120）；
 - 多模态数据资产标识（表格 / 文本 / 图片统一登记、结构摘要、标准引用、可引用定位）；
 - 本体半自动构建（种子本体 → 规则抽取 → 置信度分档 + 跨文档多跳证据 + 合并计划）；
 - 城市内涝语义孪生层（孪生对象是职责与状态，不是实时水体）+ 六步跨部门推演 + 三类职责冲突 + 反事实重放（P4–P6）；
@@ -278,7 +278,7 @@ Nexent **v2.7.0**（主 Agent v19，模型 DeepSeek-Chat）跑通。原绑定的
 （历史）重发布到 v19 / v7 后同一提示词复测仍 8/8；下文实测证据以那一轮为准，当前线上为 v24：
 
 - MCP 服务 `urban-twin-mcp`（15 工具）以 SSE 方式跑在 `nexent_network` 容器里；
-- Agent `urban_deduction_agent`（agent_id=3，已发布 v31）接了三个工具（`event_deduce` / `evidence_locate` / `doc_search`，收窄原因见集成实测报告 §6）；`doc_search` 只查规则依据，事实仍只认 `event_deduce`；
+- Agent `urban_deduction_agent`（agent_id=3，已发布 v32）接了四个工具（`event_deduce` / `evidence_locate` / `doc_search` / `collab_run`；`collab_run` 于 2026-11-18 补挂，当初把主 Agent 收窄到 2 个的过程见集成实测报告 §6）；`doc_search` 只查规则依据，事实仍只认 `event_deduce`；
 - 一次真实对话（**conversation_id=120**）产出六步 JSON，与离线 `DeductionEngine` **8/8 项一致**；
 - 平台侧确实发生了工具调用：`event_deduce`（18ms）+ 一次协议修复重试（6ms），
   两条日志记录的哈希一致（协同链路的 3 次 `collab_run` 实测另见 `samples/nexent/live/collab_live.json`，成功率 2/3）。
