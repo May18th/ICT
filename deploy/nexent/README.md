@@ -2,7 +2,25 @@
 
 把本仓库的城市孪生 MCP 服务接入本机 Nexent v2.7.0，并验证"平台 Agent 调 MCP 工具 → 六步结论与离线一致"。
 
-**最新复核（2026-11-14，主 Agent `v26` / 协同 Agent `v9`，DeepSeek-Chat）**：
+**最新复核（2026-11-18，主 Agent v32 / 协同 Agent v10，DeepSeek-Chat；按新数据重建 MCP 镜像后重跑）**：
+
+| 项 | 结果 | 证据 |
+| --- | --- | --- |
+| 主链路 | **8/8 项一致**，conversation_id=257，attempts_used=1，errors=[] | `samples/eval/nexent_urban_v32_retest.json` |
+| 协同链路 | **2/2**，校验值 `d7fa402fe22e596c`，26 卡 / 15 序 / 6 角色，两次 7.4s / 7.0s | `samples/nexent/live/collab_v10_retest.json` |
+| 数据快照 | 本轮 5 次工具调用（4×`collab_run` + 1×`event_deduce`）的 `snapshot_hash` 全为 `fc53cec7…` | `artifacts/visual/tool_log.jsonl` |
+
+> **同一套配置为什么指纹会从 `ab94413` 变成 `d7fa402`**：`deploy/mcp_sse/Dockerfile` 用 `COPY samples/` 把数据
+> 固化进镜像，镜像不重建就不会跟着仓库变。2026-11-18 把 `scene.json` 的资产 id 与 `manifest.json` 对齐后，宿主机
+> 快照变成 `fc53cec7…`，容器里仍是 11-13 的 `d102aa80…`；此时平台侧跑出的 `kernel_fingerprint` 是 `ab94413`
+> 而离线是 `d7fa402`，脚本判 0/2——**但 26 卡 / 15 序 / 6 角色、8342 字符、零硬约束违规全都对**，只是数据不同源。
+> 两侧 `src/decision_poc/collab/*.py` 的 md5 完全相同，所以先比数据、再怀疑代码。
+>
+> 按新数据重建镜像（7 秒，pip 层全缓存）后平台侧回到 `d7fa402fe22e596c`，与离线逐字一致。**改 `samples/` 之后必须
+> 重建镜像再验平台链路**，否则看到的差异是数据新旧，不是配置或模型问题。判断"这一轮用的是哪份数据"只看
+> `artifacts/visual/tool_log.jsonl` 每条调用的 `snapshot_hash` 是否等于宿主机 `scene.json` 的 `snapshot_hash`。
+
+历史复核（2026-11-14，主 Agent v26 / 协同 Agent v9，对应旧数据快照 `d102aa80…`）：
 
 | 项 | 结果 | 证据 |
 | --- | --- | --- |
