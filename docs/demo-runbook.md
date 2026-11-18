@@ -51,7 +51,7 @@ docker exec nexent-elasticsearch curl -s -u "elastic:$esPass" "localhost:9200/me
 
 期望最后一行 `"count":0`。
 
-注意两个坑（实测踩过）：
+执行时守两条约束：
 
 - 循环必须写成**单行**；用反引号断行会让 PowerShell 把参数拆开，curl 只收到 `-u` 而丢了凭据。
 - **不要写 `-w ""`**：PowerShell 会丢弃空字符串参数，curl 把后面的 `-u` 当成 `-w` 的格式串，表现为 HTTP 401。
@@ -308,8 +308,7 @@ verdict：策略 v1 → v4；分配变化 A-03 4→5 台，B-01 2→1 台；跨�
 
 ### 3. 让 UE 跟着变（不用手敲 show_step）
 
-**优先用文件总线**（同机演示，不赌端口——实测过 8788 被 Windows 拒绝绑定 `WinError 10013`、
-8899 曾被别的服务占用）：
+**优先用文件总线**：
 
 ```python
 import urban_twin_state as s

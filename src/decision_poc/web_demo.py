@@ -1138,8 +1138,7 @@ def _assets_dir():
 def _char_ver() -> str:
     """人物模型的 mtime 戳，用来打破浏览器缓存。
 
-    改完 glb 直接刷新，浏览器仍可能拿旧文件，表现是"改了没生效"——
-    这一版正是踩过一次才加上的。
+    改完 glb 直接刷新，浏览器仍可能拿旧文件，表现是"改了没生效"。用 mtime 戳破缓存。
     """
     p = Path(__file__).resolve().parents[2] / "assets" / "models" / "worker_char.glb"
     try:
@@ -2346,7 +2345,7 @@ function renderStructured(s, host, labels){
       row.style.fontSize='12.5px'; row.style.lineHeight='1.7';
       row.appendChild(el('b',null,(c.conflict_id||'')+' '));
       row.appendChild(el('span','warn',(KIND_CN[c.kind]||c.kind||'')+' '));
-      // 模型有时只交 conflict_id 与 kind，不给正文（实测过一次），别留一片空白
+      // 模型有时只交 conflict_id 与 kind，不给正文，别留一片空白
       var bodyText=H(c.subject||c.detail||'');
       var body=el('span',bodyText?'':'empty',bodyText||'（这条只给了编号与类型，正文见右侧「事件」栏）');
       body.title=String(c.subject||c.detail||'');
@@ -3560,7 +3559,7 @@ def _verify_one(kind: str, text: str) -> dict[str, Any]:
             excerpt = str(data.get("excerpt") or "")
             # 锚点有两种合法形态：条目编号（原文里有这个字符串）与章节标题
             # （`plan_flood… · 3 封路判定标准`）。后者不会在正文里重复标题，
-            # 只能靠命中切片的 heading_path 认，否则真引用会被误判成悬空（踩过）。
+            # 只能靠命中切片的 heading_path 认，否则真引用会被误判成悬空。
             if anchor not in excerpt and anchor not in heading:
                 item["reason"] = f"原文里没有「{anchor}」，这条引用指错了位置"
                 return item

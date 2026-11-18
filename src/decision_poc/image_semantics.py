@@ -191,7 +191,7 @@ def _find_axes(image: PngImage) -> dict[str, int] | None:
     """找绘图区：左侧竖轴、底部横轴。
 
     用"最长连续深色像素段"判定轴，而不是"整列/整行深色计数"——否则坐标图左上角
-    的标题文字会被误判成轴的顶端（实测踩过这个坑）。
+    的标题文字会被误判成轴的顶端。
     """
     best_column: tuple[int, int, int] | None = None
     for x in range(max(1, image.width // 3)):
@@ -371,7 +371,7 @@ def analyze_schematic(
     segments: list[dict[str, Any]] = []
     flood: dict[str, Any] | None = None
     # 走向用"该颜色在单行/单列里的最大像素数"判定：图例色块很小，不会主导走向；
-    # 直接看 bbox 长宽比会把"竖线 + 右下角图例色块"判成面积块（实测踩过）。
+    # 直接看 bbox 长宽比会把"竖线 + 右下角图例色块"判成面积块。
     row_max: dict[tuple[int, int, int], int] = {rgb: 0 for rgb in candidates}
     col_max: dict[tuple[int, int, int], int] = {rgb: 0 for rgb in candidates}
     for y in range(image.height):

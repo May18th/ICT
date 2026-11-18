@@ -209,7 +209,7 @@ def test_scheduler_routes_serve(path):
 def test_departments_come_from_the_ledger():
     """「跨部门协同」必须从部门台账读出中文名。
 
-    这条防的是一个真实踩过的坑：页面原来读 `deduction.departments`，而该字段是空列表，
+    这条防的是：页面原来读 `deduction.departments`，而该字段是空列表，
     评委看到的是「跨部门协同：无」——等于告诉评委本系统没有跨部门能力。
     """
     departments = chain.load_departments()

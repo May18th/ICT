@@ -83,7 +83,7 @@ def build_inp() -> str:
     """生成与 quant 层同口径的 SWMM INP。细节见模块 docstring。"""
     ts_lines: list[str] = []
     # 5 分钟步长均匀雨强 20 mm/h，持续 3h；带日期（SWMM 5.2 对无日期序列
-    # 会落在仿真窗口外导致降雨全丢——实测踩坑）；11:05 显式雨止避免线性内插尾巴
+    # 会落在仿真窗口外导致降雨全丢）；11:05 显式雨止避免线性内插尾巴
     for i in range(int(RAIN_DURATION_H * 12) + 1):
         minutes = i * 5
         hh, mm = divmod(8 * 60 + minutes, 60)

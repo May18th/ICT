@@ -57,7 +57,7 @@ SLIDE_XML = re.compile(r"ppt/slides/slide\d+\.xml$")
 WORD_XML = re.compile(r"word/document\.xml$")
 
 #: `<a:t>` / `<w:t>` 文本节点。注意必须是 `(?:a|w):t` 后面紧跟空白或 `>`，
-#: 写成 `[^>]*` 会把 `<w:tcPr>` 也吃进来（踩过）。
+#: 写成 `[^>]*` 会把 `<w:tcPr>` 也吃进来。
 TEXT_NODE = re.compile(r"<(?:a|w):t(?:\s[^>]*)?>(.*?)</(?:a|w):t>", re.S)
 
 #: 「发布 v19」「Agent v10」「（v10）」这类版本号。排除 `v2.7.0` 这种小节点版本：

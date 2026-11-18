@@ -1905,7 +1905,7 @@ function layoutDepartments(){
       return {id: d.id, pos};
     }
     // 一圈一圈往外找空位：8 个方向 × 3 圈。只用一圈时，如果 8 个落点都撞，
-    // 就会退回原位——而原位可能正好压在设施上（应急局就踩过这个坑）。
+    // 就会退回原位，而原位可能正好压在设施上。
     let ok = false;
     for(let ring=1; ring<=3 && !ok; ring++){
       for(const [ux,uy] of DIRS){

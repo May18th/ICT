@@ -48,7 +48,7 @@ LABELS = list(DEFAULT_LABELS)
 
 def _settings(base: str, key: str, agent: str) -> NexentSettings:
     # 不走 from_env：它只认 NEXENT_AGENT_NAME，会让 --collab-agent 静默失效，
-    # 表现为"改了半天 agent 名、跑的还是默认那个"（nexent_collab_live 踩过）。
+    # 表现为"改了半天 agent 名、跑的还是默认那个"。
     return NexentSettings(base_url=base.rstrip("/"), api_key=key.strip(), agent_name=agent)
 
 

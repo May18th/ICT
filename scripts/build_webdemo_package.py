@@ -58,7 +58,7 @@ SKIP_SUFFIXES = {".pyc", ".pyo"}
 #: 发布工具会排除构建产物目录（`dist/` 传不上去），所以线上必然是「无产物 →
 #: 现场生成」这条路径。`build_map2d.py` 生成页面，`build_event_timeline.py`
 #: 从台账重算 7 步时刻——缺后者时 `out/map2d/event_timeline.json` 不存在，
-#: 时标只能为 null，状态带会显示「回放 --:--」、7 步时刻全空（实测过）。
+#: 时标只能为 null，状态带会显示「回放 --:--」、7 步时刻全空。
 #: 只带这两个，不整目录带 `scripts/`：其余脚本是文档/训练/审计工具，与页面无关。
 SYNC_FILES: tuple[tuple[str, Path], ...] = (
     ("scripts/build_map2d.py", ROOT / "scripts" / "build_map2d.py"),

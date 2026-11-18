@@ -23,7 +23,7 @@ MISSING_EVIDENCE_SOURCE = "missing:evidence"
 class ProvenanceLevel(StrEnum):
     """数据来源级别：契约层的统一枚举，检查层与定量层共用同一套取值。
 
-    原先定义在 `data_gate`（检查模块）里，被 `hydro_contracts` 需要时会造成
+    定义在 `data_gate`（检查模块）里，被 `hydro_contracts` 需要时会造成
     "契约反向依赖检查模块"。上移到根契约后，`data_gate` 只做重导出。
     """
 

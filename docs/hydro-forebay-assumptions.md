@@ -68,7 +68,7 @@ print(time_to_level(hydrograph=hydrograph, target_level_m=curve.warning_stage_m)
 **不要**自己读 CSV 拼数组再手写来源级别——数值和 `value_basis` 一旦各说一套，就是这次资产化要堵的漏。
 需要曲线形状时可以读 `curve.stage_m` / `curve.storage_m3`，但来源只认 `curve.provenance`。
 
-> **时长换算提醒（踩过一次的坑）**：`dt_h=0.01` 表示每时段 0.6 分钟，所以「10 分钟」是 **17 个时段**，
+> **时长换算提醒**：`dt_h=0.01` 表示每时段 0.6 分钟，所以「10 分钟」是 **17 个时段**，
 > 「10 个时段」只有 6 分钟。写停机时长时一律用 `分钟 / (dt_h × 60)` 换算，别把步数当时长——
 > 本轮初稿就是把 10 个时段当成 10 分钟，峰值被低估了近一半（1.20 m vs 实际 2.04 m）。
 

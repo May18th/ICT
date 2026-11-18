@@ -216,7 +216,7 @@ def identify_asset(
     data = target.read_bytes()
     suffix = target.suffix.lower()
     # 文本按 LF 规范化后再算哈希，使 asset_id 与行尾无关（见 TEXT_SUFFIXES 注释）。
-    # byte_size 也必须量 payload：原先量的是原始字节，同一份文本在 CRLF 检出下会多出
+    # byte_size 也必须量 payload：量的是原始字节，同一份文本在 CRLF 检出下会多出
     # 「行数 × 1」字节，导致 manifest 里哈希不变、字节数却随平台漂移。
     payload = data.replace(b"\r\n", b"\n") if suffix in TEXT_SUFFIXES else data
     checksum = hashlib.sha256(payload).hexdigest()

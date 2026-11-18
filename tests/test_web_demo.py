@@ -186,7 +186,7 @@ def test_page_has_scheduler_panels_and_live_scene():
 def test_page_script_parses(tmp_path):
     """页面脚本必须能解析。
 
-    这条是为一个真实踩过的坑加的：build_html() 是普通 Python 字符串，JS 里写 "\\n"
+    这条针对：build_html() 是普通 Python 字符串，JS 里写 "\\n"
     会被解释成真实换行，把字符串字面量截断——整个 <script> 解析失败，页面按钮全哑。
 
     twin3d 曾经漏在覆盖之外：3D 沙盘的脚本在 build_twin3d_html() 里，被同一个坑

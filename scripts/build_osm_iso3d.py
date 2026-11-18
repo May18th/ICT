@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """OSM 底图 -> 等轴测（isometric）3D 城市图，纯 SVG 输出。
 
-为什么做等轴测而不是 three.js：本机 8G 内存带不动 WebGL 场景（已经踩过一次），
+为什么做等轴测而不是 three.js：本机 8G 内存带不动 WebGL 场景，
 而等轴测图是纯多边形，浏览器渲染开销接近零，还能直接转 PNG 进 PPT。
 
 投影：真等轴测
