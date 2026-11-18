@@ -243,7 +243,7 @@ def main(argv: list[str] | None = None) -> int:
         if wait_up(base, 3.0):
             ok(f"{args.port} 已有服务在跑，直接复用")
         else:
-            bad(f"{args.port} 被占用，但不是本服务", "换一个端口：--port 8899")
+            bad(f"{args.port} 被占用，但不是本服务", "请使用 --port 指定其他未占用端口")
             return 2
     elif args.check:
         ok(f"{args.port} 空闲")
@@ -256,7 +256,7 @@ def main(argv: list[str] | None = None) -> int:
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
         if not wait_up(base, 40.0):
-            bad("服务 40 秒内没起来", "手动跑一次：PYTHONPATH=src python -m decision_poc.web_demo --port 8899")
+            bad("服务 40 秒内没起来", f"手动跑一次：PYTHONPATH=src python -m decision_poc.web_demo --port {args.port}")
             return 3
         ok(f"服务已起在 {args.port}")
 
