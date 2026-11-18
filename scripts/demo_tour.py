@@ -21,7 +21,7 @@
     python scripts/demo_tour.py --manual     # 每一幕按空格推进（讲的人控节奏）
     python scripts/demo_tour.py --check      # 只自检，不起服务
     python scripts/demo_tour.py --no-open    # 起服务但不弹浏览器
-    python scripts/demo_tour.py --port 8899
+    python scripts/demo_tour.py --port 8890
 """
 
 from __future__ import annotations
@@ -227,7 +227,7 @@ def teleprompter(base: str) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="一键演示：自检 → 起服务 → 打开大屏 → 讲稿")
-    parser.add_argument("--port", type=int, default=8899)
+    parser.add_argument("--port", type=int, default=8890)
     parser.add_argument("--check", action="store_true", help="只自检，不起服务")
     parser.add_argument("--no-open", action="store_true", help="不弹浏览器")
     parser.add_argument("--manual", action="store_true", help="每幕按空格推进，而不是自动播放")

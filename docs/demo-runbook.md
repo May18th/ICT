@@ -8,6 +8,16 @@
 - Docker Desktop 已启动，`nexent-northbound` / `nexent-postgresql` / `nexent-elasticsearch` 三个容器在跑。
 - 仓库位于 `D:/华为ICT/agent_poc`，已执行过 `uv sync --locked`。
 
+## 0.5 三种启动入口
+
+| 入口 | 场景 | 凭据 | 端口 |
+|---|---|---|---|
+| `启动门户.bat` | 源码开发：直读 `src/`，改文案立刻生效 | 读 `.env` | 从 8791 起自动挑空闲 |
+| `一键演示.bat` | 断网现场演示：自检 → 起服务 → 开 `/show` → 打印讲稿 | 不读 `.env` | 固定 8890 |
+| `开始公网演示.bat` | 公网隧道：起服务 + cloudflared + 断线自动重连 | 读 `artifacts/nexent_key.env` | 固定 18770 |
+
+现场演示不读 `.env`：没有 `NEXENT_API_KEY` 时工作台问答走本地直出，这是设计行为，自检会单独报出这一项。公网演示的当前地址写在 `out/public_url.txt`。
+
 ## 1. 环境自检（约 30 秒）
 
 ```powershell
@@ -299,7 +309,7 @@ verdict：策略 v1 → v4；分配变化 A-03 4→5 台，B-01 2→1 台；跨�
 ### 3. 让 UE 跟着变（不用手敲 show_step）
 
 **优先用文件总线**（同机演示，不赌端口——实测过 8788 被 Windows 拒绝绑定 `WinError 10013`、
-8899 已被别的服务占用）：
+8899 曾被别的服务占用）：
 
 ```python
 import urban_twin_state as s

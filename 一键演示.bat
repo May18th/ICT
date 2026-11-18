@@ -23,15 +23,15 @@ if "%PICK%"=="2" goto manual
 if "%PICK%"=="3" goto check
 
 :auto
-"%PY%" scripts\demo_tour.py --port 8899
+"%PY%" scripts\demo_tour.py --port 8890
 goto end
 
 :manual
-"%PY%" scripts\demo_tour.py --port 8899 --manual
+"%PY%" scripts\demo_tour.py --port 8890 --manual
 goto end
 
 :check
-"%PY%" scripts\demo_tour.py --port 8899 --check
+"%PY%" scripts\demo_tour.py --port 8890 --check
 echo.
 pause
 goto end

@@ -94,15 +94,7 @@ uv run python -m decision_poc.web_demo --port 8790     # 浏览器开 http://127
 
 想一次跑完测试 + 推演 + 策略演化 + 自检：`uv run python scripts/reproduce.py`（约 30 秒）。
 
-三个启动入口的分工如下，双击即用，各自的默认端口与凭据逻辑保持独立：
-
-| 入口 | 用途 | 凭据 | 端口 |
-|---|---|---|---|
-| `启动门户.bat` | 源码开发：直读 `src/`，改文案立刻生效 | 读 `.env` | 从 8791 起自动挑空闲 |
-| `一键演示.bat` | 断网现场演示：自检 → 起服务 → 开 `/show` → 打印讲稿 | **不读 `.env`** | 固定 8899 |
-| `开始公网演示.bat` | 公网隧道：起服务 + cloudflared + 断线自动重连 | 读 `artifacts/nexent_key.env` | 固定 18770 |
-
-现场演示模式下没有 `NEXENT_API_KEY` 时，工作台问答走本地直出、不调用上游模型。这是设计行为而非故障，自检会把这一项单独报出来；公网演示的当前地址写在 `out/public_url.txt`。
+源码开发、断网现场演示、公网隧道三种场景各有一个启动入口，端口与凭据的差异写在 `docs/demo-runbook.md`。现场演示不依赖云端接口；未配置模型凭据时，工作台问答走本地直出、不调用上游模型，这是设计行为而非故障。
 
 演示页 `/show` 把 `/map2d` 嵌进来当底片，按「收到工单 → 冲突曝光 → 策略进化 → 重新推演 → 大屏退水」五幕推进，
 数字全部取自本机接口；空格推进，`?beat=3` 可单独排练某一幕。缺底图时大屏会悄悄退回示意图，自检会当场报出来。
@@ -115,7 +107,6 @@ uv run python -m decision_poc.web_demo --port 8790     # 浏览器开 http://127
 ```bash
 uv run python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00
 uv run python -m decision_poc.evidence_check    # 期望 108/108，核对值 06db4f93ca0b53c7
-uv run python scripts/demo_tour.py --check      # 只自检：依赖文件、页面体积、六项页面与接口
 ```
 
 </details>
