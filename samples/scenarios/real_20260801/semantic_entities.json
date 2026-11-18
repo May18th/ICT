@@ -1,12 +1,12 @@
 {
   "schema_version": "urban-twin-semantic-entities-v1",
-  "projection_hash": "proj-de40f14cbc813e83",
+  "projection_hash": "proj-2b78321ed81d62a8",
   "event_id": "WO-20261029-007",
   "as_of": "2026-10-29T09:40:00+08:00",
   "district": "A-03",
-  "scene_snapshot_hash": "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891",
-  "layout_snapshot_hash": "438d4cc786ba4f227a266ddff1037f4e828d93b189b78c40411d893c046262a9",
-  "replay_snapshot_hash": "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891",
+  "scene_snapshot_hash": "fc53cec799650dfaf4e53a717f714a630c174a4847b52a6f707f2e6b10540068",
+  "layout_snapshot_hash": "5a270b60f6f566fd0b9afd3b718f1b5042b4f7ecb0e219c91e5907284be00df7",
+  "replay_snapshot_hash": "fc53cec799650dfaf4e53a717f714a630c174a4847b52a6f707f2e6b10540068",
   "hop_order": [
     "observed",
     "affected",

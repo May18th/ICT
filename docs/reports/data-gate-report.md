@@ -1,4 +1,4 @@
-# 数据校验报告
+# 数据门禁报告
 
 - 数据集：`samples/assets/urban`
 - 来源标注：`samples/gate/data_provenance.json`

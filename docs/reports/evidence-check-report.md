@@ -73,7 +73,7 @@
 | `p9_evolution.real_event.evolved_unmet.A-03` | `0` | `0` | 通过 |
 | `p9_evolution.real_event.evolved_unmet.B-01` | `2` | `2` | 通过 |
 | `p9_evolution.real_event.evolved_transfer_count` | `1` | `1` | 通过 |
-| `test_suite.docs_declared` | `[980]` | `[980]` | 通过 |
+| `test_suite.docs_declared` | `[976]` | `[976]` | 通过 |
 | `p11_ablation.configs` | `["rules_only", "semantic_only", "single_skill", "multi_skill", "full_audited"]` | `["rules_only", "semantic_only", "single_skill", "multi_skill", "full_audited"]` | 通过 |
 | `p11_ablation.metrics.rules_only.six_hop_rate` | `0.0` | `0.0` | 通过 |
 | `p11_ablation.metrics.rules_only.safety_rate` | `0.0` | `0.0` | 通过 |

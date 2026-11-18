@@ -1,6 +1,6 @@
 {
   "schema_version": "urban-twin-scene-v1",
-  "snapshot_hash": "d102aa8076489dd431bfbabc882cec56047a3dfdb0010c52b92a2807e0c19891",
+  "snapshot_hash": "fc53cec799650dfaf4e53a717f714a630c174a4847b52a6f707f2e6b10540068",
   "objects": [
     {
       "twin_id": "TW-action-先组织抽排降低水位",
@@ -302,7 +302,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-drainage_facility-073cc674"
+        "AS-A-03-drainage_facility-d09effd5"
       ],
       "attributes": {
         "name": "兴华路雨水口组",
@@ -326,7 +326,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-drainage_facility-073cc674"
+        "AS-A-03-drainage_facility-d09effd5"
       ],
       "attributes": {
         "name": "民生街雨水口组",
@@ -349,7 +349,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-drainage_facility-073cc674"
+        "AS-A-03-drainage_facility-d09effd5"
       ],
       "attributes": {
         "name": "滨河路雨水口组",
@@ -372,7 +372,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-drainage_facility-073cc674"
+        "AS-A-03-drainage_facility-d09effd5"
       ],
       "attributes": {
         "name": "滨河路雨水口组",
@@ -396,7 +396,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-pipeline_ledger-40793355"
+        "AS-A-03-pipeline_ledger-ef229ae4"
       ],
       "attributes": {
         "kind": "drainage",
@@ -420,7 +420,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-pipeline_ledger-40793355"
+        "AS-A-03-pipeline_ledger-ef229ae4"
       ],
       "attributes": {
         "kind": "drainage",
@@ -443,7 +443,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-pipeline_ledger-40793355"
+        "AS-A-03-pipeline_ledger-ef229ae4"
       ],
       "attributes": {
         "kind": "drainage",
@@ -467,7 +467,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-pipeline_ledger-40793355"
+        "AS-A-03-pipeline_ledger-ef229ae4"
       ],
       "attributes": {
         "kind": "gas",
@@ -491,7 +491,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-pipeline_ledger-40793355"
+        "AS-A-03-pipeline_ledger-ef229ae4"
       ],
       "attributes": {
         "kind": "gas",
@@ -515,7 +515,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-work_order-6a1282a1"
+        "AS-A-03-work_order-4fa911d8"
       ],
       "attributes": {
         "road_id": "R-103",
@@ -538,7 +538,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-work_order-6a1282a1"
+        "AS-A-03-work_order-4fa911d8"
       ],
       "attributes": {
         "road_id": "R-101",
@@ -561,7 +561,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-work_order-6a1282a1"
+        "AS-A-03-work_order-4fa911d8"
       ],
       "attributes": {
         "road_id": "R-101",
@@ -584,7 +584,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-work_order-6a1282a1"
+        "AS-A-03-work_order-4fa911d8"
       ],
       "attributes": {
         "road_id": "R-101",
@@ -607,7 +607,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-work_order-6a1282a1"
+        "AS-A-03-work_order-4fa911d8"
       ],
       "attributes": {
         "road_id": "R-201",
@@ -630,7 +630,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-work_order-6a1282a1"
+        "AS-A-03-work_order-4fa911d8"
       ],
       "attributes": {
         "road_id": "R-201",
@@ -654,7 +654,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-work_order-6a1282a1"
+        "AS-A-03-work_order-4fa911d8"
       ],
       "attributes": {
         "road_id": "R-201",
@@ -677,7 +677,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-work_order-6a1282a1"
+        "AS-A-03-work_order-4fa911d8"
       ],
       "attributes": {
         "road_id": "R-202",
@@ -773,7 +773,7 @@
       "state": "unknown",
       "region_id": null,
       "asset_ids": [
-        "AS-CD-CITY-emergency_plan-2de19b5d"
+        "AS-CD-CITY-emergency_plan-f6569517"
       ],
       "attributes": {
         "file_name": "plan_flood_emergency_cd_2026.md",
@@ -809,7 +809,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-pipeline_ledger-40793355"
+        "AS-A-03-pipeline_ledger-ef229ae4"
       ],
       "attributes": {
         "kind": "power",
@@ -833,7 +833,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-pipeline_ledger-40793355"
+        "AS-A-03-pipeline_ledger-ef229ae4"
       ],
       "attributes": {
         "kind": "power",
@@ -857,7 +857,7 @@
       "state": "under_maintenance",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-drainage_facility-073cc674"
+        "AS-A-03-drainage_facility-d09effd5"
       ],
       "attributes": {
         "name": "兴华路雨水泵站",
@@ -883,7 +883,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-drainage_facility-073cc674"
+        "AS-A-03-drainage_facility-d09effd5"
       ],
       "attributes": {
         "name": "建设大道泵站",
@@ -910,7 +910,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-drainage_facility-073cc674"
+        "AS-A-03-drainage_facility-d09effd5"
       ],
       "attributes": {
         "name": "滨河路雨水泵站",
@@ -939,7 +939,7 @@
       "asset_ids": [
         "AS-A-03-resource_inventory-8133c741",
         "AS-A-03-road_network-6fbe05c1",
-        "AS-A-03-underpass-d4ae624c",
+        "AS-A-03-underpass-5a68cab1",
         "AS-A-03-weather_alert-de042dd8"
       ],
       "attributes": {
@@ -957,7 +957,7 @@
       "asset_ids": [
         "AS-A-03-resource_inventory-8133c741",
         "AS-A-03-road_network-6fbe05c1",
-        "AS-A-03-underpass-d4ae624c",
+        "AS-A-03-underpass-5a68cab1",
         "AS-A-03-weather_alert-de042dd8"
       ],
       "attributes": {
@@ -1370,7 +1370,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-pipeline_ledger-40793355"
+        "AS-A-03-pipeline_ledger-ef229ae4"
       ],
       "attributes": {
         "kind": "telecom",
@@ -1394,7 +1394,7 @@
       "state": "unknown",
       "region_id": "B-01",
       "asset_ids": [
-        "AS-A-03-underpass-d4ae624c"
+        "AS-A-03-underpass-5a68cab1"
       ],
       "attributes": {
         "name": "滨河路下穿通道",
@@ -1420,7 +1420,7 @@
       "state": "unknown",
       "region_id": "A-03",
       "asset_ids": [
-        "AS-A-03-underpass-d4ae624c"
+        "AS-A-03-underpass-5a68cab1"
       ],
       "attributes": {
         "name": "兴华路下穿隧道东端",
@@ -1446,7 +1446,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-pipeline_ledger-40793355"
+        "AS-A-03-pipeline_ledger-ef229ae4"
       ],
       "attributes": {
         "kind": "water",
@@ -1469,7 +1469,7 @@
       "state": "in_service",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-pipeline_ledger-40793355"
+        "AS-A-03-pipeline_ledger-ef229ae4"
       ],
       "attributes": {
         "kind": "water",
@@ -1588,7 +1588,7 @@
       "state": "planned",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-construction_plan-9d16ae32"
+        "AS-A-03-construction_plan-abbe33a8"
       ],
       "attributes": {
         "project_name": "兴华支路路面修复",
@@ -1613,7 +1613,7 @@
       "state": "planned",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-construction_plan-9d16ae32"
+        "AS-A-03-construction_plan-abbe33a8"
       ],
       "attributes": {
         "project_name": "民生街通信管道敷设",
@@ -1639,7 +1639,7 @@
       "state": "planned",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-construction_plan-9d16ae32"
+        "AS-A-03-construction_plan-abbe33a8"
       ],
       "attributes": {
         "project_name": "兴华路燃气主干管更换",
@@ -1665,7 +1665,7 @@
       "state": "planned",
       "region_id": null,
       "asset_ids": [
-        "AS-A-03-construction_plan-9d16ae32"
+        "AS-A-03-construction_plan-abbe33a8"
       ],
       "attributes": {
         "project_name": "滨河路燃气保护施工",

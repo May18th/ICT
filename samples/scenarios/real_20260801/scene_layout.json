@@ -1,6 +1,6 @@
 {
   "schema_version": "urban-twin-layout-v1",
-  "snapshot_hash": "438d4cc786ba4f227a266ddff1037f4e828d93b189b78c40411d893c046262a9",
+  "snapshot_hash": "5a270b60f6f566fd0b9afd3b718f1b5042b4f7ecb0e219c91e5907284be00df7",
   "units": "m",
   "notes": "示意图布局，非测绘坐标；z=0 为地平面，路面取 elevation_m，管线取 -depth_m",
   "bounds": {
