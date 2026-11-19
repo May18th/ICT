@@ -14,7 +14,7 @@
 
     $env:NEXENT_BASE_URL   = "http://localhost:5013"
     $env:NEXENT_API_KEY    = "<Access Key>"
-    $env:NEXENT_AGENT_NAME = "urban-deduction-agent"   # 已发布、已挂 MCP 工具的 Agent
+    $env:NEXENT_AGENT_NAME = "urban_deduction_agent"   # 已发布、已挂 MCP 工具的 Agent
     $env:PYTHONPATH = "src"
     uv run --locked python -m decision_poc.nexent_urban
 

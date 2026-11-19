@@ -21,7 +21,7 @@ Nexent 的「MCP 服务接入」只支持 HTTP/SSE（远程链接 / 容器 / API
 
 ```
 ┌──────────────────────────── Nexent（Docker，v2.7.0 本机） ────────────────────────────┐
-│  Agent「urban-deduction-agent」                                                      │
+│  Agent「urban_deduction_agent」                                                      │
 │    ├─ 模型：openPangu / 平台已配置模型                                                │
 │    ├─ 工具：MCP「urban-twin-mcp」→ http://host.docker.internal:8000/sse（15 个工具）  │
 │    ├─ 技能：urban-six-hop-deduction（六跳 SOP）                                       │
@@ -100,7 +100,7 @@ curl.exe http://127.0.0.1:8000/health
 ```powershell
 $env:NEXENT_BASE_URL   = "http://localhost:5013"
 $env:NEXENT_API_KEY    = "<Access Key>"
-$env:NEXENT_AGENT_NAME = "urban-deduction-agent"
+$env:NEXENT_AGENT_NAME = "urban_deduction_agent"
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_urban_smoke.json
 ```
