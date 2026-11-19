@@ -41,6 +41,7 @@
       "priority": 20,
       "confidence": 0.95,
       "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:24",
+      "method_ref": "paper-p0-4#C4-03",
       "keyword": "≥ 25cm"
     },
     {
@@ -58,6 +59,7 @@
       "priority": 50,
       "confidence": 0.8,
       "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:24",
+      "method_ref": "paper-p0-4#C4-02",
       "keyword": "同步到位"
     },
     {
@@ -96,6 +98,7 @@
       "priority": 35,
       "confidence": 0.88,
       "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:44",
+      "method_ref": "paper-p0-4#C4-01",
       "keyword": "积水影响范围内的压力管线"
     },
     {
@@ -456,6 +459,7 @@
       "priority": 20,
       "confidence": 0.85,
       "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:45",
+      "method_ref": "paper-p0-4#C4-04",
       "keyword": "泵站不可用时调用移动泵车"
     },
     {

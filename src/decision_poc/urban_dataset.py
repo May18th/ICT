@@ -341,6 +341,39 @@ SUPPLEMENTARY_ASSETS: tuple[SupplementaryAssetSpec, ...] = (
         scope="CD-CITY",
         note="24h 窗口实算累计雨量与预案四级条件逐条比对；原情景 V2 数据未被改动",
     ),
+    SupplementaryAssetSpec(
+        rel_path="references/paper-p0-1-knowledge-element-mapping.md",
+        asset_type="reference_card",
+        title="摘录卡 P0-1：基于知识-要素映射的城市内涝应急预案场景模拟",
+        source_org="内部依据文档（文献摘录卡）",
+        version="v1",
+        published_at="2026-11-19T00:00:00+08:00",
+        valid_from="2026-11-19T00:00:00+08:00",
+        scope="CD-CITY",
+        note="方法出处资产；不进入 19 项业务台账，不作为事实 source_ref",
+    ),
+    SupplementaryAssetSpec(
+        rel_path="references/paper-p0-2-chain-breaking.md",
+        asset_type="reference_card",
+        title="摘录卡 P0-2：特大城市暴雨灾害断链推演与应对方法研究",
+        source_org="内部依据文档（文献摘录卡）",
+        version="v1",
+        published_at="2026-11-19T00:00:00+08:00",
+        valid_from="2026-11-19T00:00:00+08:00",
+        scope="CD-CITY",
+        note="方法出处资产；不进入 19 项业务台账，不作为事实 source_ref",
+    ),
+    SupplementaryAssetSpec(
+        rel_path="references/paper-p0-4-complex-network-review.md",
+        asset_type="reference_card",
+        title="摘录卡 P0-4：基于复杂网络的城市内涝灾害应急管理研究综述",
+        source_org="内部依据文档（文献摘录卡）",
+        version="v1",
+        published_at="2026-11-19T00:00:00+08:00",
+        valid_from="2026-11-19T00:00:00+08:00",
+        scope="CD-CITY",
+        note="方法出处资产；不进入 19 项业务台账，不作为事实 source_ref",
+    ),
 )
 
 
@@ -368,7 +401,7 @@ def load_supplementary_assets(
 ) -> list[tuple[DataAsset, AssetGovernance, Path]]:
     """登记补充资料，返回 `(资产, 治理记录, 绝对路径)`。
 
-    路径必须一起返回：这两份文件的 `asset_id` 在 `_assets` 里，但文件名不在
+    路径必须一起返回：这些文件的 `asset_id` 在 `_assets` 里，但文件名不在
     台账目录下，任何按 `dataset_root / file_name` 取正文的地方都会找不到人。
     调用方拿到路径自己记着，比事后猜文件名可靠。
 

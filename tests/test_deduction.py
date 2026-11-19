@@ -72,6 +72,28 @@ def test_rule_validation_rejects_unknown_stage_and_validates_method_ref() -> Non
     with pytest.raises(ValueError):
         DeductionRule.model_validate({**payload, "stage": "vibes"})
 
+    expected = {
+        "RULE-AFF-ON-AFFECTED-ROAD": "paper-p0-4#C4-01",
+        "RULE-AFF-CONCURRENT-INCIDENT": "paper-p0-4#C4-02",
+        "RULE-OBS-RESPONSE-ORANGE": "paper-p0-4#C4-03",
+        "RULE-RISK-PUMP-POWER-LOSS": "paper-p0-4#C4-04",
+    }
+    by_id = {rule.rule_id: rule.method_ref for rule in RULES.rules}
+    assert {rule_id: by_id[rule_id] for rule_id in expected} == expected
+    assert sum(bool(rule.method_ref) for rule in RULES.rules) == len(expected)
+
+    from decision_poc.urban_dataset import load_supplementary_assets
+
+    cards = {
+        path.stem.removesuffix("-complex-network-review"): path.read_text(encoding="utf-8")
+        for _asset, _governance, path in load_supplementary_assets()
+        if path.suffix == ".md" and path.stem.startswith("paper-p0-")
+    }
+    for method_ref in expected.values():
+        card_id, card = method_ref.split("#", 1)
+        assert card_id in cards
+        assert f"### {card}" in cards[card_id]
+
 
 def test_every_rule_points_at_a_real_line() -> None:
     assert len(SOURCE_REFS) == len(RULES.rules)

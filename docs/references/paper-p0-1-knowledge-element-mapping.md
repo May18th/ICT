@@ -1,6 +1,6 @@
 # 摘录卡 P0-1：基于知识-要素映射的城市内涝应急预案场景模拟
 
-状态：**内部依据文档**。不注册为数据资产、不写入任何 `source_ref`、不改 39 条规则（依据见 [第二批文献核实 §6](../reports/paper-batch2-audit.md)）
+状态：**内部依据文档，已登记为补充资产**。不进入 19 项业务台账、不写入任何 `source_ref`；可作为 `method_ref` 的方法依据（依据见 [第二批文献核实 §6](../reports/paper-batch2-audit.md)）
 落点：`rules.source_ref`（预案条款锚点）与 `scene_binding`（要素→画面主键）
 
 ## 题录与获取
