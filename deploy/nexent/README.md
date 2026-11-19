@@ -7,8 +7,8 @@
 | 项 | 结果 | 证据 |
 | --- | --- | --- |
 | 主链路 | **8/8 项一致**，conversation_id=262，attempts_used=1，errors=[] | `samples/eval/nexent_urban_smoke_v34_retest.json` |
-| 协同链路 | **2/3**，校验值 `d7fa402fe22e596c`，26 卡 / 15 序 / 6 角色，7.2s / 6.4s 两次通过；第 3 次返回空骨架 JSON（各字段为 null，未调用工具） | `samples/nexent/live/collab_v12_retest.json` |
-| 数据快照 | 本轮 7 次工具调用（4×`collab_run` + 3×`event_deduce`）的 `snapshot_hash` 全为 `fc53cec7…` | `artifacts/visual/tool_log.jsonl` |
+| 协同链路 | **两轮 6 次中 5 次通过**（本轮 3/3：9.0s / 7.8s / 11.1s；前一轮 2/3，第 3 次返回空骨架 JSON、未调用工具），校验值 `d7fa402fe22e596c`，26 卡 / 15 序 / 6 角色 | `samples/nexent/live/collab_v12_retest.json`、`collab_v12_retest_run2.json` |
+| 数据快照 | 两轮共 15 次工具调用（12×`collab_run` + 3×`event_deduce`）的 `snapshot_hash` 全为 `fc53cec7…` | `artifacts/visual/tool_log.jsonl` |
 
 > **同一套配置为什么指纹会从 `ab94413` 变成 `d7fa402`**：`deploy/mcp_sse/Dockerfile` 用 `COPY samples/` 把数据
 > 固化进镜像，镜像不重建就不会跟着仓库变。2026-11-18 把 `scene.json` 的资产 id 与 `manifest.json` 对齐后，宿主机
