@@ -1986,6 +1986,15 @@ function humanRef(ref){
   var doc=DOC_CN[type]||type;
   return doc+' · 第 '+m[2].split('-')[0]+' 行';
 }
+function refCn(x){
+  var parts=String(x||'').split('#');
+  if(parts.length<2){return x;}
+  var p=parts[1].split('/');
+  var m=String(parts[2]||'').match(/(?:row|line):([0-9]+)/);
+  var doc=DOC_CN[p[1]]||p[1];
+  var ver=(p[2]&&!/^(row|line|region):/.test(p[2]))?p[2]:'';
+  return (p[0]||'')+' '+doc+(ver?' '+ver:'')+(m?' 第 '+m[1]+' 行':'');
+}
 // 2026-10-20T11:10:00+08:00 -> 2026-10-20 11:10
 function humanTime(v){
   var s=String(v||'');
