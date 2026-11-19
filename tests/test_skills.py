@@ -145,6 +145,7 @@ def test_audit_passes_and_seals_the_ledger(report: PipelineReport) -> None:
     assert audit.record_id and audit.record_hash
     assert audit.decision_id == f"DEC-{EVENT}-20261029T0940"
     assert all(claim.evidence_refs for claim in audit.claims)
+    assert all(claim.method_ref == "" for claim in audit.claims)
 
 
 def test_report_renders_the_five_sections(report: PipelineReport) -> None:

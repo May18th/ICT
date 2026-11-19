@@ -71,6 +71,7 @@ class RuleRef(StrictModel):
 
     rule_id: str = Field(min_length=1)
     source_ref: str = Field(min_length=1)
+    method_ref: str = ""
     version: str = "v1"
 
 
@@ -116,6 +117,7 @@ class ClaimTrace(StrictModel):
     semantic_snapshot_hash: str
     rule_id: str | None = None
     rule_source_ref: str | None = None
+    rule_method_ref: str | None = None
     assets: list[AssetTrace] = Field(default_factory=list)
     record_ids: list[str] = Field(default_factory=list)
     decision_ids: list[str] = Field(default_factory=list)
@@ -375,11 +377,19 @@ class ProvenanceLedger:
             semantic_snapshot_hash=snapshot,
             rule_id=claim.rule_id,
             rule_source_ref=rule.source_ref if rule else None,
+            rule_method_ref=rule.method_ref if rule else None,
             assets=assets,
             record_ids=[record.record_id for record in produced_by],
             decision_ids=sorted({record.decision_id for record in produced_by}),
             premise_claim_ids=list(claim.premise_claim_ids),
         )
+
+    def method_ref_for(self, rule_id: str | None) -> str:
+        """Return the optional method reference for an attached rule."""
+        if rule_id is None:
+            return ""
+        rule = self._rules.get(rule_id)
+        return rule.method_ref if rule else ""
 
     def replay(self, decision_id: str) -> ReplayBundle:
         """Minimum evidence set to re-derive one decision."""

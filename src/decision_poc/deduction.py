@@ -1763,7 +1763,12 @@ def build_rule_registry(rules: RuleSet, source_refs: Mapping[str, str]) -> dict[
     from .provenance import RuleRef
 
     return {
-        rule.rule_id: RuleRef(rule_id=rule.rule_id, source_ref=source_refs[rule.rule_id], version=rules.version)
+        rule.rule_id: RuleRef(
+            rule_id=rule.rule_id,
+            source_ref=source_refs[rule.rule_id],
+            method_ref=rule.method_ref,
+            version=rules.version,
+        )
         for rule in rules.rules
         if rule.rule_id in source_refs
     }

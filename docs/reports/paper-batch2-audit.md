@@ -224,6 +224,7 @@ rules.json 里的source_ref
 
 - `DeductionRule` 已增加可选字段 `method_ref: str = ""`，输入值会去除首尾空白，纯空白输入会被拒绝。
 - `source_ref` 继续定位事实台账，`method_ref` 用于记录规则设计或计算方法的出处。`verify_rules()` 仍只按 `source_ref`、`keyword` 和 `rule_id` 校验。
+- `RuleRef`、`ClaimTrace` 与审计卡 `ClaimAudit` 已沿链路携带 `method_ref`。`claim_trace` 输出字段名为 `rule_method_ref`，无方法出处时为空。
 - 39 条现有规则 JSON 保持原样。当前没有逐条核实的方法出处，因此不填入推断值。
 - 旧规则 JSON 可以继续加载，规则数量、manifest 与 `expectations_digest` 均保持不变。
 

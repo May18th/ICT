@@ -223,6 +223,7 @@ class ClaimAudit(StrictModel):
     reasons: list[str] = Field(default_factory=list)
     evidence_refs: list[str] = Field(default_factory=list)
     rule_id: str | None = None
+    method_ref: str = ""
 
 
 class AuditReport(StrictModel):
@@ -829,6 +830,7 @@ class AuditSkill(Skill):
                 reasons=list(checks[claim.claim_id].reasons),
                 evidence_refs=list(claim.evidence_refs),
                 rule_id=claim.rule_id,
+                method_ref=ledger.method_ref_for(claim.rule_id),
             )
             for claim in claims
         ]

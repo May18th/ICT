@@ -162,7 +162,13 @@ def test_inference_with_unknown_premise_is_unsupported() -> None:
 
 
 def test_rule_output_requires_known_rule_and_locatable_source() -> None:
-    rules = {"RULE-1": RuleRef(rule_id="RULE-1", source_ref="AS-plan#/line:44")}
+    rules = {
+        "RULE-1": RuleRef(
+            rule_id="RULE-1",
+            source_ref="AS-plan#/line:44",
+            method_ref="docs/method.md#section-3",
+        )
+    }
     ledger = _ledger(rules=rules)
 
     unknown = Claim(
@@ -187,6 +193,7 @@ def test_rule_output_requires_known_rule_and_locatable_source() -> None:
     )
     assert ledger.check_of("CL-r2").status is ClaimStatus.SUPPORTED
     assert ledger.check_of("CL-r2").resolved_asset_ids == ["AS-plan"]
+    assert ledger.method_ref_for("RULE-1") == "docs/method.md#section-3"
 
 
 def test_rule_source_asset_must_exist_in_ledger() -> None:
@@ -292,7 +299,13 @@ def test_verify_detects_broken_link() -> None:
 
 
 def test_trace_claim_returns_assets_rules_and_records() -> None:
-    rules = {"RULE-1": RuleRef(rule_id="RULE-1", source_ref="AS-plan#/line:44")}
+    rules = {
+        "RULE-1": RuleRef(
+            rule_id="RULE-1",
+            source_ref="AS-plan#/line:44",
+            method_ref="docs/method.md#section-3",
+        )
+    }
     ledger = _ledger(rules=rules)
     ledger.register(
         [
@@ -313,6 +326,7 @@ def test_trace_claim_returns_assets_rules_and_records() -> None:
     trace = ledger.trace_claim("CL-rule")
     assert trace.rule_id == "RULE-1"
     assert trace.rule_source_ref == "AS-plan#/line:44"
+    assert trace.rule_method_ref == "docs/method.md#section-3"
     assert trace.record_ids == [record.record_id]
     assert trace.decision_ids == ["DEC-1"]
     assert trace.semantic_snapshot_hash == SNAP
