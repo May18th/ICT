@@ -1,7 +1,13 @@
 """Counterfactual branches over the same rules and semantic layer (P6 extension).
 
-The three questions in `docs/urban-scenario-ground-truth.md` §4 (CF1-CF3) have
-one property that decides the architecture: **the answer must be replayable**.
+The questions come in two groups. CF1–CF3 are fixed in
+`docs/urban-scenario-ground-truth.md` §4. CF4–CF6 were added after the cause
+annotation audit: they vary the pump station state and the mobile-pump
+inventory, replay the same pipeline, and stay out of ground truth — they add
+cases, they do not move the acceptance bar.
+
+All of them share one property that decides the architecture: **the answer must
+be replayable**.
 So this module never writes "如果先封路，抢修会慢 15 分钟" — it interferes with an
 input, rebuilds the world, replays the same five-skill pipeline, and diffs the
 conclusions. Every number and every ordering in the output is a computed
@@ -11,7 +17,7 @@ Two kinds of intervention, both on *inputs*:
 
 | kind | 改什么 | 用于 |
 | --- | --- | --- |
-| `data_patch` | 数据集某一行某列（库存数量、工期起止） | CF2、CF3 |
+| `data_patch` | 数据集某一行某列（库存数量、工期起止、设施状态） | CF2–CF6 |
 | `rule_patch` | 规则的一个参数（处置顺序 `then.order`） | CF1 |
 
 Why not patch the deduction logic: a branch that changes the code cannot be
@@ -21,8 +27,7 @@ Honesty rule inherited from P6: if the current knowledge cannot answer the
 question, the result says which rule field is missing instead of producing a
 plausible sentence. CF3 is exactly that case — the rules contain no date field,
 so shifting a construction plan by a day changes nothing, and the report states
-it as 
-o_effect` with the reason, not as "风险上调".
+it as `no_effect` with the reason, not as "风险上调".
 """
 
 from __future__ import annotations
@@ -265,6 +270,75 @@ CASES: dict[str, CounterfactualCase] = {
                 field="end_at",
                 value="2026-10-30T18:00:00+08:00",
                 note="完工顺延一天（开工时间不变：推迟开工会让今日基坑不存在，那是另一个问题）",
+            ),
+        ],
+    ),
+    "CF4": CounterfactualCase(
+        case_id="CF4",
+        question="若 DF-PS-01 泵站恢复正常，需求、缺口和冲突如何变化？",
+        expectation="泵站恢复正常后重放同一条流水线，核对需求由 8 台降为 5 台、缺口归零，以及 C3 是否消失；C2 不因设备状态变化而自动补全。",
+        interventions=[
+            Intervention(
+                kind=InterventionKind.DATA_PATCH,
+                target="drainage_facilities.csv",
+                match={"facility_id": "DF-PS-01"},
+                field="state",
+                value="in_service",
+                note="泵站恢复运行",
+            ),
+            Intervention(
+                kind=InterventionKind.DATA_PATCH,
+                target="drainage_facilities.csv",
+                match={"facility_id": "DF-PS-01"},
+                field="failed_units",
+                value="0",
+                note="故障机组数归零",
+            ),
+        ],
+    ),
+    "CF5": CounterfactualCase(
+        case_id="CF5",
+        question="若 A-03 增调 2 台移动泵，需求、缺口和冲突如何变化？",
+        expectation="在同一数据集上把 A-03 移动泵库存由 4 台调为 6 台，核对库存由 6 台增为 8 台、缺口归零，以及 C3 是否消失；C2 保持为空白。",
+        interventions=[
+            Intervention(
+                kind=InterventionKind.DATA_PATCH,
+                target="resource_inventory.csv",
+                match={"resource_id": "RES-PUMP-M"},
+                field="qty_available",
+                value="6",
+                note="A-03 增调 2 台移动泵",
+            ),
+        ],
+    ),
+    "CF6": CounterfactualCase(
+        case_id="CF6",
+        question="若泵站恢复正常并增调 2 台移动泵，推演结果如何变化？",
+        expectation="同时改变泵站状态与 A-03 移动泵库存，重放同一条流水线并保留 C2 的职责空白结论。",
+        interventions=[
+            Intervention(
+                kind=InterventionKind.DATA_PATCH,
+                target="drainage_facilities.csv",
+                match={"facility_id": "DF-PS-01"},
+                field="state",
+                value="in_service",
+                note="泵站恢复运行",
+            ),
+            Intervention(
+                kind=InterventionKind.DATA_PATCH,
+                target="drainage_facilities.csv",
+                match={"facility_id": "DF-PS-01"},
+                field="failed_units",
+                value="0",
+                note="故障机组数归零",
+            ),
+            Intervention(
+                kind=InterventionKind.DATA_PATCH,
+                target="resource_inventory.csv",
+                match={"resource_id": "RES-PUMP-M"},
+                field="qty_available",
+                value="6",
+                note="A-03 增调 2 台移动泵",
             ),
         ],
     ),
@@ -835,7 +909,7 @@ def rerun_with_interventions(
 ) -> dict[str, Any]:
     """按干预补丁重跑一次推演，返回两侧完整报告与摘要。
 
-    这与 CF1-CF3 用的是同一套机制（`_prepare` 把数据集复制到临时目录打补丁，
+    这与全部反事实用例用的是同一套机制（`_prepare` 把数据集复制到临时目录打补丁，
     再拿一份独立的 `SkillRuntime` 重跑整条流水线），因此"改了条件以后结论怎么变"
     永远是重算出来的，不是对基线结果做加减。页面上的"人工干预 → 重新调度"就靠它。
 
@@ -873,7 +947,7 @@ def rerun_with_interventions(
         "baseline_summary": baseline.model_dump(mode="json"),
         "intervened_summary": intervened.model_dump(mode="json"),
         "interventions": [item.describe() for item in interventions],
-        "mechanism": "临时数据集副本 + 独立 SkillRuntime 重跑整条流水线（与 CF1-CF3 同机制）",
+        "mechanism": "临时数据集副本 + 独立 SkillRuntime 重跑整条流水线（与全部用例同机制）",
     }
 
 
@@ -1059,8 +1133,8 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="strict")
     import argparse
 
-    parser = argparse.ArgumentParser(description="counterfactual branches (CF1-CF3)")
-    parser.add_argument("--case", default="all", help="CF1 / CF2 / CF3 / all")
+    parser = argparse.ArgumentParser(description="counterfactual branches (CF1-CF6)")
+    parser.add_argument("--case", default="all", help="CF1..CF6 / all")
     parser.add_argument("--event", default="WO-20261029-007")
     parser.add_argument("--as-of", default="2026-10-29T09:40:00+08:00", dest="as_of")
     parser.add_argument("--caller-labels", default="ORG-EMERG")

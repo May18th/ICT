@@ -32,7 +32,10 @@
       "cases": [
         "CF1",
         "CF2",
-        "CF3"
+        "CF3",
+        "CF4",
+        "CF5",
+        "CF6"
       ],
       "failure_mode": "基线越权或不可计算 -> PERMISSION_DENIED / EVIDENCE_INSUFFICIENT，不给空差异"
     },

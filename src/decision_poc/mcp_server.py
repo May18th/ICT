@@ -218,6 +218,10 @@ class UrbanToolkit:
         return self.knowledge_version
 
     def tools(self, groups: Sequence[str] | None = None) -> list[dict[str, Any]]:
+        # 反事实用例清单从 CASES 取，不在这里写死第二份：新增 CF 用例时
+        # schema 与实现同步变化，客户端按 enum 传参才不会撞上 NOT_FOUND。
+        from .counterfactual import CASES
+
         tools = [
             {
                 "name": "semantic_query",
@@ -334,7 +338,7 @@ class UrbanToolkit:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "case_id": {"type": "string", "enum": ["CF1", "CF2", "CF3"]},
+                        "case_id": {"type": "string", "enum": sorted(CASES)},
                         "event_id": {"type": "string"},
                         "as_of": {"type": "string", "description": "ISO 8601 带时区"},
                         "caller_labels": {"type": "array", "items": {"type": "string"}},

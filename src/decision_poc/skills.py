@@ -1077,6 +1077,8 @@ def skill_manifest() -> dict[str, Any]:
     Generated from the live objects so a renamed skill or widened request model
     shows up as a diff here instead of as a runtime mismatch in the orchestrator.
     """
+    from .counterfactual import CASES
+
     return {
         "manifest_version": SKILL_MANIFEST_VERSION,
         "order": list(SKILL_ORDER),
@@ -1092,7 +1094,7 @@ def skill_manifest() -> dict[str, Any]:
                 "name": "counterfactual_run",
                 "when": "已有一条可发布的基线结论，用户追问“如果……会怎样”",
                 "mcp_tools": ["counterfactual_run"],
-                "cases": ["CF1", "CF2", "CF3"],
+                "cases": sorted(CASES),
                 "failure_mode": "基线越权或不可计算 -> PERMISSION_DENIED / EVIDENCE_INSUFFICIENT，不给空差异",
             },
             {

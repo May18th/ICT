@@ -12,6 +12,7 @@ import json
 
 import pytest
 
+from decision_poc.counterfactual import CASES
 from decision_poc.mcp_server import (
     INVALID_PARAMS,
     INVALID_REQUEST,
@@ -525,7 +526,8 @@ def test_counterfactual_rejects_unknown_case(server: McpServer) -> None:
     )
     assert payload["status"] == "error"
     assert payload["error"]["code"] == "NOT_FOUND"
-    assert payload["data"]["known"] == ["CF1", "CF2", "CF3"]
+    # 用例清单跟 CASES 走：新增反事实用例时不该再来改一次这份断言
+    assert sorted(payload["data"]["known"]) == sorted(CASES)
 
 
 def test_counterfactual_refuses_when_the_baseline_is_invisible(server: McpServer) -> None:
