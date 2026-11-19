@@ -5,7 +5,7 @@
 
 用法：
 
-    uv run --locked python scripts/reproduce.py              # 全量（含 976 项测试，约 3-6 分钟）
+    uv run --locked python scripts/reproduce.py              # 全量（含 978 项测试，约 3-6 分钟）
     uv run --locked python scripts/reproduce.py --fast       # 跳过 pytest，约 30 秒
     uv run --locked python scripts/reproduce.py --list       # 只列步骤
     uv run --locked python scripts/reproduce.py --keep-going # 出错也继续跑完，最后统一汇报
@@ -106,8 +106,8 @@ def build_steps(*, include_slow: bool) -> list[Step]:
         Step(
             # 用收集数对齐 TEST_TOTAL，而不是拿它去匹配 "N passed"：
             # Blender/Unreal/openai/dist 这些条件跳过会让 passed 数随环境浮动
-            # （干净副本 961 passed / 15 skipped，装齐依赖的本机 975 passed / 1 skipped），
-            # 只有收集数才是与登记的 976 一一对应的量。
+            # （干净副本 963 passed / 15 skipped，装齐依赖的本机 977 passed / 1 skipped），
+            # 只有收集数才是与登记的 978 一一对应的量。
             "测试收集数",
             [
                 py,

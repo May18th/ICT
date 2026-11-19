@@ -484,10 +484,10 @@ uv run --locked python -m decision_poc.scene_export --out samples/assets/urban/s
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **976 项收集 / 961 通过 / 15 项按设计跳过（0 失败）**。
+当前基线：`uv run --locked pytest -q` 共 **978 项收集 / 963 通过 / 15 项按设计跳过（0 失败）**。
 口径是**收集数**：跳过项全部是设计内——1 项需可选依赖 `openai`、1 项因仓库不分发 `.pptx`/`.docx`、
 2 项因 Blender 工具链停用、10 项因 Unreal 工程不入库，详见 `AGENTS.md`「测试口径」一节。
-**不要说"976 项全部通过"**；
+**不要说"978 项全部通过"**；
 `python -m decision_poc.evidence_check` 108/108 项一致；
 城市内涝主链路 Nexent 平台校验 8/8（Agent v19 / DeepSeek-Chat，`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。

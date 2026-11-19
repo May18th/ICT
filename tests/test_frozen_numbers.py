@@ -98,6 +98,8 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("selfcheck", re.compile(r"(\d+)\s*项(?:宣称证据|冻结期望|对外宣称数字|逐条表|证据自检)")),
     # 「834 项通过」这类验收口径。以前不扫，`553 项通过` 在两份文档里挂了两版都没人发现。
     ("testcount", re.compile(r"(\d+)\s*项通过")),
+    ("testcount", re.compile(r"(\d+)\s*项收集")),
+    ("testpassed", re.compile(r"项收集\s*/\s*(\d+)\s+通过")),
     # 同一语义的其它写法。`(\d+)\s*项通过` 要求「项通过」连写，而文档里更常见的是
     # 「839 测试」「839 项测试」——PPT 里那句「平台真机 8/8 · 776 测试 · 106 项自检」
     # 因此从来没被这条正则校验过（连 STALE_SNAPSHOTS 里登记 testcount 也校验不到它），
@@ -216,6 +218,7 @@ def _expected() -> dict[str, int | str]:
         "tools": len(UrbanToolkit().tools()),
         "selfcheck": _leaf_count(payload["checks"]),
         "testcount": int(payload["test_baseline"]["collected"]),
+        "testpassed": int(payload["test_baseline"]["passed"]),
         "fingerprint": expectations_digest(load_expectations())[:16],
     }
 
@@ -299,7 +302,7 @@ def test_selfcheck_item_count_in_materials_is_current() -> None:
 
 
 def test_test_count_in_materials_is_current() -> None:
-    _assert_families("testcount")
+    _assert_families("testcount", "testpassed")
 
 
 def test_fingerprint_in_materials_matches_expectations() -> None:
