@@ -3880,11 +3880,8 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
     <p class=lead>一次路口积水事件的处置推演：确定处置优先级与责任部门，每条结论附台账原文定位。<br>
       <b>范围：</b>只做一个约 3 公里的街区尺度场景（代号「兴华路片区」）。<b>路名与设施编号为场景代号，不是测绘数据；底图为成都真实路网。</b></p>
   </div>
-  <div class=plat>
-    <span class=tag>Nexent v2.7.0</span><br>
-    本项目 3 个智能体（另 3 个同题对照）· 主智能体接入 4 个工具<br>
-    配置可整包迁移 · 支持断网运行
-  </div>
+  <div class=plat>本项目 3 个智能体（另 3 个同题对照）· 主智能体接入 4 个工具<br>
+    配置可整包迁移 · 支持断网运行</div>
 </header>
 
 <section id=statusbar>
@@ -3898,8 +3895,6 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
 
 <main>
   <section class=asks>
-    <div class=hd><h3>四个入口</h3>
-      <span>系统概览 → 推演流程 → 证据依据 → 能力边界</span></div>
     <div class=ask-grid>
       <a class=ask href="/map2d"><b>① 系统概览</b>
         <span>积水深度、封路、泵站状态、跨区调泵，单屏呈现</span></a>
@@ -4290,10 +4285,8 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
   <section class=wide id=osm>
     <h2>开放地图底图<span class="tag real">可核验</span></h2>
     <p class=note id=osm-origin>__OSM_ORIGIN__</p>
-    <p class=note>这是本项目所在区域的真实街道图：浅蓝是河道，灰块是建筑，白线是道路；
-      取景框约 3.2 × 1.1 公里，按要素分布裁出，<b>不是行政区或项目边界</b>。
-      橙色虚线是台账里的七条路，使用场景代号（路名、设施编号、工单、部门、资源均为场景内容）；
-      底图路网为真实数据，每条场景路参照的真实道路与距离见下节。这些要素同时是大屏的底图。
+    <p class=note>底图是成都真实路网，取景约 3.2 × 1.1 公里，<b>不是行政区或项目边界</b>。
+      橙色虚线是台账里的七条路，路名与设施编号为场景代号；每条场景路参照的真实道路见下节。
       <a href="/map2d">在大屏上查看 →</a></p>
     <div class=osm-prev>__OSM_SVG__</div>
     <div class=osm-cap><b style="color:#9a3412;font-weight:600">点橙线或路名，到大屏看该路段的推演。</b>
@@ -5216,7 +5209,7 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
        数字来自 decision_poc.data_gate 的逐条来源分级（不是手写的概述）：
        70 条事实里 4 条可追溯到原文，其余 66 条分别是推算、假设、演示数据。
        主动摆出来，比被评委问「这数据真的假的」之后再解释要有力得多。 -->
-  <h3 class=sec>这份数据里，哪些是实测、哪些是假设<span>逐条分级统计，不是概述</span></h3>
+  <h3 class=sec>实测与假设的分级</h3>
   <table>
     <thead><tr><th>级别</th><th>条数</th><th>含义</th><th>对外表述口径</th></tr></thead>
     <tbody>__PROV_ROWS__</tbody>
@@ -5272,7 +5265,7 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
   <div class=table-note>对照组一致的两项，均为不依赖台账的项；依赖台账的六项全部为空。
     两项一致与格式完整性相关，与事实准确性无关。</div>
 
-  <h3 class=sec>方法与数据的已知偏差<span>均已量化，不与结论混用</span></h3>
+  <h3 class=sec>方法与数据的已知偏差</h3>
   <div class=two>
     <div class=panel>
       <h4>产流参数</h4>
@@ -5423,15 +5416,11 @@ def _prov_note_html(summary: Mapping[str, Any]) -> str:
         f"对外引用时，仅第一类可标注为「实测」。"
     ]
     if synthetic:
-        parts.append(
-            f"另有 <b>{synthetic}</b> 条属演示数据，一律不当作实测引用；"
-            "其中多数未逐条标注来源（门禁计得 59 条），按数据集自述归入这一级——"
-            "宁可把能用的往下压一级，也不把出处不明的往上抬一级。"
-        )
+        parts.append(f"另有 <b>{synthetic}</b> 条属演示数据，按数据集自述归入这一级。")
     if warns:
         listed = "；".join(f'{_esc(item["id"])}　{item["subject"]}' for item in warns)
         parts.append(f"门禁自身还有 <b>{len(warns)}</b> 项待确认：{listed}。")
-    return "".join(parts)
+    return "<br>".join(parts)
 
 
 def build_limits_html() -> str:

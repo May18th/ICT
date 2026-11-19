@@ -78,7 +78,7 @@ def test_pages_and_existing_routes_still_serve():
     limits_html = body.decode("utf-8")
     summary = data_provenance_summary()
     assert "error" not in summary, f"数据门禁没跑通：{summary.get('error')}"
-    assert "哪些是实测、哪些是假设" in limits_html
+    assert "实测与假设的分级" in limits_html
     assert f"<b>{summary['total']}</b> 条" in limits_html, "合计条数与门禁实测值不一致"
     for level, count in summary["by_level"].items():
         assert f"<b>{int(count)}</b> 条" in limits_html, f"{level} 级条数没渲染出来"
