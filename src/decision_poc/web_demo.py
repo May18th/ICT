@@ -3754,8 +3754,10 @@ def portal_payload() -> dict[str, Any]:
         from .evidence_check import expectations_digest, load_expectations
 
         expectations = load_expectations()
+        baseline = expectations.get("test_baseline") or {}
         audit = {
-            "tests": (expectations.get("test_baseline") or {}).get("collected"),
+            "tests": baseline.get("collected"),
+            "tests_passed": baseline.get("passed"),
             "fingerprint": expectations_digest(expectations)[:16],
         }
     except Exception:  # noqa: BLE001 - 门户缺这块也要能打开，不能因为自检文件缺失白屏
@@ -4004,7 +4006,7 @@ function renderStatus(d){
   document.getElementById('s-tools').textContent = '已接入 ' + tools.length + ' 个工具';
   var a = d.audit || {};
   var bits = [];
-  if(a.tests){ bits.push(a.tests + ' 项自动化测试通过'); }
+  if(a.tests){ bits.push(a.tests + ' 项收集' + (a.tests_passed ? ' / ' + a.tests_passed + ' 项通过' : '')); }
   document.getElementById('s-audit').textContent = bits.join(' · ');
 
   // 一条一行：角色（左，可伸缩） / 第几版 / 平台版本名 / 对照标记。
@@ -4866,7 +4868,11 @@ def build_portal_html() -> str:
     if chief is not None:
         agents_text += f"（主智能体第 {chief} 版）"
     tools_text = f"已接入 {len(tools)} 个工具"
-    audit_text = f"{audit['tests']} 项自动化测试通过" if audit.get("tests") else ""
+    audit_text = (
+        f"{audit['tests']} 项收集 / {audit['tests_passed']} 项通过"
+        if audit.get("tests") and audit.get("tests_passed")
+        else (f"{audit['tests']} 项收集" if audit.get("tests") else "")
+    )
 
     return (
         html.replace('<span id=s-dot class=dot></span>', f'<span id=s-dot class="{dot}"></span>')
