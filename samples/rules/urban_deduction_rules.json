@@ -459,7 +459,6 @@
       "priority": 20,
       "confidence": 0.85,
       "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:45",
-      "method_ref": "paper-p0-4#C4-04",
       "keyword": "泵站不可用时调用移动泵车"
     },
     {

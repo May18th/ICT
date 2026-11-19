@@ -225,14 +225,16 @@ rules.json 里的source_ref
 - `DeductionRule` 已增加可选字段 `method_ref: str = ""`，输入值会去除首尾空白，纯空白输入会被拒绝。
 - `source_ref` 继续定位事实台账，`method_ref` 用于记录规则设计或计算方法的出处。`verify_rules()` 仍只按 `source_ref`、`keyword` 和 `rule_id` 校验。
 - `RuleRef`、`ClaimTrace` 与审计卡 `ClaimAudit` 已沿链路携带 `method_ref`。`claim_trace` 输出字段名为 `rule_method_ref`，无方法出处时为空。
-- 首批 4 条已逐条核实的方法出处写入 `method_ref`，均指向 P0-4 摘录卡的 C4-01 至 C4-04；其余 35 条继续留空，不填入推断值。
+- 首批 3 条已逐条核实的方法出处写入 `method_ref`，均指向 P0-4 摘录卡的 C4-01 至 C4-03；其余 36 条继续留空，不填入推断值。
 - 旧规则 JSON 可以继续加载，规则数量、manifest 与 `expectations_digest` 均保持不变。
 
 ### 6.4 方法出处资产登记（2026-11-19）
 
 - P0-1、P0-2、P0-4 三张摘录卡已复制到 `samples/references/`，通过 `SUPPLEMENTARY_ASSETS` 登记为补充资产。
 - 补充资产不进入 19 项 `URBAN_ASSETS` 业务台账，不改变业务台账 manifest、规则数量或 `source_ref` 校验口径。
-- 首批方法出处为 `RULE-AFF-ON-AFFECTED-ROAD → paper-p0-4#C4-01`、`RULE-AFF-CONCURRENT-INCIDENT → paper-p0-4#C4-02`、`RULE-OBS-RESPONSE-ORANGE → paper-p0-4#C4-03`、`RULE-RISK-PUMP-POWER-LOSS → paper-p0-4#C4-04`。
+- 首批方法出处为 `RULE-AFF-ON-AFFECTED-ROAD → paper-p0-4#C4-01`、`RULE-AFF-CONCURRENT-INCIDENT → paper-p0-4#C4-02`、`RULE-OBS-RESPONSE-ORANGE → paper-p0-4#C4-03`。
+- `RULE-RISK-PUMP-POWER-LOSS` 不引用 C4-04，`method_ref` 保持空值。该规则判定的是台账事实（`backup_power_missing: true` 对应上级电源浸水后失电），而 C4-04 的原句与卡片结论是"随机关闭某一节点与真实世界差别较大，因此不做网络韧性仿真"——用一条否定节点失效推演可信度的文献，支撑自己做的节点失效判断，方向相反。该规则的事实依据仍由 `source_ref` 承担。
+- `RULE-OBS-RESPONSE-ORANGE` 与 C4-03 的联系仅限一点：片区级气象预警落到点位深度仍需推演，故触发条件同时保留深度阈值与预警等级。C4-03 不支撑"为何定橙色"，该等级来自预案条款。
 - 这些引用只解释规则的设计依据或能力边界，不把摘录卡当作事实台账，也不替代 `source_ref`。
 
 ---
