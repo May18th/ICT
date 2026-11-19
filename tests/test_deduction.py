@@ -76,16 +76,18 @@ def test_rule_validation_rejects_unknown_stage_and_validates_method_ref() -> Non
         "RULE-AFF-ON-AFFECTED-ROAD": "paper-p0-4#C4-01",
         "RULE-AFF-CONCURRENT-INCIDENT": "paper-p0-4#C4-02",
         "RULE-OBS-RESPONSE-ORANGE": "paper-p0-4#C4-03",
-        "RULE-RISK-PUMP-POWER-LOSS": "paper-p0-4#C4-04",
+        "RULE-CONF-CLOSURE-JOINT": "paper-p0-2#C2-02",
     }
     by_id = {rule.rule_id: rule.method_ref for rule in RULES.rules}
     assert {rule_id: by_id[rule_id] for rule_id in expected} == expected
     assert sum(bool(rule.method_ref) for rule in RULES.rules) == len(expected)
+    # C4-04 的结论是"节点失效推演与现实差别较大"，与断电风险规则方向相反，不得回填
+    assert by_id["RULE-RISK-PUMP-POWER-LOSS"] == ""
 
     from decision_poc.urban_dataset import load_supplementary_assets
 
     cards = {
-        path.stem.removesuffix("-complex-network-review"): path.read_text(encoding="utf-8")
+        "-".join(path.stem.split("-")[:3]): path.read_text(encoding="utf-8")
         for _asset, _governance, path in load_supplementary_assets()
         if path.suffix == ".md" and path.stem.startswith("paper-p0-")
     }

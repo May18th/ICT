@@ -234,11 +234,13 @@ def test_scheduler_endpoint_exposes_departments():
 
 def test_page_translates_backend_enums_for_humans():
     """后端枚举必须在页面显示层翻成中文，后端字段本身不动。"""
-    from decision_poc.web_demo import build_html
+    from decision_poc.web_demo import build_html, build_workbench_html
 
     html = build_html()
-    for marker in ("橙色预警", "各片区自理", "职责重叠", "参与本次", "第 '+m[1]+' 行", "事件观测"):
+    for marker in ("橙色预警", "各片区自理", "职责重叠", "参与本次", "事件观测"):
         assert marker in html, f"页面缺中文映射 {marker}"
+    # 引用芯片的行号翻译属工作台页：门户与工作台各有一份 refCn，门户那份无调用点已清理
+    assert "第 '+m[1]+' 行" in build_workbench_html()
     # 链路栅格只允许一套列定义：再出现 grid-column 强推，工具名会挤到第一列
     assert "grid-column:2/4" not in html
 
