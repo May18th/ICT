@@ -278,7 +278,7 @@ def build_contrast_html(payload: Mapping[str, Any]) -> str:
         "参考答案里本来填得平</li>"
         f"<li>该调拨 <b>{exp_tr} 次</b>，实际调了 <b>0 次</b>：跨区运力一次都没用上</li>"
         f"<li>优先序命中 {hits[0]}/{order_total}；方案偏差 {float(dev[0]):.4f}</li>"
-        "</ul><div class=vfoot>结果：关键片区告急，只能上报市级增援。</div></div>"
+        "</ul></div>"
     )
     v2 = (
         '<div class="vs-col v2"><h3>V2 · 进化后</h3>'
@@ -287,7 +287,7 @@ def build_contrast_html(payload: Mapping[str, Any]) -> str:
         f"<li>该调拨 <b>{exp_tr} 次</b>，实际调了 <b>{exp_tr - int(missed[1])} 次</b>："
         "运力用在最急的片区上</li>"
         f"<li>优先序命中 {hits[1]}/{order_total}；方案偏差 {float(dev[1]):.4f}</li>"
-        "</ul><div class=vfoot>代价不是零：非关键片区让出库存，需要市级补位。</div></div>"
+        "</ul></div>"
     )
 
     cost = (
@@ -303,8 +303,7 @@ def build_contrast_html(payload: Mapping[str, Any]) -> str:
     note = (
         f"<p class=dim style='margin:12px 0 0;font-size:12px'>口径：两列是"
         f"<b>同一批 {cases} 个评测场景</b>上的成对结果（不是两次不同事件）；"
-        f"下限 {floor} 台取自参考答案自身的缺口，删不掉。"
-        "「事件级」的分配变化见下方「场景事件」一栏。</p>"
+        f"下限 {floor} 台取自参考答案自身的缺口。</p>"
     )
     return f"<div class=versus>{v1}{v2}</div>{table}{cost}{note}"
 
@@ -385,12 +384,12 @@ def build_evolution_html() -> str:
 <header class=evolution-hero><div class=evolution-hero-copy><div class=evolution-eyebrow>POLICY EVOLUTION · 版本与调整记录</div><h1>决策进化：从反馈到可回滚策略</h1><div class=sub>每次调整的内容、采纳依据，以及能否被后续推演复用。</div></div><a class=back href='/'>← 返回推演面板</a></header>
 <div class="grid evolution-metrics" id=metrics><div class=metric><span>正在读取进化结果…</span></div></div>
 <div class=evolution-grid>
-<section class="card evolution-card outcome-card"><h2>本轮结果</h2><div class=outcome-result>资源分配与人工建议一致</div><p>策略依据人工反馈调整了区域权重，本次推演的分配结果与人工建议一致；该策略已记录版本，可回滚。</p><div class=outcome-list><span>与人工建议差异 0</span><span>新场景未退化</span><span>版本可回滚</span></div></section>
+<section class="card evolution-card outcome-card"><h2>本轮结果</h2><div class=outcome-result>资源分配与人工建议一致</div><div class=outcome-list><span>与人工建议差异 0</span><span>新场景未退化</span><span>该策略已记录版本，可回滚</span></div></section>
 <section class="card evolution-card versus-card"><h2>V1 与 V2：关键指标对照</h2><div id=versus>__CONTRAST__</div></section>
 <section class="card evolution-card flow-card"><h2>策略调整的四个环节</h2><div class=story-flow><div class=story-step><strong>1 · 原来的方案</strong><span>先按初始规则分配资源。</span></div><div class=story-step><strong>2 · 收到建议</strong><span>人工指出重点片区需要更多资源。</span></div><div class=story-step><strong>3 · 调整方案</strong><span>把资源从低优先区域转到重点区域。</span></div><div class=story-step><strong>4 · 下次复用</strong><span>相似事件可直接沿用已验证策略。</span></div></div></section>
 <section class="card evolution-card memory-card"><h2>第二会话：复用已验证经验</h2><div id=memory></div></section>
 <section class="card evolution-card review-panel"><h2>人工协同反馈：本次调整的采纳依据</h2><div id=review></div></section>
-<section class="card evolution-card allocation-card"><h2>场景事件：资源分配变化 · WO-20261029-007</h2><div id=realEvent></div><p class=dim>口径：这条工单来自本站的演示台账（评测场景），不是真实发生过的处置记录；与全站「评测场景」口径一致，标题用「场景事件」。</p></section>
+<section class="card evolution-card allocation-card"><h2>场景事件：资源分配变化 · WO-20261029-007</h2><div id=realEvent></div><p class=dim>演示台账中的场景事件，不代表真实处置记录。</p></section>
 <details class=secondary-details><summary>更多审计信息 <span>评分、版本与边界说明</span></summary><div class=details-body>
 <section class="card evolution-card comparison-card"><h2>第一会话：策略调整前后</h2><table id=firstTable></table></section>
 <section class="card evolution-card feedback-card"><h2>评审评分：收集意见并触发校验</h2>
@@ -425,10 +424,10 @@ async function main(){
   const first=p.first, second=p.second, review=p.review, real=p.real_event;
   const a=first.initial_train, b=first.final_train, c=first.initial_holdout, d=first.final_holdout;
   metrics.innerHTML=
-    '<div class=metric><span>评测场景：方案偏差</span><b>'+f4(a.deviation)+' → '+f4(b.deviation)+'</b><span class=dim>调整前 → 调整后</span></div>'+
+    '<div class=metric><span>评测场景：方案偏差</span><b>'+f4(a.deviation)+' → '+f4(b.deviation)+'</b></div>'+
     '<div class=metric><span>新场景：方案偏差</span><b>'+f4(c.deviation)+' → '+f4(d.deviation)+'</b><span class=dim>通过不退化校验</span></div>'+
-    '<div class=metric><span>复用经验后的起点</span><b class=ok>'+f4(second.initial_train.deviation)+'</b><span class=dim>第二次会话</span></div>'+
-    '<div class=metric><span>人工建议修正幅度</span><b>'+(review?f4(review.deviation_before)+' → '+f4(review.deviation_after):'-')+'</b><span class=dim>第二反馈信号</span></div>';
+    '<div class=metric><span>复用经验后的起点</span><b class=ok>'+f4(second.initial_train.deviation)+'</b></div>'+
+    '<div class=metric><span>人工建议修正幅度</span><b>'+(review?f4(review.deviation_before)+' → '+f4(review.deviation_after):'-')+'</b></div>';
   firstTable.innerHTML='<tr><th>指标</th><th>训练集 前</th><th>训练集 后</th><th>留出集 前</th><th>留出集 后</th></tr>'+
     row('综合决策偏差',a.deviation,b.deviation,c.deviation,d.deviation)+
     row('分配向量 L1 差（台）',a.allocation_l1_units,b.allocation_l1_units,c.allocation_l1_units,d.allocation_l1_units)+
@@ -439,8 +438,7 @@ async function main(){
   const w=second.warm_start;
   memory.innerHTML=w?
     '<p class=story-lead>后续相似事件可直接复用该策略 '+label(w.label)+'。</p>'+
-    '<p>这套策略已经验证过，第二次推演一开始就得到更好的结果；相似度 <b>'+f4(w.similarity)+'</b>。</p>'+
-    '<p class=dim>记录编号 '+label(w.entry_id)+'，用于审计和回滚。</p>'
+    '<p>相似度 <b>'+f4(w.similarity)+'</b>，记录编号 '+label(w.entry_id)+'，用于审计和回滚。</p>'
     :'<p class=warn>未命中记忆</p>';
   review.innerHTML=review?
     '<p class=story-lead>人工建议：把资源优先给更需要的片区。</p>'+
@@ -456,7 +454,6 @@ async function main(){
     const release=names.find(n=>(real.evolved.allocation_by_district[n]??0)<(real.baseline.allocation_by_district[n]??0));
     const moved=gain&&release?Math.abs((real.evolved.allocation_by_district[gain]??0)-(real.baseline.allocation_by_district[gain]??0)):0;
     realEvent.innerHTML='<p class=story-lead>把 <b>'+moved+' 台</b> 资源从 '+label(release||'其他片区')+' 调到 '+label(gain||'重点片区')+'。</p>'+
-      '<p>这样做的目的，是先满足更紧急的片区，而不是平均分配。</p>'+
       '<p class=dim>需要额外上报增援：'+esc(real.evolved.escalation.join('；')||'无')+'</p>';
   } else { realEvent.innerHTML='<p class=warn>场景事件未跑通</p>'; }
   boundaries.innerHTML='表述边界：'+p.boundaries.map(esc).join(' · ')+'。反馈校验值 <code>'+esc((p.case_digest||'').slice(0,16))+'</code>';

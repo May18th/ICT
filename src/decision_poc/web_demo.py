@@ -1208,13 +1208,10 @@ button{grid-column:1/-1;justify-self:start;background:#1d7f6f;border:0;color:#ea
 a{color:#5eead4}
 </style></head><body><main>
 <h1>反馈注入 · <span>处置结果回写与策略调整</span></h1>
-<div class="sub">填入一次内涝处置结果，系统据此评估处置效果；有效性成立时，按评测集跑一轮策略调整。
-评测集只读，策略调整写入运行期记录，不覆盖评测基线。
-专家评审意见以角色扮演方式给出（非真实部门批复）；偏差超过阈值时，整轮候选作废。
+<div class="sub">填入一次内涝处置结果，系统按评测集评估并写入运行期记录。专家意见以角色扮演方式给出；偏差超过阈值时，候选作废。
 <a href="/">← 回推演页</a> · <a href="/evolution">进化对比 →</a></div>
 <form id="f">
-  <p class="form-note"><b>演示环境 · 评测数据。</b>以下为演示用场景值，提交后写入本次演示的运行期记录，
-  并据此触发一次策略调整；<b>不涉及真实部门的处置结果或批复</b>。</p>
+  <p class="form-note"><b>演示环境 · 评测数据。</b>提交后写入运行期记录并触发策略调整，不涉及真实部门处置结果或批复。</p>
   <label>场景 <input name="scenario_id" value="vd02"></label>
   <label>分钟 <input name="t_min" type="number" value="45" min="0"></label>
   <label>片区 <input name="district" value="A-03"></label>
@@ -1328,19 +1325,13 @@ table{width:100%;border-collapse:collapse;font-size:12.5px}
 th{text-align:left;padding:6px 8px;border-bottom:1px solid #24384e;color:#9db4c8;font-weight:500;white-space:nowrap}
 td{padding:6px 8px;border-bottom:1px solid #16273a;vertical-align:top}
 .muted{color:#7d95ab;font-size:12.5px}
-.form-note{grid-column:1/-1;margin:0 0 4px;padding:9px 12px;border-radius:8px;
-  background:#2a2313;border:1px solid #5a4a2a;border-left:3px solid #fbbf24;
-  color:#f0e2c4;font-size:12.5px;line-height:1.65}
-.form-note b{color:#fde68a}
 a{color:#5eead4}
 </style></head><body><main>
 <h1>方案评审 · <span>人工评分与修正建议</span></h1>
-<div class="sub">四维评分只做样本记录，不参与策略判定；只有填了「建议调拨」的提交才会转成评审用例，
-和既定的 12 例一起进入策略评估。评分口径：__NOTE__。
+<div class="sub">四维评分只做样本记录，不参与策略判定；填入「建议调拨」才会进入策略评估。评分为个人意见，不代表部门审批。评分口径：__NOTE__。
 <a href="/">← 回推演页</a> · <a href="/feedback">反馈注入 →</a> · <a href="/evolution">进化对比 →</a></div>
 <div class="stats">__STATS__</div>
 <form id="f">
-  <p class="form-note"><b>演示环境 · 评测数据。</b>本页评分代表个人评审意见，<b>不代表部门审批</b>。</p>
   <label>评审人 <input name="reviewer_id" placeholder="如 zhang.water" required></label>
   <label>角色 <input name="reviewer_role" placeholder="如 水务调度负责人（角色扮演）"></label>
   <label>阶段
@@ -1433,8 +1424,7 @@ def build_review_html() -> str:
         stats_html = "".join(stats)
     else:
         stats_html = (
-            '<div class="stat-empty">还没有评审记录：填一次下面的评分，这里会显示样本数、'
-            "前后均分与差值。评分只用于后续版本调整，不参与本次推演。</div>"
+            '<div class="stat-empty">暂无记录</div>'
         )
 
     return (
@@ -1497,14 +1487,12 @@ a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
 .hint{margin-top:16px;color:var(--dim);font-size:12px;line-height:1.9}
 </style></head><body><main>
 <h1>运行自检 · <span>内部核对页</span></h1>
-<div class="sub">本页为运行核对页：确认台账、平台版本、同步状态彼此对得上，不写任何状态。
-  作品本体见 <a href="/">推演首页</a>；误差对照实验见 <a href="/limits">同题对照</a>。
-  下面的入口用于交叉核对：
-  <a href="/workbench">证据工作台 →</a> · <a href="/evolution">进化对比 →</a></div>
+<div class="sub">运行核对页，检查台账、平台版本与同步状态。
+  <a href="/">推演首页</a> · <a href="/limits">同题对照</a> ·
+  <a href="/workbench">证据工作台</a> · <a href="/evolution">进化对比</a></div>
 <div class="verdict __VERDICT_CLS__">__VERDICT__</div>
 <div class="card"><table><thead><tr><th>检查项</th><th>状态</th><th>详情</th></tr></thead><tbody>__ROWS__</tbody></table></div>
-<div class="hint">检查时间：__WHEN__<br>
-本页只读，每次打开重算一遍；某项不通时，按该项详情里的文件与字段逐层核对。</div>
+<div class="hint">检查时间：__WHEN__<br>每次打开重算；失败项附文件与字段。</div>
 </main></body></html>"""
 
 
@@ -1656,7 +1644,6 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
 </style></head><body>
 <header>
   <h1>证据工作台</h1>
-  <span class="tag">左侧提问，右侧核对；每条结论可定位到台账原文</span>
   <span class="spacer"></span>
   <span class="tag" id="stat">就绪</span>
 </header>
@@ -1668,13 +1655,11 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
       <span class="spacer"></span>
       <select id="agentSel" title="问哪个智能体"><option value="deduction">推演（事件事实）</option><option value="asset_qa">台账问答</option></select>
     </div>
-    <div class="hint">「台账问答」打开就能用，回答中的定位可跳转台账原文。
-    想看平台原生对话界面，点上面「打开平台原生界面 ↗」——新标签页打开，需要已登录平台。</div>
+    <div class="hint">回答中的定位可跳转台账原文。平台原生对话界面需要登录后打开。</div>
     <div id="chatpane">
-      <div id="feed"><div class="msg ai">支持自然语言提问，示例：「责任主体」「处置顺序」「依据条款」。
-需要指定事件时，在问题中写入事件编号（例如 WO-20261029-009）。
-事实由本地规则计算，模型负责表述；带定位的结论可展开台账原文。</div></div>
-      <div class="askbar" id="asks"><span class="lbl">常用问法：</span><button type="button" class="ask" data-agent="deduction">查询某路段积水 30 cm 时的首要处置责任部门</button><button type="button" class="ask" data-agent="deduction">查询封路与开泵的处置顺序及规则依据</button><button type="button" class="ask" data-agent="asset_qa">查询兴华路泵站的设计流量</button></div>
+      <div id="feed"><div class="msg ai">支持自然语言提问，例如「责任主体」「处置顺序」「依据条款」。
+问题中可写入事件编号（例如 WO-20261029-009）。定位可展开台账原文。</div></div>
+      <div class="askbar" id="asks"><button type="button" class="ask" data-agent="deduction">查询某路段积水 30 cm 时的首要处置责任部门</button><button type="button" class="ask" data-agent="deduction">查询封路与开泵的处置顺序及规则依据</button><button type="button" class="ask" data-agent="asset_qa">查询兴华路泵站的设计流量</button></div>
       <form id="f"><textarea id="q" placeholder="Enter 发送 · Shift+Enter 换行"></textarea><button class="send" id="go">发送</button></form>
     </div>
   </section>
@@ -3899,7 +3884,7 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
       <a class=ask href="/map2d"><b>① 系统概览</b>
         <span>积水深度、封路、泵站状态、跨区调泵，单屏呈现</span></a>
       <a class=ask href="/map2d"><b>② 推演流程</b>
-        <span>右侧 7 步事件链：降雨、堵塞、派单、缺口、增援、封路、退水</span></a>
+        <span>7 步事件链：降雨、堵塞、派单、缺口、增援、封路、退水</span></a>
       <a class=ask href="/data"><b>③ 证据依据</b>
         <span>逐字段核对出处：真实底图 / 场景台账 / 示意数据 / 可重跑结果</span></a>
       <a class=ask href="/limits"><b>④ 能力边界</b>
@@ -3921,7 +3906,7 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
       <div class=kicker>问答式</div>
       <h2>证据工作台</h2>
       <p>支持「责任主体」「处置顺序」这类提问，每条结论附台账原文定位。
-        事实由本地规则计算，模型负责表述。</p>
+        同一个问题可以重跑并逐条比对。</p>
       <ul class=points>
         <li>完整推演：雨情定级 → 影响对象 → 责任部门 → 跨部门冲突 → 资源缺口 → 处置动作</li>
         <li>每一步均可追溯依据：使用哪几份台账、取第几行</li>
@@ -3962,7 +3947,6 @@ footer{padding:22px 34px 0;color:var(--dim);font-size:12px;display:flex;flex-wra
   <span>数据来源与口径 <a href="/data">/data</a></span>
   <span>同题对照与已知偏差 <a href="/limits">/limits</a></span>
   <span>策略版本与调整记录 <a href="/evolution">/evolution</a></span>
-  <span style="margin-left:auto">示意图布局，非测绘坐标；路名与设施编号为示意</span>
 </footer>
 
 <script>
@@ -4064,11 +4048,6 @@ function renderStatus(d){
   factsRow(th, '事实计算', '规则计算事实，模型生成表述', '', false, false);
   factsRow(th, '断网运行', '12 个容器，不依赖外网', '', false, false);
   factsRow(th, '配置迁移', 'agent.json + skills 整包导出', '', false, false);
-
-  var toolNote = document.createElement('div');
-  toolNote.style.cssText = 'margin-top:8px;font-size:12px;color:#8b95a3;line-height:1.6';
-  toolNote.textContent = '工具按用途切成最小集合：一次推演只调用该步需要的那几件，结论不跨工具拼接。';
-  th.appendChild(toolNote);
 
   var chips = document.getElementById('f-chips');
   chips.innerHTML = '';
@@ -4285,12 +4264,11 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
   <section class=wide id=osm>
     <h2>开放地图底图<span class="tag real">可核验</span></h2>
     <p class=note id=osm-origin>__OSM_ORIGIN__</p>
-    <p class=note>底图是成都真实路网，取景约 3.2 × 1.1 公里，<b>不是行政区或项目边界</b>。
+    <p class=note>底图是成都真实路网，<b>不是行政区或项目边界</b>。
       橙色虚线是台账里的七条路，路名与设施编号为场景代号；每条场景路参照的真实道路见下节。
       <a href="/map2d">在大屏上查看 →</a></p>
     <div class=osm-prev>__OSM_SVG__</div>
-    <div class=osm-cap><b style="color:#9a3412;font-weight:600">点橙线或路名，到大屏看该路段的推演。</b>
-      <span class=osm-legend>
+    <div class=osm-cap><span class=osm-legend>
         <span><i style="background:#c2410c"></i>示意路</span>
         <span><i style="background:#bedbf4"></i>水系</span>
         <span><i style="background:#d9edcd"></i>绿地</span>
@@ -4307,7 +4285,7 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
 
   <section>
     <h2>业务台账<span class="tag">结构真实 · 内容为评测场景</span></h2>
-    <p class=note>表结构与字段取自真实业务口径，行内容为本场景编写；行数为运行时读取。</p>
+    <p class=note>字段结构按真实业务口径，内容为场景编写；行数为运行时读取。</p>
     <div class=ledgers id=ledgers>__LEDGERS__</div>
   </section>
 
@@ -4337,7 +4315,6 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
   <span>数据来源页 <span class=mono>/data</span></span>
   <span><a href="/">门户首页</a></span>
   <span><a href="/workbench#selfcheck">自检明细</a></span>
-  <span style="margin-left:auto">真实数据均标来源与许可；场景设定均标为示意</span>
 </footer>
 <script>
 function esc(s){
@@ -4888,14 +4865,14 @@ def _evolution_metrics_html(payload: dict[str, Any]) -> str:
     cards = [
         ("评测场景：方案偏差",
          f'{_f4((first.get("initial_train") or {}).get("deviation"))} → '
-         f'{_f4((first.get("final_train") or {}).get("deviation"))}', "调整前 → 调整后", False),
+         f'{_f4((first.get("final_train") or {}).get("deviation"))}', "", False),
         ("新场景：方案偏差",
          f'{_f4((first.get("initial_holdout") or {}).get("deviation"))} → '
          f'{_f4((first.get("final_holdout") or {}).get("deviation"))}', "通过不退化校验", False),
-        ("复用经验后的起点", _f4((second.get("initial_train") or {}).get("deviation")), "第二次会话", True),
+        ("复用经验后的起点", _f4((second.get("initial_train") or {}).get("deviation")), "", True),
         ("人工建议修正幅度",
          f'{_f4(review.get("deviation_before"))} → {_f4(review.get("deviation_after"))}' if review else "-",
-         "第二反馈信号", False),
+         "", False),
     ]
     return "".join(
         f'<div class=metric><span>{title}</span><b{" class=ok" if ok else ""}>{value}</b>'
@@ -5221,7 +5198,6 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
       <span class=tag>A 组 · 基准组</span>
       <h2>工具可用</h2>
       <div class=score>__A_PASSED__/__A_TOTAL__<span>与离线推演逐项一致</span></div>
-      <p>模型调用工具取台账，再依据取到的数据生成结论。</p>
       <ul>
         <li>调用工具 __A_CALLS__ 次，单次约 __A_LATENCY__ 毫秒（读本地台账，不走外部接口）</li>
         <li>冲突编号、资源缺口、证据定位全部一致</li>
@@ -5234,7 +5210,6 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
       <span class=tag>B 组 · 对照组</span>
       <h2>工具不可用</h2>
       <div class=score>__B_PASSED__/__B_TOTAL__<span>结构完整，事实缺失</span></div>
-      <p>六个步骤均被复述，但每一步都没有具体内容。</p>
       <ul>
         <li>冲突编号、资源缺口、证据定位：均为空</li>
         <li>未给出任何处置动作</li>
@@ -5247,7 +5222,6 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
       <span class=tag>C 组 · 加压对照组</span>
       <h2>工具不可用，且要求直接给出方案</h2>
       <div class=score>取值不一致<span>核对码与动作卡数均不符</span></div>
-      <p>该组给出了完整方案，并附一个核对码与动作卡数量。</p>
       <ul>
         <li>模型报出的核对码：<code>__C_CLAIMED__</code></li>
         <li>按台账算出的核对码：<code>__C_REAL__</code>；动作卡 __C_CARDS__ 张，基准 __C_REAL_CARDS__ 张</li>
@@ -5262,9 +5236,6 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
     <thead><tr><th>核验项</th><th>台账中的取值</th><th>对照组回答</th><th>是否依赖台账</th></tr></thead>
     <tbody>__ROWS__</tbody>
   </table>
-  <div class=table-note>对照组一致的两项，均为不依赖台账的项；依赖台账的六项全部为空。
-    两项一致与格式完整性相关，与事实准确性无关。</div>
-
   <h3 class=sec>方法与数据的已知偏差</h3>
   <div class=two>
     <div class=panel>
@@ -5273,7 +5244,7 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
         取自 GB 50014 城市建成区推荐值，不是本片区实测值。汇水面积 4.108 公顷由台账反算得出，属拟合值。</div>
       <div class=item><b>几何法核算偏差 −2.4%</b>
         按路长 750.9 米 × 服务带 54 米独立计算，峰值 29.3 厘米，台账记录 30 厘米。
-        该结果不构成精度结论：系数与面积可相互抵消，仅说明结果位于可行区间。目前 1 个标定点、0 个验证点。</div>
+        仅说明结果位于可行区间，目前 1 个标定点、0 个验证点。</div>
       <div class=item><b>堵塞率 10% 为设定值</b>台账仅记录「已堵塞」，未记录堵塞程度。</div>
     </div>
     <div class=panel>
@@ -5283,13 +5254,13 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
         实际汇水宽度逐路不同，属结构性偏差，不是系数问题。</div>
       <div class=item><b>推演窗口内雨量为预报值的 64%</b>
         预警 60 毫米/3 小时为预报上限，150 分钟窗口内施加 38.2 毫米。
-        该值为模型反推值，不是观测值；全量施加则无法呈现「路面见底」阶段。</div>
+        该值为模型反推值，不是观测值。</div>
       <div class=item><b>未接入实时监测</b>
-        无雨量站与液位计实时数据，采用离线数据集，定位为情景推演，不作实时监测使用。</div>
+        采用离线数据集，不作实时监测使用。</div>
     </div>
   </div>
 
-  <h3 class=sec>适用范围<span>超出以下范围的结论不成立</span></h3>
+  <h3 class=sec>适用范围</h3>
   <div class=panel>
     <div class=item><b>验证范围</b>一个约 3 公里的街区尺度场景（代号「兴华路片区」）。未在其他城市或片区验证，不推定适用。</div>
     <div class=item><b>可迁移与不可迁移</b>可迁移的是方法：处置流程与条款依据、证据链结构、部门职责映射，
@@ -5303,7 +5274,7 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
   <!-- 「接入真实数据要改什么」：评委会问的下一个问题一定是「这套东西离能用还有多远」。
        与其被问，不如把边界逐条摆出来——哪些是判断逻辑（换数据照跑），
        哪些是本地标定（换地方必须重算）。 -->
-  <h3 class=sec>如果接入真实物联数据，哪些能留、哪些要重做<span>按模块分别说明</span></h3>
+  <h3 class=sec>接入真实物联数据后的变化</h3>
   <div class=two>
     <div class=panel>
       <h4>与数据来源无关，可以直接留用</h4>
@@ -5408,15 +5379,12 @@ def _prov_note_html(summary: Mapping[str, Any]) -> str:
     total = int(summary.get("total") or 0)
     by_level = summary.get("by_level") or {}
     real = int(by_level.get("real") or 0)
-    synthetic = int(by_level.get("synthetic") or 0)
     warns = summary.get("warns") or []
     parts = [
         f"结论建立在 <b>{total}</b> 条事实上：<b>{real}</b> 条可追溯到原文，"
         f"其余 {total - real} 条分别是推算、假设与演示数据。"
         f"对外引用时，仅第一类可标注为「实测」。"
     ]
-    if synthetic:
-        parts.append(f"另有 <b>{synthetic}</b> 条属演示数据，按数据集自述归入这一级。")
     if warns:
         listed = "；".join(f'{_esc(item["id"])}　{item["subject"]}' for item in warns)
         parts.append(f"门禁自身还有 <b>{len(warns)}</b> 项待确认：{listed}。")
@@ -5539,21 +5507,20 @@ iframe{display:block;width:100%;height:100%;border:0}
 <body>
 <div id=bar>
   <div class=r1>
-    <span class=ttl>一键演示 · 演示模式</span>
+    <span class=ttl>一键演示</span>
     <div class=chips id=chips></div>
     <span class=keys><span><kbd>空格</kbd> 下一步</span><span><kbd>R</kbd> 重播</span><span><kbd>F11</kbd> 全屏</span></span>
   </div>
   <div class=r2>
     <span id=beat>准备就绪</span>
-    <span id=detail>按下空格开始；全程离线，本机服务，不请求任何外部接口。</span>
+    <span id=detail>按下空格开始</span>
   </div>
 </div>
 <div id=stagewrap>
   <iframe id=board src="/map2d?auto=0" title="推演大屏"></iframe>
   <div id=kick><div class=card>
-    <h1>一键演示：一条闭环，五幕演示</h1>
-    <p>收到工单 → 冲突曝光 → 策略进化 → 重新推演 → 大屏退水<br>
-       每一步的数字均来自本机接口，可当场核对其来源。</p>
+    <h1>一键演示</h1>
+    <p>收到工单 → 冲突曝光 → 策略进化 → 重新推演 → 大屏退水</p>
     <div class=go>按 <kbd>空格</kbd> 开始</div>
     <div class=note>支持断网运行；重复演示结果一致（演化走冷启动）</div>
   </div></div>
@@ -5705,7 +5672,7 @@ async function restart(){
   idx = -1;
   const api = mapApi();
   if(api){ api.play(false); api.seek(0); }
-  say('准备就绪', '按下空格重新开始；全程离线，本机服务，不请求任何外部接口。');
+  say('准备就绪', '按下空格重新开始');
   kick.classList.remove('off');
   busy = false;
 }

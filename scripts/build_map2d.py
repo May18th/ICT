@@ -1012,7 +1012,7 @@ body::before{content:'';position:fixed;left:0;right:0;top:0;height:2px;z-index:9
     <div id=st-vig></div>
     <div id=hud aria-hidden=true><i></i><i></i><i></i><i></i></div>
     <div id=agentlog>
-      <div class=lg-h><b>推演日志</b><span>逐行可回溯</span><span class=live><i></i>运行中</span></div>
+      <div class=lg-h><b>推演日志</b><span class=live><i></i>运行中</span></div>
       <div class=lg-b id=agentlog-body></div>
     </div>
     <div id="rain-layer"></div>
@@ -1260,25 +1260,10 @@ if(D.timeline && D.timeline.jumps && D.timeline.jumps.length === JUMP_VISUAL.len
     const h = D.hydro;
     if(h){
       const peak = h.peak_depth_m ? Math.round(h.peak_depth_m*100) : 30;
-      const c = h.calibration || {};
-      // 标定口径一起写进悬停：只说「算出来的」不够，要能回答「参数哪来的」。
-      const calLine = c.psi
-        ? `标定：ψ=${Number(c.psi).toFixed(2)}（GB 50014 城市建成区）· `
-          + `汇水面积 ${Number(c.geometric_ha ? c.geometric_ha['基准'] : 0).toFixed(2)} ha`
-          + `（路长 ${c.road_length_m} m × 54 m 服务带）→ `
-          + `回算峰值 ${(c.predicted_peak_at_geo_m*100).toFixed(1)} cm，对台账 30 cm 偏差 `
-          + `${c.deviation_cm > 0 ? '+' : ''}${Number(c.deviation_cm).toFixed(1)} cm`
-          + `（${Number(c.deviation_pct).toFixed(1)}%）· `
-          + `实际施加雨量 ${c.applied_rain_mm} mm（预警 ${c.forecast_rain_mm} mm 是上限，不是实测）`
-        : '';
       if(el) el.title = [
         `积水水位：模型估算，不是实测水深`,
-        `推理公式产流 + 修正 Puls 法调蓄演进 · 产流 ${Math.round(h.runoff_m3h||0)} m³/h · 峰值 ${peak} cm`,
-        `汇水面积 ${h.catchment_ha} 公顷（按峰值倒推的等效值，不是实测）`,
-        `雨强 ${h.intensity_lps_ha} 升/（秒·公顷）`,
-        calLine,
-        `算法出处 ${h.formula_runoff} / ${h.formula_routing}`,
-        `一个标定点、零验证点：2.4% 是回代偏差，不是模型精度`,
+        `峰值 ${peak} cm，按台账核实值标定`,
+        `一个标定点、零验证点；2.4% 是回代偏差`,
       ].filter(Boolean).join(String.fromCharCode(10));
       if(elv) elv.textContent = '模型估算';
       if(tag){ tag.textContent = '模型估算'; tag.className = 'src-tag t-model';
@@ -3106,9 +3091,9 @@ function phases(){
     if(first < 0 || k < first) head.push(k); else mid.push(k);
   }
   _phases = [
-    {steps: head, name:'积水演进', note:'雨在下、水在涨'},
-    {steps: mid,  name:'协同处置', note:'封控、调拨、疏通'},
-    {steps: tail, name:'退水恢复', note:'回落、恢复通行'},
+    {steps: head, name:'积水演进', note:''},
+    {steps: mid,  name:'协同处置', note:''},
+    {steps: tail, name:'退水恢复', note:''},
   ].filter(p=>p.steps.length);
   return _phases;
 }
@@ -3120,7 +3105,7 @@ function renderEventline(t){
   const esc = v => String(v==null?'':v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const tagDetail = tag => `${tag.tag||''}${tag.value ? ' '+tag.value : ''}${tag.evidence_ref ? ' · '+tag.evidence_ref : ''}`;
   box.innerHTML = phases().map(ph=>{
-    const head = `<div class=phase><b>${ph.name}</b><span>${ph.note}</span></div>`;
+    const head = `<div class=phase><b>${ph.name}</b>${ph.note ? `<span>${ph.note}</span>` : ''}</div>`;
     const cards = ph.steps.map(k=>{
       const j = JUMP_VISUAL[k];
       if(!j) return '';
@@ -3159,16 +3144,12 @@ function renderEventline(t){
     const durH = h.rain_duration_h;
     const mins = (h.sample_minutes && h.sample_minutes.length)
       ? h.sample_minutes[h.sample_minutes.length - 1] : null;
-    const it = h.intensity_lps_ha;
     const row = (k, v, unit) => v == null ? '' : `<div class=rc-row><span>${k}</span><b>${Number(v)}</b>`
       + `<span class=u>mm${unit ? ' / ' + unit : ''}</span></div>`;
     box.innerHTML = '<div class=rc-h>雨情背景<i class="src-tag t-model">推演输入</i></div>'
       + row('预报上限', fc, durH ? Number(durH) + 'h' : '')
       + row('推演施加', ap, mins ? Number(mins) + ' min' : '')
-      + '<div class=rc-note>两项均非实测雨量：预报上限是预警等级对应的最大雨量，'
-      + '推演施加是模型实际投入的量。'
-      + (it ? `雨强 ${Number(it)} L/(s·ha)，作为推理公式的输入，不单列为结果指标。` : '')
-      + '</div>';
+      + '<div class=rc-note>两项均非实测雨量。</div>';
   };
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fill);
   else fill();
@@ -3236,7 +3217,7 @@ function renderEventline(t){
   // 三条原文合计三百多像素，全展开会把事件线顶到折叠区深处。收起时先露「缺哪几项」，
   // 展开才给 missing 与推算方式——判断要不要追的人看清单，要追的人看细节。
   const brief = dg.length
-    ? `<div class="ck-sub ck-brief">${dg.map(g=>esc(g.field)).join(' · ')}</div>`
+    ? `<div class="ck-sub ck-brief">待确认：${dg.map(g=>esc(g.field)).join(' · ')}</div>`
     : '';
   secs.push(`<details class=ck-sec><summary class=ck-h>待确认事项<span class=n>${dg.length} 项</span></summary>`
     + (gLines || '<div class=ck-empty>台账未记录待确认事项。</div>') + `</details>` + brief);
