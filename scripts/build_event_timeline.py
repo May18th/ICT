@@ -45,6 +45,43 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCENE_DIR = ROOT / "samples" / "assets" / "urban"
 OUT = ROOT / "out" / "map2d" / "event_timeline.json"
+SCENARIO_KEY = "default"
+
+CAUSE_TAGS = {
+    0: [
+        {
+            "key": "expansion.low_lying",
+            "tag": "低洼地形",
+            "truth_type": "real",
+            "evidence_ref": "road_network.csv#R-101",
+        },
+        {"key": "rain.alert", "tag": "降雨", "truth_type": "real"},
+    ],
+    2: [
+        {
+            "key": "drainage.intake_clog",
+            "tag": "雨水口淤积反涌",
+            "truth_type": "real",
+            "evidence_ref": "drainage_facilities.csv#DF-IN-101",
+        }
+    ],
+    3: [
+        {
+            "key": "drainage.pump_fault",
+            "tag": "排水能力不足",
+            "truth_type": "real",
+            "evidence_ref": "drainage_facilities.csv#DF-PS-01",
+        }
+    ],
+    4: [
+        {
+            "key": "drainage.pipe_capacity",
+            "tag": "管网能力不足",
+            "truth_type": "real",
+            "evidence_ref": "pipeline_ledger.csv#PL-DRN-101",
+        }
+    ],
+}
 
 # 与 build_hydro_curve.py 的采样点同源：跳次是「过程线上的采样时刻」，
 # 不是等间距切分。两边必须一致，否则「水位 1.0 的那一跳」和「峰值上报
@@ -87,31 +124,48 @@ def pick_event(orders: list[dict[str, str]]) -> dict[str, str]:
     return min(hits, key=lambda o: o["reported_at"])
 
 
+def pick_alert(
+    alerts: list[dict[str, str]], event_date: str, district: str
+) -> dict[str, str]:
+    """挑出事件片区当天生效的最强预警。"""
+    hits = [
+        a
+        for a in alerts
+        if a.get("status") == "active"
+        and a.get("valid_from", "").startswith(event_date)
+        and a.get("district") == district
+    ]
+    if not hits:
+        raise ValueError(f"{event_date} 无 {district} 的 active 预警")
+    return max(hits, key=lambda a: float(a.get("rainfall_mm_3h") or 0))
+
+
 def main() -> int:
     orders_path = SCENE_DIR / "work_orders.csv"
     alerts_path = SCENE_DIR / "weather_alerts.csv"
+    roads_path = SCENE_DIR / "road_network.csv"
     closure_path = SCENE_DIR / "notice_road_closure.md"
-    for p in (orders_path, alerts_path):
+    for p in (orders_path, alerts_path, roads_path):
         if not p.exists():
             print(f"缺台账：{p}", file=sys.stderr)
             return 2
 
     orders = read_csv(orders_path)
     alerts = read_csv(alerts_path)
+    roads = read_csv(roads_path)
 
     main_order = pick_event(orders)
     event_date = main_order["reported_at"][:10]
-
-    # 事件零点：当天该片区的 active 预警的 valid_from（含时区）
-    day_alerts = [
-        a
-        for a in alerts
-        if a.get("status") == "active" and a.get("valid_from", "").startswith(event_date)
-    ]
-    if not day_alerts:
-        print(f"{event_date} 没有 active 预警，无法定事件零点", file=sys.stderr)
+    road_by_id = {road.get("road_id"): road for road in roads}
+    district = (road_by_id.get(main_order.get("road_id")) or {}).get("district")
+    if not district:
+        print(f"{main_order.get('road_id')} 找不到事件片区", file=sys.stderr)
         return 2
-    alert = max(day_alerts, key=lambda a: float(a.get("rainfall_mm_3h") or 0))
+    try:
+        alert = pick_alert(alerts, event_date, district)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     t0 = parse_dt(alert["valid_from"])
     issued = parse_dt(alert["issued_at"])
     expires = parse_dt(alert["valid_to"])
@@ -155,6 +209,18 @@ def main() -> int:
 
     def ts(minute: int) -> datetime:
         return t0 + timedelta(minutes=minute)
+
+    level_cn = {"blue": "蓝色", "yellow": "黄色", "orange": "橙色", "red": "红色"}
+
+    def _tags(idx: int) -> list[dict[str, str]]:
+        tags = [dict(tag) for tag in CAUSE_TAGS.get(idx, [])]
+        for tag in tags:
+            tag["scenario"] = SCENARIO_KEY
+            if tag["key"] == "rain.alert":
+                tag["evidence_ref"] = f"weather_alerts.csv#{alert['alert_id']}"
+                level_text = level_cn.get(str(alert["level"]).lower(), alert["level"])
+                tag["value"] = f"{level_text} {alert['rainfall_mm_3h']} mm/3h"
+        return tags
 
     # 台账时刻换算成「事件后第几分钟」，用于逐跳比较
     m_closure = int((closure_effective - t0).total_seconds() // 60) if closure_effective else None
@@ -272,6 +338,7 @@ def main() -> int:
                     "crew": crew,
                 },
                 "basis": basis,
+                "cause_tags": _tags(idx),
             }
         )
 
@@ -399,12 +466,12 @@ def main() -> int:
     mixed_flags = sorted(f for f, bs in seen.items() if bs == {"ledger", "derived"})
     derived_flags = sorted(f for f, bs in seen.items() if bs == {"derived"})
 
-    level_cn = {"blue": "蓝色", "yellow": "黄色", "orange": "橙色", "red": "红色"}
     level_text = level_cn.get(str(alert["level"]).lower(), alert["level"])
 
     payload = {
-        "schema": "map2d-event-timeline-1",
+        "schema": "map2d-event-timeline-2",
         "note": "由台账反推的 7 跳时标与开关；basis=ledger 有出处、basis=derived 为推演",
+        "scenario": SCENARIO_KEY,
         "event_date": event_date,
         "event_start": t0.isoformat(),
         "alert_id": alert["alert_id"],
