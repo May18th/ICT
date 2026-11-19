@@ -82,3 +82,6 @@ docs/twin3d-business-loop-todo.md
 /assets/
 scripts/build_worker_char.py
 scripts/bake_worker_anim.py
+
+# Playwright CLI 会话缓存（本地调试产物，不入库）
+.playwright-cli/
