@@ -203,7 +203,7 @@ docker exec nexent-postgresql psql -U root -d nexent -c "delete from nexent.user
 | 三维成片可播 | 走一次 P10 渲染流程，或直接播 `docs/media/` 下的成片 | 画面正常起播、时长与分镜一致 | 渲染结果进入自动出片链路时 |
 | 公网地址可用 | 读取 `out/public_url.txt`，在另一台设备打开 | 四个页面均可访问，无 530/证书错误 | 公网演示改由流水线发布时 |
 
-静态一致性已有手动验收脚本：`verify_ui_claims`（文档里的界面断言逐条对真实页面校验）与 `smoke_pages`（逐路由查状态码与关键 DOM 标记）不在 pytest 或 CI 内执行，覆盖的是"页面该有的东西在不在"，不覆盖真实点击。
+静态一致性已有手动验收脚本：先执行 `python scripts/build_event_timeline.py` 或构建大屏，生成 `out/map2d/event_timeline.json`，再运行 `verify_ui_claims`（文档里的界面断言逐条对真实页面校验）与 `smoke_pages`（逐路由查状态码与关键 DOM 标记）。两个脚本不在 pytest 或 CI 内执行，覆盖的是"页面该有的东西在不在"，不覆盖真实点击。
 
 ## 附录 A：重新生成 Key（用平台函数，不手写 SQL）
 
