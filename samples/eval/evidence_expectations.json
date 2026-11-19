@@ -200,6 +200,6 @@
     "collected": 978,
     "passed": 963,
     "command": "python -m pytest -q",
-    "verified_at": "2026-11-17"
+    "verified_at": "2026-11-19"
   }
 }

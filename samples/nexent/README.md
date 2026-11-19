@@ -18,7 +18,7 @@ uv run --locked python -m decision_poc.skills --manifest > samples/nexent/skills
 | 每个 Skill 依赖的 MCP 工具名 | 工具实现（在 `src/decision_poc/mcp_server.py`） |
 | 失败模式说明（`failure_mode`） | 密钥、地址、部署配置 |
 
-反事实（`counterfactual_run`）不在 `skills` 列表里：它不是一个链路步骤，而是对已发布结论的追问。所以它单独放在 `standalone_tools`，由编排层在拿到基线结论后调用，用例编号为 CF1–CF3。
+反事实（`counterfactual_run`）不在 `skills` 列表里：它不是一个链路步骤，而是对已发布结论的追问。所以它单独放在 `standalone_tools`，由编排层在拿到基线结论后调用，用例编号为 CF1–CF6。
 
 设计口径：**代码里能测的放本仓库，只有措辞和部署参数放 Nexent。** 因此 `skills.py` 里的五个 Skill 是可被 pytest 覆盖的实现，`skills.json` 只是它们的对外描述；Nexent 侧配置写成什么样，都不改变它们的判定结果。
 
