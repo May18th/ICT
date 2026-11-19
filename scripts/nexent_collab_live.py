@@ -185,8 +185,8 @@ def summarize(attempts: list[dict[str, Any]], args: argparse.Namespace, offline:
     if len(ok) < len(attempts):
         payload["known_limitation"] = (
             f"协同 Agent 输出稳定性：{len(ok)}/{len(attempts)} 次返回可解析 JSON 且指纹一致；"
-            "失败形态是工具调用协议退化（回答停在 `<|tool_call_start|>` + python 代码片段，未产出 JSON）；"
-            "口径是'形状可重跑、格式需容错'，不宣称 100% 稳定"
+            "失败形态是偶发返回空骨架 JSON（各字段为 null、cards 为空，未调用工具）；"
+            "验收需支持重跑与格式容错，不宣称每次 100% 成功"
         )
     return payload
 
