@@ -566,11 +566,6 @@ function tools(v){return String(v||'').split('、').filter(Boolean).map(t=>TOOLC
 const TBL={'construction_plan':'施工方案','drainage_facility':'排水设施台账','duty_list':'部门职责表','emergency_plan':'应急预案','pipeline_ledger':'管线台账','procedure':'处置规程','resource_inventory':'资源台账','road_network':'路网台账','underpass':'下穿隧道台账','work_order':'工单台账'};
 const CLAIM={'CL-S1-observed':'事件观测','CL-S2-affected':'影响对象','CL-S3-owner':'责任主体','CL-S4-conflict':'跨部门冲突','CL-S5-resource':'资源缺口'};
 function claimName(id){const s=String(id||'');if(CLAIM[s])return CLAIM[s];const m=s.match(/^CL-S6-action-(\\d+)$/);return m?'处置动作第 '+(+m[1])+' 条':s}
-function refCn(x){const parts=String(x||'').split('#');if(parts.length<2)return x;
- const p=parts[1].split('/');const m=String(parts[2]||'').match(/(?:row|line):(\\d+)/);
- const doc=(typeof DOC_CN!=='undefined'&&DOC_CN[p[1]])||TBL[p[1]]||p[1];
- const ver=(p[2]&&!/^(row|line|region):/.test(p[2]))?p[2]:'';
- return (p[0]||'')+' '+doc+(ver?' '+ver:'')+(m?' 第 '+m[1]+' 行':'')}
 function drawFloodMap(){const scene=SCHED&&SCHED.scene;if(!scene||!scene.entities)return;const fm=document.getElementById('flood-map');if(!fm)return;const parts=[];(scene.entities||[]).filter(e=>e.kind==='district').forEach(e=>{const r=Math.min(e.r,96);parts.push('<circle class="fm-zone" id="fm-'+esc(e.id)+'" cx="'+e.cx+'" cy="'+e.cy+'" r="'+r+'"/>');parts.push('<text class="fm-lbl" x="'+e.cx+'" y="'+(e.cy-r-6)+'" text-anchor="middle">'+esc(e.label)+' 片区</text>')});(scene.entities||[]).filter(e=>e.kind==='road').forEach(e=>{parts.push('<polyline class="fm-road'+(/已封/.test(e.label||'')?' fm-road-closed':'')+'" id="fm-'+esc(e.id)+'" points="'+e.points+'" fill="none"/>')});(scene.entities||[]).filter(e=>e.kind==='facility').forEach(e=>{const ps=e.id.indexOf('DF-PS')===0;
   if(ps){parts.push('<rect class="fm-node fm-node-ps" id="fm-'+esc(e.id)+'" x="'+(Number(e.cx)-7)+'" y="'+(Number(e.cy)-7)+'" width="14" height="14" rx="3"/>')}
   else{parts.push('<circle class="fm-node fm-node-in" id="fm-'+esc(e.id)+'" cx="'+e.cx+'" cy="'+e.cy+'" r="6"/>')}
@@ -1993,7 +1988,8 @@ function refCn(x){
   var m=String(parts[2]||'').match(/(?:row|line):([0-9]+)/);
   var doc=DOC_CN[p[1]]||p[1];
   var ver=(p[2]&&!/^(row|line|region):/.test(p[2]))?p[2]:'';
-  return (p[0]||'')+' '+doc+(ver?' '+ver:'')+(m?' 第 '+m[1]+' 行':'');
+  var scope=/^AS-[A-Za-z0-9_-]+$/.test(p[0]||'')?'':(p[0]||'');
+  return (scope?scope+' ':'')+doc+(ver?' '+ver:'')+(m?' 第 '+m[1]+' 行':'');
 }
 // 2026-10-20T11:10:00+08:00 -> 2026-10-20 11:10
 function humanTime(v){
