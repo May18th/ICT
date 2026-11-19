@@ -2,13 +2,13 @@
 
 把本仓库的城市孪生 MCP 服务接入本机 Nexent v2.7.0，并验证"平台 Agent 调 MCP 工具 → 六步结论与离线一致"。
 
-**最新复核（2026-11-18，主 Agent v32 / 协同 Agent v10，DeepSeek-Chat；按新数据重建 MCP 镜像后重跑）**：
+**最新复核（2026-11-19，主 Agent v34 / 协同 Agent v12，DeepSeek-Chat；重建 MCP 镜像带出 CF4–CF6 工具枚举后重跑）**：
 
 | 项 | 结果 | 证据 |
 | --- | --- | --- |
-| 主链路 | **8/8 项一致**，conversation_id=257，attempts_used=1，errors=[] | `samples/eval/nexent_urban_v32_retest.json` |
-| 协同链路 | **2/2**，校验值 `d7fa402fe22e596c`，26 卡 / 15 序 / 6 角色，两次 7.4s / 7.0s | `samples/nexent/live/collab_v10_retest.json` |
-| 数据快照 | 本轮 5 次工具调用（4×`collab_run` + 1×`event_deduce`）的 `snapshot_hash` 全为 `fc53cec7…` | `artifacts/visual/tool_log.jsonl` |
+| 主链路 | **8/8 项一致**，conversation_id=262，attempts_used=1，errors=[] | `samples/eval/nexent_urban_smoke_v34_retest.json` |
+| 协同链路 | **2/3**，校验值 `d7fa402fe22e596c`，26 卡 / 15 序 / 6 角色，7.2s / 6.4s 两次通过；第 3 次返回空骨架 JSON（各字段为 null，未调用工具） | `samples/nexent/live/collab_v12_retest.json` |
+| 数据快照 | 本轮 7 次工具调用（4×`collab_run` + 3×`event_deduce`）的 `snapshot_hash` 全为 `fc53cec7…` | `artifacts/visual/tool_log.jsonl` |
 
 > **同一套配置为什么指纹会从 `ab94413` 变成 `d7fa402`**：`deploy/mcp_sse/Dockerfile` 用 `COPY samples/` 把数据
 > 固化进镜像，镜像不重建就不会跟着仓库变。2026-11-18 把 `scene.json` 的资产 id 与 `manifest.json` 对齐后，宿主机

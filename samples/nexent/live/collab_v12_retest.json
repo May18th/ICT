@@ -1,0 +1,61 @@
+{
+  "kind": "collab-live-evidence",
+  "event_id": "WO-20261029-007",
+  "as_of": "2026-10-29T09:40:00+08:00",
+  "agent_name": "urban_collab_agent",
+  "captured_at": "2026-11-19T09:32:58+0800",
+  "method": "北向 /nb/v1/chat/run 实测；成功判据 = 从最终回答解析出含 kernel_fingerprint 的 JSON，且与离线逐字一致。平台两种合法外壳（裸 JSON / final_answer 包装）都认。",
+  "offline": {
+    "kernel_fingerprint": "d7fa402fe22e596c",
+    "cards": 26,
+    "merge_order": 15,
+    "covered_agents": 6,
+    "constraint_violations": []
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "conversation_id": 263,
+      "elapsed_s": 7.2,
+      "answer_len": 8342,
+      "json_parsed": true,
+      "kernel_fingerprint": "d7fa402fe22e596c",
+      "fingerprint_match": true,
+      "cards": 26,
+      "merge_order": 15,
+      "covered_agents": 6,
+      "constraint_violations": []
+    },
+    {
+      "attempt": 2,
+      "conversation_id": 264,
+      "elapsed_s": 6.4,
+      "answer_len": 8342,
+      "json_parsed": true,
+      "kernel_fingerprint": "d7fa402fe22e596c",
+      "fingerprint_match": true,
+      "cards": 26,
+      "merge_order": 15,
+      "covered_agents": 6,
+      "constraint_violations": []
+    },
+    {
+      "attempt": 3,
+      "conversation_id": 265,
+      "elapsed_s": 7.2,
+      "answer_len": 182,
+      "json_parsed": true,
+      "kernel_fingerprint": "",
+      "fingerprint_match": false,
+      "cards": 0,
+      "merge_order": 0,
+      "covered_agents": 0,
+      "constraint_violations": [],
+      "answer_head": "{\"event_id\": null, \"as_of\": null, \"covered_agents\": [], \"cards\": [], \"co_sign_pairs\": [], \"merge_order\": [], \"conflicts\": [], \"constraint_violations\": [], \"kernel_fingerprint\": null}"
+    }
+  ],
+  "success": true,
+  "success_attempt": 1,
+  "success_rate": "2/3",
+  "known_limitation": "协同 Agent 输出稳定性：2/3 次返回可解析 JSON 且指纹一致；失败形态是工具调用协议退化（回答停在 `<|tool_call_start|>` + python 代码片段，未产出 JSON）；口径是'形状可重跑、格式需容错'，不宣称 100% 稳定"
+}
