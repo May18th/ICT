@@ -220,6 +220,13 @@ rules.json 里的source_ref
 
 审计结论：不存在重复字段，不触发冻结数字，不动 manifest。实现阶段的前置条件已满足（是否做由后续决定）。
 
+### 6.3 method_ref 落地（2026-11-19）
+
+- `DeductionRule` 已增加可选字段 `method_ref: str = ""`，输入值会去除首尾空白，纯空白输入会被拒绝。
+- `source_ref` 继续定位事实台账，`method_ref` 用于记录规则设计或计算方法的出处。`verify_rules()` 仍只按 `source_ref`、`keyword` 和 `rule_id` 校验。
+- 39 条现有规则 JSON 保持原样。当前没有逐条核实的方法出处，因此不填入推断值。
+- 旧规则 JSON 可以继续加载，规则数量、manifest 与 `expectations_digest` 均保持不变。
+
 ---
 
 ## 7 优先级调整

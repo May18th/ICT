@@ -131,6 +131,9 @@ class DeductionRule(StrictModel):
     confidence: float = Field(default=0.9, ge=0.0, le=1.0)
     source_ref: str = Field(min_length=1)
     keyword: str = Field(min_length=1)
+    # `source_ref` locates the factual rule input. `method_ref` optionally
+    # records why the rule shape or calculation was chosen.
+    method_ref: str = ""
     assumption: bool = False
     assumption_note: str = ""
 
@@ -147,6 +150,14 @@ class DeductionRule(StrictModel):
         if "#" not in value:
             raise ValueError("source_ref must be <file_name>#<locator>")
         return value
+
+    @field_validator("method_ref")
+    @classmethod
+    def normalize_method_ref(cls, value: str) -> str:
+        normalized = value.strip()
+        if value and not normalized:
+            raise ValueError("method_ref must not be whitespace only")
+        return normalized
 
     @model_validator(mode="after")
     def assumption_needs_note(self) -> "DeductionRule":

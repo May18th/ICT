@@ -53,6 +53,26 @@ def result(engine: DeductionEngine):
 # --- rules are data, and the data is checked ----------------------------
 
 
+def test_rule_validation_rejects_unknown_stage_and_validates_method_ref() -> None:
+    payload = {
+        "rule_id": "RULE-METHOD-REF",
+        "stage": "observed",
+        "source_ref": "plan_flood_emergency_v2.md#A-03/emergency_plan/v2.0#line:23",
+        "keyword": "10–25cm",
+    }
+
+    assert DeductionRule.model_validate(payload).method_ref == ""
+    assert DeductionRule.model_validate(
+        {**payload, "method_ref": "  docs/reports/p12-quant-layer-report.md#3  "}
+    ).method_ref == "docs/reports/p12-quant-layer-report.md#3"
+    assert DeductionRule.model_validate({**payload, "method_ref": ""}).method_ref == ""
+    with pytest.raises(ValueError, match="method_ref"):
+        DeductionRule.model_validate({**payload, "method_ref": "   "})
+
+    with pytest.raises(ValueError):
+        DeductionRule.model_validate({**payload, "stage": "vibes"})
+
+
 def test_every_rule_points_at_a_real_line() -> None:
     assert len(SOURCE_REFS) == len(RULES.rules)
     for ref in SOURCE_REFS.values():
@@ -81,16 +101,6 @@ def test_assumptions_are_declared_not_hidden() -> None:
     assert assumptions == {"RULE-RES-PIT-PUMPS", "RULE-RES-LOWSPOT-PUMPS", "RULE-RES-UNDERPASS-PUMPS"}
     for rule in RULES.assumptions:
         assert rule.assumption_note, "假设必须自己说明"
-
-
-def test_unknown_stage_is_rejected() -> None:
-    with pytest.raises(ValueError):
-        DeductionRule(
-            rule_id="R",
-            stage="vibes",
-            source_ref="a.md#A-03/x/v1#line:1",
-            keyword="x",
-        )
 
 
 def test_stages_are_fixed_six_hops() -> None:
