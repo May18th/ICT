@@ -925,9 +925,9 @@ body::before{content:'';position:fixed;left:0;right:0;top:0;height:2px;z-index:9
 @keyframes kpi-upd{0%{box-shadow:inset 0 0 0 40px rgba(58,143,212,.14)}100%{box-shadow:inset 0 0 0 40px transparent}}
 .kpi-card.upd{animation:kpi-upd .6s ease-out}
 /* 左上角推演日志（现场叫「大屏弹幕」）。深色半透明压在浅色地图上，
-   一眼能看出这是机器在输出，不是页面正文。宽 352、最多 6 行——
+   一眼能看出这是机器在输出，不是页面正文。宽 384、最多 6 行——
    再高就会压住兴华路片区的片区名，那是这条巷子的主角。 */
-#agentlog{position:absolute;left:14px;top:12px;z-index:6;width:352px;
+#agentlog{position:absolute;left:14px;top:12px;z-index:6;width:384px;
   background:linear-gradient(180deg,rgba(17,26,39,.93),rgba(17,26,39,.85));
   border:1px solid rgba(120,160,200,.26);border-radius:9px;overflow:hidden;
   box-shadow:0 8px 28px rgba(12,22,36,.3);pointer-events:none}
@@ -954,7 +954,7 @@ body::before{content:'';position:fixed;left:0;right:0;top:0;height:2px;z-index:9
 #agentlog .ln.clash .tag{color:#f2a866;background:rgba(217,83,47,.26)}
 #agentlog .ln.plan .tag{color:#7cdd9e;background:rgba(76,175,125,.22)}
 #agentlog .ln.check .tag{color:#bfa4ef;background:rgba(107,70,193,.26)}
-#agentlog .ln .txt{color:#cbd8e6;min-width:0;word-break:break-word}
+#agentlog .ln .txt{color:#cbd8e6;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #agentlog .ln.clash .txt{color:#f6c79a}
 #agentlog .ln .cur{display:inline-block;width:6px;height:12px;background:#7fd8a8;vertical-align:-2px;
   margin-left:2px;animation:blink 1.1s steps(2,end) infinite}
@@ -966,7 +966,7 @@ body::before{content:'';position:fixed;left:0;right:0;top:0;height:2px;z-index:9
 #dock button{white-space:nowrap;flex-shrink:0}
 #dock .t{flex-shrink:0}
 @media(max-width:1440px){
-  #agentlog{width:298px}
+  #agentlog{width:352px}
   #agentlog .lg-b{max-height:112px;font-size:11px}
   #agentlog .ln{padding:1px 9px}
 }
