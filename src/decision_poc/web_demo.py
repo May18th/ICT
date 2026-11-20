@@ -4249,8 +4249,7 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
 <header>
   <div class=grow>
     <h1>数据来源与口径</h1>
-    <p class=lead>数据分三类：开放地图底图（真实路网，可核验）、场景设定（明确标为示意）、
-      计算结果（可按规则重跑）。每类下方注明来源、许可与生成方式。</p>
+    <p class=lead>三类数据分别标注来源、许可与生成方式。</p>
     <p class=lead style="font-size:12px;color:var(--dim);margin-top:5px;max-width:900px">
       术语关系：<b>评测场景</b>是整个虚构情境（一块街区、一场雨、一套台账）；
       <b>演示台账</b>是其中的原始单据集（工单、设施、库存、职责、通告）；
@@ -4259,13 +4258,12 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
   <div class=back><a href="/">← 回到首页</a></div>
 </header>
 <main>
-  <div class=purpose>本系统使用开放地图底图、演示台账和可重跑规则，展示城市内涝事件中的跨部门推演过程；
+  <div class=purpose>开放地图底图、演示台账与可重跑规则，用于展示跨部门推演。
     结果用于评测与演示，<b>不代表真实处置记录或正式审批</b>。</div>
   <section class=wide id=osm>
     <h2>开放地图底图<span class="tag real">可核验</span></h2>
     <p class=note id=osm-origin>__OSM_ORIGIN__</p>
-    <p class=note>底图是成都真实路网，<b>不是行政区或项目边界</b>。
-      橙色虚线是台账里的七条路，路名与设施编号为场景代号；每条场景路参照的真实道路见下节。
+    <p class=note>成都真实路网，<b>不是行政区或项目边界</b>。橙色虚线为七条场景路，名称是场景代号。
       <a href="/map2d">在大屏上查看 →</a></p>
     <div class=osm-prev>__OSM_SVG__</div>
     <div class=osm-cap><span class=osm-legend>
@@ -4296,9 +4294,7 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
 
   <section class=wide>
     <h2>场景路网的位置参照<span class="tag">沿路取点比对</span></h2>
-    <p class=note id=alias-note>七条路使用场景代号，底图路网为真实数据，两者名称不重叠。
-      下表给出每条场景路在本区域的参照道路与距离中位数，用于在地图上定位，
-      <b>不构成名称对应关系</b>。
+    <p class=note id=alias-note>场景路名为代号，参照道路仅用于定位，<b>不构成名称对应关系</b>。
       <a href="/map2d?entity=R-101">在大屏上定位兴华路 →</a></p>
     <table>
       <tr><th>场景路名</th><th>参照的真实道路</th><th class=num>中位偏差</th><th class=num>九成落在</th></tr>
@@ -5167,18 +5163,16 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
   <a class=back href="/">← 回首页</a>
   <p class=kicker>④ 能力边界</p>
   <h1>能力边界与误差对照</h1>
-  <p class=lede>同一道题、同一个模型、同一套提示词，<b>唯一变量是工具是否可用</b>。
-    三组对话均在 Nexent 平台内产生，会话编号可在平台内回查。</p>
+  <p class=lede>同题对照只改变工具是否可用，其余条件相同。会话编号可在 Nexent 平台回查。</p>
 </header>
 <div class=wrap>
 
-  <div class=judge><b>结果：</b>工具可用时，结论与台账逐项一致；工具不可用时，模型只能复述结构，
-    给不出台账中的具体事实。</div>
+  <div class=judge><b>结果：</b>工具可用时逐项命中台账；工具不可用时只剩结构。</div>
 
   <dl class=sum4>
     <div><dt>工具可用</dt><dd>__A_PASSED__/__A_TOTAL__<span>与离线推演逐项一致</span></dd></div>
     <div><dt>工具不可用</dt><dd>__B_PASSED__/__B_TOTAL__<span>只剩结构，没有台账事实</span></dd></div>
-    <div><dt>已知偏差</dt><dd class=warn>−2.4%<span>回代偏差，不是模型精度；对外样本低估 31%</span></dd></div>
+    <div><dt>已知偏差</dt><dd class=warn>−2.4%<span>回代偏差；外样本低估 31%</span></dd></div>
     <div><dt>适用范围</dt><dd>约 3 km 街区<span>单场景标定，未在其他城市验证</span></dd></div>
   </dl>
 
@@ -5199,9 +5193,9 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
       <h2>工具可用</h2>
       <div class=score>__A_PASSED__/__A_TOTAL__<span>与离线推演逐项一致</span></div>
       <ul>
-        <li>调用工具 __A_CALLS__ 次，单次约 __A_LATENCY__ 毫秒（读本地台账，不走外部接口）</li>
-        <li>冲突编号、资源缺口、证据定位全部一致</li>
-        <li>处置顺序一致：先隔离风险源，后抽排</li>
+        <li>调用工具 __A_CALLS__ 次，单次约 __A_LATENCY__ 毫秒</li>
+        <li>冲突、缺口、证据定位一致</li>
+        <li>先隔离风险源，后抽排</li>
       </ul>
       <div class=conv>会话 #__A_CONV__ · 主智能体第 __A_VER__ 版</div>
     </article>
@@ -5211,9 +5205,9 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
       <h2>工具不可用</h2>
       <div class=score>__B_PASSED__/__B_TOTAL__<span>结构完整，事实缺失</span></div>
       <ul>
-        <li>冲突编号、资源缺口、证据定位：均为空</li>
-        <li>未给出任何处置动作</li>
-        <li>一致的两项为「步骤完整」与「事件编号」，二者均不依赖台账</li>
+        <li>冲突、缺口、证据定位均为空</li>
+        <li>未给出处置动作</li>
+        <li>步骤完整、事件编号不依赖台账</li>
       </ul>
       <div class=conv>会话 #__B_CONV__ · 更早一次 __B_PREV__ 重跑结果相同</div>
     </article>
@@ -5225,7 +5219,7 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
       <ul>
         <li>模型报出的核对码：<code>__C_CLAIMED__</code></li>
         <li>按台账算出的核对码：<code>__C_REAL__</code>；动作卡 __C_CARDS__ 张，基准 __C_REAL_CARDS__ 张</li>
-        <li>核对码取六步推演的步骤、判定、结论与证据位置，排序后算摘要：同一份台账只对应一个值。两处对不上，说明方案不是从这份台账推出来的</li>
+        <li>核对码由六步结果与证据位置计算，台账不同则不一致</li>
       </ul>
       <div class=conv>会话 #__C_CONV__ · 前一组 #__C_PLAIN__ 未给出方案，返回工作说明</div>
     </article>
@@ -5243,18 +5237,15 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
       <div class=item><b>径流系数 0.70 取规范值</b>
         取自 GB 50014 城市建成区推荐值，不是本片区实测值。汇水面积 4.108 公顷由台账反算得出，属拟合值。</div>
       <div class=item><b>几何法核算偏差 −2.4%</b>
-        按路长 750.9 米 × 服务带 54 米独立计算，峰值 29.3 厘米，台账记录 30 厘米。
-        仅说明结果位于可行区间，目前 1 个标定点、0 个验证点。</div>
+        路长 750.9 米 × 服务带 54 米，峰值 29.3 厘米，台账记录 30 厘米。1 个标定点、0 个验证点。</div>
       <div class=item><b>堵塞率 10% 为设定值</b>台账仅记录「已堵塞」，未记录堵塞程度。</div>
     </div>
     <div class=panel>
       <h4>两处已知偏差与一项边界</h4>
       <div class=item><b>外样本低估 31%</b>
-        滨河路台账记录 18 厘米，同参数计算 12.4 厘米。原因是服务带宽度按片区统一取值，
-        实际汇水宽度逐路不同，属结构性偏差，不是系数问题。</div>
+        滨河路台账 18 厘米，计算 12.4 厘米。统一服务带宽度造成结构性偏差。</div>
       <div class=item><b>推演窗口内雨量为预报值的 64%</b>
-        预警 60 毫米/3 小时为预报上限，150 分钟窗口内施加 38.2 毫米。
-        该值为模型反推值，不是观测值。</div>
+        预警上限 60 毫米/3 小时，窗口施加 38.2 毫米。模型反推，非观测。</div>
       <div class=item><b>未接入实时监测</b>
         采用离线数据集，不作实时监测使用。</div>
     </div>
@@ -5262,13 +5253,10 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
 
   <h3 class=sec>适用范围</h3>
   <div class=panel>
-    <div class=item><b>验证范围</b>一个约 3 公里的街区尺度场景（代号「兴华路片区」）。未在其他城市或片区验证，不推定适用。</div>
-    <div class=item><b>可迁移与不可迁移</b>可迁移的是方法：处置流程与条款依据、证据链结构、部门职责映射，
-      换一个城市只要替换台账。<b>不可迁移的是本地标定值</b>：产流系数 0.70、服务带宽度 54 米、汇水面积 4.108 公顷，
-      换地方必须重新标定；直接沿用会重复滨河路那类结构性低估（同参数对外样本低估 31%）。</div>
+    <div class=item><b>验证范围</b>约 3 公里的「兴华路片区」，未在其他城市或片区验证。</div>
+    <div class=item><b>可迁移与不可迁移</b>流程、条款、证据链和职责映射可迁移。<b>本地标定值</b>0.70、54 米、4.108 公顷需换地方重算。</div>
     <div class=item><b>数据时效</b>台账截取于 2026 年 10 月。接入实时数据需改造数据接入层。</div>
-    <div class=item><b>处置偏好</b>「先封路还是先开泵」的优先级来自规范条款与经验规则，
-      未经真实调度记录校准；可给出理由，但权重无历史数据支撑。</div>
+      <div class=item><b>处置偏好</b>「先封路还是先开泵」来自规范条款与经验规则，未经真实调度记录校准。</div>
   </div>
 
   <!-- 「接入真实数据要改什么」：评委会问的下一个问题一定是「这套东西离能用还有多远」。
@@ -5278,23 +5266,16 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
   <div class=two>
     <div class=panel>
       <h4>与数据来源无关，可以直接留用</h4>
-      <div class=item><b>处置规则集</b>规则读取字段（深度、泵组状态、路段通行能力），
-        不依赖数据来源；更换数据集时判定逻辑无需修改。</div>
-      <div class=item><b>评测集与门禁</b>候选策略是否采纳，由固定的 12 例评测集偏差决定。
-        换成实测数据后只需重出这 12 例的参考答案，判定流程完全不变。</div>
-      <div class=item><b>版本、回滚与证据链</b>策略版本、回滚路径、每条结论的证据引用结构
-        与数据从哪来解耦；这也是本作把「数据层」和「判断层」分开写的直接原因。</div>
+      <div class=item><b>处置规则集</b>读取深度、泵组状态、通行能力，换数据不改判定。</div>
+      <div class=item><b>评测集与门禁</b>12 例重出参考答案，判定流程不变。</div>
+      <div class=item><b>版本、回滚与证据链</b>与数据来源解耦。</div>
     </div>
     <div class=panel>
       <h4>必须重做，否则超出适用边界</h4>
-      <div class=item><b>来源标注</b>逐条来源表要换成采集系统写入的字段级来源。
-        现有 70 条里有 59 条未逐条标注，现在一律按「演示数据」计——补齐之前不得对外说成实测。</div>
-      <div class=item><b>本地标定值</b>径流系数 0.70、服务带 54 米、汇水面积 4.108 公顷
-        是这座城市的标定。<b>换片区必须重算</b>，直接沿用会重复滨河路那类结构性低估。</div>
-      <div class=item><b>片区阈值</b>两个片区的临界水深（30 / 18 厘米）目前取的是保守值，
-        接液位计之后应换成实测分位数，否则「超临界」这个判定本身就没有实据。</div>
-      <div class=item><b>时延参数</b>跨区调泵 40 分钟取自台账，是登记值不是实测行程时间；
-        接实时路况后这一项要改成动态估计。</div>
+      <div class=item><b>来源标注</b>59/70 条未逐条标注，补齐前不能称实测。</div>
+      <div class=item><b>本地标定值</b>0.70、54 米、4.108 公顷，换片区必须重算。</div>
+      <div class=item><b>片区阈值</b>30 / 18 厘米，接液位计后换成实测分位数。</div>
+      <div class=item><b>时延参数</b>跨区调泵 40 分钟，接实时路况后改为动态估计。</div>
     </div>
   </div>
 
