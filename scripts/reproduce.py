@@ -169,7 +169,8 @@ def build_steps(*, include_slow: bool) -> list[Step]:
     steps.append(
         Step(
             "生成定量层水位过程线",
-            # out/ 在 .gitignore 里，克隆下来就是空的。缺这份过程线时 /map2d 不报错，
+            # out/ 整个目录都在 .gitignore 里，克隆下来并不存在（下一步会建出来）。
+            # 缺这份过程线时 /map2d 不报错，
             # 而是静默退回 build_map2d.py 里手写的 7 个水位系数（KPI 卡的来源标签
             # 会从「模型估算」变成「示意节奏」），demo_tour 自检也会报缺文件。
             # 0.8 秒的活儿，别让克隆下来的人只看得到降级版。

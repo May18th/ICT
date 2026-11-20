@@ -144,7 +144,7 @@ uv run python -m decision_poc.web_demo --port 8790     # 浏览器开 http://127
 ### 新拉取的仓库怎么跑
 
 - 不需要配置任何模型凭据。仓库里没有 `.env`，也没有 Key；页面在无凭据下的降级路径是默认路径，不是异常路径。
-- 先跑一次 `scripts/reproduce.py`。它补齐 `out/` 下大屏依赖的过程线与事件时标（这两份文件在 `.gitignore` 里，克隆下来是空的），缺它们时 `/map2d` 会静默退回手写的示意节奏，`scripts/demo_tour.py --check` 会报缺文件。
+- 先跑一次 `scripts/reproduce.py`。它补齐 `out/` 下大屏依赖的过程线与事件时标（`out/` 整个目录在 `.gitignore` 里，克隆下来并不存在，由这一步建出来），缺它们时 `/map2d` 会静默退回手写的示意节奏，`scripts/demo_tour.py --check` 会报缺文件。
 - `deploy/` 下三条部署路径依赖 Docker 与 Nexent 平台，本地演示不必执行；`deploy/nexent/` 的脚本打真实平台，需要凭据与网络，进不了 CI。
 
 演示页 `/show` 将 `/map2d` 作为底图嵌入，按「收到工单 → 冲突曝光 → 策略进化 → 重新推演 → 大屏退水」五幕推进，
