@@ -140,6 +140,39 @@ def _agent_log(payload: dict) -> list[list[dict]]:
     return log
 
 
+def _conclusion() -> dict | None:
+    """结论状态：可发布与否、交接原因、同片区过期依据条数。
+
+    数据只从五个技能跑一遍拿，不在脚本里另算——页面上「可发布」和
+    `/api/demo` 的 `publishable` 必须是同一个值，否则两处迟早对不上。
+    脚本按路径加载（不经包导入），命令行直接跑时可能找不到 `decision_poc`，
+    这时返回 None，页面少一节，不影响出图。
+    """
+    try:
+        from decision_poc.skills import SkillPipeline, SkillRuntime
+        # 事件与时点从 Demo 层取，不在这里另写一份，否则页面和 /api/demo 会各说各的
+        from decision_poc.web_demo import AS_OF, EVENT_ID
+    except ImportError:
+        return None
+    try:
+        report = SkillPipeline(SkillRuntime()).run(
+            EVENT_ID, AS_OF, caller_labels=["ORG-EMERG"], persist=False,
+        )
+    except Exception as exc:  # noqa: BLE001 - 状态不是必需件，失败要能继续出图
+        print(f"  [conclusion] 推演失败，页面不显示结论状态：{type(exc).__name__}: {exc}",
+              file=sys.stderr)
+        return None
+    facts = report.facts
+    return {
+        "publishable": bool(report.publishable),
+        "status": report.status,
+        "stop_reason": report.stop_reason,
+        "handoff_required": bool(report.handoff_required),
+        "handoff_reasons": list(report.handoff_reasons),
+        "expired_evidence": int(getattr(facts, "expired_evidence", 0) or 0) if facts else 0,
+    }
+
+
 def build_payload() -> dict:
     d = load_layout()
     districts = [
@@ -518,6 +551,7 @@ def build_payload() -> dict:
         "timeline": timeline,
     }
     payload["agent_log"] = _agent_log(payload)
+    payload["conclusion"] = _conclusion()
     return payload
 
 
@@ -3169,6 +3203,34 @@ function renderEventline(t){
   const dn = D.district_names || {};
   const dname = id => dn[id] || id;
   const secs = [];
+
+  // ⓪ 结论状态：可发布与否、需人工复核的原因、同片区过期依据条数。
+  // 「过期依据」不是页面自己判的——它是推演时被时态层排除的旧预警条数。
+  // 写在这里是为了让「把旧预警当现行预警」这件事在页面上看得见，而不是只留在报告里。
+  // 编号换成名字：交接原因是给指挥者看的，"DF-PS-01" 得先查台账才知道是哪座泵站。
+  const cc = D.conclusion;
+  if(cc){
+    const facName = id => {
+      const hit = (D.facilities || []).find(f=>f.id === id);
+      return hit ? hit.name : id;
+    };
+    const ccOk = !!cc.publishable;
+    const ccReasons = (cc.handoff_reasons || []).map(r=>String(r).replace(/[A-Z]{2,}-[A-Z0-9-]+/g, m=>facName(m)));
+    const ccExp = Number(cc.expired_evidence) || 0;
+    let ccLines = '';
+    if(ccExp){
+      ccLines += `<div class=ck-row title="同片区在此时点已失效的气象依据，已从推演中排除，不参与定级">`
+        + `<span>过期依据</span><span class=ck-gap>${ccExp} 条已排除</span></div>`;
+    }
+    if(ccReasons.length){
+      ccLines += `<div class=ck-row><span>交接原因</span><span>${ccReasons.length} 项</span></div>`;
+      ccLines += ccReasons.map(r=>`<div class=ck-sub style="padding-left:10px">${esc(r)}</div>`).join('');
+    }
+    if(cc.stop_reason) ccLines += `<div class=ck-sub>${esc(cc.stop_reason)}</div>`;
+    secs.push(`<div class=ck-sec><div class=ck-h>结论状态`
+      + `<span class="n${ccOk ? '' : ' ck-gap'}">${ccOk ? '可发布' : '需人工复核'}</span></div>`
+      + ccLines + `</div>`);
+  }
 
   // ① 资源缺口
   const sig = dec.signals || {};
