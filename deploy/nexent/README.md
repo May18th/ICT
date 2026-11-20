@@ -485,12 +485,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File deploy/up_mcp.ps1
 ```
 
 脚本做四件事：Docker/网络体检 → 判定同名容器归属 → `docker compose up -d` → 等到 healthy
-且**容器内 `/health` 的 `tools_count == 14`**。退出码 0 才算起好。
+且**容器内 `/health` 的 `tools_count == 15`**（脚本参数 `-ExpectedTools`，默认 15）。退出码 0 才算起好。
 底层编排仍是 `deploy/docker-compose.mcp.yml`，也可以直接：
 
 ```powershell
 docker compose -f deploy/docker-compose.mcp.yml up -d
-docker compose -f deploy/docker-compose.mcp.yml ps   # healthcheck 校验 tools_count == 14
+docker compose -f deploy/docker-compose.mcp.yml ps   # healthcheck 校验 tools_count == 15
 ```
 
 **为什么需要外面这层脚本**：编排里 `container_name: urban-twin-mcp` 是固定名（容器间靠这个名字互访，
@@ -504,3 +504,27 @@ Nexent 侧注册的地址就是 `http://urban-twin-mcp:8000/sse`），不能靠�
 healthcheck 判据是"15 个工具都在"，不是"进程没死"——容器活着但工具没注册时，平台侧只表现为
 "智能体变笨"，不会报错。日志与渲染产物挂到宿主 `artifacts/visual/`，取证不必再 `docker cp`
 （沙箱里 `docker cp` 常被 npipe 权限拦）。
+
+## 2026-11-20 容器接管（手工 `docker run` → compose）
+
+原容器为历史裸 `docker run` 创建，`Config.Labels` 为空、**无卷挂载**，运行期 `tool_log.jsonl`
+只累积在容器内 `/app/artifacts/visual/`（本次 11 行）。
+
+接管顺序：`docker stop` → 改名 `urban-twin-mcp.manual-<时间戳>` 保留回滚 → `compose up -d` →
+逐项验证 → 删除旧容器。未直接走脚本里的 `rm -f`，是为了保留一个可 `docker start` 的退路。
+
+| 项 | 结果 |
+| --- | --- |
+| 归属标签 | `com.docker.compose.project=urban-twin`，`service=mcp` |
+| 健康 | healthy（启动后首次检查即通过） |
+| 工具数 | `tools_count=15`，与编排 healthcheck 一致 |
+| 卷挂载 | `artifacts/visual` 双向可写（容器内写入宿主可见） |
+| 访问 | 宿主 `127.0.0.1:18000/health` 与 `nexent_network` 内 `http://urban-twin-mcp:8000/sse` 均 `status=ok` |
+| 脚本体检 | `up_mcp.ps1 -KeepOld` 退出码 0（工具数 15/15） |
+
+副作用与留存：
+- 接管时容器重建，Nexent 侧对 MCP 的调用有约 10 秒中断；容器名、网络端口不变，平台注册地址无需改动。
+- 容器内 11 条调用记录已并入宿主 `artifacts/visual/tool_log.jsonl`（257→268 行），否则挂载生效即被覆盖；
+  原始快照见 `out/backup/tool_log.container.<时间戳>.jsonl` 与 `out/backup/urban-twin-mcp.manual.inspect.<时间戳>.json`。
+- 顺带修正：`up_mcp.ps1` 期望工具数原写死 14（实际 15），体检必然误报 exit 5；现改为 `-ExpectedTools`（默认 15）。
+  另注意 `-KeepOld` 分支的退出码是 **2** 不是 1，`1` 表示环境体检未过（Docker 或 `nexent_network` 缺失）。
