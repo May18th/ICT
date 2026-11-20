@@ -1456,9 +1456,9 @@ _STATUS_PAGE = """<!DOCTYPE html>
 <style>
 /* 配色与门户/工作台同一套（浅底、白卡、同一种蓝）。这一页虽然只给内部看，
    但评委若误入，也不该看到一张跟作品无关的黑屏。 */
-:root{--bg:#f5f7fa;--panel:#fff;--line:#e5e9ef;--line2:#d8dee7;
-  --ink:#1b2330;--sub:#5b6472;--dim:#8b95a3;
-  --blue:#2f6fb5;--green:#15803d;--amber:#b45309;--red:#b91c1c}
+:root{--bg:#f3f5f5;--panel:#fff;--line:#dfe6e3;--line2:#cbd7d2;
+  --ink:#253532;--sub:#5f706e;--dim:#84918f;
+  --blue:#4e6f82;--green:#4f7d63;--amber:#a0783c;--red:#a65350}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);
   font:14px/1.65 "Segoe UI","Microsoft YaHei",system-ui,sans-serif}
@@ -1588,46 +1588,46 @@ _WORKBENCH_PAGE = """<!DOCTYPE html>
 <title>证据工作台 · 城市内涝决策</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#f5f6f8;color:#1f2328;font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
-header{display:flex;align-items:baseline;gap:12px;padding:14px 20px;background:#fff;border-bottom:1px solid #e5e7eb}
+body{margin:0;background:#f3f5f5;color:#253532;font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+header{display:flex;align-items:baseline;gap:12px;padding:14px 20px;background:#fff;border-bottom:1px solid #dfe6e3}
 h1{font-size:17px;margin:0;font-weight:600}
 .tag{font-size:12px;color:#6b7280}
 .spacer{flex:1}
 select,button,input,textarea{font:inherit;color:inherit}
 select{background:#fff;border:1px solid #d8dbe0;border-radius:6px;padding:4px 8px;font-size:12.5px;max-width:100%}
-.link{color:#0f766e;text-decoration:none;font-size:12.5px;border-bottom:1px dashed #9fd3cb}
+.link{color:#2f7069;text-decoration:none;font-size:12.5px;border-bottom:1px dashed #a8c9c1}
 main{display:grid;grid-template-columns:minmax(380px,48%) 1fr;gap:14px;padding:14px 18px 20px;height:calc(100vh - 57px)}
-.panel{background:#fff;border:1px solid #e5e7eb;border-radius:10px;display:flex;flex-direction:column;min-height:0;min-width:0}
+.panel{background:#fff;border:1px solid #dfe6e3;border-radius:10px;display:flex;flex-direction:column;min-height:0;min-width:0}
 .panel>h2{font-size:12px;font-weight:600;color:#6b7280;letter-spacing:.4px;margin:0;padding:9px 14px;border-bottom:1px solid #eef0f3}
 .switch{display:flex;align-items:center;gap:4px;padding:8px 12px 0;border-bottom:1px solid #eef0f3;flex-wrap:wrap;min-width:0}
 .switch select{margin-bottom:6px}
 .sw{background:none;border:0;padding:6px 10px;font-size:13px;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent}
-.sw.on{color:#0f766e;border-bottom-color:#0f766e}
+.sw.on{color:#2f7069;border-bottom-color:#2f7069}
 
 #chatpane{flex:1;display:none;flex-direction:column;min-height:0}
 .hint{padding:8px 14px 11px;font-size:12px;line-height:1.6;color:#9aa1aa;border-top:1px solid #eef0f3}
 #feed{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
 .msg{max-width:93%;font-size:13.5px;line-height:1.65;white-space:pre-wrap;word-break:break-word}
-.me{align-self:flex-end;background:#e8f4f1;border:1px solid #cde7e1;border-radius:10px 10px 2px 10px;padding:8px 11px}
+.me{align-self:flex-end;background:#edf5f2;border:1px solid #d4e5df;border-radius:10px 10px 2px 10px;padding:8px 11px}
 .ai{align-self:flex-start;background:#fbfbfc;border:1px solid #eceef1;border-radius:10px 10px 10px 2px;padding:9px 11px}
 .meta{align-self:flex-start;font-size:11.5px;color:#8a919b}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.chip{font-family:ui-monospace,Consolas,monospace;font-size:11px;background:#f3f4f6;border:1px solid #e1e4e8;border-radius:5px;padding:2px 6px;cursor:pointer;color:#0f766e}
+.chip{font-family:ui-monospace,Consolas,monospace;font-size:11px;background:#f2f5f4;border:1px solid #dce5e2;border-radius:5px;padding:2px 6px;cursor:pointer;color:#2f7069}
 .askbar{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0 2px;border-top:1px solid #eef0f3;margin-top:6px}
 .askbar .lbl{font-size:11.5px;color:#6b7280;align-self:center;margin-right:2px}
 .ask{font-family:inherit;font-size:12.5px;background:#fff;border:1px solid #cfd6dd;border-radius:14px;
   padding:5px 11px;cursor:pointer;color:#2c3e50;line-height:1.3}
-.ask:hover{background:#eef6f4;border-color:#0f766e;color:#0f766e}
+.ask:hover{background:#edf5f2;border-color:#2f7069;color:#2f7069}
 .ask:disabled{opacity:.45;cursor:default}
-.chip:hover{background:#e8f4f1}
+.chip:hover{background:#eaf3f0}
 form{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #eef0f3}
 textarea{flex:1;resize:none;height:42px;border:1px solid #d8dbe0;border-radius:8px;padding:9px 10px;font-size:13px;min-width:0}
 textarea:focus{outline:2px solid #cde7e1}
-.send{background:#0f766e;color:#fff;border:0;border-radius:8px;padding:0 16px;cursor:pointer;font-size:13px}
+.send{background:#2f7069;color:#fff;border:0;border-radius:8px;padding:0 16px;cursor:pointer;font-size:13px}
 .send:disabled{opacity:.5;cursor:default}
 .tabs{display:flex;gap:4px;padding:8px 12px 0;border-bottom:1px solid #eef0f3;flex-wrap:wrap;min-width:0}
 .tab{background:none;border:0;padding:6px 10px;font-size:13px;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent}
-.tab.on{color:#0f766e;border-bottom-color:#0f766e}
+.tab.on{color:#2f7069;border-bottom-color:#2f7069}
 .body{flex:1;overflow:auto;padding:14px}
 .empty{color:#9aa1aa;font-size:13px}
 .kv{display:grid;grid-template-columns:80px 1fr;gap:5px 10px;font-size:12.5px;margin:0 0 12px}
@@ -1637,7 +1637,7 @@ pre.excerpt{margin:0;background:#fbfbfc;border:1px solid #eceef1;border-radius:8
 table{width:100%;border-collapse:collapse;font-size:12.5px}
 th{text-align:left;color:#8a919b;font-weight:500;padding:5px 8px;border-bottom:1px solid #eceef1;white-space:nowrap}
 td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
-.ok{color:#0f766e}.warn{color:#b45309}.bad{color:#b91c1c}
+.ok{color:#2f7069}.warn{color:#a0783c}.bad{color:#a65350}
 .mono{font-family:ui-monospace,Consolas,monospace}
 .row{padding:7px 0;border-bottom:1px solid #f3f4f6;font-size:13px}
 @media(max-width:900px){main{grid-template-columns:1fr;height:auto;padding:12px 12px 16px}main>*{min-width:0}#feed{max-height:42vh}}
@@ -1773,7 +1773,7 @@ function verifyAll(refs,cites,host){
 function renderVerify(d){
   setTab('evidence'); pane.innerHTML='';
   var head=el('div','empty',d.verdict);
-  head.style.color = d.missing ? '#b4532a' : '#0f766e';
+  head.style.color = d.missing ? '#a65350' : '#2f7069';
   head.style.fontWeight='600';
   pane.appendChild(head);
   pane.appendChild(el('div','empty','悬空 = 这条引用回不到原文，要么原文里没有，要么定位信息不全；两种都要人工核对，不能当作已证实。'));
@@ -3773,9 +3773,9 @@ _PORTAL_PAGE = """<!DOCTYPE html>
 <title>城市内涝跨部门决策 · 可核查推演</title>
 <style>
 :root{
-  --bg:#f5f7fa; --panel:#fff; --line:#e5e9ef; --line2:#d8dee7;
-  --ink:#1b2330; --sub:#5b6472; --dim:#8b95a3;
-  --blue:#2f6fb5; --teal:#0f766e; --amber:#b45309; --red:#b91c1c; --green:#15803d;
+  --bg:#f3f5f5; --panel:#fff; --line:#dfe6e3; --line2:#cbd7d2;
+  --ink:#253532; --sub:#5f706e; --dim:#84918f;
+  --blue:#4e6f82; --teal:#2f7069; --amber:#a0783c; --red:#a65350; --green:#4f7d63;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);
@@ -3816,7 +3816,7 @@ main{padding:24px 34px 0;max-width:1360px}
 .card .points li::before{content:'';position:absolute;left:0;top:11px;width:5px;height:5px;
   border-radius:50%;background:var(--line2)}
 .card .go{margin-top:auto;padding-top:16px;font-size:13px;font-weight:600}
-.card.primary{background:linear-gradient(180deg,#fbfdff,#fff);border-left:3px solid var(--teal)}
+.card.primary{background:#fbfdfc;border-left:3px solid var(--teal)}
 .card.primary h2{font-size:18px}
 
 .asks{margin:0 0 16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
@@ -4189,8 +4189,8 @@ _DATA_PAGE = """<!DOCTYPE html>
 <title>数据来源与口径 · 城市内涝跨部门决策</title>
 <style>
 *{box-sizing:border-box}
-:root{--ink:#1f2937;--sub:#4b5563;--dim:#8a93a1;--line:#e6eaef;--line2:#d5dbe3;
-  --bg:#f6f8fa;--panel:#fff;--blue:#2b6cb0;--teal:#2c7a7b;--amber:#b7791f}
+:root{--ink:#253532;--sub:#5f706e;--dim:#84918f;--line:#dfe6e3;--line2:#cbd7d2;
+  --bg:#f3f5f5;--panel:#fff;--blue:#4e6f82;--teal:#2f7069;--amber:#a0783c}
 html,body{margin:0;background:var(--bg);color:var(--ink);
   font:14px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif}
 a{color:var(--blue);text-decoration:none}
@@ -5092,9 +5092,9 @@ _LIMITS_PAGE = """<!DOCTYPE html>
 <meta name=viewport content='width=device-width,initial-scale=1'>
 <title>能力边界与误差对照 · 三组同题对照</title>
 <style>
-:root{--bg:#f5f7fa;--panel:#fff;--line:#e5e9ef;--line2:#d8dee7;
-  --ink:#1b2330;--sub:#5b6472;--dim:#8b95a3;
-  --blue:#2f6fb5;--teal:#0f766e;--amber:#b45309;--red:#b91c1c;--green:#15803d}
+:root{--bg:#f3f5f5;--panel:#fff;--line:#dfe6e3;--line2:#cbd7d2;
+  --ink:#253532;--sub:#5f706e;--dim:#84918f;
+  --blue:#4e6f82;--teal:#2f7069;--amber:#a0783c;--red:#a65350;--green:#4f7d63}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);
   font:14px/1.65 "Segoe UI","Microsoft YaHei",system-ui,sans-serif}
@@ -5436,16 +5436,16 @@ _SHOW_PAGE = """<!doctype html><html lang=zh-CN><meta charset=utf-8>
 <meta name=viewport content='width=device-width,initial-scale=1'>
 <title>一键演示 · 城市内涝可进化决策智能体</title>
 <style>
-:root{--ink:#1b2330;--sub:#5b6472;--dim:#8b95a3;--line:#e2e7ee;
-  --blue:#2f7fb8;--teal:#0f766e;--amber:#b45309;--red:#b91c1c;--green:#15803d}
+:root{--ink:#253532;--sub:#a1b2ae;--dim:#748883;--line:#263c3b;
+  --blue:#6f9299;--teal:#78aaa0;--amber:#b69a68;--red:#b97771;--green:#78a98c}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;overflow:hidden;background:#0b1420;
+html,body{margin:0;height:100%;overflow:hidden;background:#101b1b;
   font:14px/1.5 "Segoe UI","Microsoft YaHei",system-ui,sans-serif;color:#e8eef5}
 #bar{height:100px;display:flex;flex-direction:column;justify-content:center;gap:5px;
-  padding:0 22px;background:linear-gradient(180deg,#0e1a29,#0b1420);
+  padding:0 22px;background:linear-gradient(180deg,#142323,#101b1b);
   border-bottom:1px solid rgba(120,160,200,.18);position:relative;z-index:2}
 #bar::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
-  background:linear-gradient(90deg,transparent,#2f7fb8,#4fd1c5,transparent);
+  background:linear-gradient(90deg,transparent,#527e83,#78aaa0,transparent);
   background-size:200% 100%;animation:sweep 6s linear infinite}
 @keyframes sweep{from{background-position:200% 0}to{background-position:-100% 0}}
 .r1{display:flex;align-items:center;gap:14px;min-width:0}
@@ -5457,7 +5457,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b1420;
   transition:.35s}
 .chip i{width:14px;height:14px;border-radius:50%;border:1px solid currentColor;
   font-size:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.chip.on{color:#0b1420;background:#5fd0c4;border-color:#5fd0c4;box-shadow:0 0 14px rgba(95,208,196,.45)}
+.chip.on{color:#17302d;background:#78aaa0;border-color:#78aaa0;box-shadow:0 0 10px rgba(120,170,160,.24)}
 .chip.done{color:#7fd8a8;border-color:rgba(127,216,168,.45)}
 .chip.done i{border-color:rgba(127,216,168,.6)}
 .keys{display:flex;gap:12px;font-size:11px;color:#7b8fa6;white-space:nowrap;flex-shrink:0}
@@ -5480,7 +5480,7 @@ iframe{display:block;width:100%;height:100%;border:0}
   box-shadow:0 18px 60px rgba(0,0,0,.45)}
 #kick h1{margin:0 0 6px;font-size:19px;font-weight:600;letter-spacing:.5px;color:#eaf3fb}
 #kick p{margin:0;font-size:12.5px;color:#93a9c0;line-height:1.8}
-#kick .go{margin-top:14px;font-size:12px;color:#0b1420;background:#5fd0c4;
+#kick .go{margin-top:14px;font-size:12px;color:#17302d;background:#78aaa0;
   display:inline-block;padding:5px 16px;border-radius:99px;font-weight:600;letter-spacing:.5px}
 #kick .go kbd{font:inherit;background:transparent;border:none;color:inherit;padding:0 2px}
 #kick .note{margin-top:10px;font-size:11px;color:#6f8399}

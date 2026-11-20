@@ -544,11 +544,11 @@ HTML_TEMPLATE = r"""<!doctype html><html lang=zh-CN><meta charset=utf-8>
 <title>城市内涝可进化决策智能体 · 排水防涝推演</title>
 <style>
 :root{
-  --bg:#f2f4f7; --bg2:#fafbfc; --panel:#ffffff; --panel2:#f5f7f9; --line:#e4e8ee; --line2:#d4dae2;
-  --ink:#1f2937; --sub:#5b6472; --dim:#8a93a1;
+  --bg:#f1f3f3; --bg2:#f8faf9; --panel:#ffffff; --panel2:#f3f6f5; --line:#dde5e2; --line2:#cbd7d2;
+  --ink:#253532; --sub:#5f706e; --dim:#84918f;
   --road:#ffffff; --road-edge:#c8cfd8; --building:#e8ebef; --building-edge:#d5dae1;
-  --water-lo:#8cd7cd; --water-hi:#107d85; --water-line:#0e7d85;
-  --red:#d9534f; --amber:#e08a2e; --green:#4caf7d; --blue:#3a8fd4; --cyan:#2b9bd4;
+  --water-lo:#a7d7d0; --water-hi:#3f8786; --water-line:#3d7e7d;
+  --red:#a85b57; --amber:#a57945; --green:#6b927c; --blue:#5a7892; --cyan:#5d9ba3;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;font:14px/1.55 "Segoe UI","Microsoft YaHei",system-ui,sans-serif;color:var(--ink);background:var(--bg);overflow:hidden}
@@ -582,7 +582,7 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
   border:1px solid var(--line);background:var(--panel2);white-space:nowrap;font-size:11px}
 #statusbar .ly b{font-weight:600;color:var(--ink)}
 #statusbar .ly::before{content:'';width:6px;height:6px;border-radius:2px;background:var(--lcol,#9aa4b2);flex-shrink:0}
-#statusbar .ly-osm{--lcol:#8a93a1}
+#statusbar .ly-osm{--lcol:#84918f}
 #statusbar .ly-ledger{--lcol:var(--blue)}
 #statusbar .ly-model{--lcol:var(--water-hi)}
 #statusbar .ly-time{--lcol:var(--amber)}
@@ -590,10 +590,10 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
    和状态带的色块同色系，扫一眼就能对上。 */
 .src-tag{font-style:normal;font-size:9.5px;line-height:1.5;padding:0 5px;border-radius:99px;
   border:1px solid transparent;white-space:nowrap;flex-shrink:0;font-weight:400}
-.src-tag.t-ledger{color:#2b6cb0;background:#eaf2fb;border-color:#cfe0f4}
-.src-tag.t-model{color:#0e7d85;background:#e6f4f5;border-color:#c6e6e8}
-.src-tag.t-rule{color:#6b46c1;background:#f2ecfd;border-color:#ded0f8}
-.src-tag.t-demo{color:#a8630f;background:#fdf4e6;border-color:#f2ddba}
+.src-tag.t-ledger{color:#506f88;background:#edf3f4;border-color:#d5e1e0}
+.src-tag.t-model{color:#3f7776;background:#edf5f3;border-color:#d1e3df}
+.src-tag.t-rule{color:#756b83;background:#f2eff4;border-color:#dfd8e3}
+.src-tag.t-demo{color:#926f43;background:#f7f1e8;border-color:#eadfce}
 .src-tag.t-time{color:#5b6472;background:#f1f3f5;border-color:#e0e4e9}
 /* 主体 */
 #wrap{flex:1;display:flex;min-height:0}
@@ -720,7 +720,7 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
 .dc-row{display:flex;justify-content:space-between;padding:2px 0;color:var(--sub)}
 .dc-row b{color:var(--ink);font-weight:600}
 .dc-row .short{color:#c0392b;font-weight:600}
-.dc-row .ok{color:#4caf7d;font-weight:600}
+.dc-row .ok{color:#6b927c;font-weight:600}
 .dc-trans{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line2);color:var(--ink);font-size:11.5px}
 .dc-trans b{color:#2b6cb0}
 .dc-src{margin-top:8px;font-size:10.5px;color:var(--dim);line-height:1.5;border-top:1px solid var(--line);padding-top:6px}
@@ -766,19 +766,19 @@ header #srcbtn:hover{border-color:var(--blue);color:var(--blue)}
 #dock .hint{font-size:11px;color:var(--dim);border-left:1px solid var(--line);padding-left:10px}
 /* 解说字幕：地图底部大字，像纪录片字幕，讲清"谁、做了什么" */
 #narration{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);max-width:86%;
-  background:rgba(20,28,40,.82);color:#eef4fb;padding:9px 18px;border-radius:8px;
+  background:rgba(31,49,48,.88);color:#edf5f2;padding:9px 18px;border-radius:8px;
   font-size:15px;font-weight:500;letter-spacing:.3px;text-align:center;z-index:4;
   box-shadow:0 2px 12px rgba(15,23,42,.25);transition:opacity .3s;pointer-events:none}
 /* 解说的时刻前缀：台账推出来的钟点，和正文拉开一档，扫一眼就能对上时间轴 */
 #narration .nclock{display:inline-block;margin-right:9px;padding:1px 7px;border-radius:4px;
-  background:rgba(255,255,255,.14);color:#f6d68a;font-weight:700;font-variant-numeric:tabular-nums;
+  background:rgba(255,255,255,.12);color:#d6c49a;font-weight:700;font-variant-numeric:tabular-nums;
   font-size:13px;letter-spacing:.6px}
 /* 焦点事件卡：讲「当前这一步是什么」，像新闻标题。
    原来钉在正中上方，实测压下「兴华路片区」片区名和燃气/供电两个部门圆点——
    这三个恰恰是那一步的主角，被标题盖掉最冤。挪到右上角：那一段是两片区之间的
    滨河路，没有业务标注，卡片再长也只往左伸，不压人。 */
 #focuscard{position:absolute;right:14px;top:10px;z-index:6;
-  background:rgba(20,28,40,.88);color:#fff;padding:10px 18px;border-radius:10px;
+  background:rgba(31,49,48,.92);color:#fff;padding:10px 18px;border-radius:10px;
   text-align:center;pointer-events:none;max-width:54%;transition:opacity .35s;
   border-left:4px solid var(--blue);box-shadow:0 4px 20px rgba(10,18,32,.35)}
 #focuscard .fc-stage{font-size:11.5px;color:#9fc3e8;letter-spacing:1px;margin-bottom:3px}
@@ -1085,7 +1085,7 @@ body::before{content:'';position:fixed;left:0;right:0;top:0;height:2px;z-index:9
     </div>
     <div class=sp-body>
       <section>
-        <h4><i class="sq" style="background:#8a93a1"></i>底图 · OpenStreetMap 静态底图</h4>
+        <h4><i class="sq" style="background:#84918f"></i>底图 · OpenStreetMap 静态底图</h4>
         <table>
           <tr><th>许可</th><td>© OpenStreetMap 贡献者，ODbL 1.0。转载与二次分发须保留署名并以同许可开放衍生数据。</td></tr>
           <tr><th>提取时间</th><td>2026-11-13 21:42（四川省数据包下载完成时刻，一次性提取，未接实时更新）</td></tr>
@@ -1096,7 +1096,7 @@ body::before{content:'';position:fixed;left:0;right:0;top:0;height:2px;z-index:9
         </table>
       </section>
       <section>
-        <h4><i class="sq" style="background:#3a8fd4"></i>事件与工单 · 演示台账</h4>
+        <h4><i class="sq" style="background:#5a7892"></i>事件与工单 · 演示台账</h4>
         <table>
           <tr><th>内容</th><td id=sp-ledger-cnt>—</td></tr>
           <tr><th>性质</th><td>按真实城市内涝处置流程编写的演示台账，字段结构对齐真实业务单据（工单、设施台账、物资库存、部门职责、封路通告）。<b>非实时物联接入</b>：本页没有对接 SCADA、积水监测站或视频，状态变化由时间轴驱动，不是现场传感器回传。</td></tr>
@@ -1121,7 +1121,7 @@ body::before{content:'';position:fixed;left:0;right:0;top:0;height:2px;z-index:9
         </table>
       </section>
       <section>
-        <h4><i class="sq" style="background:#e08a2e"></i>时间线 · 台账反推</h4>
+        <h4><i class="sq" style="background:#a57945"></i>时间线 · 台账反推</h4>
         <table>
           <tr><th>锚点</th><td>事件零点＝预警生效时刻；半幅封闭＝封路通告生效；全幅封闭＝首条积水工单上报</td></tr>
           <tr><th>口径</th><td id=sp-tl-mix>—</td></tr>
@@ -1822,7 +1822,7 @@ function buildBase(){
     const t = svgNS('text');
     t.dataset.lp = '40';
     t.setAttribute('font-size','9');
-    t.setAttribute('fill','#8a93a1');
+    t.setAttribute('fill','#84918f');
     t.setAttribute('text-anchor','middle');
     t.setAttribute('paint-order','stroke'); t.setAttribute('stroke','#ffffff'); t.setAttribute('stroke-width','2');
     t.textContent = r.name;
@@ -1906,7 +1906,7 @@ function buildBase(){
         ring.setAttribute('class', 'fac-ring' + (d ? ' d2' : ''));
         ring.setAttribute('cx', px.toFixed(1)); ring.setAttribute('cy', py.toFixed(1));
         ring.setAttribute('r', '9');
-        ring.setAttribute('stroke', '#4caf7d'); ring.setAttribute('stroke-width', '1.6');
+        ring.setAttribute('stroke', '#6b927c'); ring.setAttribute('stroke-width', '1.6');
         ring.setAttribute('stroke-opacity', d ? '0.5' : '0.85');
         g.appendChild(ring);
       });
@@ -2348,7 +2348,7 @@ function buildWorkOrderLayer(){
     const off = (i%3-1)*5;
     const px = cx(pt.x)+off, py = cy(pt.y)+off;
     const closed = w.status==='closed';
-    const col = closed ? '#b8c0ca' : (w.severity==='high' ? '#d9534f' : '#e08a2e');
+    const col = closed ? '#b8c0ca' : (w.severity==='high' ? '#a85b57' : '#a57945');
     const c = svgNS('circle');
     c.setAttribute('cx', px.toFixed(1)); c.setAttribute('cy', py.toFixed(1));
     c.setAttribute('r','4');
@@ -2387,7 +2387,7 @@ function buildUnderpassLayer(){
     tri.setAttribute('role','button');
     tri.setAttribute('aria-label', u.name + ' · 查看台账详情');
     tri.setAttribute('d', `M${px},${(py-7).toFixed(1)} L${(px-6).toFixed(1)},${(py+5).toFixed(1)} L${(px+6).toFixed(1)},${(py+5).toFixed(1)} Z`);
-    tri.setAttribute('fill','#d9534f');
+    tri.setAttribute('fill','#a85b57');
     tri.setAttribute('stroke','#ffffff'); tri.setAttribute('stroke-width','1.2');
     g.appendChild(tri);
     // 标注放三角形右侧而不是正上方：隧道点离兴华路泵站只有二十来个像素，
@@ -2424,7 +2424,7 @@ function buildDecisionLayer(){
     c.setAttribute('cy', cy(d.center.y).toFixed(1));
     c.setAttribute('r', (d.radius_m*scale*0.5).toFixed(1));
     c.setAttribute('fill','none');
-    c.setAttribute('stroke', dec.critical.includes(d.id) ? '#d9534f' : '#b8c0ca');
+    c.setAttribute('stroke', dec.critical.includes(d.id) ? '#a85b57' : '#b8c0ca');
     c.setAttribute('stroke-width','0.8');
     c.setAttribute('stroke-dasharray','3 5');
     c.setAttribute('opacity','0.5');
@@ -2512,7 +2512,7 @@ function buildDecisionLayer(){
     note.setAttribute('x', cx(midX).toFixed(1));
     note.setAttribute('y', (cy(midY)+11).toFixed(1));
     note.setAttribute('font-size','8');
-    note.setAttribute('fill','#8a93a1');
+    note.setAttribute('fill','#84918f');
     note.setAttribute('text-anchor','middle');
     note.setAttribute('paint-order','stroke'); note.setAttribute('stroke','#ffffff'); note.setAttribute('stroke-width','2.5');
     note.textContent = '起终点为片区中心示意图';
@@ -2534,15 +2534,15 @@ function buildDecisionLayer(){
   svg.appendChild(g);
 }
 function roadColor(state){
-  if(state==='closed') return '#d9534f';
-  if(state==='under_construction') return '#e08a2e';
+  if(state==='closed') return '#a85b57';
+  if(state==='under_construction') return '#a57945';
   return '#b8c0ca';
 }
 function pipeName(kind){
   return {drainage:'雨水',gas:'燃气',power:'电力',telecom:'通信',water:'供水'}[kind] || kind;
 }
 function pipeColor(kind){
-  return {drainage:'#1d6fa8',gas:'#c07818',power:'#8e44ad',telecom:'#2e7d4f',water:'#1d6fa8'}[kind] || '#8a93a1';
+  return {drainage:'#1d6fa8',gas:'#c07818',power:'#8e44ad',telecom:'#2e7d4f',water:'#1d6fa8'}[kind] || '#84918f';
 }
 function pipeWidth(kind){
   return {drainage:'2.2',gas:'1.8',power:'1.6',telecom:'1.6',water:'1.8'}[kind] || '1.6';
@@ -2552,9 +2552,9 @@ function pipeDash(kind){
   return {drainage:'none',water:'none',gas:'7 4',power:'3 4',telecom:'5 4'}[kind] || '3 3';
 }
 function facColor(f){
-  if(f.type==='pump_station') return '#4caf7d';
-  if(f.state==='clogged') return '#e08a2e';
-  return '#3a8fd4';
+  if(f.type==='pump_station') return '#6b927c';
+  if(f.state==='clogged') return '#a57945';
+  return '#5a7892';
 }
 function facState(f){
   if(f.state==='clogged') return '堵塞';
@@ -2830,7 +2830,7 @@ function renderRoads(t){
     let color = '#c3ccd6';
     if(closed && lvl>=2) color = '#d94a3d';
     else if(closed && lvl===1) color = '#c9781f';
-    else if(st.under_construction && st.under_construction.includes(rid)) color = '#e08a2e';
+    else if(st.under_construction && st.under_construction.includes(rid)) color = '#a57945';
     p.setAttribute('stroke', color);
     // 封路：加粗 + 虚线强调（业务关键动作，要在真实底图上跳出来）。
     // 半幅比全幅细一档：施工占道只占半幅，画成全幅是夸大。
@@ -3973,7 +3973,7 @@ if(qEnt){
     mk.appendChild(base0);
     const hi = svgNS('path');
     hi.setAttribute('d', pathD); hi.setAttribute('fill', 'none');
-    hi.setAttribute('stroke', '#b91c1c'); hi.setAttribute('stroke-width', '4.5');
+    hi.setAttribute('stroke', '#a65350'); hi.setAttribute('stroke-width', '4.5');
     hi.setAttribute('stroke-linecap', 'round'); hi.setAttribute('stroke-linejoin', 'round');
     mk.appendChild(hi);
     // 不再另写一个路名：地图自己的路名标签已经在那条路上，叠两个只会打架。
