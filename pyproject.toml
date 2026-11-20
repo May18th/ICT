@@ -22,7 +22,10 @@ build-backend = "hatchling.build"
 packages = ["src/decision_poc"]
 
 [dependency-groups]
-dev = ["pytest==9.1.1"]
+dev = [
+    "playwright>=1.65.2",
+    "pytest==9.1.1",
+]
 # 可选：真实语言模型（DeepSeek）需要的 OpenAI SDK；默认 `uv sync --locked` 不安装
 llm = ["openai>=2.0"]
 
