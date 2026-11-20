@@ -110,6 +110,9 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("testcount", re.compile(r"(\d+)\s*测试(?![\u4e00-\u9fff])")),
     ("testcount", re.compile(r"测试\s*(\d+)\s*项")),
     ("fingerprint", re.compile(r"指纹\s*`?([0-9a-f]{16})")),
+    # 「校验值 c6ccdc…」「核对值 c6ccdc…」是同义变体，前面不带「指纹」二字。
+    # README 与 README-dev 各有一处用这种写法，指纹换了两轮都靠人肉 grep 才改到，故单挂一条。
+    ("fingerprint", re.compile(r"(?:校验值|核对值)\s*`?([0-9a-f]{16})")),
     # `evidence_check`（108/108）这种写法两处都漏了：根 README 的「四个能当场核对的结果」
     # 表格、以及 PPT 生成脚本里那句可复现命令。现有 `(\d+)/(\d+)\s*项一致` 要求后面紧跟
     # 「项一致」，而它们的分数直接在括号里结束或接逗号，所以从来没被校验过——
@@ -161,11 +164,7 @@ ALLOWED_NON_TOTAL: dict[tuple[str, str, int | str], tuple[int, str]] = {
         "docs/p10-visualization-tools-design.md",
         9,
     ): (1, "「P5 起的 MCP 服务有 9 个工具」是阶段叙述（当时工具数），不是当前总数"),
-    (
-        "testcount",
-        "docs/ICT-赛题3-城市内涝事件推演-WorkBuddy任务单.md",
-        370,
-    ): (1, "赛题任务单记录的是当时验收（370 项），属于任务书原文，不改写成当前值"),
+    # 任务单原先记 370 项（当时验收），改写成当前值后该豁免失效，随数字一起删除。
     # 以下是子系统/历史验收的用例数，不是全仓总数。补上「N 测试」「N 项测试」两种写法后才显形。
     (
         "testcount",

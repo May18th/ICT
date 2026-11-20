@@ -49,7 +49,7 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望末行：对外数字自检：108/108 项一致（期望的校验值 3ef6d8d8539d40dc）
+# 期望末行：对外数字自检：108/108 项一致（期望的校验值 c6ccdc1202ded660）
 ```
 
 期望值固定在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/对外说明，

@@ -157,7 +157,7 @@ uv run python -m decision_poc.web_demo --port 8790     # 浏览器开 http://127
 
 ```bash
 uv run python -m decision_poc.deduction --event WO-20261029-007 --as-of 2026-10-29T09:40:00+08:00
-uv run python -m decision_poc.evidence_check    # 期望 108/108，核对值 3ef6d8d8539d40dc
+uv run python -m decision_poc.evidence_check    # 期望 108/108，校验值 c6ccdc1202ded660
 ```
 
 </details>
