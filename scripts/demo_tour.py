@@ -226,6 +226,9 @@ def teleprompter(base: str) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="strict")
+
     parser = argparse.ArgumentParser(description="一键演示：自检 → 起服务 → 打开大屏 → 讲稿")
     parser.add_argument("--port", type=int, default=8890)
     parser.add_argument("--check", action="store_true", help="只自检，不起服务")

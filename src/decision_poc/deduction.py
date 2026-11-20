@@ -1631,6 +1631,10 @@ def _format(result: DeductionResult) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     import argparse
+    import sys
+
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="strict")
 
     parser = argparse.ArgumentParser(description="six-hop cross-department deduction")
     parser.add_argument("--event", required=True, help="工单编号，如 WO-20261029-007")

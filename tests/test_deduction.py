@@ -13,6 +13,9 @@ from "让模型写一段推演":
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -35,6 +38,7 @@ from decision_poc.urban_dataset import DEFAULT_DATASET_ROOT
 
 AS_OF = datetime.fromisoformat("2026-10-29T09:40:00+08:00")
 EVENT = "WO-20261029-007"
+ROOT = Path(__file__).resolve().parents[1]
 
 RULES = load_rules()
 SOURCE_REFS = dict(verify_rules(RULES, DEFAULT_DATASET_ROOT))
@@ -457,6 +461,31 @@ def test_cli_runs_the_whole_chain_and_records(tmp_path) -> None:
     )
     assert restored.verify().ok
     assert len(restored.records()) == 1
+
+    legacy_env = dict(os.environ)
+    legacy_env["PYTHONIOENCODING"] = "ascii"
+    legacy_env["PYTHONUTF8"] = "0"
+    legacy_env["PYTHONPATH"] = str(ROOT / "src")
+    for command in (
+        [sys.executable, "scripts/demo_tour.py", "--check", "--port", "0"],
+        [
+            sys.executable,
+            "-m",
+            "decision_poc.deduction",
+            "--event",
+            EVENT,
+            "--as-of",
+            AS_OF.isoformat(),
+        ],
+    ):
+        completed = subprocess.run(
+            command,
+            cwd=ROOT,
+            env=legacy_env,
+            capture_output=True,
+            check=False,
+        )
+        assert completed.returncode == 0, completed.stderr.decode("utf-8", errors="replace")
 
 
 # --- 时点与状态闸门：不该推演的事件不许推 ------------------------------
