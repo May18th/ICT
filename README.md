@@ -19,6 +19,19 @@
 
 ---
 
+## 界面
+
+<p align="center"><img src="docs/reports/shots/portal.png" width="880" alt="门户首屏：一次事件的结论摘要、指标条、三组对照入口与数据来源"></p>
+
+<p align="center"><sub>门户：一次事件的结论、可核对指标、三组对照与数据来源，一屏读完</sub></p>
+
+| | |
+|---|---|
+| <img src="docs/reports/shots/map2d.jpg" alt="2.5D 大屏：逐拍推演、封路与泵站状态、资源缺口"><br><sub>2.5D 大屏 — 逐拍推演，左侧日志写出每一步读了哪本账、依据哪条规则</sub> | <img src="docs/reports/shots/data.jpg" alt="数据台账页：开放底图上的设施台账与资产分级"><br><sub>数据台账 — 开放底图与设施台账，每项标注来源与分级</sub> |
+| <img src="docs/reports/shots/limits.png" alt="能力边界页：同题三组对照与偏差说明"><br><sub>能力边界 — 同题三组对照，工具不可用时能说对多少、错在哪</sub> | <img src="docs/reports/shots/evolution.png" alt="策略演化页：偏差归零、被拒的一轮与回退验证"><br><sub>策略演化 — 偏差归零、被拒的一轮与回退验证</sub> |
+
+---
+
 ## 可复核结果
 
 | 指标 | 实测值 | 核验方式 |
