@@ -30,3 +30,19 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5013/nb/v1/agents
 - 录制文件存到工作区外（与交付材料同策略，不进 git）。
 - 在 `docs/reports/nexent-evidence-index.md` 的「尚未取得的外部证据」中改写该条，并附文件路径与录制时间。
 - 若只做静态材料，可先跑 `python deploy/nexent/capture_platform_ui.py` 出三张界面截图，但截图不能替代第 3、4 段的交互过程。
+
+## 实际执行结果（2026-11-21 20:54）
+
+已录得 44 秒界面演示，存 `_archive_deliverables_20261121/screen-recording/nexent_platform_demo_20261121.mp4`（1.1MB，2560×1440 / 15fps）。
+
+| 实际段落 | 内容 |
+|---|---|
+| 第 1 段 | MCP `/health` 的 JSON，工具列表与 `tools_count` |
+| 第 2 段 | 平台「选择智能体」弹窗，六个 Agent 与版本号 v34 / v12 / v11 |
+| 第 3 段 | 对话配置里的知识库索引，含 `urban-policy-ledger`（2 篇文档） |
+| 第 6 段 | 门户 `/evolution`：0.2264→0.0000 等指标与 V1/V2 对照 |
+
+**第 3、4 段（主推演与协同问答）没有录**：平台前端渲染回答时抛 `Minified React error #185`（Maximum update depth exceeded），回答区域变成红框报错。主推演、协同、以及把问题缩到 250 字不输出 JSON 都复现，所以不是内容太长；后端同事件调用正常（8/8）。问答证据继续用 `samples/nexent/live/` 下的 JSON。
+
+录制方式：`ffmpeg -f gdigrab -framerate 15 -i desktop`，OBS 这条路不可用——本机 OBS 33.0.1 的 GUI 进程启动后会被环境回收，websocket 4455 随之消失。
+
