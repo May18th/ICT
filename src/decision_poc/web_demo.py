@@ -1182,34 +1182,35 @@ def build_feedback_html() -> str:
     为什么不给 Agent 一个 MCP 工具让它自己提交：那等于让模型自己注入反馈、自己触发策略调整，
     与"反馈必须手动注入"的约束直接冲突。人填写、机器算、门禁判，三层各就各位。
     """
-    return """<!DOCTYPE html>
+    return ("""<!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>反馈注入 · 城市内涝决策进化</title>
 <style>
-body{margin:0;background:#0b1622;color:#dce8f2;font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+body{margin:0;background:#eef3f2;color:#243533;font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
 main{max-width:860px;margin:0 auto;padding:28px 20px 60px}
-h1{font-size:22px;margin:0 0 6px}h1 span{color:#5eead4}
-.sub{color:#89a2b8;margin-bottom:22px}
+h1{font-size:22px;margin:0 0 6px}h1 span{color:#2f756e}
+.sub{color:#637470;margin-bottom:22px}
 form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;
-     border:1px solid #1e3348;border-radius:12px;padding:18px;background:#0f1e2e}
-label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:#9db4c8}
-input,select{background:#0a1622;border:1px solid #24384e;border-radius:7px;color:#e6f1fa;padding:7px 9px;font:inherit}
+     border:1px solid #d7e3e0;border-radius:12px;padding:18px;background:#ffffff}
+label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:#637470}
+input,select{background:#f7fbfa;border:1px solid #d7e3e0;border-radius:7px;color:#243533;padding:7px 9px;font:inherit}
 .full{grid-column:1/-1}
-button{grid-column:1/-1;justify-self:start;background:#1d7f6f;border:0;color:#eafff9;padding:9px 20px;
-       border-radius:8px;font:inherit;cursor:pointer}button:hover{background:#229584}
+button{grid-column:1/-1;justify-self:start;background:#2f756e;border:0;color:#ffffff;padding:9px 20px;
+       border-radius:8px;font:inherit;cursor:pointer}button:hover{background:#28645f}
 #out{margin-top:20px;white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;
-     background:#08131d;border:1px solid #1e3348;border-radius:10px;padding:14px;min-height:40px;color:#b7cadb}
-.k{color:#7dd3fc}.ok{color:#34d399}.warn{color:#fbbf24}
+     background:#ffffff;border:1px solid #d7e3e0;border-radius:10px;padding:14px;min-height:40px;color:#637470}
+.k{color:#2f756e}.ok{color:#2f756e}.warn{color:#a4773c}
 .form-note{grid-column:1/-1;margin:0 0 4px;padding:9px 12px;border-radius:8px;
-  background:#2a2313;border:1px solid #5a4a2a;border-left:3px solid #fbbf24;
-  color:#f0e2c4;font-size:12.5px;line-height:1.65}
-.form-note b{color:#fde68a}
-a{color:#5eead4}
+  background:#f7fbfa;border:1px solid #c7ddd8;border-left:3px solid #2f756e;
+  color:#637470;font-size:12.5px;line-height:1.65}
+.form-note b{color:#2f756e}
+a{color:#2f756e}
 </style></head><body><main>
 <h1>反馈注入 · <span>处置结果回写与策略调整</span></h1>
 <div class="sub">填入一次内涝处置结果，系统按评测集评估并写入运行期记录。专家意见以角色扮演方式给出；偏差超过阈值时，候选作废。
-<a href="/">← 回推演页</a> · <a href="/evolution">进化对比 →</a></div>
+<a href="/show">← 回主演示</a> · <a href="/">门户首页</a> · <a href="/evolution">进化对比 →</a></div>
+__FLOW_NAV__
 <form id="f">
   <p class="form-note"><b>演示环境 · 评测数据。</b>提交后写入运行期记录并触发策略调整，不涉及真实部门处置结果或批复。</p>
   <label>场景 <input name="scenario_id" value="vd02"></label>
@@ -1232,8 +1233,8 @@ a{color:#5eead4}
   <button type="submit">提交反馈并运行评估</button>
 </form>
 <div id="out">尚无反馈记录</div>
-<h2 style="font-size:16px;margin:26px 0 8px">反馈流水 <span style="color:#7d95ab;font-weight:400;font-size:12.5px">（最近 30 条，倒序）</span></h2>
-<div id="hist" style="color:#7d95ab;font-size:12.5px">加载中…</div>
+<h2 style="font-size:16px;margin:26px 0 8px">反馈流水 <span style="color:#8a9a96;font-weight:400;font-size:12.5px">（最近 30 条，倒序）</span></h2>
+<div id="hist" style="color:#8a9a96;font-size:12.5px">加载中…</div>
 </main><script>
 const f=document.getElementById('f'),out=document.getElementById('out'),hist=document.getElementById('hist');
 const NL=String.fromCharCode(10);
@@ -1247,7 +1248,7 @@ async function loadHist(){
     if(!rows.length){hist.textContent='还没有反馈记录。提交一次就会出现。';return;}
     let html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr>'
       +['时间','片区·水深','判定','维度','触发','最终标签','降幅 训练·留出','记忆','条目','评审偏差']
-        .map(h=>'<th style="text-align:left;padding:6px 8px;border-bottom:1px solid #24384e;color:#9db4c8;font-weight:500;white-space:nowrap">'+h+'</th>').join('')
+        .map(h=>'<th style="text-align:left;padding:6px 8px;border-bottom:1px solid #d7e3e0;color:#637470;font-weight:500;white-space:nowrap">'+h+'</th>').join('')
       +'</tr></thead><tbody>';
     for(const x of rows){
       const rv=(x.review_before==null&&x.review_after==null)?'—'
@@ -1292,7 +1293,7 @@ f.addEventListener('submit',async ev=>{
     loadHist();
   }catch(err){out.textContent='请求失败：'+err;}
 });
-</script></body></html>"""
+</script></body></html>""".replace("__FLOW_NAV__", _flow_nav("evolution")))
 
 
 _REVIEW_PAGE = """<!DOCTYPE html>
@@ -1300,36 +1301,37 @@ _REVIEW_PAGE = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>方案评审 · 城市内涝决策进化</title>
 <style>
-body{margin:0;background:#0b1622;color:#dce8f2;font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+body{margin:0;background:#eef3f2;color:#243533;font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
 main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
-h1{font-size:22px;margin:0 0 6px}h1 span{color:#5eead4}
+h1{font-size:22px;margin:0 0 6px}h1 span{color:#2f756e}
 h2{font-size:16px;margin:26px 0 8px}
-.sub{color:#89a2b8;margin-bottom:20px}
+.sub{color:#637470;margin-bottom:20px}
 .stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
-.stat-empty{flex:1 1 100%;background:#0f1e2e;border:1px dashed #2a4257;border-radius:10px;
-  padding:12px 14px;font-size:13px;color:#9db4c8}
-.stat{border:1px solid #1e3348;border-radius:10px;padding:10px 14px;background:#0f1e2e;min-width:112px}
-.stat small{display:block;color:#8aa3b8;font-size:11.5px}
-.stat b{font-size:19px;color:#e6f1fa;font-weight:600}
-.stat.ok b{color:#34d399}.stat.warn b{color:#fbbf24}
+.stat-empty{flex:1 1 100%;background:#f7fbfa;border:1px dashed #c7ddd8;border-radius:10px;
+  padding:12px 14px;font-size:13px;color:#637470}
+.stat{border:1px solid #d7e3e0;border-radius:10px;padding:10px 14px;background:#ffffff;min-width:112px}
+.stat small{display:block;color:#8a9a96;font-size:11.5px}
+.stat b{font-size:19px;color:#243533;font-weight:600}
+.stat.ok b{color:#2f756e}.stat.warn b{color:#a4773c}
 form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;
-     border:1px solid #1e3348;border-radius:12px;padding:18px;background:#0f1e2e}
-label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:#9db4c8}
-input,select,textarea{background:#0a1622;border:1px solid #24384e;border-radius:7px;color:#e6f1fa;padding:7px 9px;font:inherit}
+     border:1px solid #d7e3e0;border-radius:12px;padding:18px;background:#ffffff}
+label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:#637470}
+input,select,textarea{background:#f7fbfa;border:1px solid #d7e3e0;border-radius:7px;color:#243533;padding:7px 9px;font:inherit}
 .full{grid-column:1/-1}
-button{grid-column:1/-1;justify-self:start;background:#1d7f6f;border:0;color:#eafff9;padding:9px 20px;
-       border-radius:8px;font:inherit;cursor:pointer}button:hover{background:#229584}
+button{grid-column:1/-1;justify-self:start;background:#2f756e;border:0;color:#ffffff;padding:9px 20px;
+       border-radius:8px;font:inherit;cursor:pointer}button:hover{background:#28645f}
 #out{margin-top:18px;white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;
-     background:#08131d;border:1px solid #1e3348;border-radius:10px;padding:14px;min-height:40px;color:#b7cadb}
+     background:#ffffff;border:1px solid #d7e3e0;border-radius:10px;padding:14px;min-height:40px;color:#637470}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
-th{text-align:left;padding:6px 8px;border-bottom:1px solid #24384e;color:#9db4c8;font-weight:500;white-space:nowrap}
-td{padding:6px 8px;border-bottom:1px solid #16273a;vertical-align:top}
-.muted{color:#7d95ab;font-size:12.5px}
-a{color:#5eead4}
+th{text-align:left;padding:6px 8px;border-bottom:1px solid #d7e3e0;color:#637470;font-weight:500;white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid #e7efed;vertical-align:top}
+.muted{color:#8a9a96;font-size:12.5px}
+a{color:#2f756e}
 </style></head><body><main>
 <h1>方案评审 · <span>人工评分与修正建议</span></h1>
 <div class="sub">四维评分只做样本记录，不参与策略判定；填入「建议调拨」才会进入策略评估。评分为个人意见，不代表部门审批。评分口径：__NOTE__。
-<a href="/">← 回推演页</a> · <a href="/feedback">反馈注入 →</a> · <a href="/evolution">进化对比 →</a></div>
+<a href="/show">← 回主演示</a> · <a href="/">门户首页</a> · <a href="/feedback">反馈注入 →</a> · <a href="/evolution">进化对比 →</a></div>
+__FLOW_NAV__
 <div class="stats">__STATS__</div>
 <form id="f">
   <label>评审人 <input name="reviewer_id" placeholder="如 zhang.water" required></label>
@@ -1431,6 +1433,7 @@ def build_review_html() -> str:
         _REVIEW_PAGE.replace("__STATS__", stats_html)
         .replace("__RECENT__", recent)
         .replace("__NOTE__", _esc(summary["note"]))
+        .replace("__FLOW_NAV__", _flow_nav("evolution"))
     )
 
 
@@ -1488,8 +1491,9 @@ a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
 </style></head><body><main>
 <h1>运行自检 · <span>内部核对页</span></h1>
 <div class="sub">运行核对页，检查台账、平台版本与同步状态。
-  <a href="/">推演首页</a> · <a href="/limits">同题对照</a> ·
+  <a href="/show">回主演示</a> · <a href="/">门户首页</a> · <a href="/limits">同题对照</a> ·
   <a href="/workbench">证据工作台</a> · <a href="/evolution">进化对比</a></div>
+__FLOW_NAV__
 <div class="verdict __VERDICT_CLS__">__VERDICT__</div>
 <div class="card"><table><thead><tr><th>检查项</th><th>状态</th><th>详情</th></tr></thead><tbody>__ROWS__</tbody></table></div>
 <div class="hint">检查时间：__WHEN__<br>每次打开重算；失败项附文件与字段。</div>
@@ -1530,6 +1534,7 @@ def build_status_html() -> str:
     when = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
     return (
         _STATUS_PAGE.replace("__VERDICT__", verdict)
+        .replace("__FLOW_NAV__", _flow_nav(""))
         .replace(
             "__VERDICT_CLS__",
             "bad" if any(i["state"] == "bad" for i in problem)
@@ -1647,6 +1652,7 @@ td{padding:5px 8px;border-bottom:1px solid #f3f4f6;vertical-align:top}
   <span class="spacer"></span>
   <span class="tag" id="stat">就绪</span>
 </header>
+__FLOW_NAV__
 <main>
   <section class="panel">
     <div class="switch">
@@ -3616,10 +3622,38 @@ def workbench_verify(body: bytes | None) -> tuple[int, str, bytes]:
     )
 
 
+_FLOW_NAV_STYLE = """<style>
+.flow-nav{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:0 20px 12px;font-size:12px}
+.flow-nav .flow-label{margin-right:4px;color:#84918f;font-weight:600;letter-spacing:.3px}
+.flow-nav a{padding:4px 8px;border:1px solid #dfe6e3;border-radius:6px;color:#4e6f82;text-decoration:none;line-height:1.2}
+.flow-nav a:hover{border-color:#8fb7bf;background:#f1f7f8;text-decoration:none}
+.flow-nav a.active{border-color:#8fb7bf;background:#e8f2f3;color:#29494b;font-weight:650}
+.flow-nav span{color:#aab5b5}
+@media(max-width:640px){.flow-nav{padding:0 12px 10px}}
+</style>"""
+
+
+def _flow_nav(current: str) -> str:
+    steps = (
+        ("show", "01 演示", "/show"),
+        ("workbench", "02 证据", "/workbench"),
+        ("data", "03 数据", "/data"),
+        ("evolution", "04 进化", "/evolution"),
+        ("limits", "05 边界", "/limits"),
+    )
+    links: list[str] = []
+    for index, (key, label, href) in enumerate(steps):
+        active = ' class="active" aria-current="page"' if key == current else ""
+        links.append(f'<a href="{href}"{active}>{label}</a>')
+        if index < len(steps) - 1:
+            links.append("<span aria-hidden=\"true\">→</span>")
+    return _FLOW_NAV_STYLE + '<nav class="flow-nav" aria-label="操作路径"><span class="flow-label">操作路径</span>' + "".join(links) + "</nav>"
+
+
 def build_workbench_html() -> str:
     """注入平台对话页地址。平台 Web 与北向不是同一个端口，所以单独取 env。"""
     web = os.getenv("NEXENT_WEB_BASE", "http://localhost:3000").rstrip("/")
-    return _WORKBENCH_PAGE.replace("__WEB_BASE__", web)
+    return _WORKBENCH_PAGE.replace("__WEB_BASE__", web).replace("__FLOW_NAV__", _flow_nav("workbench"))
 
 
 def build_map2d_html() -> tuple[int, str, bytes]:
@@ -4227,8 +4261,8 @@ th:nth-child(5),td:nth-child(5){padding-left:10px}
 .lic{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);
   font-size:11.5px;color:var(--dim);line-height:1.7}
 .osm-prev{margin:12px 0 8px;border:1px solid var(--line);border-radius:10px;
-  overflow:hidden;background:#fbfcfd}
-.osm-prev svg{display:block;width:100%;height:auto}
+  overflow:hidden;background:#fbfcfd;min-width:0}
+.osm-prev svg{display:block;width:100%;max-width:100%;height:auto}
 .osm-cap{font-size:12px;color:var(--dim);line-height:1.9;margin:0 2px 14px}
 .osm-legend{display:inline-flex;flex-wrap:wrap;gap:4px 14px;margin-left:8px;vertical-align:middle}
 .osm-legend span{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--sub)}
@@ -4244,6 +4278,17 @@ ul.set b{font-weight:600}
 ul.set .why{color:var(--sub);display:block;margin-top:1px}
 footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px;flex-wrap:wrap}
 @media(max-width:1100px){main{grid-template-columns:1fr}.ledgers{grid-template-columns:1fr}}
+@media(max-width:640px){
+  header{padding:20px 16px 12px;display:block}
+  header .back{display:block;padding-top:12px}
+  main{padding:6px 12px 28px;grid-template-columns:minmax(0,1fr)}
+  main>*{min-width:0}
+  section{padding:14px}
+  .osm-prev{overflow-x:auto}
+  .osm-prev svg{min-width:0;overflow:hidden}
+  table{display:block;max-width:100%;overflow-x:auto}
+  footer{padding:0 12px 24px;display:block}
+}
 </style>
 <body>
 <header>
@@ -4255,8 +4300,9 @@ footer{padding:0 40px 30px;color:var(--dim);font-size:12px;display:flex;gap:16px
       <b>演示台账</b>是其中的原始单据集（工单、设施、库存、职责、通告）；
       <b>场景事件</b>是从台账里取出的一次推演事件。三者都不指真实发生过的处置。</p>
   </div>
-  <div class=back><a href="/">← 回到首页</a></div>
+  <div class=back><a href="/show">← 回主演示</a></div>
 </header>
+__FLOW_NAV__
 <main>
   <div class=purpose>开放地图底图、演示台账与可重跑规则，用于展示跨部门推演。
     结果用于评测与演示，<b>不代表真实处置记录或正式审批</b>。</div>
@@ -4778,6 +4824,7 @@ def build_data_html() -> str:
     payload = data_payload()
     return (
         _DATA_PAGE
+        .replace("__FLOW_NAV__", _flow_nav("data"))
         .replace("__OSM_SVG__", _osm_preview_svg())
         .replace("__OSM_ROWS__", _osm_rows_html(payload))
         .replace("__OSM_ORIGIN__", _osm_origin_html(payload))
@@ -4904,7 +4951,7 @@ def _reviews_summary_html(payload: dict[str, Any]) -> str:
 
 def build_evolution_page() -> str:
     """进化页：首屏指标与评分汇总在服务端先填，页面打开即有内容。"""
-    html = build_evolution_html()
+    html = build_evolution_html(_flow_nav("evolution"))
     try:
         payload = build_evolution_payload()
         html = html.replace(
@@ -5147,6 +5194,7 @@ td.act{color:var(--ink)}
 .ok{color:var(--green)}.no{color:var(--amber)}
 .pill.need{color:var(--blue)}
 .pill.free{color:var(--dim);border-style:dashed}
+.table-scroll{max-width:100%;overflow-x:auto}
 .table-note{margin:9px 2px 0;font-size:12px;color:var(--sub);line-height:1.7}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:16px 18px}
@@ -5160,11 +5208,12 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
 </style>
 <body>
 <header>
-  <a class=back href="/">← 回首页</a>
+  <a class=back href="/show">← 回主演示</a>
   <p class=kicker>④ 能力边界</p>
   <h1>能力边界与误差对照</h1>
   <p class=lede>同题对照只改变工具是否可用，其余条件相同。会话编号可在 Nexent 平台回查。</p>
 </header>
+__FLOW_NAV__
 <div class=wrap>
 
   <div class=judge><b>结果：</b>工具可用时逐项命中台账；工具不可用时只剩结构。</div>
@@ -5181,10 +5230,12 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
        70 条事实里 4 条可追溯到原文，其余 66 条分别是推算、假设、演示数据。
        主动摆出来，比被评委问「这数据真的假的」之后再解释要有力得多。 -->
   <h3 class=sec>实测与假设的分级</h3>
-  <table>
-    <thead><tr><th>级别</th><th>条数</th><th>含义</th><th>对外表述口径</th></tr></thead>
-    <tbody>__PROV_ROWS__</tbody>
-  </table>
+  <div class=table-scroll>
+    <table>
+      <thead><tr><th>级别</th><th>条数</th><th>含义</th><th>对外表述口径</th></tr></thead>
+      <tbody>__PROV_ROWS__</tbody>
+    </table>
+  </div>
   <div class=table-note>__PROV_NOTE__</div>
 
   <section class=grid3>
@@ -5226,10 +5277,12 @@ footer{padding:26px 34px 40px;max-width:1280px;color:var(--dim);font-size:12px;l
   </section>
 
   <h3 class=sec>八项逐条对照<span>前六项依赖台账，后两项不依赖</span></h3>
-  <table>
-    <thead><tr><th>核验项</th><th>台账中的取值</th><th>对照组回答</th><th>是否依赖台账</th></tr></thead>
-    <tbody>__ROWS__</tbody>
-  </table>
+  <div class=table-scroll>
+    <table>
+      <thead><tr><th>核验项</th><th>台账中的取值</th><th>对照组回答</th><th>是否依赖台账</th></tr></thead>
+      <tbody>__ROWS__</tbody>
+    </table>
+  </div>
   <h3 class=sec>方法与数据的已知偏差</h3>
   <div class=two>
     <div class=panel>
@@ -5401,7 +5454,8 @@ def build_limits_html() -> str:
     prov_note = _prov_note_html(prov)
 
     return (
-        _LIMITS_PAGE.replace("__A_PASSED__", num(a["passed"]))
+        _LIMITS_PAGE.replace("__FLOW_NAV__", _flow_nav("limits"))
+        .replace("__A_PASSED__", num(a["passed"]))
         .replace("__A_TOTAL__", num(a["total"]))
         .replace("__A_CALLS__", num(a["calls"]))
         .replace("__A_LATENCY__", num(a["latency_ms"]))
@@ -5434,75 +5488,134 @@ def build_limits_html() -> str:
 
 _SHOW_PAGE = """<!doctype html><html lang=zh-CN><meta charset=utf-8>
 <meta name=viewport content='width=device-width,initial-scale=1'>
+<link rel="icon" href="data:,">
 <title>一键演示 · 城市内涝可进化决策智能体</title>
 <style>
-:root{--ink:#253532;--sub:#a1b2ae;--dim:#748883;--line:#263c3b;
-  --blue:#6f9299;--teal:#78aaa0;--amber:#b69a68;--red:#b97771;--green:#78a98c}
+:root{--ink:#243533;--sub:#637470;--dim:#8a9a96;--line:#d7e3e0;
+  --panel:#ffffff;--panel-2:#f7fbfa;--teal:#2f756e;--amber:#a4773c;--red:#a65350;--green:#2f756e}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;overflow:hidden;background:#101b1b;
-  font:14px/1.5 "Segoe UI","Microsoft YaHei",system-ui,sans-serif;color:#e8eef5}
-#bar{height:100px;display:flex;flex-direction:column;justify-content:center;gap:5px;
-  padding:0 22px;background:linear-gradient(180deg,#142323,#101b1b);
-  border-bottom:1px solid rgba(120,160,200,.18);position:relative;z-index:2}
+html,body{margin:0;height:100%;overflow:hidden;background:#eef3f2;
+  font:14px/1.5 "Segoe UI","Microsoft YaHei",system-ui,sans-serif;color:var(--ink)}
+body{display:flex;flex-direction:column}
+button{font:inherit}
+#bar{height:78px;display:flex;align-items:center;justify-content:space-between;gap:20px;
+  padding:0 22px;background:linear-gradient(180deg,#ffffff,#f7fbfa);
+  border-bottom:1px solid var(--line);position:relative;z-index:2}
 #bar::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
-  background:linear-gradient(90deg,transparent,#527e83,#78aaa0,transparent);
+  background:linear-gradient(90deg,transparent,#9ab8b2,#2f756e,transparent);
   background-size:200% 100%;animation:sweep 6s linear infinite}
 @keyframes sweep{from{background-position:200% 0}to{background-position:-100% 0}}
-.r1{display:flex;align-items:center;gap:14px;min-width:0}
-.r1 .ttl{font-size:13px;font-weight:600;letter-spacing:.6px;color:#bcd3e8;
-  white-space:nowrap;flex-shrink:0}
-.chips{display:flex;align-items:center;gap:6px;flex:1;min-width:0;overflow:hidden}
-.chip{display:flex;align-items:center;gap:6px;padding:2px 10px;border-radius:99px;
-  border:1px solid rgba(140,175,210,.22);font-size:11.5px;color:#8fa6bd;white-space:nowrap;
-  transition:.35s}
-.chip i{width:14px;height:14px;border-radius:50%;border:1px solid currentColor;
-  font-size:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.chip.on{color:#17302d;background:#78aaa0;border-color:#78aaa0;box-shadow:0 0 10px rgba(120,170,160,.24)}
-.chip.done{color:#7fd8a8;border-color:rgba(127,216,168,.45)}
-.chip.done i{border-color:rgba(127,216,168,.6)}
-.keys{display:flex;gap:12px;font-size:11px;color:#7b8fa6;white-space:nowrap;flex-shrink:0}
-.keys kbd{font:11px ui-monospace,monospace;padding:1px 5px;border-radius:4px;
-  border:1px solid rgba(140,175,210,.3);color:#b9cbdd;background:rgba(255,255,255,.05)}
-.r2{display:flex;align-items:baseline;gap:14px;min-width:0}
-#beat{font-size:17px;font-weight:600;letter-spacing:.4px;white-space:nowrap;flex-shrink:0;
-  color:#eaf3fb}
-#detail{font-size:12.5px;color:#93a9c0;min-width:0;line-height:1.5;overflow:hidden;
+.brand{display:flex;align-items:center;gap:12px;min-width:260px}
+.brand-mark{width:28px;height:28px;border:1px solid rgba(47,117,110,.45);border-radius:8px;
+  display:grid;place-items:center;color:var(--teal);font-size:12px;letter-spacing:-1px}
+.brand-copy{display:flex;flex-direction:column;gap:1px}
+.brand-copy .ttl{font-size:14px;font-weight:650;letter-spacing:.5px;color:var(--ink)}
+.brand-copy small{font-size:10px;color:var(--dim);letter-spacing:.35px}
+.r2{display:flex;align-items:center;gap:14px;min-width:0;flex:1}
+#beat{font-size:16px;font-weight:600;letter-spacing:.3px;white-space:nowrap;color:var(--ink)}
+#detail{font-size:12px;color:var(--sub);min-width:0;line-height:1.5;overflow:hidden;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-#detail b{color:#cfe6ff;font-weight:600}
-#detail em{font-style:normal;color:#f3c07b}
-#stagewrap{position:relative;height:calc(100% - 100px);background:#eef1f5}
+#detail b{color:var(--ink);font-weight:600}
+#detail em{font-style:normal;color:var(--amber)}
+.keys{display:flex;gap:9px;font-size:10.5px;color:var(--dim);white-space:nowrap;flex-shrink:0}
+.keys kbd{font:10.5px ui-monospace,monospace;padding:2px 5px;border-radius:4px;
+  border:1px solid var(--line);color:var(--sub);background:var(--panel-2)}
+#stagewrap{position:relative;flex:1;min-height:0;display:grid;grid-template-columns:250px minmax(0,1fr) 310px;
+  gap:12px;padding:12px;background:#eef3f2}
+.panel{min-width:0;min-height:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 12px 32px rgba(36,53,51,.08)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:14px 15px 10px;
+  border-bottom:1px solid var(--line)}
+.panel-head strong{font-size:12px;font-weight:600;letter-spacing:.4px;color:var(--ink)}
+.panel-head small{font-size:10px;color:var(--dim)}
+#timeline{display:flex;flex-direction:column;overflow:hidden}
+#timeline .hint{padding:12px 15px 8px;font-size:11px;color:var(--sub);line-height:1.7}
+.chips{display:flex;flex-direction:column;gap:7px;padding:5px 10px 12px;overflow:auto}
+.chip{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;
+  border:1px solid var(--line);font-size:12px;color:var(--sub);white-space:nowrap;
+  transition:.25s;background:var(--panel-2)}
+.chip i{width:19px;height:19px;border-radius:50%;border:1px solid currentColor;
+  font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-style:normal}
+.chip.on{color:var(--teal);background:#e8f2f0;border-color:var(--teal);box-shadow:0 0 12px rgba(47,117,110,.14)}
+.chip.done{color:var(--teal);border-color:#b7d2cc;background:#f2f8f6}
+.chip.done i{border-color:#86b4aa}
+.timeline-foot{margin:auto 15px 15px;padding-top:11px;border-top:1px solid var(--line);
+  font-size:10.5px;color:var(--dim);line-height:1.7}
+#map-panel{position:relative;overflow:hidden;background:#f7fbfa}
+#map-head{position:absolute;left:13px;right:13px;top:12px;z-index:1;display:flex;align-items:center;justify-content:space-between;
+  padding:7px 10px;border:1px solid var(--line);border-radius:7px;background:rgba(255,255,255,.86);
+  color:var(--ink);font-size:11px;backdrop-filter:blur(8px)}
+#map-head span:last-child{color:var(--sub)}
 iframe{display:block;width:100%;height:100%;border:0}
-#kick{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;
-  background:rgba(8,16,26,.62);backdrop-filter:blur(2px);transition:opacity .35s}
+#right-panel{display:flex;flex-direction:column;overflow:hidden}
+.signal{display:flex;align-items:center;gap:7px;padding:12px 15px 10px;color:var(--teal);font-size:11px}
+.signal i{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 9px rgba(47,117,110,.28)}
+#current{margin:0 15px 12px;padding:11px 12px;border-radius:7px;background:var(--panel-2);border:1px solid var(--line)}
+#current small{display:block;color:var(--dim);font-size:10px;margin-bottom:4px}
+#current-title{font-size:12px;color:var(--ink);margin-bottom:5px}
+#current-detail{font-size:11px;color:var(--sub);line-height:1.65}
+#current-detail b{color:var(--ink);font-weight:600}
+#current-detail em{font-style:normal;color:var(--amber)}
+#log{padding:0 15px 15px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.log-entry{padding:9px 10px;border-left:2px solid #9ab8b2;background:var(--panel-2);border-radius:0 6px 6px 0}
+.log-entry time{display:block;font-size:9px;color:var(--dim);margin-bottom:3px;letter-spacing:.3px}
+.log-entry strong{display:block;font-size:11px;color:var(--ink);font-weight:600;margin-bottom:3px}
+.log-entry p{margin:0;font-size:10.5px;line-height:1.55;color:var(--sub)}
+.next-step{margin:auto 15px 15px;padding:11px 12px;border-top:1px solid var(--line);font-size:10.5px;color:var(--sub);line-height:1.7}
+.next-step strong{display:block;color:var(--ink);font-size:11px;margin-bottom:5px}
+.next-step a{display:inline-block;margin-right:10px;color:var(--teal);text-decoration:none}
+.next-step a:hover{text-decoration:underline}
+#kick{position:absolute;inset:12px;z-index:3;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+  border-radius:10px;background:rgba(238,243,242,.86);backdrop-filter:blur(3px);transition:opacity .35s}
 #kick.off{opacity:0;pointer-events:none}
-#kick .card{text-align:center;padding:26px 40px;border-radius:14px;
-  background:rgba(14,26,41,.9);border:1px solid rgba(120,160,200,.25);
-  box-shadow:0 18px 60px rgba(0,0,0,.45)}
-#kick h1{margin:0 0 6px;font-size:19px;font-weight:600;letter-spacing:.5px;color:#eaf3fb}
-#kick p{margin:0;font-size:12.5px;color:#93a9c0;line-height:1.8}
-#kick .go{margin-top:14px;font-size:12px;color:#17302d;background:#78aaa0;
-  display:inline-block;padding:5px 16px;border-radius:99px;font-weight:600;letter-spacing:.5px}
+#kick .card{text-align:center;max-width:360px;padding:28px 38px;border-radius:12px;
+  pointer-events:auto;
+  background:rgba(255,255,255,.98);border:1px solid #b9d1cc;box-shadow:0 18px 60px rgba(36,53,51,.16)}
+#kick h1{margin:0 0 7px;font-size:19px;font-weight:600;letter-spacing:.5px;color:var(--ink)}
+#kick p{margin:0;font-size:12px;color:var(--sub);line-height:1.8}
+#kick .go{margin-top:14px;font-size:12px;color:#fff;background:var(--teal);
+  display:inline-block;padding:6px 17px;border:0;border-radius:99px;font-weight:600;letter-spacing:.5px;cursor:pointer}
 #kick .go kbd{font:inherit;background:transparent;border:none;color:inherit;padding:0 2px}
-#kick .note{margin-top:10px;font-size:11px;color:#6f8399}
+#kick .note{margin-top:11px;font-size:10.5px;color:var(--dim)}
+@media(max-width:1050px){#stagewrap{grid-template-columns:215px minmax(0,1fr) 270px}.keys{display:none}}
+@media(max-width:980px){html,body{overflow:auto}#bar{height:auto;min-height:112px;align-items:flex-start;flex-direction:column;gap:8px;padding:13px 15px}.brand{min-width:0}.r2{width:100%;align-items:flex-start;flex-direction:column;gap:2px}#stagewrap{min-height:900px;grid-template-columns:1fr;grid-template-rows:220px minmax(430px,1fr) 280px;padding:8px;gap:8px}.chips{flex-direction:row;overflow:auto}.chip{min-width:max-content}.timeline-foot{display:none}#map-head{top:8px;left:8px;right:8px}#kick{inset:8px}}
 </style>
 <body>
 <div id=bar>
-  <div class=r1>
-    <span class=ttl>一键演示</span>
-    <div class=chips id=chips></div>
-    <span class=keys><span><kbd>空格</kbd> 下一步</span><span><kbd>R</kbd> 重播</span><span><kbd>F11</kbd> 全屏</span></span>
+  <div class=brand>
+    <span class=brand-mark>↗</span>
+    <span class=brand-copy><span class=ttl>城市内涝 · 决策演示</span><small>市级应急指挥中心 / 本机可回查推演</small></span>
   </div>
   <div class=r2>
     <span id=beat>准备就绪</span>
     <span id=detail>按下空格开始</span>
   </div>
+  <span class=keys><span><kbd>空格</kbd> 下一步</span><span><kbd>R</kbd> 重播</span><span><kbd>F11</kbd> 全屏</span></span>
 </div>
+__FLOW_NAV__
 <div id=stagewrap>
-  <iframe id=board src="/map2d?auto=0" title="推演大屏"></iframe>
+  <section id=timeline class=panel aria-label="演示时间线">
+    <div class=panel-head><strong>演示时间线</strong><small>5 幕 + 结束</small></div>
+    <div class=hint>按事件发生顺序推进。每一步都会把地图动作和本机接口结果对齐。</div>
+    <div class=chips id=chips></div>
+    <div class=timeline-foot>数据来源 · 事件台账 / 冲突检测 / 演化记录<br>快捷键 · 空格继续，R 重播，Esc 暂停地图</div>
+  </section>
+  <section id=map-panel class=panel aria-label="城市推演地图">
+    <div id=map-head><span>2.5D 城市态势地图</span><span>同源回放 · /map2d</span></div>
+    <iframe id=board src="/map2d?auto=0" title="推演大屏"></iframe>
+  </section>
+  <aside id=right-panel class=panel aria-label="Agent 决策日志">
+    <div class=panel-head><strong>Agent 决策日志</strong><small>LIVE TRACE</small></div>
+    <div class=signal><i></i><span>本机接口已连接 · 演化冷启动</span></div>
+    <div id=current><small>当前步骤</small><div id=current-title>准备就绪</div><div id=current-detail>按下空格开始演示</div></div>
+    <div id=log aria-live=polite></div>
+    <div class=next-step><strong>演示之后</strong><a href="/workbench">去证据工作台 →</a><a href="/evolution">看策略进化 →</a></div>
+  </aside>
   <div id=kick><div class=card>
     <h1>一键演示</h1>
     <p>收到工单 → 冲突曝光 → 策略进化 → 重新推演 → 大屏退水</p>
-    <div class=go>按 <kbd>空格</kbd> 开始</div>
+    <button class=go id=start-btn type=button>按 <kbd>空格</kbd> 开始</button>
     <div class=note>支持断网运行；重复演示结果一致（演化走冷启动）</div>
   </div></div>
 </div>
@@ -5528,7 +5641,11 @@ const frame = document.getElementById('board');
 const chipsBox = document.getElementById('chips');
 const elBeat = document.getElementById('beat');
 const elDetail = document.getElementById('detail');
+const currentTitle = document.getElementById('current-title');
+const currentDetail = document.getElementById('current-detail');
+const logBox = document.getElementById('log');
 const kick = document.getElementById('kick');
+const startBtn = document.getElementById('start-btn');
 let idx = -1, running = false, busy = false, cache = {}, timer = null;
 let autoMode = false;
 
@@ -5550,9 +5667,24 @@ const dimCN = (d)=> DIM_CN[d] || d || '—';
 const mapApi = ()=>{
   try { return frame.contentWindow.__map2d || null; } catch(e) { return null; }
 };
+function addLog(title, html){
+  const item = document.createElement('article');
+  item.className = 'log-entry';
+  const stamp = document.createElement('time');
+  stamp.textContent = new Date().toLocaleTimeString('zh-CN', {hour12:false});
+  const heading = document.createElement('strong');
+  heading.textContent = title;
+  const body = document.createElement('p');
+  body.textContent = String(html || '').replace(/<[^>]+>/g, '');
+  item.append(stamp, heading, body);
+  logBox.prepend(item);
+  while(logBox.children.length > 6) logBox.lastElementChild.remove();
+}
 function say(title, html){
   elBeat.textContent = title;
   elDetail.innerHTML = html || '';
+  currentTitle.textContent = title;
+  currentDetail.innerHTML = html || '';
 }
 
 async function getJSON(url, opt){
@@ -5627,9 +5759,18 @@ async function run(i){
     if(typeof b.map.seek === 'number') api.seek(b.map.seek, !!b.map.play);
     if(b.map.play === false) api.play(false);
   }
+  addLog('进入第 ' + (i + 1) + ' 幕 · ' + b.chip, b.detail || '等待本机接口返回结果');
   if(b.fetch){
-    try { say(b.title, await FETCH[b.fetch]()); }
-    catch(err){ say(b.title, '<em>本机接口未返回：' + String(err.message || err) + '</em>（其余几幕不受影响，可按空格继续）'); }
+    try {
+      const result = await FETCH[b.fetch]();
+      say(b.title, result);
+      addLog('接口返回 · ' + b.fetch, result);
+    }
+    catch(err){
+      const message = '<em>本机接口未返回：' + String(err.message || err) + '</em>（其余几幕不受影响，可按空格继续）';
+      say(b.title, message);
+      addLog('接口异常 · ' + b.fetch, message);
+    }
   }
   if(b.map && b.map.play && mapApi()){ mapApi().play(true); }
   // 自动模式用定时器推进，而不是在这里 await：await 会把「按空格提前进下一幕」
@@ -5646,14 +5787,20 @@ async function next(){
   await run(idx + 1);
   busy = false;
 }
+startBtn.addEventListener('click', next);
 async function restart(){
   if(busy) return;
   busy = true;
   clearTimer();
   idx = -1;
+  [...chipsBox.children].forEach((c) => {
+    c.className = 'chip';
+  });
   const api = mapApi();
   if(api){ api.play(false); api.seek(0); }
   say('准备就绪', '按下空格重新开始');
+  logBox.innerHTML = '';
+  addLog('等待开始', '按下空格推进第一幕，所有数据从本机接口读取。');
   kick.classList.remove('off');
   busy = false;
 }
@@ -5673,6 +5820,7 @@ frame.addEventListener('load', ()=>{
   const api = mapApi();
   if(api) api.play(false);
 });
+addLog('等待开始', '按下空格推进第一幕，所有数据从本机接口读取。');
 // 全自动模式：/show?auto=1 加载即开跑，不用碰键盘。
 // 彩排过场用（连按空格容易点乱），正式答辩仍建议留一个空格，节奏由讲的人定。
 if(new URLSearchParams(location.search).get('auto') === '1'){
@@ -5692,7 +5840,7 @@ if(!isNaN(qBeat) && qBeat >= 1 && qBeat <= BEATS.length){
 
 def build_show_html() -> str:
     """GET /show：一键演示页。静态外壳 + 前端按节拍调本机接口。"""
-    return _SHOW_PAGE
+    return _SHOW_PAGE.replace("__FLOW_NAV__", _flow_nav("show"))
 
 
 def show_evolve() -> tuple[int, str, bytes]:
@@ -5823,6 +5971,8 @@ def route(path: str, method: str = "GET", body: bytes | None = None) -> tuple[in
     segments = [item for item in parsed.path.split("/") if item]
     query = parse_qs(parsed.query)
 
+    if parsed.path == "/favicon.ico":
+        return 204, "image/x-icon", b""
     if parsed.path in {"", "/"}:
         # 首页是门户：一屏说清"这是什么、凭什么可信、建在什么平台上"。
         # 旧的面板页留在 /demo —— 页面本身没删，只是不再是第一眼看到的东西。
