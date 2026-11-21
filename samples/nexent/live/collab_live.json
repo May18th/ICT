@@ -3,7 +3,7 @@
   "event_id": "WO-20261029-007",
   "as_of": "2026-10-29T09:40:00+08:00",
   "agent_name": "urban_collab_agent",
-  "captured_at": "2026-11-21T18:31:42+0800",
+  "captured_at": "2026-11-21T19:18:19+0800",
   "method": "北向 /nb/v1/chat/run 实测；本轮 live 范围只覆盖 cards、merge_order、covered_agents、constraint_violations 与 kernel_fingerprint。成功判据 = 从最终回答解析出含 kernel_fingerprint 的 JSON，五个字段齐全且与离线投影后逐字一致（卡片只比交卷字段）。平台两种合法外壳（裸 JSON / final_answer 包装）都认；本地/MCP AgentMessage 消息信封不纳入判定，不据此宣称线上 A2A。",
   "answer_contract": {
     "fields": [
@@ -33,7 +33,8 @@
   "attempts": [
     {
       "attempt": 1,
-      "conversation_id": 311,
+      "conversation_id": 315,
+      "elapsed_s": 10.6,
       "answer_len": 8342,
       "json_parsed": true,
       "kernel_fingerprint": "d7fa402fe22e596c",
@@ -62,7 +63,38 @@
     },
     {
       "attempt": 2,
-      "conversation_id": 312,
+      "conversation_id": 316,
+      "elapsed_s": 8.2,
+      "answer_len": 8342,
+      "json_parsed": true,
+      "kernel_fingerprint": "d7fa402fe22e596c",
+      "fingerprint_match": true,
+      "cards": 26,
+      "merge_order": 15,
+      "covered_agents": 6,
+      "constraint_violations": [],
+      "card_keys": [
+        "action",
+        "agent_id",
+        "card_id",
+        "co_sign_required",
+        "depends_on",
+        "stage",
+        "status"
+      ],
+      "field_matches": {
+        "cards": true,
+        "merge_order": true,
+        "covered_agents": true,
+        "constraint_violations": true
+      },
+      "shape_match": true,
+      "mismatches": []
+    },
+    {
+      "attempt": 3,
+      "conversation_id": 317,
+      "elapsed_s": 6.3,
       "answer_len": 8342,
       "json_parsed": true,
       "kernel_fingerprint": "d7fa402fe22e596c",
@@ -92,5 +124,5 @@
   ],
   "success": true,
   "success_attempt": 1,
-  "success_rate": "2/2"
+  "success_rate": "3/3"
 }
