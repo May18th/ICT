@@ -36,9 +36,19 @@
 | 多事件回归（v19） | `samples/nexent/live/multi_event_regression.json` 的旧版本由 git 历史保留 | 采集时 Agent v19，不能当作 v34 的回归；v34 结果见当前快照表 |
 | 三张平台截图 | `docs/reports/captures/nexent/platform_ui.json` | 截图采集时页面期望为 v31，不能证明当前页面仍为 v31 |
 
+## 已知平台缺陷
+
+**实时提问的流式回答会让前端崩溃**（Nexent v2.7.0，`nexent/nexent-web:v2.7.0`）
+
+- **现象**：在对话框里新提问，回答区变成红框 `Minified React error #185`，内容不显示。主推演、协同、以及把问题缩到 120–250 字且不要求 JSON，全部复现。
+- **定性**：`#185` 是 Maximum update depth exceeded——某组件在一次提交里反复触发自身更新，React 数到 50 次抛错。压缩堆栈只到 React 内部（`dispatchUpdate → dispatch`），应用侧集中在 `frontend/app/[locale]/chat/streaming/`（`chatStreamMain` / `taskWindow` / `chatStreamFinalMessage`，共 4760 行）；`taskWindow.tsx` 存在「测高度 → setState → 容器高度变 → 再测」的链条，且 `setContentHeight` 是无条件赋值。**此为静态推断，尚未在非压缩构建上确认。**
+- **影响面**：只影响实时演示的画面。后端不受影响——同一事件 API 调用 8/8，conversation 319–322 正常；历史会话重放也正常，六跳、三类冲突、处置顺序都能完整显示。
+- **规避**：演示与录屏一律走左侧历史会话，不要新提问。
+- **未修复原因**：这是平台官方前端，改它等于维护补丁分支，且升级会冲突；初赛函评不到场，实时提问不是必需项。若决赛需要现场演示，处理路径是「开 `productionBrowserSourceMaps` 重建定位真实行号 → 给无条件 `setState` 加收敛守卫 → `docker cp` 到容器 `/opt/frontend-dist` 并重启」。
+
 ## 尚未取得的外部证据
 
-- **新提问的问答全过程**录屏仍未取得。2026-11-21 已录 35 秒界面演示（六个 Agent 与版本号、平台历史会话的完整推演结论、知识库索引、`/evolution`），但实时提问录不了：平台前端渲染**新生成的**流式回答时抛 `Minified React error #185`（Maximum update depth exceeded），主推演、协同、缩短到 250 字的问法均复现，属前端缺陷而非内容过长。**历史会话重放不受影响**，录屏即走这条路。问答数值证据仍以 JSON 为准。
+- **新提问的问答全过程**录屏仍未取得，原因见上方「已知平台缺陷」。2026-11-21 已录 35 秒界面演示（六个 Agent 与版本号、平台历史会话的完整推演结论、知识库索引、`/evolution`）；问答数值证据仍以 JSON 为准。
 - Nexent 分层记忆的真实平台读写闭环尚未取得独立运行快照，当前仅有离线同构契约。
 - `data-gate-report.md` 中一项高程基准、逐字段来源补齐，以及前池库容曲线的图纸或实测来源，仓库和公开检索均没有对应原始资料。
 - 平台运行时系统提示词要求检索型回答保留 `[[字母+数字]]` 引用标记，当前没有发现 Agent 配置项可关闭。`urban_asset_qa` 提示词已要求提交前删除角标，但 2026-11-21 三问实测仍有 1/3 返回 `[[a1]]`。网页端已有展示层清理，北向原始 `final_answer` 仍需按 `marker_free` 字段验收。
