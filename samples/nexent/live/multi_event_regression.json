@@ -1,95 +1,105 @@
 {
   "schema_version": "nexent-multi-event-1",
-  "captured_at": "2026-11-06T18:54:26+0800",
+  "captured_at": "2026-11-21T19:45:37+0800",
   "agent_name": "urban_deduction_agent",
-  "agent_version": 19,
+  "agent_version": 34,
   "model": "DeepSeek-Chat",
-  "method": "北向 /nb/v1/chat/run 实测；每事件一次对话，与离线 DeductionEngine 逐项比对 8 项",
-  "note": "验收脚本原先只认 WO-20261029-007：key_actions 写死「隔离风险源/抽排/封闭积水路段」，009 属于基坑+燃气场景、没有封控类动作，被误判 7/8。改成按动作族从离线推演派生后，四次对话均 8/8。",
+  "method": "北向 /nb/v1/chat/run 实测；每事件一次对话，与离线 DeductionEngine 逐项比对 8 项。解析成功但结论不一致不重试——那属于结论错误，重试等于把错答案刷成通过。",
+  "note": "本轮 4/4 通过；版本号取自 samples/nexent/live/agents.json 的 current_version_no，不是代码常量。多事件证据只说明这几个工单在同一条链路上一致，不外推为全量覆盖。",
+  "summary": {
+    "passed": 4,
+    "total": 4
+  },
   "events": [
     {
       "event_id": "WO-20261029-007",
       "as_of": "2026-10-29T09:40:00+08:00",
-      "conversation_id": 141,
+      "conversation_id": 319,
+      "elapsed_s": 23.5,
       "attempts_used": 1,
       "checks_passed": "8/8",
-      "offline": {
+      "failed_checks": [],
+      "passed": true,
+      "errors": [],
+      "answer_shape": {
+        "six_hops": 6,
         "conflicts": [
           "C1",
           "C2",
           "C3"
         ],
         "resource_gap": 2,
-        "action_families": [
-          "隔离风险源",
-          "抽排",
-          "封控"
-        ],
-        "action_count": 10
-      },
-      "failed_checks": []
+        "action_count": 10,
+        "evidence_refs": 5,
+        "handoff_required": true
+      }
     },
     {
       "event_id": "WO-20261029-009",
       "as_of": "2026-10-29T09:55:00+08:00",
-      "conversation_id": 140,
+      "conversation_id": 320,
+      "elapsed_s": 13.6,
       "attempts_used": 1,
       "checks_passed": "8/8",
-      "offline": {
+      "failed_checks": [],
+      "passed": true,
+      "errors": [],
+      "answer_shape": {
+        "six_hops": 6,
         "conflicts": [
           "C1",
           "C2",
           "C3"
         ],
         "resource_gap": 2,
-        "action_families": [
-          "隔离风险源",
-          "抽排",
-          "封控"
-        ],
-        "action_count": 8
-      },
-      "failed_checks": []
+        "action_count": 6,
+        "evidence_refs": 5,
+        "handoff_required": true
+      }
     },
     {
       "event_id": "WO-20261030-021",
       "as_of": "2026-10-30T10:35:00+08:00",
-      "conversation_id": 142,
+      "conversation_id": 321,
+      "elapsed_s": 20.9,
       "attempts_used": 1,
       "checks_passed": "8/8",
-      "offline": {
+      "failed_checks": [],
+      "passed": true,
+      "errors": [],
+      "answer_shape": {
+        "six_hops": 6,
         "conflicts": [
           "C1",
           "C2"
         ],
         "resource_gap": 0,
-        "action_families": [
-          "隔离风险源",
-          "封控"
-        ],
-        "action_count": 4
-      },
-      "failed_checks": []
+        "action_count": 3,
+        "evidence_refs": 5,
+        "handoff_required": true
+      }
     },
     {
       "event_id": "WO-20261026-013",
       "as_of": "2026-10-26T16:00:00+08:00",
-      "conversation_id": 143,
+      "conversation_id": 322,
+      "elapsed_s": 37.0,
       "attempts_used": 1,
       "checks_passed": "8/8",
-      "offline": {
+      "failed_checks": [],
+      "passed": true,
+      "errors": [],
+      "answer_shape": {
+        "six_hops": 6,
         "conflicts": [
           "C1",
           "C2"
         ],
         "resource_gap": 0,
-        "action_families": [
-          "隔离风险源",
-          "封控"
-        ],
-        "action_count": 4
-      },
-      "failed_checks": []
+        "action_count": 3,
+        "evidence_refs": 5,
+        "handoff_required": true
+      }
     }
   ]
 }
