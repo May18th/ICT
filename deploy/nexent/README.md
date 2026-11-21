@@ -87,6 +87,11 @@ docker cp samples/nexent/skill             nexent-config:/tmp/nexent_skills
 docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_nexent.py all"
 ```
 
+> **装配前先在宿主侧跑一次差集检查**：`uv run python scripts/check_skill_mounts.py`。平台只校验技能重名、
+> 从不校验工具引用，技能绑上去后列表全绿、运行时却截断。该脚本把 SKILL.md 正文提到的工具与该 Agent 的
+> 挂载集并排求差，缺口必须与 `tests/test_skill_body_tools.py` 的登记表逐项对齐。同一技能绑不同 Agent
+> 结论相反（协同总控挂了 `conflict_check`、主 Agent 没挂），所以换 Agent 时 `--agent` 要显式给。
+
 `all` 依次跑六步，任何一步非 0 就停下（不会带着半成品去发 Key）：
 
 | 步骤 | 作用 | 幂等策略 |
