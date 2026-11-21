@@ -282,7 +282,7 @@ project/
 - [x] 评测资产解析、实体关系、检索命中、多跳路径、引用完整率和响应时间。（`python -m decision_poc.urban_eval`，指标口径见 `docs/reports/p8-evaluation-report.md` §1）
 - [x] 输出失败案例和改进前后对比。（改进前 17/22 → 22/22；差的是「as_of 早于上报时间 / 工单已流程」被当成正常事件推演，已加时点闸门，对比见报告 §5）
 - [x] 完成 README、部署说明、数据说明、开源截图和演示脚本。（README 含「界面」段 5 张截图与 2×2 排布，图在 `docs/reports/shots/`；另见 `docs/demo-runbook.md` / `docs/data-asset-spec.md`）
-- [x] 验收：从干净环境按 README 可复现；评测结果可重复生成。（`uv run --locked pytest -q` 981 项收集 / 966 通过 / 14 项按设计跳过；评测正确性校验值在 `test_correctness_is_reproducible` 里逐位比对）
+- [x] 验收：从干净环境按 README 可复现；评测结果可重复生成。（`uv run --locked pytest -q` 981 项收集 / 967 通过 / 14 项按设计跳过；评测正确性校验值在 `test_correctness_is_reproducible` 里逐位比对）
 
 ## 7. WorkBuddy 禁止事项
 

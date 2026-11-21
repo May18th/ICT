@@ -106,7 +106,7 @@ def build_steps(*, include_slow: bool) -> list[Step]:
         Step(
             # 用收集数对齐 TEST_TOTAL，而不是拿它去匹配 "N passed"：
             # Blender/Unreal/openai/dist 这些条件跳过会让 passed 数随环境浮动
-            # （本轮隔离工作树 966 passed / 14 skipped），
+            # （本轮隔离工作树 967 passed / 14 skipped），
             # 只有收集数才是与登记的 981 一一对应的量。
             "测试收集数",
             [

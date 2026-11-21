@@ -484,7 +484,7 @@ uv run --locked python -m decision_poc.scene_export --out samples/assets/urban/s
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **981 项收集 / 966 通过 / 14 项按设计跳过（0 失败）**。
+当前基线：`uv run --locked pytest -q` 共 **981 项收集 / 967 通过 / 14 项按设计跳过（0 失败）**。
 口径是**收集数**：跳过项全部是设计内——1 项需可选依赖 `openai`、1 项因仓库不分发 `.pptx`/`.docx`、
 2 项因 Blender 工具链停用、10 项因 Unreal 工程不入库，详见 `AGENTS.md`「测试口径」一节。
 **不要说"981 项全部通过"**；

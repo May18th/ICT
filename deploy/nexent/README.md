@@ -411,8 +411,10 @@ $env:NEXENT_API_KEY  = "<mint-key 生成的 Key>"
 uv run --locked python scripts/nexent_collab_live.py --attempts 2 --json samples/nexent/live/collab_v7.json
 ```
 
-判定只看一件事：从最终回答里解析出含 `kernel_fingerprint` 的 JSON，且与离线 `collab_run` 逐字一致。
-平台两种合法外壳（裸 JSON / `final_answer` 包装）都认，否则会把动作历史里的片段当结论。
+当前 live 判定范围只包括动作卡、处置顺序、角色覆盖、约束违规和 `kernel_fingerprint`：从最终回答里解析出含
+`kernel_fingerprint` 的 JSON，且与离线 `collab_run` 逐字一致。平台两种合法外壳（裸 JSON / `final_answer`
+包装）都认，否则会把动作历史里的片段当结论。`collab_run` 返回的本地/MCP `AgentMessage` 消息信封暂不
+纳入平台 live 判定，因此这里不宣称线上 A2A 或线上消息交接已验收。
 
 角色白名单 `ROLE_TOOL_GROUPS` 是**运行期视图**，不导出到 `tools.json`；部门 Agent 若单独建（路径 A），
 只能看到本组工具。Nexent v2.7 是否支持 Agent-as-Tool **未验证**，故默认走路径 B。

@@ -193,7 +193,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 - 新增 Agent `urban_collab_agent`（`deploy/nexent/setup_nexent.py create-collab-agent`）：
   挂 `collab_run` + `event_deduce` + `conflict_check` + `allocation_plan` + `twin_neighbors` + `evidence_locate`。
 - 提示词两步式：先 `collab_run`，再转述 `cards / co_sign_pairs / merge_order / conflicts / kernel_fingerprint`。
-- 协作结果同时提供 `messages` 消息信封。每条角色交接消息含 `sender`、`receiver`、`message_id`、`correlation_id`、结构化 `payload.card_ids` 与 `status/error`，可作为后续 A2A 适配边界；当前仍由单进程 `collab_run` 生成，未据此宣称 Nexent live A2A 已验收。
+- 协作结果同时提供 `messages` 消息信封。每条角色交接消息含 `sender`、`receiver`、`message_id`、`correlation_id`、结构化 `payload.card_ids` 与 `status/error`，可作为后续 A2A 适配边界；当前仍由单进程 `collab_run` 生成。Nexent live 证据只验收动作卡、处置顺序、角色覆盖、约束违规与 `kernel_fingerprint`，不包含该消息信封，因此未据此宣称 Nexent live A2A 或线上消息交接已验收。
 - 为什么单开一个 Agent：主 Agent 的 8 项结论一致性校验依赖固定 JSON 结构，
   把"部门动作卡"塞进同一份回答会让两种产出互相污染。
 - 未验证项：Nexent v2.7 的 Agent-as-Tool（路径 A，5 个部门 Agent 实测互调）**没有证据**，

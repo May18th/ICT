@@ -198,7 +198,7 @@
   },
   "test_baseline": {
     "collected": 981,
-    "passed": 966,
+    "passed": 967,
     "command": "python -m pytest -q",
     "verified_at": "2026-11-21"
   }

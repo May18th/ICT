@@ -10,7 +10,7 @@
 
 1. 主 Agent（urban_deduction_agent）调 `event_deduce` 出六跳；
 2. 拿同一个 `event_id` 让协同 Agent（urban_collab_agent）调 `collab_run` 复核；
-3. 校验两侧指向同一事件、内核指纹与离线逐字一致，落盘
+3. 校验两侧指向同一事件、协同字段与内核指纹和离线逐字一致，落盘
    `samples/nexent/live/chain_live.json`。
 
 跑法（平台在线时）：
@@ -100,7 +100,11 @@ def run_chain(args: argparse.Namespace) -> dict[str, Any]:
         record["elapsed_s"] = round(time.time() - started, 1)
         record["event_id"] = EVENT_ID
         judge(result.get("answer") or "", offline, record)
-        record["passed"] = bool(record.get("json_parsed")) and not record.get("mismatches")
+        record["passed"] = bool(
+            record.get("json_parsed")
+            and record.get("shape_match")
+            and record.get("fingerprint_match")
+        )
     except Exception as exc:  # 网络/流中断都算失败，如实记录，不让异常变成"没跑过"
         record["conversation_id"] = None
         record["elapsed_s"] = round(time.time() - started, 1)
@@ -125,7 +129,8 @@ def run_chain(args: argparse.Namespace) -> dict[str, Any]:
         },
         "note": (
             "两环在**一次运行内串联**：主 Agent 出结论后，协同 Agent 用同一 event_id 复核。"
-            "与 /api/collab-review 的离线复核同源，指纹应逐字一致。"
+            "协同环核对 cards、merge_order、covered_agents、constraint_violations 与 kernel_fingerprint；"
+            "与 /api/collab-review 的离线复核同源。AgentMessage 信封不纳入判定，不据此宣称线上 A2A。"
         ),
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }

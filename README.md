@@ -209,7 +209,7 @@ uv run python -m decision_poc.evidence_check    # 期望 108/108，校验值 a63
 | `src/decision_poc/collab/` | 多智能体协同：角色、契约、协同板、编排器 |
 | `src/decision_poc/quant/` | 定量层：水文、水力、简化水动力、可靠性、不确定性 |
 | `scripts/` | 生成器、证据核对、界面自动检查。入口是 `reproduce.py`，其余脚本都从它串起来；分组索引见 [`scripts/README.md`](scripts/README.md) |
-| `tests/` | 981 项收集 / 966 通过 / 14 项按设计跳过（本轮隔离工作树实测，0 失败） |
+| `tests/` | 981 项收集 / 967 通过 / 14 项按设计跳过（本轮隔离工作树实测，0 失败） |
 | `samples/` | 资产台账 `assets/`、规则库 `rules/`、评测用例 `eval/`、平台实测证据 `nexent/` |
 | `docs/` | 设计与验收文档。**先读 [`docs/README.md`](docs/README.md)** —— 它按阅读顺序编排，不按文件名字母序 |
 | `deploy/` | 三条部署路径，见 [`deploy/README.md`](deploy/README.md)：`nexent/` 平台装配、`offline/` 离线包、`mcp_sse/` MCP 容器 |
