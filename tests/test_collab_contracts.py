@@ -56,6 +56,20 @@ def test_card_carries_execution_contract_fields() -> None:
     ]
     assert card.acceptance_criteria == ["动作完成后复核积水深度"]
 
+    # 交卷契约：平台最终回答里每张卡只回这 7 个键（见 scripts/nexent_collab_live.py
+    # 的 ANSWER_CARD_KEYS）。字段改名不会让任何测试变红，却会让 live 协同证据静默判假，
+    # 所以在模型层钉一次。
+    handed_in = {
+        "action",
+        "agent_id",
+        "card_id",
+        "co_sign_required",
+        "depends_on",
+        "stage",
+        "status",
+    }
+    assert handed_in <= set(ActionCard.model_fields)
+
 
 def test_card_rejects_blank_execution_contract_items() -> None:
     with pytest.raises(ValidationError):
