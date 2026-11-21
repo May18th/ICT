@@ -18,7 +18,7 @@
 - `const`（默认）：`deploy/nexent/setup_nexent.py` 的 `MAIN_TOOLS` / `COLLAB_TOOLS`，
   与发布链路同一份定义。
 - `export`：`/agent/export` 导出包里的 `agent_info.<id>.tools`。**它读的是草稿版本**
-  （现行运行版是发布版），2026-11-14 那份快照就只有 2 个工具、缺 event_deduce，
+  （现行运行版是发布版），2026-11-14 那份快照只列了 `collab_run` 与 `doc_search` 两项、缺 event_deduce，
   直接拿它判会得出完全相反的结论，所以脚本会先核对工具数再决定是否采用。
 
 只读：不连平台、不改文件。
