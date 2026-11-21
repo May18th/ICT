@@ -205,7 +205,7 @@ powershell -ExecutionPolicy Bypass -File scripts\start_demo.ps1 -CheckOnly
 - Nexent 北向传输层（SSE 聚合、幂等键、401/429/冲突错误映射，默认不联网）；
 - Nexent SDK 传输层（无平台环境时的内嵌路径，可选依赖）；
 - 北向链路实测验证（本机 Nexent v2.7.0，SSE → 结构化决策）；
-- 城市内涝主链路 Nexent 集成实测：MCP-over-SSE（15 工具）+ Agent 发布 v32（DeepSeek-Chat）+ 8/8 结论一致性校验（v24 加 doc_search 后重跑仍 8/8；历史实测留痕 conversation_id=120）；
+- 城市内涝主链路 Nexent 集成实测：MCP-over-SSE（15 工具）+ 当前主 Agent 发布 v34（DeepSeek-Chat）+ conversation 290 的 8/8 结论一致性；协同 conversation 291 与离线指纹一致，重复协同 3/3 通过（详见证据索引）；
 - 多模态数据资产标识（表格 / 文本 / 图片统一登记、结构摘要、标准引用、可引用定位）；
 - 本体半自动构建（种子本体 → 规则抽取 → 置信度分档 + 跨文档多跳证据 + 合并计划）；
 - 城市内涝语义孪生层（孪生对象是职责与状态，不是实时水体）+ 六步跨部门推演 + 三类职责冲突 + 反事实重放（P4–P6）；
@@ -272,16 +272,16 @@ powershell -ExecutionPolicy Bypass -File scripts\start_demo.ps1 -CheckOnly
 
 ## Nexent 平台接入（已验证：8/8）
 
-赛题 3 的「基于 Nexent 可运行」不是"能连上"，而是"平台 Agent 调工具产出的结论与离线一致"。当前已在本机
-Nexent **v2.7.0**（主 Agent v19，模型 DeepSeek-Chat）跑通。原绑定的 openPangu-2.0-Pro 走华为 ModelArts，
+赛题 3 的「基于 Nexent 可运行」不是"能连上"，而是"平台 Agent 调工具产出的结论与离线一致"。仓库保留了本机
+Nexent **v2.7.0** 的外部实跑快照，当前主 Agent 快照为 v34（`urban-mcp-v5`），模型为 DeepSeek-Chat。原绑定的 openPangu-2.0-Pro 走华为 ModelArts，
 2026-11-06 因账户欠费停服，主/协同 Agent 改挂平台已注册的 DeepSeek-Chat（`MODEL_IDS` 默认 5），
-（历史）重发布到 v19 / v7 后同一提示词复测仍 8/8；下文实测证据以那一轮为准，当前线上为 v24：
+v19 / v24 文字属于历史记录，当前版本、链路和时间点以 [Nexent 证据索引](reports/nexent-evidence-index.md) 为准：
 
 - MCP 服务 `urban-twin-mcp`（15 工具）以 SSE 方式跑在 `nexent_network` 容器里；
-- Agent `urban_deduction_agent`（agent_id=3，已发布 v32）接了四个工具（`event_deduce` / `evidence_locate` / `doc_search` / `collab_run`；`collab_run` 于 2026-11-18 补挂，当初把主 Agent 收窄到 2 个的过程见集成实测报告 §6）；`doc_search` 只查规则依据，事实仍只认 `event_deduce`；
-- 一次真实对话（**conversation_id=120**）产出六步 JSON，与离线 `DeductionEngine` **8/8 项一致**；
+- Agent `urban_deduction_agent`（agent_id=3，已发布 v34）接了四个工具（`event_deduce` / `evidence_locate` / `doc_search` / `collab_run`；`collab_run` 于 2026-11-18 补挂，当初把主 Agent 收窄到 2 个的过程见集成实测报告 §6）；`doc_search` 只查规则依据，事实仍只认 `event_deduce`；
+- 历史对话（包括 **conversation_id=120**）产出六步 JSON，与离线 `DeductionEngine` **8/8 项一致**；
 - 平台侧确实发生了工具调用：`event_deduce`（18ms）+ 一次协议修复重试（6ms），
-  两条日志记录的哈希一致（协同链路的 2 次 `collab_run` 实测另见 `samples/nexent/live/collab_live.json`，成功率 2/2）。
+  两条日志记录的哈希一致（同一事件的主链与协同链实测另见 `samples/nexent/live/chain_live.json`、`collab_live.json`，协同 3/3 通过；会话号与采集时间以证据索引为准）。
 
 ```powershell
 # 1) 构建并启动 MCP 容器（详细步骤见 deploy/nexent/README.md）
@@ -311,8 +311,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 汇总 JSON）。完整排障与边界见 [集成实测报告](reports/nexent-live-integration-report.md)。
 
 边界：只在小规模本机 Docker 演示环境验证；两个 SKILL.md 已上传技能仓库（skill_id=2/3）**并已绑定到已发布 Agent**（草稿与发布版本各 2 条实例、全部 enabled，`bind_skills.py verify --require-published` 退出码 0，证据 `samples/nexent/live/skill_bindings.json`）；
-平台界面截图 3 张已固化（`docs/reports/captures/nexent/`，含 sha256 自检），问答过程录屏与多事件实测回归仍待补；
-不宣称"多 Agent 协同"。
+平台界面截图 3 张已固化（`docs/reports/captures/nexent/`，含 sha256 自检），问答已有 3/3 来源命中 JSON 探针；当前 v34 的多事件实测回归和问答录屏仍待补，且问答响应仍有内部引用标记需要清理。
 
 ## 策略演进（P9 / P9.1）
 
@@ -489,7 +488,7 @@ uv run --locked python -m decision_poc.scene_export --out samples/assets/urban/s
 2 项因 Blender 工具链停用、10 项因 Unreal 工程不入库，详见 `AGENTS.md`「测试口径」一节。
 **不要说"981 项全部通过"**；
 `python -m decision_poc.evidence_check` 108/108 项一致；
-城市内涝主链路 Nexent 平台校验 8/8（Agent v19 / DeepSeek-Chat，`python -m decision_poc.nexent_urban`）；
+城市内涝主链路 Nexent 平台历史校验 8/8，当前平台快照与历史时点见 `docs/reports/nexent-evidence-index.md`；
 同时要求锁文件、Python 编译和依赖一致性检查通过。
 P0-P10 的验收口径与实测数字见各阶段回传报告（`docs/reports/`）。
 

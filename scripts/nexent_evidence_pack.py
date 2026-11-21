@@ -514,7 +514,7 @@ def render(log_dir: Path) -> str:
     add("")
     note = platform_version_note()
     if note:
-        add(f"平台版本说明（原文）：{note}")
+        add(f"平台版本说明（历史快照原文）：{note}")
         add("")
 
     # A2

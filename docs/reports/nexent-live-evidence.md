@@ -1,6 +1,6 @@
 # Nexent 平台实跑证据包
 
-> 自动生成于 2026-11-21 18:33 +0800，**禁止手改**。生成命令：`uv run --locked python scripts/nexent_evidence_pack.py`
+> 自动生成于 2026-11-21 19:34 +0800，**禁止手改**。生成命令：`uv run --locked python scripts/nexent_evidence_pack.py`
 >
 > 数据来自 `samples/nexent/live/` 的平台抓取产物与北向服务日志，均为**历史快照**。
 > 本文不给结论性评价，只把散落记录整理成可逐条回查的事实。每条后面标了来源。
@@ -11,14 +11,14 @@
 |---|---|---|
 | 平台地址 | `http://localhost:5013` | 〔源: live_evidence.json → nexent_base_url〕 |
 | 主推演 Agent | `urban_deduction_agent` / 城市内涝跨部门决策智能体 | 〔源: agents.json → data[].name〕 |
-| 当前版本 | **v32**（`urban-mcp-v5`） | 〔源: agents.json → current_version_no〕 |
+| 当前版本 | **v34**（`urban-mcp-v5`） | 〔源: agents.json → current_version_no〕 |
 | 模型 | `DeepSeek-Chat` | 〔源: agents.json → model_name〕 |
 | 已记录 Agent | 6 个 | 〔源: agents.json〕 |
 | MCP 工具 | 15 项，分 4 组 | 〔源: src/decision_poc/mcp_server.py → TOOL_GROUPS〕 |
 | 主链路一致性 | 8/8 | 〔源: live_evidence.json → checks_passed〕 |
 | 工具调用记录 | 6 次 | 〔源: live_evidence.json → tool_calls〕 |
-| 北向日志跨度 | 2026-10-22 01:56:17 ~ 2026-11-21 18:31:48 | 〔源: northbound/（21 个文件）〕 |
-| 北向请求累计 | 511 次（服务端 access log） | 〔源: northbound〕 |
+| 北向日志跨度 | 2026-10-22 01:56:17 ~ 2026-11-21 19:18:13 | 〔源: northbound/（21 个文件）〕 |
+| 北向请求累计 | 534 次（服务端 access log） | 〔源: northbound〕 |
 
 ## A1 平台与模型
 
@@ -27,13 +27,13 @@
 | Agent | 显示名 | 版本 | 版本名 | 模型 | 可用 | 用途 |
 |---|---|---|---|---|---|---|
 | `urban_collab_control_no_tools` | 对照：无 MCP 工具的协同总控 | v2 | `control-collab-no-tools-v1` | DeepSeek-Chat | 是 | 实验对照组。提示词/模型与协同 Agent 完全相同，仅解绑协同工具，用于证明动作卡与处置顺序来自 collab_run |
-| `urban_asset_qa` | 内涝资产台账问答 | v10 | `urban-asset-qa-v3` | DeepSeek-Chat | 是 | 基于平台知识库回答设施状态、路段属性、部门职责与预案条款；每条结论标出处 |
+| `urban_asset_qa` | 内涝资产台账问答 | v11 | `urban-asset-qa-v4` | DeepSeek-Chat | 是 | 基于平台知识库回答设施状态、路段属性、部门职责与预案条款；每条结论标出处 |
 | `urban_control_no_tools` | 对照：无 MCP 工具的城市内涝智能体 | v2 | `control-no-tools-v1` | DeepSeek-Chat | 是 | 实验对照组。提示词/模型与主 Agent 完全相同，仅解绑 15 个 MCP 工具，用于证明八项一致来自工具而非模型先验 |
 | `urban_llm_decision_agent` | LLM 决策对照智能体 | v2 | `llm-decision-v2` | DeepSeek-Chat | 是 | 类型化决策任务的 LLM 对照：在确定性推演给定的选项内选择并解释，与 P8 A/B 同口径 |
-| `urban_collab_agent` | 城市内涝应急协同总控 | v10 | `urban-collab-v1` | DeepSeek-Chat | 是 | 把六跳推演拆成 1 总控 + 5 专业部门的动作卡，编排联合发布与处置顺序 |
-| `urban_deduction_agent` | 城市内涝跨部门决策智能体 | v32 | `urban-mcp-v5` | DeepSeek-Chat | 是 | 基于 Nexent + MCP 的城市内涝跨部门推演：六跳结论、三类冲突、稀缺资源分配与证据链 |
+| `urban_collab_agent` | 城市内涝应急协同总控 | v12 | `urban-collab-v1` | DeepSeek-Chat | 是 | 把六跳推演拆成 1 总控 + 5 专业部门的动作卡，编排联合发布与处置顺序 |
+| `urban_deduction_agent` | 城市内涝跨部门决策智能体 | v34 | `urban-mcp-v5` | DeepSeek-Chat | 是 | 基于 Nexent + MCP 的城市内涝跨部门推演：六跳结论、三类冲突、稀缺资源分配与证据链 |
 
-平台版本说明（原文）：Nexent v2.7.0 真机：平台 Agent（v31）调用 MCP 工具后产出六跳结论，与离线推演逐项比对
+平台版本说明（历史快照原文）：Nexent v2.7.0 真机：平台 Agent（v31）调用 MCP 工具后产出六跳结论，与离线推演逐项比对
 
 ## A2 · 工具分组
 
@@ -147,14 +147,14 @@
 
 ## A7 北向服务日志时间线
 
-日志目录 `D:\华为ICT\Nexent-data\logs\northbound`，共 21 个文件，跨度 2026-10-22 01:56:17 ~ 2026-11-21 18:31:48。
+日志目录 `D:\华为ICT\Nexent-data\logs\northbound`，共 21 个文件，跨度 2026-10-22 01:56:17 ~ 2026-11-21 19:18:13。
 
 | 指标 | 值 |
 |---|---|
 | 服务启动次数 | 55 |
-| 北向请求总数 | 511 |
-| 状态分布 | 200 × 482、400 × 2、401 × 10、403 × 2、404 × 14、429 × 1 |
-| 创建会话数 | 275（最大 id 312） |
+| 北向请求总数 | 534 |
+| 状态分布 | 200 × 505、400 × 2、401 × 10、403 × 2、404 × 14、429 × 1 |
+| 创建会话数 | 280（最大 id 317） |
 
 按天：
 
@@ -180,7 +180,7 @@
 | 2026-11-18 | 1 | 10 |
 | 2026-11-19 | 2 | 25 |
 | 2026-11-20 | 3 | 28 |
-| 2026-11-21 | 2 | 63 |
+| 2026-11-21 | 2 | 86 |
 
 **这些是服务端 access log，不是本地 mock 记录。**请求从容器网络进来，
 每次创建会话都有递增 id，刷新服务重启与请求的时间关系可以对照。
@@ -189,39 +189,40 @@
 
 | 文件 | 字节 | 修改时间 | sha256 前 12 |
 |---|---|---|---|
-| `agent_export.json` | 1817 | 2026-11-21 13:15 | `40c8e94bbb5c` |
-| `agents.json` | 7521 | 2026-11-21 13:15 | `4a454f722672` |
-| `asset_qa_multihop.json` | 4048 | 2026-11-21 13:15 | `ee96abd8d01c` |
-| `asset_qa_reconcile.json` | 5320 | 2026-11-21 13:15 | `68fdf59948a1` |
-| `chain_live.json` | 2105 | 2026-11-21 18:31 | `8ac9b2b00480` |
-| `collab_ab.json` | 2941 | 2026-11-21 13:15 | `45885d1cf630` |
-| `collab_live.json` | 2691 | 2026-11-21 18:31 | `69ca52f1c40a` |
-| `collab_v10_retest.json` | 1313 | 2026-11-21 13:15 | `479fe01c470e` |
-| `collab_v12_retest.json` | 2138 | 2026-11-21 13:15 | `68692968c8f4` |
-| `collab_v12_retest_run2.json` | 1640 | 2026-11-21 13:15 | `0ed74a7365c5` |
-| `collab_v7.json` | 1314 | 2026-11-21 13:15 | `93fcc79c0ee6` |
-| `collab_v9_retest.json` | 1314 | 2026-11-21 13:15 | `49dadd5bfc18` |
-| `control_main_smoke.json` | 2196 | 2026-11-21 13:15 | `323ec3530247` |
-| `control_no_tools.json` | 2292 | 2026-11-21 13:15 | `7c837f3b7325` |
-| `conversation_119.json` | 4822 | 2026-11-21 13:15 | `4a7405e1a2ce` |
-| `conversation_120.json` | 4931 | 2026-11-21 13:15 | `29972ef2d51a` |
-| `conversation_148.json` | 4662 | 2026-11-21 13:15 | `d34051275aa9` |
-| `conversation_179.json` | 4755 | 2026-11-21 13:15 | `18b0c5573470` |
-| `conversation_78.json` | 6627 | 2026-11-21 13:15 | `7c013c7944de` |
-| `live_evidence.json` | 3732 | 2026-11-21 13:15 | `4d9566ca4180` |
-| `llm_decision_platform.json` | 3149 | 2026-11-21 13:15 | `fc848a623c74` |
-| `llm_decision_platform_run1.json` | 2971 | 2026-11-21 13:15 | `17832824de90` |
-| `llm_decision_platform_run2.json` | 2974 | 2026-11-21 13:15 | `91bdc4a6d82b` |
-| `llm_decision_platform_run3.json` | 3149 | 2026-11-21 13:15 | `fc848a623c74` |
-| `main_v19_baseline.json` | 4693 | 2026-11-21 13:15 | `7373eef5a49d` |
-| `multi_event_regression.json` | 2415 | 2026-11-21 13:15 | `b02f5a56491d` |
-| `precedent_ab.json` | 3657 | 2026-11-21 13:15 | `719f5775a2bf` |
-| `precedent_live.json` | 4654 | 2026-11-21 13:15 | `060fe3adb9d7` |
-| `skill_bindings.json` | 1113 | 2026-11-21 13:15 | `5b1614d0045c` |
-| `skills.json` | 2825 | 2026-11-21 13:15 | `7ed2eb823223` |
-| `urban_asset_qa.export.json` | 9922 | 2026-11-21 13:15 | `32a878d6e6c9` |
-| `urban_asset_qa.export_meta.json` | 324 | 2026-11-21 13:15 | `5b60fdaf8129` |
-| `urban_collab_agent.export.json` | 4090 | 2026-11-21 13:15 | `2f63c902266f` |
-| `urban_collab_agent.export_meta.json` | 327 | 2026-11-21 13:15 | `954ee147a1ee` |
+| `agent_export.json` | 1817 | 2026-11-14 18:38 | `40c8e94bbb5c` |
+| `agents.json` | 7521 | 2026-11-21 19:33 | `db152dab7026` |
+| `asset_qa_multihop.json` | 4048 | 2026-11-17 00:00 | `ee96abd8d01c` |
+| `asset_qa_reconcile.json` | 5320 | 2026-11-17 00:00 | `68fdf59948a1` |
+| `chain_live.json` | 1766 | 2026-11-21 19:33 | `a9b7919c3292` |
+| `collab_ab.json` | 2941 | 2026-11-17 00:00 | `45885d1cf630` |
+| `collab_live.json` | 3348 | 2026-11-21 19:33 | `6b5f2f516b5d` |
+| `collab_v10_retest.json` | 1359 | 2026-11-18 22:26 | `19c7b24eae97` |
+| `collab_v12_retest.json` | 2199 | 2026-11-19 09:32 | `2c13bcecdf90` |
+| `collab_v12_retest_run2.json` | 1699 | 2026-11-19 09:35 | `b21e06154c30` |
+| `collab_v7.json` | 1314 | 2026-11-17 00:00 | `93fcc79c0ee6` |
+| `collab_v9_retest.json` | 1314 | 2026-11-17 00:00 | `49dadd5bfc18` |
+| `control_main_smoke.json` | 2196 | 2026-11-17 00:00 | `323ec3530247` |
+| `control_no_tools.json` | 2292 | 2026-11-17 00:00 | `7c837f3b7325` |
+| `conversation_119.json` | 4822 | 2026-11-17 00:00 | `4a7405e1a2ce` |
+| `conversation_120.json` | 4931 | 2026-11-17 00:00 | `29972ef2d51a` |
+| `conversation_148.json` | 4662 | 2026-11-17 00:00 | `d34051275aa9` |
+| `conversation_179.json` | 4755 | 2026-11-17 00:00 | `18b0c5573470` |
+| `conversation_78.json` | 6627 | 2026-11-17 00:00 | `7c013c7944de` |
+| `live_evidence.json` | 3732 | 2026-11-17 00:00 | `4d9566ca4180` |
+| `llm_decision_platform.json` | 3149 | 2026-11-17 00:00 | `fc848a623c74` |
+| `llm_decision_platform_run1.json` | 2971 | 2026-11-17 00:00 | `17832824de90` |
+| `llm_decision_platform_run2.json` | 2974 | 2026-11-17 00:00 | `91bdc4a6d82b` |
+| `llm_decision_platform_run3.json` | 3149 | 2026-11-17 00:00 | `fc848a623c74` |
+| `main_v19_baseline.json` | 4693 | 2026-11-17 00:00 | `7373eef5a49d` |
+| `multi_event_regression.json` | 2415 | 2026-11-17 00:00 | `b02f5a56491d` |
+| `platform_qa_current.json` | 4505 | 2026-11-21 19:33 | `eb826a942544` |
+| `precedent_ab.json` | 3657 | 2026-11-17 00:00 | `719f5775a2bf` |
+| `precedent_live.json` | 4654 | 2026-11-17 00:00 | `060fe3adb9d7` |
+| `skill_bindings.json` | 1113 | 2026-11-06 19:23 | `5b1614d0045c` |
+| `skills.json` | 2825 | 2026-11-03 14:29 | `7ed2eb823223` |
+| `urban_asset_qa.export.json` | 9922 | 2026-11-14 18:39 | `32a878d6e6c9` |
+| `urban_asset_qa.export_meta.json` | 324 | 2026-11-14 18:39 | `5b60fdaf8129` |
+| `urban_collab_agent.export.json` | 4090 | 2026-11-14 18:39 | `2f63c902266f` |
+| `urban_collab_agent.export_meta.json` | 327 | 2026-11-14 18:39 | `954ee147a1ee` |
 
 哈希用于确认「这份报告读的就是这些字节」，换人复核时对一下即可。

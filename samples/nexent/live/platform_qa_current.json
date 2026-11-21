@@ -1,0 +1,81 @@
+{
+  "generated_at": "2026-11-21T03:19:09+00:00",
+  "northbound": "http://localhost:5013",
+  "results": [
+    {
+      "agent": "urban_asset_qa",
+      "query": "当前生产策略是哪个版本？训练集和留出集的偏差降幅分别是多少？",
+      "tools": [
+        "search_memory",
+        "knowledge_base_search"
+      ],
+      "sources": [
+        "policy-ledger://flood-response-v1.2",
+        "platform-versions://snapshot"
+      ],
+      "answer": "当前生产策略版本为 flood-response-v1.2（出处：platform-versions.md · 平台运行版本快照/本地生产策略）。\n\n- 训练集偏差降幅 0.226428（出处：policy-ledger.md · flood-response-v1.2 策略演进台账）。\n- 留出集偏差降幅 0.218155（出处：policy-ledger.md · flood-response-v1.2 策略演进台账）。\n- 偏差越低表示策略与该场景处置基准越接近；评测为训练集 8 例、留出集 4 例，评测集为冻结基准（出处：policy-ledger.md · flood-response-v1.2 策略演进台账）。",
+      "expect_hit": true,
+      "id": "policy-version",
+      "expect_source": "policy-ledger",
+      "citation_markers": [],
+      "marker_free": true
+    },
+    {
+      "agent": "urban_asset_qa",
+      "query": "平台上的 urban_deduction_agent 现在跑的是哪个版本？版本名是什么？",
+      "tools": [
+        "search_memory",
+        "knowledge_base_search"
+      ],
+      "sources": [
+        "platform-versions://snapshot",
+        "policy-ledger://flood-response-v1.2"
+      ],
+      "answer": "urban_deduction_agent 当前在平台上运行的是 **v34**，版本名为 **urban-mcp-v5**。\n\n- 当前版本：v34；版本名：urban-mcp-v5（出处：platform-versions.md · platform-versions.md 版本表 urban_deduction_agent 行）[[a1]]\n- 使用模型为 DeepSeek-Chat，状态为可用（出处：platform-versions.md · platform-versions_agent 行）[[a1]]\n- 该快照取自平台北向接口，快照时间为 2026-11-20 13:00:59 UTC（出处：platform-versions.md · 快照时间）[[a1]]\n\n注意：这是平台 Agent 装配版本，与本地决策策略版本 flood-response-v1.2 是两套编号，不要混用（出处：platform-versions.md · 说明段）[[a1]]",
+      "expect_hit": true,
+      "id": "platform-version",
+      "expect_source": "platform-versions",
+      "citation_markers": [
+        "[[a1]]",
+        "[[a1]]",
+        "[[a1]]",
+        "[[a1]]"
+      ],
+      "marker_free": false
+    },
+    {
+      "agent": "urban_asset_qa",
+      "query": "A-03 片区有哪些泵站？各自的设计流量是多少？",
+      "tools": [
+        "search_memory",
+        "knowledge_base_search"
+      ],
+      "sources": [
+        "urban-assets/README.md#4",
+        "urban-assets/README.md#1",
+        "urban-assets/drainage_facilities.csv#row4",
+        "urban-assets/drainage_facilities.csv#row6",
+        "urban-assets/pump_forebay_curves.csv#row7",
+        "urban-assets/pump_forebay_curves.csv#row5",
+        "urban-assets/pump_forebay_curves.csv#row6",
+        "urban-assets/pump_forebay_curves.csv#row3",
+        "urban-assets/pump_forebay_curves.csv#row4",
+        "urban-assets/pump_forebay_curves.csv#row8",
+        "urban-assets/drainage_facilities.csv#row2",
+        "urban-assets/drainage_facilities.csv#row3",
+        "urban-assets/road_network.csv#row2",
+        "urban-assets/resource_inventory.csv#row2",
+        "urban-assets/notice_gas_construction.md#1",
+        "urban-assets/pipeline_ledger.csv#row5",
+        "urban-assets/underpasses.csv#row2",
+        "urban-assets/pipeline_ledger.csv#row11"
+      ],
+      "answer": "A-03 片区台账中共记录 2 座泵站，均属第一排水分区（DZ-01）：\n\n- DF-PS-01（兴华路雨水泵站），位于 R-101（兴华路），设计流量 1200 立方米/小时，状态为故障待修，1#泵组电机故障，运维主体未明确。（出处：drainage_facilities.csv · DF-PS-01）\n- DF-PS-02（建设大道泵站），位于 R-102（建设大道），设计流量 2400 立方米/小时，状态为正常在用，备用电源可用。（出处：drainage_facilities.csv · DF-PS-02）\n\n另需注意：DF-PS-03（滨河路雨水泵站，1800 立方米/小时）属第二排水分区（DZ-02）、位于 R-201，不在 A-03 片区。（出处：drainage_facilities.csv · DF-PS-03）",
+      "expect_hit": true,
+      "id": "asset-fact",
+      "expect_source": "urban-assets",
+      "citation_markers": [],
+      "marker_free": true
+    }
+  ]
+}

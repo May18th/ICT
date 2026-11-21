@@ -1,10 +1,10 @@
 # Nexent 侧工具注册（P10 增补）
 
-## 当前状态：代码清单 14 个，平台已注册 14 个（2026-11-06 实测）
+## 当前状态：代码清单 15 个，平台已注册 15 个（2026-11-20 Docker 实测）
 
 > 2026-11-06 实测平台 `/api/tool/list`：15 个工具全部为 `source=mcp`、`is_available=true`，
 > `tool_id` 41–53 加后注册的 `scene_status=86`（新增工具不会复用旧编号，看到 41–53 就断言"只有 13 个"是错的）。
-> 主 Agent `urban_deduction_agent` 已发布 **v32**（模型 **DeepSeek-Chat**，因 openPangu 于 2026-11-06 欠费停服而切换）；
+> 主 Agent `urban_deduction_agent` 当前已发布 **v34**（`urban-mcp-v5`，模型 **DeepSeek-Chat**，因 openPangu 于 2026-11-06 欠费停服而切换）；
 > 实测复测 **conversation_id=120，8/8 一致，attempts=1**。
 >
 > 历史：2026-11-03 首次实测注册时平台工具库为 13 个（尚无 `scene_status`），Agent 版本 v10，
@@ -111,8 +111,7 @@ $env:PYTHONPATH = "src"
 ## 表述边界（演示时不要越界）
 
 - ✅ 可以说：15 个 MCP 工具已实现并可被任意 MCP 客户端调用；注册清单由代码生成并有一致性测试。
-- ✅ 可以说：历史证据证明 Nexent v2.7.0 曾以平台工具库 13 个跑通内涝主链路（conversation_id=78，8/8 一致）；
-  当前代码实现和导出清单为 14 个，平台重扫结果待 Docker 恢复后确认。
+- ✅ 可以说：当前代码实现、导出清单和 Docker 平台工具库均为 15 个，平台健康探针返回 `tools_count=15`；主 Agent v34 的当前链路与协同证据见 [Nexent 证据索引](reports/nexent-evidence-index.md)。
 - ✅ 可以说：2 个 SKILL.md 已上传到本机 Nexent 技能仓库（skill_id=2/3，正文逐位一致，见 `samples/nexent/live/skills.json`）。
 
 实测证据已留档：`samples/nexent/live/`（Agent 列表、会话、MCP 调用日志、汇总 JSON）+

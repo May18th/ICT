@@ -50,8 +50,8 @@
       "is_main_agent": true,
       "group_ids": "2",
       "permission": "EDIT",
-      "current_version_no": 10,
-      "version_name": "urban-asset-qa-v3",
+      "current_version_no": 11,
+      "version_name": "urban-asset-qa-v4",
       "greeting_message": "我是内涝资产台账问答助手。\n\n可以问我这几类问题：\n· 某台设施现在什么状态、容量多少、谁负责维护\n· 某个路段的等级、车道数、所属片区、是否易涝\n· 某个部门的职责范围与上报路径\n· 预案条款里对某个场景是怎么规定的\n\n我只回答\"台账和预案原文里写了什么\"，每条结论都会标出处。\n处置建议请找「城市内涝跨部门决策智能体」。",
       "example_questions": [
         "DF-PS-01 泵站现在是什么状态？设计流量多少？运维主体是谁？",
@@ -148,7 +148,7 @@
       "is_main_agent": true,
       "group_ids": "2",
       "permission": "EDIT",
-      "current_version_no": 10,
+      "current_version_no": 12,
       "version_name": "urban-collab-v1",
       "greeting_message": "我是城市内涝应急协同总控。负责跨部门分工、抽排资源调拨与处置顺序裁决，输出各部门动作卡与联合发布对。",
       "example_questions": [
@@ -187,7 +187,7 @@
       "is_main_agent": true,
       "group_ids": "2",
       "permission": "EDIT",
-      "current_version_no": 32,
+      "current_version_no": 34,
       "version_name": "urban-mcp-v5",
       "greeting_message": "我是城市内涝跨部门决策智能体。给我一个工单号（如 WO-20261029-007），我按「事件现象 → 受影响设施 → 责任部门 → 资源需求 → 处置动作 → 后续风险」六跳推演，每个结论都标注依据来源与版本。",
       "example_questions": [
@@ -209,5 +209,5 @@
       "tags": []
     }
   ],
-  "requestId": "f7b5dc03-1733-41c8-8758-9f901751698c"
+  "requestId": "c7298049-76d8-46ba-b50e-366e40f845d2"
 }

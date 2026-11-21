@@ -15,7 +15,7 @@
 | 2 | [数据资产标识规范](data-asset-spec.md)、[核心事件 Ground Truth](urban-scenario-ground-truth.md) | 数据从哪来、标准答案长什么样 |
 | 3 | [演示运行手册](demo-runbook.md)、[Nexent 侧装配手册](../deploy/nexent/README.md) | 现场怎么跑、平台怎么装 |
 | 4 | [对外数字自检报告](reports/evidence-check-report.md)、[P8 评测报告](reports/p8-evaluation-report.md) | 凭什么说它有效 |
-| 5 | [`competition/`](competition/) 下的四维映射与价值证据 | 交付材料怎么对应评分维度 |
+| 5 | 比赛交付材料见仓外归档，仓内索引见 `docs/reports/` | 交付材料怎么对应评分维度 |
 | 6 | `reports/` 里 P2–P13 各阶段报告、`superpowers/specs/` | 追溯某个设计为什么是这样 |
 
 前四步走完就能答辩，5 和 6 是备查。
@@ -52,7 +52,7 @@
 - [Nexent 集成边界](nexent-integration-boundary.md)：适配层职责与接入验收。
 - [Nexent 北向传输层设计](nexent-northbound-transport-design.md)：已核对的 `/nb/v1` 契约、SSE 事件、幂等/限流与传输层落地方案。
 - [Nexent 工具注册](nexent-tool-registration.md)：15 个工具的注册清单（`samples/nexent/tools.json`，由代码导出）、三阶段分组接入与验收标准。
-- [城市内涝主链路 Nexent 集成实测报告](reports/nexent-live-integration-report.md)：MCP-over-SSE 注册、Agent 发布、8/8 一致性（conversation_id=120，Agent v19 / DeepSeek-Chat）、平台工具调用日志、排障与边界。
+- [城市内涝主链路 Nexent 集成实测报告](reports/nexent-live-integration-report.md)：MCP-over-SSE 注册、历史 8/8 一致性、当前 v34 链路与协同实测、平台工具调用日志、排障与边界。
 - [平台侧证据报告](reports/platform-evidence-report.md)：SKILL.md 上传平台技能仓库（skill_id=2/3、幂等、正文逐位一致）+ 平台界面三张截图断言取证。
 - [真实语言模型可选接入设计](real-model-provider-design.md)：默认 `TestModel` 离线不变；显式配置后走 DeepSeek 官方 provider，含配置、失败语义、密钥安全与验收口径。
 - [真实用户评分采集](real-feedback-channel.md)：真实用户评分（进化前后各一次）的采集/汇总/导出，以及「只汇总不进校验」与「带修正建议才进校验」两条通道的口径。
@@ -79,23 +79,12 @@
 
 ## 5. 比赛交付材料
 
-先看 [赛题官方简报要点](competition/official-brief-2026-11-06.md)，再看下面三篇能把"题目要求"逐条对上"我们做了什么"：
+比赛交付材料曾随仓库提交，后按交付治理移出源码仓库。当前副本位于
+`D:\华为ICT\_archive_deliverables_20261118\competition\`，克隆仓库不再提供这些相对链接。
 
-- [四维映射](competition/four-dimensions-mapping.md)：评分维度 → 实现与证据的逐项对应。
-- [价值与证据](competition/value-evidence.md)：每项价值的可核验出处。
-- [相关工作定位表](competition/related-work-positioning.md)：与已发表的 Agentic AI + 数字孪生 + 审计框架逐维度对照、三条对外说明口径与"不能怎么做"边界。
-
-补充材料：
-
-- [Skill 与 MCP 设计](competition/skills-mcp-design.md)：平台侧技能与工具的分工。
-- [评测数据集规范](competition/eval-dataset-spec.md)：22 个用例的构成与标注口径。
-- [评审说明](competition/reviewer-instructions.md)：给评审的操作指引。
-- [离线交付说明](competition/OFFLINE.md) 与 [离线部署评估](competition/offline-deploy-assessment.md)：无网环境下的交付与限制。
-- **成文材料**：`competition/初赛开发设计文档-v2（模板原样）.docx`（按官方模板 1 成文）、`competition/模板1-原件备份.docx`。
-- **证据附件**：`competition/evidence/`（页面与截图）、`competition/figures/`（架构图源文件）、`competition/video-clips/`（录屏片段）。
-
-> 内部工作文档（分工、答辩主线、差距审计、初赛 PPT、信息收集表等）**不随公开仓库分发**。
-> 它们在本地仍有副本，但不要在这里加链接——读者拿不到文件。
+- [Nexent 证据索引](reports/nexent-evidence-index.md)：当前快照、历史快照与未完成取证的分界。
+- [数据闸门报告](reports/data-gate-report.md)：数据来源、假设与未确认项。
+- 仓库内可复核附件以 `samples/`、`docs/reports/` 和 `docs/media/` 为准。
 
 ## 6. 设计档案与历史报告
 

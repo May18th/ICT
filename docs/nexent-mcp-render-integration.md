@@ -140,10 +140,10 @@ PY
 | 渲染执行器端到端 | ✅ 7 条测试 | `tests/test_p10_render_worker.py` |
 | 实测调用链输出（pending→acked→reused） | ✅ 已固化 | `samples/nexent/live/` 下的调用记录 |
 | 成片与 sha256 | ✅ | `docs/media/VD02-B-incident-P9.mp4` |
-| 平台界面截图（技能仓库 / Agent 工具列表） | ⬜ 待补 | 需平台实例运行 |
+| 平台界面截图（技能仓库 / Agent 工具列表） | ✅ 已固化历史截图 | `docs/reports/captures/nexent/`，换环境需重拍 |
 | 平台侧实测回归（Agent 自主调 `scene_status`） | ⬜ 待补 | 需平台实例运行 |
 
-后两项**无法离线伪造**，必须在 Nexent 实例起来后跑一遍并截图。没跑之前不要在文档里写"已验证"。
+Agent 自主调用 `scene_status` 仍需在当前平台实例重新跑一遍。历史截图不能替代当前版本验证，详情见 [Nexent 证据索引](reports/nexent-evidence-index.md)。
 
 ---
 

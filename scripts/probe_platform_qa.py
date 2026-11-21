@@ -49,6 +49,7 @@ QUESTIONS: tuple[dict[str, str], ...] = (
 )
 
 _URL_RE = re.compile(r'"(?:url|path_or_url)"\s*:\s*"([^"]+)"')
+_CITATION_RE = re.compile(r"\[\[[A-Za-z0-9_-]+\]\]")
 
 
 def run_query(agent: str, query: str, *, timeout: int = 200) -> dict:
@@ -117,7 +118,12 @@ def main(argv: list[str] | None = None) -> int:
             results.append({**item, "error": f"{type(exc).__name__}: {exc}"})
             continue
         hit = any(item["expect"] in url for url in result["sources"])
+        answer = result.get("answer") or ""
         result["expect_hit"] = hit
+        result["id"] = item["id"]
+        result["expect_source"] = item["expect"]
+        result["citation_markers"] = _CITATION_RE.findall(answer)
+        result["marker_free"] = not result["citation_markers"]
         print(f"工具链：{' → '.join(result['tools']) or '（无工具调用）'}")
         print(f"命中来源：{', '.join(result['sources'][:6]) or '（无）'}")
         print(f"期望命中 {item['expect']}：{'是' if hit else '否'}")
