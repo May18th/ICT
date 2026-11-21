@@ -36,7 +36,7 @@
 
 | 指标 | 实测值 | 核验方式 |
 |---|---|---|
-| **一致性** | **8/8**（4 个事件各一次对话通过） | `samples/nexent/live/multi_event_regression.json` |
+| **一致性** | **8/8**（v34，4 个事件各一次对话通过） | `samples/nexent/live/multi_event_regression.json` |
 | **MCP 工具** | **15 个**（11 在线决策 + 4 离线渲染），主入口只接 4 个 | `deploy/nexent/setup_nexent.py status` |
 | **策略演化** | **v1.0 → v1.2**，偏差 `0.2264 → 0.0000`，含 1 轮被拒与回退验证 | `uv run python -m decision_poc.policy_evolution` |
 | **溯源** | 引用完整率 **100%**，每条结论定位到台账原文的具体行 | `uv run python -m decision_poc.evidence_check`（108/108） |

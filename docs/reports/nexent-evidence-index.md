@@ -9,8 +9,9 @@
 | 主 Agent 当前发布版本为 v34（`urban-mcp-v5`） | `samples/nexent/live/agents.json` 的 `urban_deduction_agent.current_version_no` | 2026-11-20 北向接口快照 |
 | 协同 Agent 当前发布版本为 v12（`urban-collab-v1`） | `artifacts/ledger/platform_versions.json` 的 `urban_collab_agent.current_version`、`samples/nexent/live/agents.json` | 2026-11-21 北向接口实测 |
 | `urban_asset_qa` 当前发布版本为 v11（`urban-asset-qa-v4`） | `artifacts/ledger/platform_versions.json` 的 `urban_asset_qa.current_version` | 2026-11-21 北向接口实测；提示词增加 final_answer 角标清理要求 |
-| 主链与协同链在同一事件内串联通过 | `samples/nexent/live/chain_live.json`，conversation `290 → 291`，`chain_ok=true`，指纹 `d7fa402fe22e596c` | 当前 Docker 实测；同一事件 `WO-20261029-007` |
-| 协同链重复运行稳定 | `samples/nexent/live/collab_live.json`，conversation `292/293/294` | 当前 3/3 解析、指纹和约束校验通过 |
+| 主链与协同链在同一事件内串联通过 | `samples/nexent/live/chain_live.json`，conversation `313 → 314`，`chain_ok=true`，指纹 `d7fa402fe22e596c` | 当前 Docker 实测；同一事件 `WO-20261029-007` |
+| 协同链重复运行稳定 | `samples/nexent/live/collab_live.json`，conversation `315/316/317` | 当前 3/3 解析、指纹和约束校验通过 |
+| 多事件回归覆盖四个工单 | `samples/nexent/live/multi_event_regression.json`，`agent_version=34`，conversation `319/320/321/322` | 2026-11-21 19:45 北向实测，四个事件各一次对话均 8/8，未重试 |
 | 平台问答命中三类来源 | `samples/nexent/live/platform_qa_current.json` | 2026-11-21 北向接口实测 3/3 预期来源命中；本次 2/3 问答无角标、1/3 仍返回 `[[a1]]`，提示词约束不是稳定门禁 |
 | 平台知识库版本快照已同步 | `deploy/nexent/sync_policy_ledger.py --apply --latest-only`、`artifacts/ledger/platform_versions.json` | 已将 `platform-versions://snapshot` 更新到 v34 |
 | 15 个 MCP 工具分组与代码一致 | `samples/nexent/tools.json`、`src/decision_poc/mcp_server.py` | 已有快照 |
@@ -32,12 +33,12 @@
 | 事实 | 证据 | 口径 |
 |---|---|---|
 | 主链 8/8 与工具调用明细 | `samples/nexent/live/live_evidence.json`、`docs/reports/nexent-live-evidence.md` | 抓取文件保留原始时点，报告当前版本行读取 `agents.json` |
-| 多事件回归 | `samples/nexent/live/multi_event_regression.json` | 采集时 Agent v19，不能当作 v34 的新回归 |
+| 多事件回归（v19） | `samples/nexent/live/multi_event_regression.json` 的旧版本由 git 历史保留 | 采集时 Agent v19，不能当作 v34 的回归；v34 结果见当前快照表 |
 | 三张平台截图 | `docs/reports/captures/nexent/platform_ui.json` | 截图采集时页面期望为 v31，不能证明当前页面仍为 v31 |
 
 ## 尚未取得的外部证据
 
-- 当前 v34 的多事件平台重跑和问答全过程录屏仍未取得；现有问答 JSON 探针已覆盖 3 个问题，但不是录屏证据。
+- 当前 v34 的问答全过程录屏仍未取得；现有问答 JSON 探针已覆盖 3 个问题，多事件回归已覆盖 4 个工单，但都不是录屏证据。
 - Nexent 分层记忆的真实平台读写闭环尚未取得独立运行快照，当前仅有离线同构契约。
 - `data-gate-report.md` 中一项高程基准、逐字段来源补齐，以及前池库容曲线的图纸或实测来源，仓库和公开检索均没有对应原始资料。
 - 平台运行时系统提示词要求检索型回答保留 `[[字母+数字]]` 引用标记，当前没有发现 Agent 配置项可关闭。`urban_asset_qa` 提示词已要求提交前删除角标，但 2026-11-21 三问实测仍有 1/3 返回 `[[a1]]`。网页端已有展示层清理，北向原始 `final_answer` 仍需按 `marker_free` 字段验收。

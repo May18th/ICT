@@ -311,7 +311,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
 汇总 JSON）。完整排障与边界见 [集成实测报告](reports/nexent-live-integration-report.md)。
 
 边界：只在小规模本机 Docker 演示环境验证；两个 SKILL.md 已上传技能仓库（skill_id=2/3）**并已绑定到已发布 Agent**（草稿与发布版本各 2 条实例、全部 enabled，`bind_skills.py verify --require-published` 退出码 0，证据 `samples/nexent/live/skill_bindings.json`）；
-平台界面截图 3 张已固化（`docs/reports/captures/nexent/`，含 sha256 自检），问答已有 3/3 来源命中 JSON 探针；当前 v34 的多事件实测回归和问答录屏仍待补，且问答响应仍有内部引用标记需要清理。
+平台界面截图 3 张已固化（`docs/reports/captures/nexent/`，含 sha256 自检），问答已有 3/3 来源命中 JSON 探针；v34 多事件实测回归已覆盖 4 个工单（各一次对话 8/8），问答录屏仍待补，且问答响应仍有内部引用标记需要清理。
 
 ## 策略演进（P9 / P9.1）
 
