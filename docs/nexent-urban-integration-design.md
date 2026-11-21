@@ -22,7 +22,7 @@ Nexent 的「MCP 服务接入」只支持 HTTP/SSE（远程链接 / 容器 / API
 ```
 ┌──────────────────────────── Nexent（Docker，v2.7.0 本机） ────────────────────────────┐
 │  Agent「urban_deduction_agent」                                                      │
-│    ├─ 模型：openPangu / 平台已配置模型                                                │
+│    ├─ 模型：DeepSeek / 平台已配置模型                                                 │
 │    ├─ 工具：MCP「urban-twin-mcp」→ http://host.docker.internal:8000/sse（15 个工具）  │
 │    ├─ 技能：urban-six-hop-deduction（六跳 SOP）                                       │
 │    │        scarcity-allocation-evolution（分配/进化/回滚 SOP）                       │
@@ -171,7 +171,7 @@ uv run --locked python -m decision_poc.nexent_urban --json samples/eval/nexent_u
   提示词与查询都要求 `final_answer(json.dumps(...))` 交卷且禁用 ``` 围栏，主 Agent 输出预算提到 16384，
   `evidence_refs` 限 3–5 条。复测结果 **8/8、conversation_id=119、attempts=1**，
   工具日志 2 行均为 `event_deduce`、状态记录 `d102aa80…`，与 `samples/eval/nexent_urban_smoke.json` 同源。
-  同日 openPangu 欠费停服，主/协同 Agent 改挂 DeepSeek-Chat（`MODEL_IDS` 默认 5）后发布 v19/v7，
+  同日早期模型停服，主/协同 Agent 改挂 DeepSeek-Chat（`MODEL_IDS` 默认 5）后发布 v19/v7，
   再测 **8/8、conversation_id=120、attempts=1、工具调用 1 次**——换模型没有改变结论一致性。
 - **已完成（平台侧）**：2 个 SKILL.md 已上传平台技能仓库（skill_id=2/3，幂等脚本 `deploy/nexent/upload_skills.py`），证据 `samples/nexent/live/skills.json`；平台界面截图 3 张 + sha256 证据（`deploy/nexent/capture_platform_ui.py` → `docs/reports/captures/nexent/`），报告 [平台侧证据报告](reports/platform-evidence-report.md)。
   `twin_neighbors` 的 `twin_id` 参数提示词修正。

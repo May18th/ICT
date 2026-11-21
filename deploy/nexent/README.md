@@ -46,7 +46,7 @@
 > 都是 8/8、attempts=1，差别只是采集时点。
 
 平台实际调用 `event_deduce` 1 次，工具日志与该轮一一对应（`samples/nexent/live/mcp_tool_log.jsonl` 仅 1 行）。
-> 模型切换原因：openPangu-2.0-Pro 走华为 ModelArts，2026-11-06 因账户欠费停服，改为平台已注册的 DeepSeek-Chat（`https://api.deepseek.com/v1`，独立计费）。切换后深度思考段消失，同一提示词下一轮即通过，作答预算也从 16384 回调到 8192。
+> 模型切换原因：早期接入的公有云模型走华为 ModelArts，2026-11-06 因账户停服，改为平台已注册的 DeepSeek-Chat（`https://api.deepseek.com/v1`，独立计费）。切换后深度思考段消失，同一提示词下一轮即通过，作答预算也从 16384 回调到 8192。
 完整过程与排障见 [实测集成报告](../../docs/reports/nexent-live-integration-report.md)。
 
 ## 0 前置
@@ -301,7 +301,7 @@ docker cp nexent-config:/tmp/agent_export.json       samples/nexent/live/agent_e
 | 现象 | 原因 | 处理 |
 | --- | --- | --- |
 | httpx 报 `Invalid port: ':1;*.cn;...'` | 系统 `NO_PROXY` 含 `10.*;192.168.*` 等通配，httpx 解析代理规则失败 | 传输层已 `trust_env=False`（不读系统代理）；代理需显式传 |
-| Agent 最终回答是 `<\|tool_call_start\|>...` 文本 | openPangu 工具调用协议需修复重试 | Agent 开 `enable_protocol_repair_retry`；提示词改成"先调 event_deduce，再只输出 JSON"两步式 |
+| Agent 最终回答是 `<\|tool_call_start\|>...` 文本 | 早期模型的工具调用协议需修复重试 | Agent 开 `enable_protocol_repair_retry`；提示词改成"先调 event_deduce，再只输出 JSON"两步式 |
 | 工具调用走 `parallel_executor` 后卡住 | 模型自行发起并行子任务 | 提示词明确禁止 `parallel_executor` |
 | `twin_neighbors` 返回 NOT_FOUND | 模型把事件编号当 `twin_id` 传 | 提示词可补"twin_id 用 `TW-incident-<工单号>`"；当前校验不依赖该工具 |
 | 界面里 MCP 显示"未连接" | 卡片上的连通性是**上次校验**的状态记录，容器重启后不会自动重测 | 点卡片右上角「连通性校验」；`capture_platform_ui.py` 会自己点一次再截图 |
@@ -313,7 +313,7 @@ docker cp nexent-config:/tmp/agent_export.json       samples/nexent/live/agent_e
 - 实测结论只覆盖 `WO-20261029-007` 一个事件与 8 项一致性检查；扩事件需要扩数据集与评测用例。
 - 主 Agent 挂 **4 个工具**（`event_deduce` + `evidence_locate` + `doc_search` + `collab_run`）。平台工具库当前是 15 个
   （`setup_nexent.py status` 显示 `命中 15/15`），主 Agent 的接入是这 15 个里的 3 个子集。
-  收窄接入不是偷懒：openPangu 看到 `twin_neighbors` / `conflict_check` / `allocation_plan`
+  收窄接入不是偷懒：早期模型看到 `twin_neighbors` / `conflict_check` / `allocation_plan`
   就会去调（提示词明令禁止也拦不住），随后走 `parallel_executor` 把回答截断在 `<|tool_call_start|>`。
   工具列表才是模型真正读的"提示词"。`doc_search` 是 2026-11-13 加的第 3 个（真实预案进库后要能查"依据哪一条"），
   提示词把它限死在"最多 1 次、只提供依据不提供事实"；2026-11-14 复核时模型**没触发**它。

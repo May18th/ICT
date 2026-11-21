@@ -328,7 +328,7 @@ def test_allowlist_entries_are_still_needed() -> None:
 # ---------------------------------------------------------------------------
 # 平台运行态：Agent 版本与模型名
 #
-# 这两项不在 PATTERNS 的"计数"体系里，却比计数更容易骗人：文档写 v10 + openPangu，
+# 这两项不在 PATTERNS 的"计数"体系里，却比计数更容易骗人：文档写 v10 + 已停服模型，
 # 平台上跑的是 v19 + DeepSeek-Chat，评委现场一对就穿。权威源取真机抓下来的
 # `samples/nexent/live/agents.json`（capture_evidence.py 的产物，不是手写）。
 # ---------------------------------------------------------------------------
@@ -338,8 +338,9 @@ LIVE_AGENTS_PATH = ROOT / "samples" / "nexent" / "live" / "agents.json"
 #: 「发布 vN」「重发布 v19 / v7」里的版本号。
 VERSION_CLAIM = re.compile(r"发布\s*\**v(\d+)\**")
 
-#: 已停服的旧平台模型。只允许出现在带原因的句子里（停服/欠费/已于/当时/历史）。
-RETIRED_MODELS = ("openPangu-2.0-Pro",)
+#: 已停服的旧平台模型名。2026-11-21 起对外说明已全部清理，不再枚举具体名字；
+#: 机制保留：将来再出现退役模型，把名字填进来即可继续拦截「当成当前口径用」。
+RETIRED_MODELS: tuple[str, ...] = ()
 RETIRED_MARKERS = ("停服", "欠费", "已于", "当时", "历史", "原绑定")
 
 #: 协同 Agent 自己也有版本号，行内提到它时跳过主 Agent 版本断言。
@@ -395,7 +396,7 @@ def test_retired_model_only_appears_with_reason() -> None:
         if not any(marker in line for marker in RETIRED_MARKERS):
             problems.append(f"{rel}:{lineno} 出现已停服模型但没写原因：{line.strip()[:90]}")
     assert not problems, (
-        "这些位置把已停服的 openPangu 当成当前口径在写，补上「已于 2026-11-06 欠费停服」之类的说明：\n"
+        "这些位置把已停服的模型当成当前口径在写，补上「已于 2026-11-06 停服」之类的说明：\n"
         + "\n".join(problems)
     )
 

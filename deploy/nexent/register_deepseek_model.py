@@ -109,7 +109,7 @@ def cmd_verify(client: PlatformClient) -> None:
     print(f"[verify] LLM 类模型共 {len(llm_models)} 个：{[m.get('display_name') for m in llm_models]}")
     print(
         "[verify] 人工核对项：模型设置页「已配置 n/10」的默认槽位不应变化；"
-        "主 Agent 的绑定模型应仍为 openPangu-2.0-Pro。"
+        "主 Agent 的绑定模型应为 DeepSeek-Chat。"
     )
 
 

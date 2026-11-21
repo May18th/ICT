@@ -273,8 +273,8 @@ powershell -ExecutionPolicy Bypass -File scripts\start_demo.ps1 -CheckOnly
 ## Nexent 平台接入（已验证：8/8）
 
 赛题 3 的「基于 Nexent 可运行」不是"能连上"，而是"平台 Agent 调工具产出的结论与离线一致"。仓库保留了本机
-Nexent **v2.7.0** 的外部实跑快照，当前主 Agent 快照为 v34（`urban-mcp-v5`），模型为 DeepSeek-Chat。原绑定的 openPangu-2.0-Pro 走华为 ModelArts，
-2026-11-06 因账户欠费停服，主/协同 Agent 改挂平台已注册的 DeepSeek-Chat（`MODEL_IDS` 默认 5），
+Nexent **v2.7.0** 的外部实跑快照，当前主 Agent 快照为 v34（`urban-mcp-v5`），模型为 DeepSeek-Chat。早期接入的公有云模型走华为 ModelArts，已于 2026-11-06 停服，
+主/协同 Agent 因此改挂平台已注册的 DeepSeek-Chat（`MODEL_IDS` 默认 5），
 v19 / v24 文字属于历史记录，当前版本、链路和时间点以 [Nexent 证据索引](reports/nexent-evidence-index.md) 为准：
 
 - MCP 服务 `urban-twin-mcp`（15 工具）以 SSE 方式跑在 `nexent_network` 容器里；

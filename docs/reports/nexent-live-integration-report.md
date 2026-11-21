@@ -1,7 +1,7 @@
 # Nexent 实测集成报告：城市内涝主链路上平台
 
 - 日期：2026-11-03（首版 2026-10-30，本轮全量重跑并重写结论段）
-- 环境：本机 Docker Desktop + Nexent **v2.7.0**（openPangu-2.0-Pro 模型，`nexent-config` / `nexent-runtime` / `nexent-northbound` 全栈）
+- 环境：本机 Docker Desktop + Nexent **v2.7.0**（早期接入的公有云模型，`nexent-config` / `nexent-runtime` / `nexent-northbound` 全栈）
 - 结论：**城市内涝主链路已在 Nexent 上实测跑通**——平台 Agent 调用 MCP 工具后产出六步 JSON，
   与离线推演 **8/8 项一致**（`conversation_id=78`）。
 - 证据：`samples/nexent/live/`（Agent 列表、会话记录、MCP 调用日志、技能绑定、协同实测、汇总 JSON）。
@@ -20,11 +20,11 @@
 | MCP 服务 | `urban-twin-mcp`（mcp_id=2），URL `http://urban-twin-mcp:8000/sse`，status=True，enabled=True |
 | MCP 工具 | **13 个**（平台 tool_id 41–53）：semantic_query / twin_neighbors / evidence_locate / claim_trace / provenance_verify / event_deduce / counterfactual_run / conflict_check / allocation_plan / scene_render / scene_compare / asset_lookup / collab_run |
 | 工具库命中 | `scan_tool` **13/13**，缺失 0 |
-| 主 Agent | `urban_deduction_agent`（agent_id=3），模型 openPangu-2.0-Pro，已发布 **v10** |
+| 主 Agent | `urban_deduction_agent`（agent_id=3），模型为早期接入的公有云模型，已发布 **v10** |
 | 主 Agent 工具 | **只挂 2 个**：`event_deduce` + `evidence_locate`（收窄原因见 §6） |
 | 协同 Agent | `urban_collab_agent`（agent_id=4），已发布 **v4**，挂 6 个工具（含 `collab_run`） |
 | 技能绑定 | 2 个 SKILL.md 在草稿与 v10 发布版本均 `present=True enabled=True` |
-| 协议修复 | `enable_protocol_repair_retry=true`（openPangu 工具调用文本需要修复重试） |
+| 协议修复 | `enable_protocol_repair_retry=true`（早期模型的工具调用文本需要修复重试） |
 | 北向 Key | 平台函数生成（token_id=38，密钥不落仓） |
 
 ## 3 实测对话结果（conversation 78）
@@ -197,13 +197,13 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
    否则新请求排队——这是本次排查里最长的一段弯路。
 3. ~~LLM 决策 Agent 3 次实测均 `selected_match=false`~~ —— 已于同日修复，见下节。
 
-## 2026-11-06 追加：openPangu 欠费，主/协同 Agent 切到 DeepSeek-Chat（v19 / v7）
+## 2026-11-06 追加：原模型停服，主/协同 Agent 切到 DeepSeek-Chat（v19 / v7）
 
-当天华为 ModelArts 账户欠费，`openpangu-2.0-pro`（model_id=2）停服，实测请求直接失败。
+当天华为 ModelArts 账户欠费，早期接入的对话模型（model_id=2）停服，实测请求直接失败。
 平台已注册的可用对话模型只剩 `deepseek-chat`（model_id=5，`https://api.deepseek.com/v1`，独立计费），
 因此把 `MODEL_IDS` 默认值从 `2` 改成 `5`，重新发布主 Agent v19、协同 Agent v7。
 
-| 项 | openPangu（v18） | DeepSeek-Chat（v19） |
+| 项 | 原模型（v18） | DeepSeek-Chat（v19） |
 | --- | --- | --- |
 | 结论一致性 | 8/8 | **8/8** |
 | conversation_id | 119 | **120** |
@@ -212,8 +212,8 @@ Agent-as-Tool（路径 A）未验证，无证据不宣称。
 | 工具调用次数 | 2 次 `event_deduce` | **1 次** `event_deduce` |
 
 结论：换模型没有改变结论一致性，也印证了前面的判断——8/8 靠的是"MCP 工具返回的事实 + 提示词约束"，
-不是某个模型的运气。副作用要记住：**模型名进了对外说明**（v18 是 openPangu，v19 起是 DeepSeek-Chat），
-引用旧截图/旧报告时不能再说"当前用 openPangu"。
+不是某个模型的运气。副作用要记住：**模型名进了对外说明**（v18 是旧模型，v19 起是 DeepSeek-Chat），
+引用旧截图/旧报告时不能沿用当时的模型名。
 
 ## 2026-11-06 追加：LLM 决策对照从 0/3 修到 3/3
 

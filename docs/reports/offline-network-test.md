@@ -68,7 +68,7 @@ api.modelarts-maas.com BLOCKED gaierror
 | 模型 | 用途 | 端点 |
 |---|---|---|
 | deepseek-chat | LLM | `https://api.deepseek.com/v1` |
-| openpangu-2.0-pro | LLM | `https://api.modelarts-maas.com/v1` |
+| 早期接入的 LLM（已停服） | LLM | `https://api.modelarts-maas.com/v1` |
 | bge-m3 | embedding | `https://api.modelarts-maas.com/api.../embeddings` |
 | bge-reranker-v2-m3 | rerank | `https://api.modelarts-maas.com/v1/rerank` |
 
