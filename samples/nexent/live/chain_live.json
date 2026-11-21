@@ -29,6 +29,15 @@
       "merge_order": 15,
       "covered_agents": 6,
       "constraint_violations": [],
+      "card_keys": [
+        "action",
+        "agent_id",
+        "card_id",
+        "co_sign_required",
+        "depends_on",
+        "stage",
+        "status"
+      ],
       "field_matches": {
         "cards": true,
         "merge_order": true,
@@ -48,6 +57,12 @@
     "offline_kernel_fingerprint": "d7fa402fe22e596c",
     "offline_cards": 26
   },
+  "carried_over": {
+    "step": 1,
+    "conversation_id": 309,
+    "from_generated_at": "2026-11-21T13:08:06+0800",
+    "reason": "第 1 环沿用既定会话记录（未重新调模型），本轮只按现行口径重判第 2 环；elapsed_s 亦取自该记录。"
+  },
   "note": "两环在**一次运行内串联**：主 Agent 出结论后，协同 Agent 用同一 event_id 复核。协同环核对 cards、merge_order、covered_agents、constraint_violations 与 kernel_fingerprint；与 /api/collab-review 的离线复核同源。AgentMessage 信封不纳入判定，不据此宣称线上 A2A。",
-  "generated_at": "2026-11-21T13:08:06+0800"
+  "generated_at": "2026-11-21T18:31:48+0800"
 }

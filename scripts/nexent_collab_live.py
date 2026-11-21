@@ -45,6 +45,24 @@ EVENT_ID = "WO-20261029-007"
 AS_OF = "2026-10-29T09:40:00+08:00"
 LABELS = ["ORG-EMERG"]
 
+# 交卷契约：回答里必须出现的顶层字段，以及卡片只回交这几个键。
+# 平台侧按提示词回交，本地 collab_run 的卡片比它多 9 个内部字段，比对前统一投影到这一层。
+ANSWER_FIELDS = ("cards", "merge_order", "covered_agents", "constraint_violations")
+ANSWER_CARD_KEYS = (
+    "action",
+    "agent_id",
+    "card_id",
+    "co_sign_required",
+    "depends_on",
+    "stage",
+    "status",
+)
+
+
+def project_cards(cards: list[Any]) -> list[dict[str, Any]]:
+    """把卡片投影到交卷字段，两端用同一函数，避免"多几个内部字段就判假"或"少几个字段还判真"。"""
+    return [{key: card.get(key) for key in ANSWER_CARD_KEYS} for card in cards]
+
 
 def build_collab_query(payload: dict[str, Any]) -> str:
     return (
@@ -145,7 +163,12 @@ def extract_json(text: str) -> dict[str, Any] | None:
 
 
 def judge(answer: str, offline: dict[str, Any], record: dict[str, Any]) -> dict[str, Any]:
-    """把一次回答折算成判定结果，写回 record。"""
+    """把一次回答折算成判定结果，写回 record。
+
+    比对前两端先投影到同一层：平台回答只回交卷字段（`ANSWER_CARD_KEYS`），
+    本地 `collab_run` 的卡片另有 9 个内部字段（claim_ids/evidence_refs/quantity…）。
+    直接整卡相等会让真机回答永远判不过，那是口径问题不是模型问题。
+    """
     parsed = extract_json(answer)
     record["answer_len"] = len(answer)
     if parsed is None:
@@ -160,27 +183,27 @@ def judge(answer: str, offline: dict[str, Any], record: dict[str, Any]) -> dict[
     got_fp = str(parsed.get("kernel_fingerprint") or "")
     record["kernel_fingerprint"] = got_fp
     record["fingerprint_match"] = got_fp == offline["kernel_fingerprint"]
+    absent = [name for name in ANSWER_FIELDS + ("kernel_fingerprint",) if name not in parsed]
     got_fields = {
-        "cards": list(parsed.get("cards") or []),
+        "cards": project_cards(list(parsed.get("cards") or [])),
         "merge_order": list(parsed.get("merge_order") or []),
         "covered_agents": list(parsed.get("covered_agents") or []),
         "constraint_violations": list(parsed.get("constraint_violations") or []),
     }
     expected_fields = offline.get("_field_values")
-    if not isinstance(expected_fields, dict):
+    if isinstance(expected_fields, dict):
+        expected_fields = dict(expected_fields)
+        expected_fields["cards"] = project_cards(list(expected_fields.get("cards") or []))
+    else:
         # 旧证据只有数量，不能冒充逐字段比较；让这次判定明确失败。
-        expected_fields = {
-            "cards": offline.get("cards"),
-            "merge_order": offline.get("merge_order"),
-            "covered_agents": offline.get("covered_agents"),
-            "constraint_violations": offline.get("constraint_violations"),
-        }
+        expected_fields = {name: offline.get(name) for name in ANSWER_FIELDS}
     record["cards"] = len(got_fields["cards"])
     record["merge_order"] = len(got_fields["merge_order"])
     record["covered_agents"] = len(got_fields["covered_agents"])
     record["constraint_violations"] = got_fields["constraint_violations"]
+    record["card_keys"] = list(ANSWER_CARD_KEYS)
     field_matches = {
-        field: got_fields[field] == expected_fields.get(field)
+        field: field not in absent and got_fields[field] == expected_fields.get(field)
         for field in got_fields
     }
     record["field_matches"] = field_matches
@@ -222,9 +245,14 @@ def summarize(attempts: list[dict[str, Any]], args: argparse.Namespace, offline:
         "method": (
             "北向 /nb/v1/chat/run 实测；本轮 live 范围只覆盖 cards、merge_order、covered_agents、"
             "constraint_violations 与 kernel_fingerprint。成功判据 = 从最终回答解析出含 kernel_fingerprint "
-            "的 JSON，且五个字段与离线逐字一致。平台两种合法外壳（裸 JSON / final_answer 包装）都认；"
-            "本地/MCP AgentMessage 消息信封不纳入判定，不据此宣称线上 A2A。"
+            "的 JSON，五个字段齐全且与离线投影后逐字一致（卡片只比交卷字段）。平台两种合法外壳"
+            "（裸 JSON / final_answer 包装）都认；本地/MCP AgentMessage 消息信封不纳入判定，"
+            "不据此宣称线上 A2A。"
         ),
+        "answer_contract": {
+            "fields": list(ANSWER_FIELDS) + ["kernel_fingerprint"],
+            "card_keys": list(ANSWER_CARD_KEYS),
+        },
         "offline": public_offline_reference(offline),
         "attempts": attempts,
         "success": bool(ok),
