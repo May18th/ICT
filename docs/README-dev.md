@@ -281,7 +281,7 @@ Nexent **v2.7.0**（主 Agent v19，模型 DeepSeek-Chat）跑通。原绑定的
 - Agent `urban_deduction_agent`（agent_id=3，已发布 v32）接了四个工具（`event_deduce` / `evidence_locate` / `doc_search` / `collab_run`；`collab_run` 于 2026-11-18 补挂，当初把主 Agent 收窄到 2 个的过程见集成实测报告 §6）；`doc_search` 只查规则依据，事实仍只认 `event_deduce`；
 - 一次真实对话（**conversation_id=120**）产出六步 JSON，与离线 `DeductionEngine` **8/8 项一致**；
 - 平台侧确实发生了工具调用：`event_deduce`（18ms）+ 一次协议修复重试（6ms），
-  两条日志记录的哈希一致（协同链路的 3 次 `collab_run` 实测另见 `samples/nexent/live/collab_live.json`，成功率 2/3）。
+  两条日志记录的哈希一致（协同链路的 2 次 `collab_run` 实测另见 `samples/nexent/live/collab_live.json`，成功率 2/2）。
 
 ```powershell
 # 1) 构建并启动 MCP 容器（详细步骤见 deploy/nexent/README.md）

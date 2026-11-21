@@ -6,8 +6,8 @@
       "step": 1,
       "agent": "urban_deduction_agent",
       "tool": "event_deduce",
-      "conversation_id": 281,
-      "elapsed_s": 30.2,
+      "conversation_id": 309,
+      "elapsed_s": 18.7,
       "passed": true,
       "checks": 8,
       "failures": [],
@@ -18,8 +18,8 @@
       "step": 2,
       "agent": "urban_collab_agent",
       "tool": "collab_run",
-      "conversation_id": 282,
-      "elapsed_s": 28.8,
+      "conversation_id": 310,
+      "elapsed_s": 14.3,
       "event_id": "WO-20261029-007",
       "answer_len": 8342,
       "json_parsed": true,
@@ -41,5 +41,5 @@
     "offline_cards": 26
   },
   "note": "两环在**一次运行内串联**：主 Agent 出结论后，协同 Agent 用同一 event_id 复核。与 /api/collab-review 的离线复核同源，指纹应逐字一致。",
-  "generated_at": "2026-11-20T10:54:16+0800"
+  "generated_at": "2026-11-21T13:08:06+0800"
 }

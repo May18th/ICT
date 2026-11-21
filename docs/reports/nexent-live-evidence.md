@@ -188,9 +188,9 @@
 | `agents.json` | 7520 | 2026-11-17 00:00 | `0dc464aa4ae5` |
 | `asset_qa_multihop.json` | 4048 | 2026-11-17 00:00 | `ee96abd8d01c` |
 | `asset_qa_reconcile.json` | 5320 | 2026-11-17 00:00 | `68fdf59948a1` |
-| `chain_live.json` | 1244 | 2026-11-17 00:00 | `70bfb214547e` |
+| `chain_live.json` | 1290 | 2026-11-21 13:08 | `0d31e21fc0cf` |
 | `collab_ab.json` | 2941 | 2026-11-17 00:00 | `45885d1cf630` |
-| `collab_live.json` | 1875 | 2026-11-17 00:00 | `2cf65453b53e` |
+| `collab_live.json` | 1359 | 2026-11-21 13:08 | `d00b060546ce` |
 | `collab_v7.json` | 1314 | 2026-11-17 00:00 | `93fcc79c0ee6` |
 | `collab_v9_retest.json` | 1314 | 2026-11-17 00:00 | `49dadd5bfc18` |
 | `control_main_smoke.json` | 2196 | 2026-11-17 00:00 | `323ec3530247` |
