@@ -44,6 +44,7 @@
 - **定性**：`#185` 是 Maximum update depth exceeded——某组件在一次提交里反复触发自身更新，React 数到 50 次抛错。压缩堆栈只到 React 内部（`dispatchUpdate → dispatch`），应用侧集中在 `frontend/app/[locale]/chat/streaming/`（`chatStreamMain` / `taskWindow` / `chatStreamFinalMessage`，共 4760 行）；`taskWindow.tsx` 存在「测高度 → setState → 容器高度变 → 再测」的链条，且 `setContentHeight` 是无条件赋值。**此为静态推断，尚未在非压缩构建上确认。**
 - **影响面**：只影响实时演示的画面。后端不受影响——同一事件 API 调用 8/8，conversation 319–322 正常；历史会话重放也正常，六跳、三类冲突、处置顺序都能完整显示。
 - **规避**：演示与录屏一律走左侧历史会话，不要新提问。
+- **上游追踪**：2026-11-21 已向 `ModelEngine-Group/nexent` 报告，[issue #4384](https://github.com/ModelEngine-Group/nexent/issues/4384)（含最小复现与鉴别信息，未附带本项目业务数据）。
 - **未修复原因**：这是平台官方前端，改它等于维护补丁分支，且升级会冲突；初赛函评不到场，实时提问不是必需项。若决赛需要现场演示，处理路径是「开 `productionBrowserSourceMaps` 重建定位真实行号 → 给无条件 `setState` 加收敛守卫 → `docker cp` 到容器 `/opt/frontend-dist` 并重启」。
 
 ## 尚未取得的外部证据
