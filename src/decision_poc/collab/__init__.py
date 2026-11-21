@@ -10,10 +10,13 @@
 from decision_poc.collab.blackboard import Blackboard
 from decision_poc.collab.contracts import (
     ActionCard,
+    AgentMessage,
     CardStatus,
     CollabResult,
     ResourceBinding,
     RoleHandoff,
+    MessageStatus,
+    MessageType,
     kernel_fingerprint,
 )
 from decision_poc.collab.orchestrator import orchestrate
@@ -34,11 +37,14 @@ __all__ = [
     "ROLES",
     "ROLE_BY_ID",
     "ActionCard",
+    "AgentMessage",
     "Blackboard",
     "CardStatus",
     "CollabResult",
     "ResourceBinding",
     "RoleHandoff",
+    "MessageStatus",
+    "MessageType",
     "RoleSpec",
     "kernel_fingerprint",
     "orchestrate",

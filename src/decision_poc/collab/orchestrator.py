@@ -20,6 +20,7 @@ from datetime import datetime
 from decision_poc.collab.blackboard import Blackboard
 from decision_poc.collab.contracts import (
     ActionCard,
+    AgentMessage,
     CardStatus,
     CollabResult,
     ResourceBinding,
@@ -266,6 +267,22 @@ def build_handoffs(deduction: DeductionResult, board: Blackboard) -> list[RoleHa
     return handoffs
 
 
+def _messages_for_handoffs(handoffs: list[RoleHandoff]) -> list[AgentMessage]:
+    """将现有角色交接投影成可传输的消息信封。"""
+
+    return [
+        AgentMessage(
+            message_id=f"MSG-{handoff.handoff_id}",
+            correlation_id=handoff.handoff_id,
+            sender=handoff.from_agent,
+            receiver=handoff.to_agent,
+            message_type="handoff",
+            payload={"card_ids": list(handoff.card_ids)},
+        )
+        for handoff in handoffs
+    ]
+
+
 def orchestrate(deduction: DeductionResult) -> CollabResult:
     """一条推演 -> 一次完整协同（确定性，可离线重跑）。"""
 
@@ -298,12 +315,14 @@ def orchestrate(deduction: DeductionResult) -> CollabResult:
         ]
     )
 
+    handoffs = build_handoffs(deduction, board)
     return CollabResult(
         event_id=deduction.event_id,
         cards=board.all_cards(),
         conflicts=list(deduction.conflicts),
         co_sign_pairs=[(left, right) for left, right in co_sign_pairs],
-        handoffs=build_handoffs(deduction, board),
+        handoffs=handoffs,
+        messages=_messages_for_handoffs(handoffs),
         merge_order=[card.card_id for card in ordered],
         constraint_violations=violations,
         covered_agents=[agent_id for agent_id in AGENT_IDS if board.cards_of(agent_id)],

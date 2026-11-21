@@ -161,3 +161,13 @@ def test_handoffs_reference_existing_cards(collab) -> None:
     known = {card.card_id for card in collab.cards}
     for handoff in collab.handoffs:
         assert set(handoff.card_ids) <= known
+
+
+def test_handoff_messages_have_matching_correlation_and_cards(collab) -> None:
+    handoffs = {handoff.handoff_id: handoff for handoff in collab.handoffs}
+    assert len(collab.messages) == len(collab.handoffs)
+    for message in collab.messages:
+        handoff = handoffs[message.correlation_id]
+        assert message.sender == handoff.from_agent
+        assert message.receiver == handoff.to_agent
+        assert message.payload["card_ids"] == handoff.card_ids

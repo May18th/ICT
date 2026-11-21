@@ -15,6 +15,7 @@ import hashlib
 import json
 from datetime import datetime
 from enum import StrEnum
+from typing import Any
 
 from pydantic import Field, field_validator, model_validator
 
@@ -28,6 +29,46 @@ class CardStatus(StrEnum):
     ACCEPTED = "accepted"
     REJECTED = "rejected"
     NO_ACTION = "no_action"
+
+
+class MessageStatus(StrEnum):
+    """Agent 消息的传递状态。"""
+
+    DELIVERED = "delivered"
+    FAILED = "failed"
+    FALLBACK = "fallback"
+
+
+class MessageType(StrEnum):
+    """协作消息的语义，先覆盖角色交接和请求回复。"""
+
+    HANDOFF = "handoff"
+    REQUEST = "request"
+    REPLY = "reply"
+
+
+class AgentMessage(StrictModel):
+    """Agent 间通信信封。
+
+    payload 只承载结构化引用，例如交接的 card_ids。消息本身不承载新的内核断言。
+    """
+
+    message_id: str = Field(min_length=1)
+    correlation_id: str = Field(min_length=1)
+    sender: str = Field(min_length=1)
+    receiver: str = Field(min_length=1)
+    message_type: MessageType
+    payload: dict[str, Any]
+    status: MessageStatus = MessageStatus.DELIVERED
+    error: str = ""
+
+    @model_validator(mode="after")
+    def _check_delivery_error(self) -> AgentMessage:
+        if self.status in {MessageStatus.FAILED, MessageStatus.FALLBACK} and not self.error.strip():
+            raise ValueError("失败或降级消息必须说明 error")
+        if self.status is MessageStatus.DELIVERED and self.error.strip():
+            raise ValueError("成功消息不应带 error")
+        return self
 
 
 class ResourceBinding(StrictModel):
@@ -131,6 +172,7 @@ class CollabResult(StrictModel):
     conflicts: list[DepartmentConflict] = Field(default_factory=list)
     co_sign_pairs: list[tuple[str, str]] = Field(default_factory=list)
     handoffs: list[RoleHandoff] = Field(default_factory=list)
+    messages: list[AgentMessage] = Field(default_factory=list)
     merge_order: list[str] = Field(default_factory=list)
     constraint_violations: list[str] = Field(default_factory=list)
     covered_agents: list[str] = Field(default_factory=list)
@@ -152,6 +194,19 @@ class CollabResult(StrictModel):
             missing = [card_id for card_id in handoff.card_ids if card_id not in known]
             if missing:
                 raise ValueError(f"handoff {handoff.handoff_id} 引用了不存在的卡片: {missing}")
+        handoffs_by_id = {handoff.handoff_id: handoff for handoff in self.handoffs}
+        for message in self.messages:
+            card_ids = message.payload.get("card_ids", [])
+            if not isinstance(card_ids, list) or any(card_id not in known for card_id in card_ids):
+                raise ValueError(f"消息 {message.message_id} 引用了不存在的卡片")
+            if message.message_type is MessageType.HANDOFF:
+                handoff = handoffs_by_id.get(message.correlation_id)
+                if handoff is None:
+                    raise ValueError(f"消息 {message.message_id} 未关联角色交接")
+                if message.sender != handoff.from_agent or message.receiver != handoff.to_agent:
+                    raise ValueError(f"消息 {message.message_id} 的收发方与角色交接不一致")
+                if card_ids != handoff.card_ids:
+                    raise ValueError(f"消息 {message.message_id} 的卡片引用与角色交接不一致")
         return self
 
 
