@@ -1007,6 +1007,28 @@ body::before{content:'';position:fixed;left:0;right:0;top:0;height:2px;z-index:9
 @media(max-width:1200px){#agentlog{display:none}}
 /* 1366 投影上 dock 一行放不下七个控件 + 提示语，提示语先让位（键盘用法在 hint 的 title 里） */
 @media(max-width:1400px){#dock .hint{display:none}}
+/* 窄屏仍保留同一条推演链，但把地图与详情栏改为上下阅读，避免固定 316px 侧栏把地图压成窄条。 */
+@media(max-width:900px){
+  html,body{overflow:auto}
+  #statusbar{height:auto;min-height:30px;padding:6px 12px;align-items:flex-start;flex-wrap:wrap;gap:6px}
+  #statusbar .layers{margin-left:0;width:100%;overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;padding-bottom:2px}
+  #wrap{display:block;overflow:visible}
+  #stage{height:58vh;min-height:340px;overflow:hidden}
+  #side{width:auto;border-left:0;border-top:1px solid var(--line);padding:12px;max-height:none;overflow:visible}
+  #kpibar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:8px 12px}
+  #dock{max-width:calc(100% - 20px);overflow-x:auto;justify-content:flex-start}
+  #dock input[type=range]{width:150px}
+  #legend{left:10px;bottom:58px;max-width:calc(100% - 20px)}
+}
+@media(max-width:560px){
+  header{height:auto;min-height:50px;padding:8px 12px;flex-wrap:wrap;gap:6px}
+  header .scope{width:100%}
+  #stage{height:52vh;min-height:300px}
+  #kpibar{grid-template-columns:1fr 1fr}
+  #dock{bottom:8px;padding:6px 9px;gap:6px}
+  #dock button{padding:5px 9px}
+  #dock input[type=range]{width:105px}
+}
 /* 尊重系统的「减少动态效果」：所有无限动画停掉，静态版信息一样全 */
 @media(prefers-reduced-motion:reduce){
   body::before,.fac-ring,.water-ring,.water-sheen,#agentlog .lg-h .live i,#agentlog .ln .cur{animation:none}
@@ -1018,6 +1040,7 @@ body::before{content:'';position:fixed;left:0;right:0;top:0;height:2px;z-index:9
 <header>
   <h1>城市内涝可进化决策智能体</h1>
   <span class=scope>语义孪生层 · 情景推演，非实时物联</span>
+  <a href="/show" style="color:var(--blue);text-decoration:none;font-size:11.5px;white-space:nowrap">← 回主演示</a>
   <button id=srcbtn title="数据来源、覆盖范围与证据边界">数据来源与边界</button>
 </header>
 <div id=statusbar>
