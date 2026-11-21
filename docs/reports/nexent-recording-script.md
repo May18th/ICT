@@ -31,18 +31,21 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5013/nb/v1/agents
 - 在 `docs/reports/nexent-evidence-index.md` 的「尚未取得的外部证据」中改写该条，并附文件路径与录制时间。
 - 若只做静态材料，可先跑 `python deploy/nexent/capture_platform_ui.py` 出三张界面截图，但截图不能替代第 3、4 段的交互过程。
 
-## 实际执行结果（2026-11-21 20:54）
+## 实际执行结果（2026-11-21 21:06）
 
-已录得 44 秒界面演示，存 `_archive_deliverables_20261121/screen-recording/nexent_platform_demo_20261121.mp4`（1.1MB，2560×1440 / 15fps）。
+成片 35 秒，837KB，2560×1440 / 15fps，带中文字幕，存 `_archive_deliverables_20261121/screen-recording/nexent_platform_demo_20261121.mp4`。
 
-| 实际段落 | 内容 |
-|---|---|
-| 第 1 段 | MCP `/health` 的 JSON，工具列表与 `tools_count` |
-| 第 2 段 | 平台「选择智能体」弹窗，六个 Agent 与版本号 v34 / v12 / v11 |
-| 第 3 段 | 对话配置里的知识库索引，含 `urban-policy-ledger`（2 篇文档） |
-| 第 6 段 | 门户 `/evolution`：0.2264→0.0000 等指标与 V1/V2 对照 |
+| 时间 | 画面 | 字幕 |
+|---|---|---|
+| 0–9.5s | 「选择智能体」弹窗，六个 Agent 与 v34 / v12 / v11 | 平台已发布 6 个智能体 |
+| 9.5–22.5s | 平台历史会话的完整推演结论：受影响对象、三类冲突、处置进退顺序 | 同一次推演的关键结论 |
+| 22.5–26.5s | 知识库索引 `urban-policy-ledger` | 策略台账与平台版本快照 |
+| 26.5–35s | 门户 `/evolution`：0.2264→0.0000 与 V1/V2 对照 | 偏差归零、策略可回滚 |
 
-**第 3、4 段（主推演与协同问答）没有录**：平台前端渲染回答时抛 `Minified React error #185`（Maximum update depth exceeded），回答区域变成红框报错。主推演、协同、以及把问题缩到 250 字不输出 JSON 都复现，所以不是内容太长；后端同事件调用正常（8/8）。问答证据继续用 `samples/nexent/live/` 下的 JSON。
+**关键发现：历史会话能正常渲染，新提问的流式回答会崩。**
 
-录制方式：`ffmpeg -f gdigrab -framerate 15 -i desktop`，OBS 这条路不可用——本机 OBS 33.0.1 的 GUI 进程启动后会被环境回收，websocket 4455 随之消失。
+平台前端在渲染**新生成的**流式回答时抛 `Minified React error #185`（Maximum update depth exceeded）——主推演、协同、缩短到 250 字的问法全部复现，后端同事件调用正常（8/8）。但左侧历史会话点开重放不受影响，六跳、冲突、处置顺序都能完整显示。所以录屏走「历史会话」这条路，既避开缺陷，也仍是平台真实输出。
 
+**OBS 不可用**：本机 OBS 33.0.1 的 GUI 进程启动后会被环境回收，websocket 4455 随之消失。录制改用 `ffmpeg -f gdigrab -framerate 15 -i desktop`。
+
+**字幕排版**：libass 的 `FontSize` / `MarginV` 以 288 的基准高度换算，2560×1440 下要写字号 40px 需设 `FontSize=8`；直接填 40 会占掉半屏。
