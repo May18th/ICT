@@ -92,7 +92,7 @@
 按 `AGENTS.md`「单一 owner + 一次性同步」执行：
 
 - `samples/eval/evidence_expectations.json`：`test_baseline.collected`、`checks.test_suite.docs_declared`；
-- 三份文档测试数：`README.md`、`docs/competition-gap-audit.md`、`docs/competition/preliminary-submission-draft.md`；
+- 三份历史文档测试数：`README.md` 与比赛材料归档中的缺口审计、预提交草稿；当前仓内证据索引见 `docs/reports/nexent-evidence-index.md`；
 - 其余对外文档与脚本里"803 测试 / 新校验值"同步更新（含 `scripts/reproduce.py` 说明与
   `scripts/build_answer_ppt.py`、`scripts/build_preliminary_docx.py` 文案）；
 - `docs/reports/evidence-check-report.md` 与 `samples/eval/evidence_check.json` 由命令重生成（勿手改）。

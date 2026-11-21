@@ -4,7 +4,7 @@
 - 目的：回答一个问题——P10 的渲染作业已经把 `steps[i].highlights` 送到引擎了，
   为什么画面上的对象还是没亮？
 - 判定依据：[P10 可视化工具层设计](p10-visualization-tools-design.md)、
-  [技术广度与呈现边界](competition/technical-breadth-and-presentation-boundary.md) §4.1/§5。
+  技术广度与呈现边界材料已移至 `D:\华为ICT\_archive_deliverables_20261118\competition\` §4.1/§5。
 
 ## 1 结论：断点不在渲染，在 id
 

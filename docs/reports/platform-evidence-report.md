@@ -1,5 +1,7 @@
 # 平台侧证据报告：技能仓库上传 + 平台界面截图
 
+> 本报告记录平台界面截图采集时点的历史快照。当前 Agent 版本与证据时间线见 [Nexent 证据索引](nexent-evidence-index.md)，截图换环境或换版本需重新采集。
+
 - 日期：2026-11-02
 - 环境：本机 Docker 部署 Nexent **v2.7.0**（`nexent-config` 5010、`nexent-web` 3000、`nexent-northbound` 5013）
 - 目的：把"基于 Nexent 可运行"里此前只差**平台侧可见证据**的两项补齐——技能是否真在平台技能仓库里、

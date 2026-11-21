@@ -3,7 +3,7 @@
 - 裁决日期：2026-11-06
 - 裁决人：项目负责人
 - 状态：**已固定**。本文件是"为什么缺口写 2 台"的唯一权威解释，与代码或说明文档冲突时以本文件为准。
-- 上位文档：[P12 场景 v2 口径标定报告](reports/p12-scenario-v2-calibration-report.md) §4.3（二选一裁决点）、[交付状态核对表](competition/delivery-status.md) §3-B
+- 上位文档：[P12 场景 v2 口径标定报告](reports/p12-scenario-v2-calibration-report.md) §4.3（二选一裁决点）。交付状态核对表已移至 `D:\华为ICT\_archive_deliverables_20261118\competition\`。
 
 ## 0 一句话
 
