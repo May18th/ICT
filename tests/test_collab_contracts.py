@@ -9,10 +9,13 @@ from pydantic import ValidationError
 
 from decision_poc.collab.contracts import (
     ActionCard,
+    AgentMessage,
     CardStatus,
     CollabResult,
     ResourceBinding,
     RoleHandoff,
+    MessageStatus,
+    MessageType,
     kernel_fingerprint,
 )
 
@@ -52,6 +55,20 @@ def test_card_carries_execution_contract_fields() -> None:
         ResourceBinding(resource_id="RES-PUMP-M", quantity=1, unit="台")
     ]
     assert card.acceptance_criteria == ["动作完成后复核积水深度"]
+
+    # 交卷契约：平台最终回答里每张卡只回这 7 个键（见 scripts/nexent_collab_live.py
+    # 的 ANSWER_CARD_KEYS）。字段改名不会让任何测试变红，却会让 live 协同证据静默判假，
+    # 所以在模型层钉一次。
+    handed_in = {
+        "action",
+        "agent_id",
+        "card_id",
+        "co_sign_required",
+        "depends_on",
+        "stage",
+        "status",
+    }
+    assert handed_in <= set(ActionCard.model_fields)
 
 
 def test_card_rejects_blank_execution_contract_items() -> None:
@@ -136,6 +153,36 @@ def test_handoff_must_name_real_cards() -> None:
                 )
             ]
         )
+
+
+def test_agent_message_has_traceable_handoff_envelope() -> None:
+    message = AgentMessage(
+        message_id="MSG-HO-1",
+        correlation_id="HO-1",
+        sender="EMERG-COORD",
+        receiver="ORG-DRAIN",
+        message_type=MessageType.HANDOFF,
+        payload={"card_ids": ["AC-S1-ORG-DRAIN"]},
+    )
+    assert message.status is MessageStatus.DELIVERED
+    assert message.correlation_id == "HO-1"
+
+
+def test_agent_message_requires_error_for_fallback_and_failure() -> None:
+    base = {
+        "message_id": "MSG-1",
+        "correlation_id": "REQ-1",
+        "sender": "A",
+        "receiver": "B",
+        "message_type": MessageType.REQUEST,
+        "payload": {"card_ids": ["AC-S1-ORG-DRAIN"]},
+    }
+    with pytest.raises(ValidationError):
+        AgentMessage(**base, status=MessageStatus.FAILED)
+    with pytest.raises(ValidationError):
+        AgentMessage(**base, status=MessageStatus.FALLBACK)
+    fallback = AgentMessage(**base, status=MessageStatus.FALLBACK, error="目标 Agent 不可用")
+    assert fallback.error
 
 
 def test_fingerprint_is_order_and_duplicate_insensitive() -> None:

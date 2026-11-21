@@ -53,6 +53,7 @@ from nexent_collab_live import (  # noqa: E402
     build_collab_query,
     judge,
     offline_reference,
+    public_offline_reference,
 )
 from decision_poc.nexent_transport import NexentHttpTransport, NexentSettings  # noqa: E402
 
@@ -178,7 +179,7 @@ def compare(base: str, key: str, with_tools: str, control: str) -> dict:
         "kind": "collab-ab-evidence",
         "event_id": EVENT_ID,
         "as_of": AS_OF,
-        "offline": offline,
+        "offline": public_offline_reference(offline),
         "agents": platform_snapshot(base, key),
         "groups": {"with_tools": _shape(a), "without_tools": _shape(b), "without_tools_pressed": _shape(c)},
         "verdict": {

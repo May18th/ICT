@@ -49,7 +49,7 @@ uv run --locked python scripts/reproduce.py --list     # 只看会跑哪些步�
 ```powershell
 $env:PYTHONPATH = "src"
 uv run --locked python -m decision_poc.evidence_check
-# 期望末行：对外数字自检：108/108 项一致（期望的校验值 c6ccdc1202ded660）
+# 期望末行：对外数字自检：108/108 项一致（期望的校验值 a63cbf4f9fc53c6e）
 ```
 
 期望值固定在 `samples/eval/evidence_expectations.json`；改数字必须改期望文件并同步 README/报告/对外说明，
@@ -281,7 +281,7 @@ Nexent **v2.7.0**（主 Agent v19，模型 DeepSeek-Chat）跑通。原绑定的
 - Agent `urban_deduction_agent`（agent_id=3，已发布 v32）接了四个工具（`event_deduce` / `evidence_locate` / `doc_search` / `collab_run`；`collab_run` 于 2026-11-18 补挂，当初把主 Agent 收窄到 2 个的过程见集成实测报告 §6）；`doc_search` 只查规则依据，事实仍只认 `event_deduce`；
 - 一次真实对话（**conversation_id=120**）产出六步 JSON，与离线 `DeductionEngine` **8/8 项一致**；
 - 平台侧确实发生了工具调用：`event_deduce`（18ms）+ 一次协议修复重试（6ms），
-  两条日志记录的哈希一致（协同链路的 3 次 `collab_run` 实测另见 `samples/nexent/live/collab_live.json`，成功率 2/3）。
+  两条日志记录的哈希一致（协同链路的 2 次 `collab_run` 实测另见 `samples/nexent/live/collab_live.json`，成功率 2/2）。
 
 ```powershell
 # 1) 构建并启动 MCP 容器（详细步骤见 deploy/nexent/README.md）
@@ -484,10 +484,10 @@ uv run --locked python -m decision_poc.scene_export --out samples/assets/urban/s
 
 ## 验证状态
 
-当前基线：`uv run --locked pytest -q` 共 **978 项收集 / 963 通过 / 15 项按设计跳过（0 失败）**。
+当前基线：`uv run --locked pytest -q` 共 **981 项收集 / 967 通过 / 14 项按设计跳过（0 失败）**。
 口径是**收集数**：跳过项全部是设计内——1 项需可选依赖 `openai`、1 项因仓库不分发 `.pptx`/`.docx`、
 2 项因 Blender 工具链停用、10 项因 Unreal 工程不入库，详见 `AGENTS.md`「测试口径」一节。
-**不要说"978 项全部通过"**；
+**不要说"981 项全部通过"**；
 `python -m decision_poc.evidence_check` 108/108 项一致；
 城市内涝主链路 Nexent 平台校验 8/8（Agent v19 / DeepSeek-Chat，`python -m decision_poc.nexent_urban`）；
 同时要求锁文件、Python 编译和依赖一致性检查通过。

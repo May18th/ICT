@@ -61,6 +61,21 @@ def test_collab_run_covers_six_roles_and_keeps_kernel_conflicts(toolkit: UrbanTo
     assert len(data["kernel_fingerprint"]) == 16
     assert data["co_sign_pairs"]
 
+    # 交卷契约的运行时一侧：collab_run 产出的每张卡都必须带齐 live 证据要比的 7 个键
+    # （scripts/nexent_collab_live.py 的 ANSWER_CARD_KEYS）。少了任何一个，投影后两端
+    # 都是 None，真机回答会被判成"一致"，比判假更难发现。
+    handed_in = {
+        "action",
+        "agent_id",
+        "card_id",
+        "co_sign_required",
+        "depends_on",
+        "stage",
+        "status",
+    }
+    for card in data["cards"]:
+        assert handed_in <= set(card), f"交卷字段缺失: {sorted(handed_in - set(card))}"
+
     hydrograph = {
         "times_h": [0.0, 0.5, 1.0],
         "values": [0.2, 0.8, 1.1],
