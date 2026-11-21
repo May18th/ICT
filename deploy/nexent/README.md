@@ -98,7 +98,7 @@ docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/setup_
 | --- | --- | --- |
 | `register-mcp` | 注册 MCP 服务 `urban-twin-mcp`（URL `http://urban-twin-mcp:8000/sse`） | 同名已存在则复用 |
 | `sync-tools` | `scan_tool` 把 15 个 MCP 工具同步进平台工具库 | 已存在则覆盖状态 |
-| `create-main` | 创建/复用 `urban_deduction_agent`（**upsert**：带 `agent_id` 回写提示词），挂 2 个结论类工具并发布 | 同名 Agent 复用；重复接入无害 |
+| `create-main` | 创建/复用 `urban_deduction_agent`（**upsert**：带 `agent_id` 回写提示词），按 `MAIN_TOOLS` 挂 4 个工具（`event_deduce` / `evidence_locate` / `doc_search` / `collab_run`）并发布 | 同名 Agent 复用；重复接入无害 |
 | `create-collab` | 创建/复用 `urban_collab_agent`，挂 6 个协同工具并发布 | 同上 |
 | `skills` | 上传 SKILL.md → 绑 Agent 草稿 → **重新发布** → 复核已发布版本 | 上传按正文哈希判 `unchanged`；绑定是覆盖写 |
 | `mint-key` | 生成北向 API Key | 每次生成新 Key（旧 Key 可继续用） |

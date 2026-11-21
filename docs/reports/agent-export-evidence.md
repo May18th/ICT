@@ -1,7 +1,7 @@
 # 平台作品导出证据（初赛「配置能力」项）
 
 - 日期：2026-11-06
-- 官方依据：初赛需提交「配置能力」，即用平台导出功能导出作品 `[官方赋能直播 17:05]`，来源见 [官方口径落库](../competition/official-brief-2026-11-06.md)
+- 官方依据：初赛需提交「配置能力」，即用平台导出功能导出作品 `[官方赋能直播 17:05]`。官方口径原件已移至 `D:\华为ICT\_archive_deliverables_20261118\competition\`。
 - 结论：**已导出并通过结构核验；同时澄清了「15 工具」与导出包「2 工具」的口径矛盾。**
 
 ## 1 产物
@@ -64,7 +64,12 @@ Agent 本体：`urban_deduction_agent`（显示名「城市内涝跨部门决策
 | 主 Agent `urban_deduction_agent` 接入 | **2**（`event_deduce`、`evidence_locate`） | `setup_nexent.py:89 MAIN_TOOLS`，导出包实测 |
 | 协同 Agent `urban_collab_agent` 接入 | **6**（含 `collab_run`） | `setup_nexent.py:131 COLLAB_TOOLS` |
 
-主 Agent 收窄到 2 个是**有意的设计决策**，源码注释给了理由（`setup_nexent.py:83-88`）：模型真正读的「提示词」是工具列表，工具一多就会绕过 `event_deduce` 去调 `twin_neighbors` / `allocation_plan`，随后 `parallel_executor` 把回答截断在 `<|tool_call_start|>`，8 项结论一致性校验就守不住。
+> **后续变更（2026-11-21 核对）**：上表是 11-06 的快照，不改写当天实测。之后 `doc_search`（11-13）、
+> `collab_run`（11-18）先后补入 `MAIN_TOOLS`，主 Agent 现挂 **4** 个；三个常量的行号也已变动
+> （`OUR_TOOLS` / `MAIN_TOOLS` / `COLLAB_TOOLS` 现为 `setup_nexent.py:78 / 101 / 192`）。
+> 引用主 Agent 工具数时以源码常量为准，本文与下文「2 个」的表述均属 11-06 时间点。
+
+主 Agent 收窄到 2 个是**有意的设计决策**，源码注释给了理由（`MAIN_TOOLS` 上方注释，现为 `setup_nexent.py:85-100`）：模型真正读的「提示词」是工具列表，工具一多就会绕过 `event_deduce` 去调 `twin_neighbors` / `allocation_plan`，随后 `parallel_executor` 把回答截断在 `<|tool_call_start|>`，8 项结论一致性校验就守不住。
 
 一句话说法：**「平台注册 15 个 MCP 工具，主 Agent 只拿 2 个结论类工具（收窄是稳定性设计），协同入口与其余工具挂在协同 Agent 上。」**
 
@@ -72,7 +77,7 @@ Agent 本体：`urban_deduction_agent`（显示名「城市内涝跨部门决策
 
 导出包只存 `mcp_info` 里的 **server 地址**，不存工具清单与工具实现。评委拿到 zip 复现时，若没有 `urban-twin-mcp` 服务端代码，这 15 个工具一个都起不来。
 
-→ 对外说明/复现包必须**同时交 MCP 服务端代码 + 启动说明**（`src/decision_poc/mcp_server.py` / `mcp_sse.py` + 容器启动方式），并说明「导出包恢复的是 Agent 配置，工具能力由 MCP 服务提供」。这一条已补进 [差距台账](../competition-gap-audit.md) 第 3 节。
+→ 对外说明/复现包必须**同时交 MCP 服务端代码 + 启动说明**（`src/decision_poc/mcp_server.py` / `mcp_sse.py` + 容器启动方式），并说明「导出包恢复的是 Agent 配置，工具能力由 MCP 服务提供」。这一条已补进仓外交付归档的差距台账第 3 节。
 
 ## 6 重跑命令
 

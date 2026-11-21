@@ -167,8 +167,9 @@ docker exec -i supabase-db-mini psql -U postgres -d supabase -c \
 2. **不裁 sandbox 是有依据的**：`setup_nexent.py` 的 `DUTY_PROMPT` 已禁用 `python_interpreter` 与
    `parallel_executor`，全链路不执行沙箱代码，理论可省 1.89 GB；但「停掉 sandbox 后 8/8 是否仍通」**待实测验证**，
    未验证前不从包里删。
-3. **`doc_search` 与主 Agent 的关系**：主 Agent 只挂 2 个工具（`event_deduce` / `evidence_locate`）是
-   `MAIN_TOOLS` **有意收窄**，检索以独立入口提供。评委问"为什么 15 个工具只挂 2 个"时，这是设计取舍，不是缺陷。
+3. **`doc_search` 与主 Agent 的关系**：主 Agent 只挂 4 个工具（`event_deduce` / `evidence_locate` /
+   `doc_search` / `collab_run`）是 `MAIN_TOOLS` **有意收窄**，检索与协同各留一个专用入口，其余工具挂协同 Agent。
+   评委问"15 个工具为什么不都给主 Agent"时，这是设计取舍，不是缺陷。
 4. **导出包不含 MCP 实现**：平台导出的 `agent.json` 只存 MCP 的 server 地址，工具能力由 `urban-twin-mcp` 提供，
    所以离线包必须同时带 `urban-twin-mcp:dev` 镜像与 `src/decision_poc/mcp_server.py`。
 
