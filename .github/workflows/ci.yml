@@ -34,6 +34,14 @@ jobs:
       - name: 语法编译检查
         run: uv run --locked python -m compileall -q src tests scripts
 
+      # out/ 下这两份大屏数据不入库，但 pytest 里的 demo_tour --check 要求它们存在，
+      # 否则 clean clone 上必然报「缺 2 项文件」。两份都只从台账推导，不依赖其他生成物，
+      # 放在测试之前不会掩盖真实失败；reproduce --fast 仍会再核对一次数字。
+      - name: 生成大屏数据
+        run: |
+          uv run --locked python scripts/build_hydro_curve.py
+          uv run --locked python scripts/build_event_timeline.py
+
       - name: 测试
         run: uv run --locked pytest -q
 
