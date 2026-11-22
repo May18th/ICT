@@ -1,0 +1,469 @@
+{
+  "source_type": "observed",
+  "dataset": {
+    "name": "Kong et al. 2023 validation bundle — 深圳 10 条易涝路",
+    "zenodo_doi": "10.5281/zenodo.7894921",
+    "license": "CC BY 4.0",
+    "event": "2019-06-11",
+    "rain_interval_min": 5.0,
+    "level_unit": "m",
+    "rain_unit": "mm per 5 min",
+    "note": "论文的率定事件是 2015-05-09 / 05-23，Zenodo 只公开了这两场的出租车通过率计数，没有对应水位；能用的真观测水位只有 2019-06-11 这一场。"
+  },
+  "paper_result_claim": false,
+  "command": "python experiments/literature_repro/external_kong2023/run_kong_validation.py --source observed --data-root <external>/_extern_kong2023 --alpha 1.0",
+  "environment": {
+    "python": "3.12.14",
+    "numpy": "2.5.5",
+    "scikit-learn": "1.9.1",
+    "openpyxl": "3.1.5",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "input_sha256": {
+    "water_level_10.xlsx": "93dce2895c1e4764a95b7a79bf404b048329d5a0606d58ab721ae6c4d16e90b3",
+    "rainfall_10.xlsx": "5cf4338242955280dbe5d369a79149df5ad29ceacc3998104cef8c84c0028c85"
+  },
+  "observed_summary": [
+    {
+      "road_id": "1",
+      "rain_samples": 17,
+      "level_samples": 51,
+      "rain_span_min": 80.0,
+      "level_span_min": 272.0,
+      "total_rain_mm": 49.34,
+      "peak_rain_mm_per_5min": 20.1,
+      "peak_rain_time": "2019-06-11T16:10:00",
+      "peak_level_m": 0.38,
+      "peak_level_time": "2019-06-11T17:30:00",
+      "lag_minutes": 80.0,
+      "minutes_above_015m": 90,
+      "level_range_m": [
+        0.0,
+        0.38
+      ]
+    },
+    {
+      "road_id": "2",
+      "rain_samples": 15,
+      "level_samples": 29,
+      "rain_span_min": 70.0,
+      "level_span_min": 227.0,
+      "total_rain_mm": 46.4,
+      "peak_rain_mm_per_5min": 20.1,
+      "peak_rain_time": "2019-06-11T16:00:00",
+      "peak_level_m": 0.33,
+      "peak_level_time": "2019-06-11T16:55:00",
+      "lag_minutes": 55.0,
+      "minutes_above_015m": 40,
+      "level_range_m": [
+        0.0,
+        0.33
+      ]
+    },
+    {
+      "road_id": "3",
+      "rain_samples": 11,
+      "level_samples": 16,
+      "rain_span_min": 50.0,
+      "level_span_min": 120.0,
+      "total_rain_mm": 42.6,
+      "peak_rain_mm_per_5min": 10.1,
+      "peak_rain_time": "2019-06-11T16:15:00",
+      "peak_level_m": 0.34,
+      "peak_level_time": "2019-06-11T16:50:00",
+      "lag_minutes": 35.0,
+      "minutes_above_015m": 45,
+      "level_range_m": [
+        0.0,
+        0.34
+      ]
+    },
+    {
+      "road_id": "4",
+      "rain_samples": 11,
+      "level_samples": 44,
+      "rain_span_min": 50.0,
+      "level_span_min": 217.0,
+      "total_rain_mm": 42.6,
+      "peak_rain_mm_per_5min": 10.1,
+      "peak_rain_time": "2019-06-11T16:15:00",
+      "peak_level_m": 0.35,
+      "peak_level_time": "2019-06-11T17:10:00",
+      "lag_minutes": 55.0,
+      "minutes_above_015m": 75,
+      "level_range_m": [
+        0.01,
+        0.35
+      ]
+    },
+    {
+      "road_id": "5",
+      "rain_samples": 24,
+      "level_samples": 15,
+      "rain_span_min": 115.0,
+      "level_span_min": 180.0,
+      "total_rain_mm": 37.03,
+      "peak_rain_mm_per_5min": 18.1,
+      "peak_rain_time": "2019-06-11T16:25:00",
+      "peak_level_m": 0.71,
+      "peak_level_time": "2019-06-11T17:10:00",
+      "lag_minutes": 45.0,
+      "minutes_above_015m": 45,
+      "level_range_m": [
+        0.0,
+        0.71
+      ]
+    },
+    {
+      "road_id": "6",
+      "rain_samples": 11,
+      "level_samples": 14,
+      "rain_span_min": 50.0,
+      "level_span_min": 82.0,
+      "total_rain_mm": 42.2,
+      "peak_rain_mm_per_5min": 10.1,
+      "peak_rain_time": "2019-06-11T17:00:00",
+      "peak_level_m": 0.29,
+      "peak_level_time": "2019-06-11T17:15:00",
+      "lag_minutes": 15.0,
+      "minutes_above_015m": 30,
+      "level_range_m": [
+        0.0,
+        0.29
+      ]
+    },
+    {
+      "road_id": "7",
+      "rain_samples": 11,
+      "level_samples": 33,
+      "rain_span_min": 50.0,
+      "level_span_min": 160.0,
+      "total_rain_mm": 42.6,
+      "peak_rain_mm_per_5min": 10.1,
+      "peak_rain_time": "2019-06-11T09:35:00",
+      "peak_level_m": 0.31,
+      "peak_level_time": "2019-06-11T10:00:00",
+      "lag_minutes": 25.0,
+      "minutes_above_015m": 40,
+      "level_range_m": [
+        0.01,
+        0.31
+      ]
+    },
+    {
+      "road_id": "8",
+      "rain_samples": 16,
+      "level_samples": 41,
+      "rain_span_min": 75.0,
+      "level_span_min": 210.0,
+      "total_rain_mm": 52.9,
+      "peak_rain_mm_per_5min": 10.1,
+      "peak_rain_time": "2019-06-11T16:45:00",
+      "peak_level_m": 0.21,
+      "peak_level_time": "2019-06-11T17:10:00",
+      "lag_minutes": 25.0,
+      "minutes_above_015m": 45,
+      "level_range_m": [
+        0.0,
+        0.21
+      ]
+    },
+    {
+      "road_id": "9",
+      "rain_samples": 11,
+      "level_samples": 10,
+      "rain_span_min": 50.0,
+      "level_span_min": 67.0,
+      "total_rain_mm": 42.6,
+      "peak_rain_mm_per_5min": 10.1,
+      "peak_rain_time": "2019-06-11T17:15:00",
+      "peak_level_m": 0.2,
+      "peak_level_time": "2019-06-11T17:35:00",
+      "lag_minutes": 20.0,
+      "minutes_above_015m": 15,
+      "level_range_m": [
+        0.0,
+        0.2
+      ]
+    },
+    {
+      "road_id": "10",
+      "rain_samples": 16,
+      "level_samples": 56,
+      "rain_span_min": 75.0,
+      "level_span_min": 282.0,
+      "total_rain_mm": 51.2,
+      "peak_rain_mm_per_5min": 20.1,
+      "peak_rain_time": "2019-06-11T18:00:00",
+      "peak_level_m": 0.15,
+      "peak_level_time": "2019-06-11T18:20:00",
+      "lag_minutes": 20.0,
+      "minutes_above_015m": 5,
+      "level_range_m": [
+        0.0,
+        0.15
+      ]
+    }
+  ],
+  "observed_aggregate": {
+    "roads": 10,
+    "peak_level_m_range": [
+      0.15,
+      0.71
+    ],
+    "peak_level_m_median": 0.32,
+    "lag_minutes_median": 30.0,
+    "lag_minutes_range": [
+      15.0,
+      80.0
+    ],
+    "total_rain_mm_range": [
+      37.03,
+      52.9
+    ]
+  },
+  "ridge_loro": {
+    "model": "ridge",
+    "alpha": 1.0,
+    "split": "leave-one-road-out（10 折，每条路整段留出）",
+    "features": [
+      "rain_now_mm",
+      "rain_last_5min_mm",
+      "rain_last_15min_mm",
+      "rain_last_30min_mm",
+      "rain_last_60min_mm",
+      "rain_last_120min_mm",
+      "rain_cumulative_mm",
+      "elapsed_hours"
+    ],
+    "pooled_nse": 0.0607,
+    "pooled_rmse_m": 0.1032,
+    "pooled_nse_mean_baseline": -0.0168,
+    "per_road_median_nse": 0.036,
+    "per_road_positive_nse_count": 5,
+    "per_road": {
+      "1": {
+        "n": 59,
+        "nse": -0.0187,
+        "rmse_m": 0.1282,
+        "observed_peak_m": 0.38,
+        "predicted_peak_m": 0.146
+      },
+      "2": {
+        "n": 57,
+        "nse": -0.9941,
+        "rmse_m": 0.1007,
+        "observed_peak_m": 0.33,
+        "predicted_peak_m": 0.344
+      },
+      "3": {
+        "n": 53,
+        "nse": 0.3698,
+        "rmse_m": 0.0797,
+        "observed_peak_m": 0.34,
+        "predicted_peak_m": 0.133
+      },
+      "4": {
+        "n": 53,
+        "nse": 0.194,
+        "rmse_m": 0.1041,
+        "observed_peak_m": 0.35,
+        "predicted_peak_m": 0.131
+      },
+      "5": {
+        "n": 66,
+        "nse": 0.0908,
+        "rmse_m": 0.1768,
+        "observed_peak_m": 0.71,
+        "predicted_peak_m": 0.089
+      },
+      "6": {
+        "n": 53,
+        "nse": -0.121,
+        "rmse_m": 0.0895,
+        "observed_peak_m": 0.29,
+        "predicted_peak_m": 0.166
+      },
+      "7": {
+        "n": 53,
+        "nse": 0.3137,
+        "rmse_m": 0.0697,
+        "observed_peak_m": 0.31,
+        "predicted_peak_m": 0.136
+      },
+      "8": {
+        "n": 58,
+        "nse": 0.3919,
+        "rmse_m": 0.0487,
+        "observed_peak_m": 0.21,
+        "predicted_peak_m": 0.131
+      },
+      "9": {
+        "n": 53,
+        "nse": -1.8097,
+        "rmse_m": 0.0695,
+        "observed_peak_m": 0.2,
+        "predicted_peak_m": 0.147
+      },
+      "10": {
+        "n": 58,
+        "nse": -3.2076,
+        "rmse_m": 0.0835,
+        "observed_peak_m": 0.15,
+        "predicted_peak_m": 0.288
+      }
+    }
+  },
+  "ridge_time_holdout": {
+    "model": "ridge",
+    "alpha": 1.0,
+    "split": "逐路时间切分（前 70% 训练，后段测试）",
+    "pooled_nse": -4.3017,
+    "per_road_median_nse": -15.5961,
+    "per_road_positive_nse_count": 0,
+    "phase_diagnostic": {
+      "note": "按测试段内水位是否上升分组。退水段只剩雨停后的衰减，纯雨量特征无从表达，所以两组差距能说明「缺少水位/蓄量状态」而不是「特征没用」。",
+      "rising": {
+        "n": 0,
+        "rmse_m": null,
+        "nse": null
+      },
+      "falling": {
+        "n": 169,
+        "rmse_m": 0.0578,
+        "nse": -4.3017,
+        "observed_mean_m": 0.026,
+        "predicted_mean_m": 0.008
+      }
+    },
+    "per_road": {
+      "1": {
+        "n_test": 18,
+        "nse": -15.5961
+      },
+      "2": {
+        "n_test": 17,
+        "nse": -70.0921
+      },
+      "3": {
+        "n_test": 16,
+        "nse": NaN
+      },
+      "4": {
+        "n_test": 16,
+        "nse": -89.763
+      },
+      "5": {
+        "n_test": 20,
+        "nse": NaN
+      },
+      "6": {
+        "n_test": 16,
+        "nse": NaN
+      },
+      "7": {
+        "n_test": 16,
+        "nse": NaN
+      },
+      "8": {
+        "n_test": 17,
+        "nse": -0.3739
+      },
+      "9": {
+        "n_test": 16,
+        "nse": NaN
+      },
+      "10": {
+        "n_test": 17,
+        "nse": -4.9011
+      }
+    }
+  },
+  "ridge_random_holdout": {
+    "model": "ridge",
+    "alpha": 1.0,
+    "split": "逐路随机留出 20% 时间点（seed 42），属插值上界",
+    "pooled_nse": 0.8415,
+    "pooled_rmse_m": 0.0355,
+    "per_road_median_nse": 0.9463,
+    "per_road_positive_nse_count": 8,
+    "phase_diagnostic": {
+      "rising": {
+        "n": 11,
+        "rmse_m": 0.0395,
+        "nse": 0.8515,
+        "observed_mean_m": 0.198,
+        "predicted_mean_m": 0.189
+      },
+      "falling": {
+        "n": 104,
+        "rmse_m": 0.035,
+        "nse": 0.7803,
+        "observed_mean_m": 0.05,
+        "predicted_mean_m": 0.057
+      }
+    },
+    "per_road": {
+      "1": {
+        "n_test": 12,
+        "nse": 0.9498
+      },
+      "2": {
+        "n_test": 11,
+        "nse": 0.6182
+      },
+      "3": {
+        "n_test": 11,
+        "nse": 0.951
+      },
+      "4": {
+        "n_test": 11,
+        "nse": 0.9463
+      },
+      "5": {
+        "n_test": 13,
+        "nse": NaN
+      },
+      "6": {
+        "n_test": 11,
+        "nse": 0.4826
+      },
+      "7": {
+        "n_test": 11,
+        "nse": 0.9494
+      },
+      "8": {
+        "n_test": 12,
+        "nse": 0.7453
+      },
+      "9": {
+        "n_test": 11,
+        "nse": -11.4482
+      },
+      "10": {
+        "n_test": 12,
+        "nse": 0.9742
+      }
+    }
+  },
+  "ridge_self_fit_upper_bound": {
+    "model": "ridge",
+    "alpha": 1.0,
+    "kind": "in-sample upper bound（不可作为精度指标）",
+    "per_road_median_nse": 0.9127,
+    "per_road_min_nse": 0.7374,
+    "per_road": {
+      "1": 0.976,
+      "2": 0.7374,
+      "3": 0.9532,
+      "4": 0.9612,
+      "5": 0.7489,
+      "6": 0.7963,
+      "7": 0.9483,
+      "8": 0.8835,
+      "9": 0.7909,
+      "10": 0.942
+    }
+  },
+  "evidence_boundary": "标签是深圳市政务数据开放平台 171 个积水测站中的 10 个易涝点在 2019-06-11 的实测水位，不是合成序列。但只有单场、10 条序列、逐路 10—56 个观测，按路段留出后独立单元仅 10 个，NSE 受单条路支配，不构成精度结论；深圳道路积水与成都片区管网不是同一对象，结论只能支持「雨量→水位存在可学习信号、接口在真实测上可训练」，不能写成本项目的预测精度，也不能替代论文作者那套 PCSWMM 49 情景结果。"
+}

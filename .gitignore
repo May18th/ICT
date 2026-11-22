@@ -61,6 +61,9 @@ deploy-webdemo/
 # 训练产物（模型权重不入仓）
 dist/
 
+# 外部数据落地目录（Zenodo / 期刊 PDF 等，按 DOI 可重下，见 experiments/literature_repro/external_kong2023/）
+_external/
+
 # 本地模型/引擎缓存（HF 权重与 pyswmm 输出，可重建）
 .cache/
 
