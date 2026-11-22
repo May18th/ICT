@@ -121,3 +121,13 @@ print(time_to_level(hydrograph=hydrograph, target_level_m=curve.warning_stage_m)
 | 警戒水位依据 | 泵站运行规程或调度预案原文 |
 | 是否有溢流堰/溢流管及其尺寸 | 泵站工艺图（有则可给 `spill_crest_m` / `spill_width_m`） |
 | 泵特性曲线 H–Q | 泵组样本（缺则抽排能力只能按额定常值处理） |
+## 8 路线对照（仅文献参照，不接入）
+
+本项目当前用 `level_pool_route` 做可解释的简化演进。文献里的街区尺度管网—地表耦合是可选的高保真路线，
+两者分工互补：SWMM 覆盖地表水文与管网一维过程，但表达不了管道超载后溢到地表的二维漫流；
+LISFLOOD-FP 覆盖河道一维与地表二维漫流，但不含管网。要同时表达两侧，只能把两个模型耦合起来，
+一维管网与二维地表双向耦合时还需显式处理雨水口 / 检查井的水流交换与时间同步。
+
+本项目**没有**接入上述任何模型，也没有对应的率定与验证数据；前池库容曲线仍是假设值（见上文第 7 节）。
+
+出处：[`paper-p1-1-hydrodynamic-coupling.md`](references/paper-p1-1-hydrodynamic-coupling.md)（C1-01、C1-02）。该卡只作方法路线对照，不作为事实来源。
