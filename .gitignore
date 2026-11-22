@@ -1,4 +1,5 @@
 .venv/
+.venv-exp/
 .pytest_cache/
 .superpowers/
 .worktrees/

@@ -1,0 +1,89 @@
+{
+  "source_type": "synthetic",
+  "paper_result_claim": false,
+  "stage": "grgm",
+  "generated_at_utc": "2026-11-22T04:00:23.931722+00:00",
+  "command": "experiments/literature_repro/liu_grgm_lstm/run_grgm_lstm.py --source synthetic --stage grgm",
+  "input_sha256": "4397a56bb22c156e08a9287a28455db6edc5cef5ee0e4338194b4aff6c49020a",
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "numpy": "2.5.5"
+  },
+  "method": {
+    "name": "GRGM runoff smoke",
+    "grid_resolution_m": 10,
+    "grid_shape": [
+      4,
+      5
+    ],
+    "station_count": 37,
+    "event_count": 18,
+    "time_steps": 24,
+    "mode_names": {
+      "0": "infiltration_excess",
+      "1": "saturation_excess",
+      "2": "mixed"
+    }
+  },
+  "shapes": {
+    "grid_rain_mm": [
+      18,
+      24,
+      4,
+      5
+    ],
+    "runoff_mm": [
+      18,
+      24,
+      4,
+      5
+    ],
+    "infiltration_mm": [
+      18,
+      24,
+      4,
+      5
+    ],
+    "storage_mm": [
+      18,
+      24,
+      4,
+      5
+    ],
+    "runoff_volume_m3": [
+      18,
+      24
+    ],
+    "discharge_m3s": [
+      18,
+      24
+    ],
+    "mass_residual_mm": [
+      18,
+      24,
+      4,
+      5
+    ],
+    "rain_volume_m3": [
+      18,
+      24
+    ],
+    "infiltration_volume_m3": [
+      18,
+      24
+    ]
+  },
+  "conservation": {
+    "rain_volume_m3": 16154.758616684087,
+    "infiltration_volume_m3": 5210.613121621773,
+    "runoff_volume_m3": 10944.145495062312,
+    "volume_residual_m3": 1.8189894035458565e-12,
+    "max_abs_step_residual_mm": 0.0
+  },
+  "lstm_dependency": "not_checked",
+  "evidence_boundary": "synthetic fixture or user-supplied JSON; no claim about the paper's observed NSE or flood forecast accuracy",
+  "outputs": {
+    "arrays": "runoff_outputs.npz"
+  }
+}
