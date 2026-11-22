@@ -66,7 +66,7 @@
 ## 复现入口
 
 ```text
-工作树：agent_poc/.worktrees/literature-tech-repro
+仓库根：agent_poc/（源码 src/decision_poc/，复现脚本 experiments/literature_repro/）
 环境：  uv venv .venv-exp --python 3.12
         uv pip install --python .venv-exp/Scripts/python.exe numpy lightgbm scikit-learn openpyxl
         uv pip install --python .venv-exp/Scripts/python.exe torch --index-url https://download.pytorch.org/whl/cpu
