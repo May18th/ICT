@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620" font-family="'Microsoft YaHei','PingFang SC',system-ui,sans-serif">
+  <rect x="0" y="0" width="1000" height="620" fill="#ffffff"/>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- 用户 -->
+  <rect x="40" y="30" width="170" height="54" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="58" y="53" fill="#111827" font-size="13" font-weight="600">工单 + 时点</text>
+  <text x="58" y="71" fill="#64748b" font-size="11">自然语言提问</text>
+
+  <line x1="210" y1="57" x2="264" y2="57" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#ar)"/>
+
+  <!-- 主 Agent -->
+  <rect x="270" y="20" width="460" height="74" rx="6" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.2"/>
+  <text x="290" y="43" fill="#312e81" font-size="14" font-weight="700">主推演 Agent · urban_deduction_agent · v34</text>
+  <text x="290" y="63" fill="#4338ca" font-size="11.5">DeepSeek-Chat · ReAct 工具循环 · max_steps=20 · 挂 4 个 MCP 工具</text>
+  <text x="290" y="81" fill="#64748b" font-size="11">模型只选工具与组织表达；裁决在工具内部完成</text>
+
+  <!-- 扇出 -->
+  <path d="M420,94 C380,120 240,120 180,152" fill="none" stroke="#94a3b8" stroke-width="1.3" marker-end="url(#ar)"/>
+  <line x1="500" y1="94" x2="500" y2="152" stroke="#94a3b8" stroke-width="1.3" marker-end="url(#ar)"/>
+  <path d="M580,94 C620,120 760,120 820,152" fill="none" stroke="#94a3b8" stroke-width="1.3" marker-end="url(#ar)"/>
+
+  <!-- 1 规则引擎 -->
+  <rect x="40" y="160" width="280" height="152" rx="6" fill="#eefaf7" stroke="#99d6c8" stroke-width="1.2"/>
+  <text x="58" y="184" fill="#0f766e" font-size="13" font-weight="700">规则引擎 · event_deduce</text>
+  <text x="58" y="206" fill="#134e4a" font-size="11.5">39 条规则，每条带预案原文行号</text>
+  <text x="58" y="225" fill="#134e4a" font-size="11.5">一次返回六跳结论</text>
+  <text x="58" y="244" fill="#134e4a" font-size="11.5">冲突 C1 封路权限 / C2 泵站主体 / C3 抽排争用</text>
+  <text x="58" y="263" fill="#134e4a" font-size="11.5">资源缺口 2 台，处置顺序 10 条</text>
+  <text x="58" y="288" fill="#0f766e" font-size="10.5">确定性代码，同一输入同一结论</text>
+
+  <!-- 2 台账检索 -->
+  <rect x="360" y="160" width="280" height="152" rx="6" fill="#fdf6ec" stroke="#e8cfa4" stroke-width="1.2"/>
+  <text x="378" y="184" fill="#b45309" font-size="13" font-weight="700">台账与预案检索</text>
+  <text x="378" y="206" fill="#78350f" font-size="11.5">doc_search 混合检索 + evidence_locate 定位</text>
+  <text x="378" y="225" fill="#78350f" font-size="11.5">125 个切片 / 21 个源文件</text>
+  <text x="378" y="244" fill="#78350f" font-size="11.5">返回 文件名#行号，可逐字复核</text>
+  <text x="378" y="263" fill="#78350f" font-size="11.5">废止预案默认拦截，需显式打开</text>
+  <text x="378" y="288" fill="#b45309" font-size="10.5">检索只给原文，不给结论</text>
+
+  <!-- 3 协同总控 -->
+  <rect x="680" y="160" width="280" height="152" rx="6" fill="#eff6ff" stroke="#a9c7f5" stroke-width="1.2"/>
+  <text x="698" y="184" fill="#1d4ed8" font-size="13" font-weight="700">协同总控 · collab_run</text>
+  <text x="698" y="206" fill="#1e3a8a" font-size="11.5">ORG-EMERG 编排 5 个部门</text>
+  <text x="698" y="225" fill="#1e3a8a" font-size="11.5">DRAIN / ROAD / TRAFFIC / GAS / POWER</text>
+  <text x="698" y="244" fill="#1e3a8a" font-size="11.5">26 张动作卡，联合发布 15 步合并顺序</text>
+  <text x="698" y="263" fill="#1e3a8a" font-size="11.5">会签缺失即拒收，不静默放行</text>
+  <text x="698" y="288" fill="#1d4ed8" font-size="10.5">黑板在进程内，部门之间不对话</text>
+
+  <!-- 汇聚 -->
+  <path d="M180,312 C220,346 300,352 340,378" fill="none" stroke="#94a3b8" stroke-width="1.3" marker-end="url(#ar)"/>
+  <line x1="500" y1="312" x2="500" y2="378" stroke="#94a3b8" stroke-width="1.3" marker-end="url(#ar)"/>
+  <path d="M820,312 C780,346 700,352 660,378" fill="none" stroke="#94a3b8" stroke-width="1.3" marker-end="url(#ar)"/>
+
+  <!-- 大屏 -->
+  <rect x="330" y="386" width="340" height="70" rx="6" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1.2"/>
+  <text x="350" y="410" fill="#5b21b6" font-size="13" font-weight="700">大屏渲染 · /map2d</text>
+  <text x="350" y="430" fill="#4c1d95" font-size="11.5">scene_render 起作业，scene_status 查交付与 sha256</text>
+  <text x="350" y="447" fill="#6b7280" font-size="11">同一 snapshot_id 与结论一一对应，重跑幂等</text>
+
+  <!-- 机制脚注 -->
+  <line x1="40" y1="496" x2="960" y2="496" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="40" y="522" fill="#334155" font-size="11.5" font-weight="600">平台机制对应</text>
+  <text x="40" y="545" fill="#475569" font-size="11">主从：当前租户未启用 A2A 子 Agent（探测 404），总控与部门是 collab_run 内的角色，不是平台 sub-agent</text>
+  <text x="40" y="566" fill="#475569" font-size="11">任务规划：ReAct 循环（enable_planning=false，max_steps=20），换工具不改提示词</text>
+  <text x="40" y="587" fill="#475569" font-size="11">上下文隔离：三个 Agent 各自 conversation_id；工具只回结构化 JSON，不共享自由文本</text>
+</svg>

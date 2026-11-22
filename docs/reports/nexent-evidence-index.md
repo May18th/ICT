@@ -1,6 +1,8 @@
 # Nexent 证据索引
 
-更新时间：2026-11-21。这个索引把当前快照、历史快照和未完成取证分开，避免把不同时间的版本号混成一次运行。
+更新时间：2026-11-22。这个索引把当前快照、历史快照和未完成取证分开，避免把不同时间的版本号混成一次运行。
+
+**初赛「基于 Nexent 可运行」按六项取证时，先读 [平台能力证据包](nexent-platform-capability-pack.md)**：配置导出、MCP 接入方式、知识库、调用图、分层记忆、调试迭代逐项给了证据位置与边界。本索引只负责状态与历史分层。
 
 ## 当前快照
 
@@ -16,6 +18,10 @@
 | 平台知识库版本快照已同步 | `deploy/nexent/sync_policy_ledger.py --apply --latest-only`、`artifacts/ledger/platform_versions.json` | 已将 `platform-versions://snapshot` 更新到 v34 |
 | 15 个 MCP 工具分组与代码一致 | `samples/nexent/tools.json`、`src/decision_poc/mcp_server.py` | 已有快照 |
 | 平台技能绑定与三张界面截图 | `samples/nexent/live/skill_bindings.json`、`docs/reports/captures/nexent/` | 截图为历史采集，换环境需重拍 |
+| 三个业务 Agent 的配置摘要（版本/模型/采样/模式/工具/技能） | `samples/nexent/live/agent_config_summary.json` | 2026-11-22 由 `deploy/nexent/export_capability_pack.py` 生成；导出包只反映草稿态，见包内 `platform_export_defect` |
+| MCP 15 个工具清单与两组 `/health` 原始返回 | `samples/nexent/live/mcp_status.json` | 2026-11-22 本地起同源 `mcp_sse` 抓取 |
+| 知识库切分口径与 125 条切片统计 | `samples/nexent/live/kb_chunks.json` | 2026-11-22 由 `ingest_knowledge.build_docs()` 生成 |
+| CI 五道闸最近三次运行 | `docs/reports/ci-runs.json` | 2026-11-22 由 `gh run view` 抓取，含 run id 与 commit sha |
 
 ## 架构边界
 

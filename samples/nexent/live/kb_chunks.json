@@ -1,0 +1,53 @@
+{
+  "schema_version": "nexent-kb-chunks-1",
+  "generated_at": "2026-11-22T21:57:13+0800",
+  "method": "deploy/nexent/ingest_knowledge.py::build_docs()（与入库同一份切分代码）",
+  "note": "只统计切分结果，不写平台；入库需平台在线（--apply）",
+  "total_chunks": 125,
+  "total_chars": 40073,
+  "file_count": 21,
+  "chunks_by_file": {
+    "README.md": 5,
+    "construction_plans.csv": 4,
+    "department_duties.csv": 8,
+    "drainage_facilities.csv": 7,
+    "mapping_report.md": 4,
+    "notice_gas_construction.md": 5,
+    "notice_road_closure.md": 5,
+    "pipeline_ledger.csv": 10,
+    "plan_flood_emergency_cd_2026.md": 4,
+    "plan_flood_emergency_chengdu_2020.md": 10,
+    "plan_flood_emergency_v1.md": 5,
+    "plan_flood_emergency_v2.md": 8,
+    "procedure_gas_protection.md": 5,
+    "procedure_waterlogging.md": 5,
+    "pump_forebay_curves.csv": 7,
+    "resource_inventory.csv": 9,
+    "response_events_chengdu_20200811.csv": 3,
+    "road_network.csv": 7,
+    "underpasses.csv": 2,
+    "weather_alerts.csv": 4,
+    "work_orders.csv": 8
+  },
+  "chunking_policy": {
+    "markdown": "按 `## ` 二级标题切；<40 字的空段丢弃；front matter 去掉；每块正文前缀「文档：<文件名>\\n小节：<标题>」",
+    "csv": "一行一条记录，正文前缀「台账：<文件名>（列：…）」+「记录 <主键>：k=v；…」；空行跳过",
+    "why_not_whole_file": "CSV 整篇当一个块时，8 行台账会被压成一个千字块，命中后模型拿到的仍是全部行，等于没切",
+    "locator": {
+      "markdown": "urban-assets/<文件>#<节序号>（节序号，不是行号）",
+      "csv": "urban-assets/<文件>#row<行号>（含表头，故首条数据为 row2）"
+    }
+  },
+  "sample_chunk": {
+    "content": "文档：plan_flood_emergency_v2.md\n小节：plan_flood_emergency_v2\n\n# 城区防汛排涝应急预案（2025 年修订）\n\n| 项目 | 内容 |\n| --- | --- |\n| 文件编号 | YJ-FX-2025-002 |\n| 版本 | v2.0 |\n| 发布单位 | 区应急管理局（ORG-EMERG） |\n| 发布日期 | 2025-05-20 |\n| 生效日期 | 2025-06-01 |\n| 失效日期 | 长期有效（另行发文废止） |\n| 密级 | 公开 |\n| 替代关系 | 替代 YJ-FX-2021-001（v1.0） |",
+    "path_or_url": "urban-assets/plan_flood_emergency_v2.md#0",
+    "filename": "plan_flood_emergency_v2.md",
+    "source_type": "local",
+    "metadata": {
+      "title": "plan_flood_emergency_v2.md · plan_flood_emergency_v2",
+      "languages": [
+        "zh"
+      ]
+    }
+  }
+}

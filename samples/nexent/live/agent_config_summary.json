@@ -1,0 +1,217 @@
+{
+  "schema_version": "nexent-agent-config-1",
+  "generated_at": "2026-11-22T21:57:13+0800",
+  "generator": "deploy/nexent/export_capability_pack.py",
+  "sources": {
+    "platform_versions": "artifacts/ledger/platform_versions.json",
+    "live_agents": "samples/nexent/live/agents.json",
+    "tools_contract": "samples/nexent/tools.json",
+    "tool_binding": "deploy/nexent/setup_nexent.py"
+  },
+  "agents": [
+    {
+      "name": "urban_deduction_agent",
+      "display_name": "城市内涝跨部门决策智能体",
+      "role": "主推演",
+      "published_version": {
+        "current_version_no": 34,
+        "version_name": "urban-mcp-v5",
+        "is_available": true,
+        "source": "samples/nexent/live/agents.json（北向只读快照）",
+        "captured_at": "2026-11-21T03:17:35+00:00"
+      },
+      "model": {
+        "display_name": "DeepSeek-Chat",
+        "model_names": [
+          "DeepSeek-Chat"
+        ],
+        "api_model": "deepseek-chat",
+        "base_url": "https://api.deepseek.com/v1",
+        "max_tokens": 8192,
+        "source": "deploy/nexent/register_deepseek_model.py（DISPLAY_NAME / MODEL_NAME / MAX_TOKENS）"
+      },
+      "sampling": {
+        "temperature": null,
+        "top_p": null,
+        "overrides": {},
+        "resolution": "未显式设置采样温度（override 只有空 extra_params）→ 取平台/服务商默认",
+        "note": "曾试过 temperature=0：模型在工具调用之后返回空回答（conversation 76/77），已回退默认",
+        "source": "samples/nexent/live/*.export.json 的 agent_info.model_params_override"
+      },
+      "execution": {
+        "mode": "ReAct（工具循环，非规划模式）",
+        "enable_planning": false,
+        "max_steps": 20,
+        "requested_output_tokens": 8192,
+        "source": "enable_planning 默认 False 见 Nexent/backend/agents/create_agent_info.py:1318；max_steps / requested_output_tokens 取自导出件 agent_info",
+        "caveat": "导出件不含 enable_planning 字段，取值来自平台后端默认值；本项目未开启规划模式"
+      },
+      "tools": [
+        "collab_run",
+        "doc_search",
+        "event_deduce",
+        "evidence_locate"
+      ],
+      "tools_source": "deploy/nexent/setup_nexent.py::MAIN_TOOLS（已发布版本的工具绑定）",
+      "tool_descriptions_present": true,
+      "tool_descriptions_note": null,
+      "skills": [
+        "scarcity-allocation-evolution",
+        "urban-six-hop-deduction"
+      ],
+      "export_artifact": {
+        "available": true,
+        "path": "samples/nexent/live/urban_deduction_agent.zip",
+        "state": "draft(version_no=0)",
+        "tools_in_export": [
+          "collab_run",
+          "doc_search"
+        ],
+        "mcp_info": [
+          {
+            "mcp_server_name": "urban-twin-mcp",
+            "mcp_url": "http://urban-twin-mcp:8000/sse"
+          }
+        ]
+      },
+      "draft_vs_published": {
+        "consistent": false,
+        "note": "导出接口固定导草稿（agent_app.py:662 未传 version_no，impl 默认 0），草稿的工具绑定落后于已发布版本，故导出包不能当该版本的配置证据"
+      }
+    },
+    {
+      "name": "urban_collab_agent",
+      "display_name": "城市内涝应急协同总控",
+      "role": "协同总控",
+      "published_version": {
+        "current_version_no": 12,
+        "version_name": "urban-collab-v1",
+        "is_available": true,
+        "source": "samples/nexent/live/agents.json（北向只读快照）",
+        "captured_at": "2026-11-21T03:17:35+00:00"
+      },
+      "model": {
+        "display_name": "DeepSeek-Chat",
+        "model_names": [
+          "DeepSeek-Chat"
+        ],
+        "api_model": "deepseek-chat",
+        "base_url": "https://api.deepseek.com/v1",
+        "max_tokens": 8192,
+        "source": "deploy/nexent/register_deepseek_model.py（DISPLAY_NAME / MODEL_NAME / MAX_TOKENS）"
+      },
+      "sampling": {
+        "temperature": null,
+        "top_p": null,
+        "overrides": {},
+        "resolution": "未显式设置采样温度（override 只有空 extra_params）→ 取平台/服务商默认",
+        "note": "曾试过 temperature=0：模型在工具调用之后返回空回答（conversation 76/77），已回退默认",
+        "source": "samples/nexent/live/*.export.json 的 agent_info.model_params_override"
+      },
+      "execution": {
+        "mode": "ReAct（工具循环，非规划模式）",
+        "enable_planning": false,
+        "max_steps": 20,
+        "requested_output_tokens": 8192,
+        "source": "enable_planning 默认 False 见 Nexent/backend/agents/create_agent_info.py:1318；max_steps / requested_output_tokens 取自导出件 agent_info",
+        "caveat": "导出件不含 enable_planning 字段，取值来自平台后端默认值；本项目未开启规划模式"
+      },
+      "tools": [
+        "allocation_plan",
+        "collab_run",
+        "conflict_check",
+        "event_deduce",
+        "evidence_locate",
+        "twin_neighbors"
+      ],
+      "tools_source": "deploy/nexent/setup_nexent.py::COLLAB_TOOLS（已发布版本的工具绑定）",
+      "tool_descriptions_present": true,
+      "tool_descriptions_note": null,
+      "skills": [],
+      "export_artifact": {
+        "available": true,
+        "path": "samples/nexent/live/urban_collab_agent.export.json",
+        "state": "draft(version_no=0)",
+        "tools_in_export": [],
+        "mcp_info": []
+      },
+      "draft_vs_published": {
+        "consistent": false,
+        "note": "导出接口固定导草稿（agent_app.py:662 未传 version_no，impl 默认 0），草稿的工具绑定落后于已发布版本，故导出包不能当该版本的配置证据"
+      }
+    },
+    {
+      "name": "urban_asset_qa",
+      "display_name": "内涝资产台账问答",
+      "role": "台账问答",
+      "published_version": {
+        "current_version_no": 11,
+        "version_name": "urban-asset-qa-v4",
+        "is_available": true,
+        "source": "samples/nexent/live/agents.json（北向只读快照）",
+        "captured_at": "2026-11-21T03:17:35+00:00"
+      },
+      "model": {
+        "display_name": "DeepSeek-Chat",
+        "model_names": [
+          "DeepSeek-Chat"
+        ],
+        "api_model": "deepseek-chat",
+        "base_url": "https://api.deepseek.com/v1",
+        "max_tokens": 8192,
+        "source": "deploy/nexent/register_deepseek_model.py（DISPLAY_NAME / MODEL_NAME / MAX_TOKENS）"
+      },
+      "sampling": {
+        "temperature": null,
+        "top_p": null,
+        "overrides": {},
+        "resolution": "未显式设置采样温度（override 只有空 extra_params）→ 取平台/服务商默认",
+        "note": "曾试过 temperature=0：模型在工具调用之后返回空回答（conversation 76/77），已回退默认",
+        "source": "samples/nexent/live/*.export.json 的 agent_info.model_params_override"
+      },
+      "execution": {
+        "mode": "ReAct（工具循环，非规划模式）",
+        "enable_planning": false,
+        "max_steps": 12,
+        "requested_output_tokens": null,
+        "source": "enable_planning 默认 False 见 Nexent/backend/agents/create_agent_info.py:1318；max_steps / requested_output_tokens 取自导出件 agent_info",
+        "caveat": "导出件不含 enable_planning 字段，取值来自平台后端默认值；本项目未开启规划模式"
+      },
+      "tools": [
+        "knowledge_base_search"
+      ],
+      "tools_source": "平台内置 knowledge_base_search（导出件 agent_info.tools）",
+      "tool_descriptions_present": null,
+      "tool_descriptions_note": "knowledge_base_search 是平台内置工具，不在本项目 tools.json 契约内",
+      "skills": [],
+      "export_artifact": {
+        "available": true,
+        "path": "samples/nexent/live/urban_asset_qa.export.json",
+        "state": "draft(version_no=0)",
+        "tools_in_export": [
+          "knowledge_base_search"
+        ],
+        "mcp_info": []
+      },
+      "draft_vs_published": {
+        "consistent": true,
+        "note": null
+      },
+      "knowledge_base": {
+        "bound_tool": "knowledge_base_search",
+        "index_name": "urban-flood-assets",
+        "embedding_model": "bge-m3（model id 3）",
+        "source": "deploy/nexent/ingest_knowledge.py（--index / --embedding-model-id 默认值）"
+      }
+    }
+  ],
+  "platform_export_defect": {
+    "summary": "平台导出只导草稿态，草稿的工具/技能绑定落后于已发布版本；导出包与发布版本不等价",
+    "evidence": [
+      "Nexent/backend/apps/agent_app.py:662 —— 路由调 export_agent_with_skills_impl 未传 version_no",
+      "Nexent/backend/management/services/agent/management.py:1410 —— impl 支持 version_no，默认 0（草稿）",
+      "主 Agent 导出包 2 工具、协同 Agent 导出包 0 工具，而发布版本分别为 4 / 6"
+    ],
+    "workaround": "容器内直调 impl 并传 version_no=<已发布版本号>；命令见 docs/reports/nexent-platform-capability-pack.md §1"
+  }
+}

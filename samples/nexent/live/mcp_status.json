@@ -1,0 +1,49 @@
+{
+  "schema_version": "nexent-mcp-status-1",
+  "generated_at": "2026-11-22T21:57:15+0800",
+  "method": "本地起 decision_poc.mcp_sse 抓 /health；与平台容器同一份代码（deploy/mcp_sse/Dockerfile COPY src/）",
+  "runs": [
+    {
+      "command": "-m decision_poc.mcp_sse --host 127.0.0.1 --port 8871",
+      "groups": "all",
+      "health": {
+        "status": "ok",
+        "transport": "sse",
+        "server": "decision_poc.mcp_server",
+        "tools_count": 15,
+        "tools": [
+          "semantic_query",
+          "twin_neighbors",
+          "doc_search",
+          "evidence_locate",
+          "claim_trace",
+          "provenance_verify",
+          "event_deduce",
+          "counterfactual_run",
+          "conflict_check",
+          "allocation_plan",
+          "scene_render",
+          "scene_status",
+          "scene_compare",
+          "asset_lookup",
+          "collab_run"
+        ]
+      }
+    },
+    {
+      "command": "-m decision_poc.mcp_sse --host 127.0.0.1 --port 8872 --groups presentation",
+      "groups": "presentation",
+      "health": {
+        "status": "ok",
+        "transport": "sse",
+        "server": "decision_poc.mcp_server",
+        "tools_count": 3,
+        "tools": [
+          "scene_render",
+          "scene_status",
+          "scene_compare"
+        ]
+      }
+    }
+  ]
+}
