@@ -532,3 +532,35 @@ def build_city_bundle(
     status = {asset.asset_id: governance.status.value for asset, governance in rows}
     documents = parse_assets(assets, root, annotations_path=root / "annotations.json")
     return extract_city_candidates(documents, assets, asset_status=status)
+
+
+def _main(argv: Sequence[str] | None = None) -> int:
+    """离线跑一遍候选抽取并打印统计；`--write` 才落盘。"""
+
+    import argparse
+    import json
+
+    from .ontology import bundle_payload
+    from .urban_dataset import DEFAULT_DATASET_ROOT, load_urban_assets
+
+    parser = argparse.ArgumentParser(description="城市排水域本体候选抽取（离线，无模型）")
+    parser.add_argument("--dataset", default=None, help="资产目录，默认 samples/assets/urban")
+    parser.add_argument("--out", default="samples/assets/urban/ontology_candidates.json")
+    parser.add_argument("--write", action="store_true", help="把候选与统计写到 --out")
+    args = parser.parse_args(argv)
+
+    root = Path(args.dataset) if args.dataset else DEFAULT_DATASET_ROOT
+    asset_count = len(load_urban_assets(root))
+    bundle = build_city_bundle(root)
+    payload = bundle_payload(bundle, asset_count=asset_count)
+    print(json.dumps(payload["stats"], ensure_ascii=False, indent=2))
+    if args.write:
+        target = Path(args.out)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(f"written: {target}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(_main())

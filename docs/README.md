@@ -38,7 +38,7 @@
 - [图像语义抽取](image-semantics.md)：PNG 像素级抽取（频谱峰值/示意色块/积水范围），输出 RegionSpec 区域候选；明确不做 OCR、不用视觉模型。
 - [实体重投影与绑定表](scene-binding.md)：决策层 `TW-*` 如何对齐到场景几何与 Actor tag、`primary_hop` 为什么取"最后一跳"、19 个高亮里 3 个无几何为什么显式列出而不补。
 - [泵站前池库容曲线（假设值）数据说明](hydro-forebay-assumptions.md)：`samples/assets/urban/pump_forebay_curves.csv` 的列定义、假设链条、演示算例与敏感性。
-- [本体半自动构建方案](ontology-bootstrap.md)：种子本体、规则抽取、置信度分档、跨文档多跳证据与合并计划。
+- [本体半自动构建方案](ontology-bootstrap.md)：城市排水域种子本体（13 类 / 10 谓词）、确定性抽取、置信度分档、跨文档与跨版本冲突、合并计划，以及只有几份市级预案时的冷启动路径。
 - [P2 任务单：认知加工层](tasks/p2-cognition-task-order.md)：适配器、切片、表格标准化、区域标注、抽取基线。
 - [P2 回传报告](reports/p2-cognition-report.md)：解析与抽取统计、三类抽查样例、硬断言验证结果。
 - [P4 回传报告](reports/p4-graph-provenance-report.md)：时态语义层、引用闸门、哈希链篡改定位、跨版本血缘（locator 键）。
