@@ -1,0 +1,47 @@
+{
+  "source_type": "toy",
+  "paper_result_claim": false,
+  "stage": "one_way_overflow_to_surface",
+  "generated_at_utc": "2026-11-22T04:07:51.013567+00:00",
+  "command": "experiments/literature_repro/lu_swmm_lisflood/run_swmm_lisflood.py",
+  "input_sha256": "90e46e7094ae57fe6aab65327ef8c7a2cd20cf9369101cad012baebd11ab9341",
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "numpy": "2.5.5"
+  },
+  "method": {
+    "name": "pipe overflow to 2D surface, one-way",
+    "grid_resolution_m": 10.0,
+    "grid_shape": [
+      18,
+      24
+    ],
+    "node_count": 6,
+    "time_steps": 12,
+    "dt_s": 300.0,
+    "manning_n": 0.03,
+    "scheme": "explicit finite volume, Manning face flux, donor-volume limiter, free outfall"
+  },
+  "conservation": {
+    "inflow_m3": 4772.79,
+    "boundary_outflow_m3": 2453.2052172653835,
+    "storage_m3": 2319.5847827346606,
+    "volume_residual_m3": -4.411049303598702e-11,
+    "relative_residual": -9.24207707357479e-15
+  },
+  "stats": {
+    "max_depth_m": 2.5296521299844934,
+    "max_wet_area_m2": 9100.0,
+    "final_wet_area_m2": 9000.0,
+    "peak_overflow_m3s": 0.85,
+    "overflow_volume_m3": 4772.79,
+    "substeps_per_step": 60,
+    "inundation_area_gt_030cm_m2": 2500.0,
+    "inundation_area_gt_100cm_m2": 900.0
+  },
+  "evidence_boundary": "toy DEM and synthetic overflow hydrographs; no SWMM solver, no LISFLOOD-FP shallow-water scheme, no calibration or observation. Not comparable with the paper's NSE or inundation maps.",
+  "outputs": {
+    "arrays": "surface_outputs.npz"
+  }
+}

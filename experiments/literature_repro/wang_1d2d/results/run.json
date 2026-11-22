@@ -1,0 +1,149 @@
+{
+  "source_type": "toy",
+  "paper_result_claim": false,
+  "stage": "two_way_1d_2d_coupling",
+  "generated_at_utc": "2026-11-22T04:08:21.515325+00:00",
+  "command": "experiments/literature_repro/wang_1d2d/run_1d2d_coupling.py",
+  "input_sha256": "4f5ffd73f61656fc36cec36e4708b38bca664b4448595077552cd39b0d152307",
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "numpy": "2.5.5"
+  },
+  "method": {
+    "name": "1D pipe chain + 2D surface, bidirectional orifice exchange",
+    "grid_resolution_m": 10.0,
+    "grid_shape": [
+      18,
+      24
+    ],
+    "pipe_segments": 8,
+    "manhole_units": 8,
+    "inlet_units": 3,
+    "time_steps": 12,
+    "dt_s": 300.0,
+    "substeps_per_step": 40,
+    "exchange_iterations_per_substep": 2,
+    "scheme": "explicit finite volume surface + Manning pipe conveyance + orifice exchange"
+  },
+  "runs": {
+    "none": {
+      "mode": "none",
+      "exchange_unit_count": 0,
+      "conservation": {
+        "rain_inflow_m3": 648.0,
+        "surface_storage_m3": 648.0000000000039,
+        "pipe_storage_m3": 0.0,
+        "outfall_m3": 0.0,
+        "surface_to_pipe_m3": 0.0,
+        "pipe_to_surface_m3": 0.0,
+        "pipe_full_spill_m3": 0.0,
+        "volume_residual_m3": -3.865352482534945e-12,
+        "relative_residual": -5.965050127368742e-15
+      },
+      "stats": {
+        "max_depth_m": 0.7697006024773421,
+        "final_wet_area_gt_030cm_m2": 600.0,
+        "max_wet_area_gt_030cm_m2": 600.0,
+        "peak_pipe_level_m": 0.0
+      }
+    },
+    "manhole": {
+      "mode": "manhole",
+      "exchange_unit_count": 8,
+      "conservation": {
+        "rain_inflow_m3": 648.0,
+        "surface_storage_m3": 412.93248370316735,
+        "pipe_storage_m3": 9.291483842983025,
+        "outfall_m3": 225.77603245385208,
+        "surface_to_pipe_m3": 11008.467915294701,
+        "pipe_to_surface_m3": 10697.934550526363,
+        "pipe_full_spill_m3": 75.4658484714905,
+        "volume_residual_m3": -2.4442670110147446e-12,
+        "relative_residual": -3.772016992306705e-15
+      },
+      "stats": {
+        "max_depth_m": 0.5906495072540188,
+        "final_wet_area_gt_030cm_m2": 300.0,
+        "max_wet_area_gt_030cm_m2": 300.0,
+        "peak_pipe_level_m": 1.5957691216057308
+      }
+    },
+    "inlet": {
+      "mode": "inlet",
+      "exchange_unit_count": 3,
+      "conservation": {
+        "rain_inflow_m3": 648.0,
+        "surface_storage_m3": 512.5880304904255,
+        "pipe_storage_m3": 8.401002067094366,
+        "outfall_m3": 127.01096744248318,
+        "surface_to_pipe_m3": 2226.944561275156,
+        "pipe_to_surface_m3": 1870.5998941184316,
+        "pipe_full_spill_m3": 220.93269764714515,
+        "volume_residual_m3": -3.0127011996228248e-12,
+        "relative_residual": -4.64923024633152e-15
+      },
+      "stats": {
+        "max_depth_m": 0.6500495533189868,
+        "final_wet_area_gt_030cm_m2": 600.0,
+        "max_wet_area_gt_030cm_m2": 600.0,
+        "peak_pipe_level_m": 1.5957691216057308
+      }
+    },
+    "inlet_manhole": {
+      "mode": "inlet_manhole",
+      "exchange_unit_count": 11,
+      "conservation": {
+        "rain_inflow_m3": 648.0,
+        "surface_storage_m3": 397.2072631524104,
+        "pipe_storage_m3": 1.5270987685451152,
+        "outfall_m3": 249.2656380790467,
+        "surface_to_pipe_m3": 6974.134888114073,
+        "pipe_to_surface_m3": 5842.8879876747005,
+        "pipe_full_spill_m3": 880.4541635917791,
+        "volume_residual_m3": -2.2168933355715126e-12,
+        "relative_residual": -3.4211316906967785e-15
+      },
+      "stats": {
+        "max_depth_m": 0.5491332712832996,
+        "final_wet_area_gt_030cm_m2": 200.0,
+        "max_wet_area_gt_030cm_m2": 300.0,
+        "peak_pipe_level_m": 1.5957691216057308
+      }
+    }
+  },
+  "comparison": {
+    "none": {
+      "max_wet_area_gt_030cm_m2": 600.0,
+      "area_reduction_vs_no_drainage_pct": 0.0,
+      "max_depth_m": 0.7697006024773421,
+      "depth_reduction_vs_no_drainage_pct": 0.0
+    },
+    "manhole": {
+      "max_wet_area_gt_030cm_m2": 300.0,
+      "area_reduction_vs_no_drainage_pct": 50.0,
+      "max_depth_m": 0.5906495072540188,
+      "depth_reduction_vs_no_drainage_pct": 23.262
+    },
+    "inlet": {
+      "max_wet_area_gt_030cm_m2": 600.0,
+      "area_reduction_vs_no_drainage_pct": 0.0,
+      "max_depth_m": 0.6500495533189868,
+      "depth_reduction_vs_no_drainage_pct": 15.545
+    },
+    "inlet_manhole": {
+      "max_wet_area_gt_030cm_m2": 300.0,
+      "area_reduction_vs_no_drainage_pct": 50.0,
+      "max_depth_m": 0.5491332712832996,
+      "depth_reduction_vs_no_drainage_pct": 28.656
+    }
+  },
+  "limitations": {
+    "area_quantization_m2": 100.0,
+    "note": "淹没面积按整格计数，最小步长就是一格（100 m²），所以面积百分比是粗粒度的；峰值水深是连续量，方向性更可靠。检查井 8 个、雨水口 3 个且孔口面积不同，三者之间的排序取决于本 toy 的布点，不代表论文的 9.3% / 23.2% / 24.5%。"
+  },
+  "evidence_boundary": "toy terrain, synthetic rain and a single trunk pipe; no SWMM network, no shallow-water solver, no Glasgow geometry or observation. Percentages here are properties of this toy setup and must not be compared with the paper's 9.3% / 23.2% / 24.5%.",
+  "outputs": {
+    "arrays": "coupling_outputs.npz"
+  }
+}
