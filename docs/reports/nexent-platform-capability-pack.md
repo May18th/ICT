@@ -11,7 +11,7 @@
 |---|---|---|---|
 | Agent 配置导出 | 三个业务 Agent 的已发布版本已导出（4 / 6 / 1 个工具），配置摘要另出一份 | `samples/nexent/live/published_exports.json`、`urban_deduction_agent-v34.zip` | 已补；路由导出仍只给草稿，见 §1.2 |
 | MCP 接入方式 | 4 个主工具同属一个容器内 SSE 端点，不是"远程地址"也不是"OpenAPI 转 MCP" | `samples/nexent/live/mcp_status.json`、`samples/nexent/tools.json` | 已补，`/health` 现场抓取 |
-| 知识库 | 单索引 125 个切片 / 21 个源文件，引用回 `文件名#行号` | `samples/nexent/live/kb_chunks.json`、`samples/nexent/live/platform_qa_current.json` | 已补；**未按四类分库**，见 §3.4 |
+| 知识库 | 主索引 125 切片 / 21 源文件 + 策略台账库；引用回 `文件名#节或行` | `samples/nexent/live/kb_chunks.json`、`samples/nexent/live/platform_qa_current.json` | 已补；**未按四类分库**，理由与代价见 §3.4 |
 | 多智能体调用图 | 主 Agent → 三组工具 → 大屏；总控与 5 部门在 `collab_run` 内，不是平台 sub-agent | `docs/figures/nexent-multiagent-callgraph.svg` | 已补，含平台机制对照 |
 | 分层记忆 | 离线五步全过；平台侧**三层均已实测**（agent 短期记忆的写入/召回/注入/隔离，tenant 与 user 长期记忆的写入/注入），进化循环仍离线 | `samples/nexent/live/memory_roundtrip.json`、`memory_long_term.json` | 已补，边界见 §5.3 |
 | 调试迭代 | 版本—会话号—结论可逐条对上；CI 五道闸有运行记录 | `docs/reports/nexent-live-integration-report.md`、`docs/reports/ci-runs.json` | 已补；顺带更正一处口径 |
@@ -177,14 +177,42 @@ $ python -m decision_poc.mcp_sse --port 8872 --groups presentation
 
 **我们实测入库的只有 Markdown 与 CSV**（因为台账和预案原件就是这两类）。Word/PDF/PPT/Excel 的解析能力是平台能力，本项目**没有实测样本**，材料里别写成"我们验证了七种格式"。
 
-### 3.4 与"底图/预案/台账/规则分别建库"的差异
+### 3.4 为什么没按"底图/预案/台账/规则"分四库（2026-11-22 结论）
 
-当前是**一个索引**，四类资料靠 `path_or_url` 前缀区分，不是四个库。这是当初的取舍：
+**现结构是两个索引**，不是四个：
+
+| 索引 | 内容 | 关键参数 |
+|---|---|---|
+| `3-4829593e…`（`urban-flood-assets`） | 预案 4 + 规程 2 + 通告 2 + 说明 1 + 台账 10 CSV + 外部资料 2，共 **125 切片 / 21 源文件 / 40 073 字** | 台账问答绑这个 |
+| `4-72336e70…`（`urban-policy-ledger`） | 策略台账与平台版本快照（`policy-ledger://`、`platform-versions://`） | 同上，一起绑 |
+
+台账问答智能体（`urban_asset_qa`，agent 40）的检索工具参数实测是
+`index_names=[3-…,4-…]、top_k=10、search_mode=hybrid、rerank=false`
+（`nexent.ag_tool_instance_t.params`），与提交件那张参数表逐项一致。
+
+不拆成四个库的理由（产品侧，仍然成立）：
 
 - 拆库等于在检索层给来源打标签，"这条依据来自预案还是台账"会变成检索前置条件，提问者得先知道自己该查哪个库；
-- 单库 + 元数据（`filename` / `title`）已经能回答"出自哪份文件哪一行"，可溯源的要求不靠拆库满足。
+- 单库 + 元数据（`filename` / `title`）已经能回答"出自哪份文件哪一节"，可溯源的要求不靠拆库满足。
 
-代价要承认：单库里预案条文与台账记录会互相挤占 top-k。实测「A-03 片区有哪些泵站」这一问返回 18 条来源，与问题直接相关的只有 3 条（两座泵站 + 片区说明），其余是邻接资料。要拆的话成本不高——`ingest_knowledge.py --index <新库名> --only <文件列表>` 已经在，一次增量补录即可，但需要平台在线。**是否拆，是产品取舍，不是技术缺口。**
+代价要承认：预案条文与台账记录在同一索引里互相挤占 top-k。实测「A-03 片区有哪些泵站」返回 18 条来源，
+与问题直接相关的只有 3 条（两座泵站 + 片区说明）。
+
+**一条今天才核实的硬约束，之前写错过**：原稿说"拆库成本不高，`ingest_knowledge.py --index --only` 一次增量补录即可"。
+灌数据确实便宜，但**索引绑定写在智能体版本配置里**（`ag_tool_instance_t.params.index_names`），
+拆库必须改这一行 → 重新发布 → `urban_asset_qa` 从 v11 升到 v12。升版号会连带三处：
+提交件参数表（v11 / id=3、id=4）、演示片 0:03 那句"台账 v11"、`published_exports.json` 里的 v11 条目。
+
+**结论：初赛不拆**。理由是收益（台账问句少被邻接资料挤占）不抵一次版本号变更在提交件、视频、导出件三处的连锁，
+而单库已经能做到"每条结论回文件名 + 定位符"。要做就放到决赛，一次做完：
+
+```bash
+# 1) 新建两个库并只灌对应文件（--only 按文件名过滤）
+python deploy/nexent/ingest_knowledge.py --apply --index urban-kb-plans  --only plan_flood_emergency_v2.md,plan_flood_emergency_v1.md
+python deploy/nexent/ingest_knowledge.py --apply --index urban-kb-ledger --only drainage_facilities.csv,work_orders.csv
+# 2) 改 deploy/nexent/create_asset_qa_agent.py 里的 index_names，重新 create-agent 并发布
+# 3) 同步三处：提交件参数表、演示片 0:03 画面、published_exports.json
+```
 
 ---
 
@@ -389,6 +417,8 @@ uv run --locked python scripts/nexent_chain_live.py
 | 新提问的问答全过程录屏 | 平台前端流式回答触发 React #185，一问就崩 | 初赛函评不到场，非必需；决赛要现场演示则先修前端或走历史会话回放 |
 
 分层记忆那一格已于 2026-11-22 补上（§5.3），三层记忆都已写入并注入；仍属离线的是**进化循环**本身。
+
+知识库四库拆分是**主动不做**，不是缺能力：拆库要改智能体版本配置里的 `index_names`，会连带提交件、演示片、导出件三处（§3.4）。
 
 其余各格都有可读文件可复核。历史快照与当前状态的边界统一看 `docs/reports/nexent-evidence-index.md`。
 
