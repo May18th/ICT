@@ -283,9 +283,12 @@ docker cp nexent-config:/tmp/agent_export.json       samples/nexent/live/agent_e
     引擎不在线时体现为 `delivery=pending`，不算失败。2026-11-14 起现场演示不再使用 UE/Blender，
     这 4 个工具保留是因为 P10 模块有独立测试（`tests/test_p10_render_worker.py` 等），不是死代码，
     但**对外不要宣称它们参与决策**。
-  - 接入数不是越多越好：2026-11-03 把 12 个工具全挂上主 Agent，模型转去调 `parallel_executor`，
-    8/8 掉到 0/8。恢复不是一步到 4 个：先只挂 `event_deduce` + `evidence_locate` 两个即恢复 8/8（v10），
-    `doc_search` 是 2026-11-13 加的第 3 个、`collab_run` 是 11-14 加的第 4 个。
+  - 接入数不是越多越好：2026-11-03 主 Agent 挂 12 个工具、技能正文又要求逐个调
+    `twin_neighbors` / `conflict_check` / `allocation_plan` 时，模型转去调 `parallel_executor`，
+    8/8 掉到 0/8；而同一批 12 个工具单独挂着、正文未点名时是 8/8（conversation 59）。
+    决定退化的是「清单里有什么 + 正文要求什么」，不是数量。恢复不是一步到 4 个：先只挂
+    `event_deduce` + `evidence_locate` 两个即恢复 8/8（v10），`doc_search` 是 2026-11-13 加的第 3 个、
+    `collab_run` 是 11-14 加的第 4 个。
 
 细节与交叉核对结论见 [`docs/reports/agent-export-evidence.md`](../../docs/reports/agent-export-evidence.md)。
 
