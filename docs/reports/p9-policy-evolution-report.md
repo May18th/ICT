@@ -5,7 +5,7 @@
 - 评测集指纹：`c2c7666eb0bd1bf8`
 - 用例：训练 8 例 / 留出 4 例 / 人工评审 1 例
 - 反馈来源：冻结 ground truth + 人工评审结论（受控评测环境下的反馈信号），不是真实市政数据回流；人工评审为角色扮演，非真实部门批复。
-- 分层记忆为**离线同构实现**（Tenant/User/Agent 三层契约与 Nexent 对齐），**未在真实 Nexent 平台验证**。
+- 分层记忆为**离线同构实现**（Tenant/User/Agent 三层契约与 Nexent 对齐），这个进化循环**未在真实 Nexent 平台验证**；平台侧只验证过 agent 层短期记忆的写入与召回（2026-11-22，见 `deploy/nexent/memory_roundtrip.py`）。
 
 ## 0 一句话结论
 

@@ -43,6 +43,7 @@ ROOT = Path(__file__).resolve().parents[2]
 LIVE = ROOT / "samples" / "nexent" / "live"
 LEDGER = ROOT / "artifacts" / "ledger" / "platform_versions.json"
 AGENTS = LIVE / "agents.json"
+PUBLISHED = LIVE / "published_exports.json"
 TOOLS_JSON = ROOT / "samples" / "nexent" / "tools.json"
 
 sys.path.insert(0, str(ROOT / "deploy" / "nexent"))
@@ -137,6 +138,9 @@ def _sampling(override: dict | None) -> dict:
 def build_agent_summary() -> dict:
     live = {item["name"]: item for item in _load(AGENTS)["data"]}
     ledger = {item["name"]: item for item in _load(LEDGER)["platform_agents"]}
+    published = {}
+    if PUBLISHED.is_file():
+        published = {item["name"]: item for item in _load(PUBLISHED)["agents"]}
     tools_contract = {t["name"]: t for t in _load(TOOLS_JSON)["tools"]}
 
     agents = []
@@ -183,6 +187,18 @@ def build_agent_summary() -> dict:
                 f"deploy/nexent/setup_nexent.py::{plan['tools_const']}（已发布版本的工具绑定）"
                 if plan["tools_const"] else "平台内置 knowledge_base_search（导出件 agent_info.tools）"
             ),
+            "published_export": (
+                {
+                    "version_no": published[name].get("version_no"),
+                    "kind": published[name].get("kind"),
+                    "tools_count": published[name].get("tools_count"),
+                    "tools": published[name].get("tools"),
+                    "agent_json_sha256": published[name].get("agent_json_sha256"),
+                    "matches_binding": sorted(published[name].get("tools") or []) == tools,
+                    "source": "samples/nexent/live/published_exports.json",
+                }
+                if name in published else None
+            ),
             "tool_descriptions_present": (
                 all(t in tools_contract for t in tools) if plan["tools_const"] else None
             ),
@@ -225,6 +241,7 @@ def build_agent_summary() -> dict:
             "live_agents": AGENTS.relative_to(ROOT).as_posix(),
             "tools_contract": TOOLS_JSON.relative_to(ROOT).as_posix(),
             "tool_binding": "deploy/nexent/setup_nexent.py",
+            "published_exports": PUBLISHED.relative_to(ROOT).as_posix() if PUBLISHED.is_file() else None,
         },
         "agents": agents,
         "platform_export_defect": {
@@ -234,7 +251,7 @@ def build_agent_summary() -> dict:
                 "Nexent/backend/management/services/agent/management.py:1410 —— impl 支持 version_no，默认 0（草稿）",
                 "主 Agent 导出包 2 工具、协同 Agent 导出包 0 工具，而发布版本分别为 4 / 6",
             ],
-            "workaround": "容器内直调 impl 并传 version_no=<已发布版本号>；命令见 docs/reports/nexent-platform-capability-pack.md §1",
+            "workaround": "容器内直调 impl 并传 version_no=<已发布版本号>：deploy/nexent/export_published.py（2026-11-22 实测通过，产物 samples/nexent/live/published_exports.json）",
         },
     }
 

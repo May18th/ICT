@@ -9,11 +9,11 @@
 
 | 项 | 结论 | 主要证据 | 状态 |
 |---|---|---|---|
-| Agent 配置导出 | 三个业务 Agent 的版本/模型/工具/技能/模式已固化为 JSON；**平台导出包不能代表已发布版本** | `samples/nexent/live/agent_config_summary.json` | 已补，附导出缺陷实测 |
+| Agent 配置导出 | 三个业务 Agent 的已发布版本已导出（4 / 6 / 1 个工具），配置摘要另出一份 | `samples/nexent/live/published_exports.json`、`urban_deduction_agent-v34.zip` | 已补；路由导出仍只给草稿，见 §1.2 |
 | MCP 接入方式 | 4 个主工具同属一个容器内 SSE 端点，不是"远程地址"也不是"OpenAPI 转 MCP" | `samples/nexent/live/mcp_status.json`、`samples/nexent/tools.json` | 已补，`/health` 现场抓取 |
 | 知识库 | 单索引 125 个切片 / 21 个源文件，引用回 `文件名#行号` | `samples/nexent/live/kb_chunks.json`、`samples/nexent/live/platform_qa_current.json` | 已补；**未按四类分库**，见 §3.4 |
 | 多智能体调用图 | 主 Agent → 三组工具 → 大屏；总控与 5 部门在 `collab_run` 内，不是平台 sub-agent | `docs/figures/nexent-multiagent-callgraph.svg` | 已补，含平台机制对照 |
-| 分层记忆 | 离线同构五步全过；平台侧**零次**真实写入与召回 | `docs/reports/nexent-memory-walkthrough.md`、`samples/eval/decision_memory.json` | 未补完，原因与补齐命令见 §5 |
+| 分层记忆 | 离线五步全过；平台侧 agent 层短期记忆**已实测**写入/召回/注入/隔离，租户与用户两层长期记忆未写 | `samples/nexent/live/memory_roundtrip.json`、`docs/reports/nexent-memory-walkthrough.md` | 已补，边界见 §5.3 |
 | 调试迭代 | 版本—会话号—结论可逐条对上；CI 五道闸有运行记录 | `docs/reports/nexent-live-integration-report.md`、`docs/reports/ci-runs.json` | 已补；顺带更正一处口径 |
 
 重新生成上面三份 JSON：
@@ -48,28 +48,34 @@ uv run --locked python deploy/nexent/export_capability_pack.py --with-mcp-health
 
 `enable_planning` 说明：导出件**不含**该字段，取值来自平台后端默认（`Nexent/backend/agents/create_agent_info.py:1318`，`enable_planning: bool = False`）。所以本项目是 ReAct 循环，不是 plan-and-execute。
 
-### 1.2 平台导出包为什么不能当 v34 的配置证据
+### 1.2 导出接口只给草稿，已发布版本要直调（2026-11-22 实测通过）
 
-实测三条，都能自己复核：
+三条能自己复核的事实：
 
-1. `/agent/export` 路由调用实现时**没传版本号**（`Nexent/backend/apps/agent_app.py:662`），实现签名默认 `version_no=0`（`management.py:1410`）——导的是**草稿**。
-2. 草稿的工具绑定落后于已发布版本：主 Agent 导出包只有 2 个工具（`collab_run`、`doc_search`），发布版是 4 个；协同 Agent 导出包 **0 个工具、0 个技能**，发布版是 6 个。
-3. 于是导出包与发布版本不等价。`agent_config_summary.json` 里每个 Agent 都有 `draft_vs_published` 字段记录这个差集。
+1. `/agent/export` 路由调实现时**没传版本号**（`Nexent/backend/apps/agent_app.py:662`），实现默认 `version_no=0`（`management.py:1410`）——导的是**草稿**。
+2. 草稿落后于已发布版本：主 Agent 草稿包 2 个工具（`collab_run`、`doc_search`），发布版 4 个；协同草稿包 **0 个工具、0 个技能**，发布版 6 个。
+3. 实现本身支持 `version_no`，只是路由没透出来。容器内直调就能拿到真正的已发布版本。
 
-提交口径：**交配置摘要 JSON，同时把导出缺陷说明附上**。反过来做（交导出包、声称就是 v34）会被评委当场对照出来。
+绕过办法与实测结果（`samples/nexent/live/published_exports.json`，脚本 `deploy/nexent/export_published.py`）：
 
-平台在线时要拿真正的 v34 包，正确做法是在 backend 容器里直调实现并传版本号：
+| Agent | 版本 | 产物 | 工具数 | 工具 |
+|---|---|---|---|---|
+| `urban_deduction_agent` | v34 | zip（含 2 个技能包） | **4** | `event_deduce` / `evidence_locate` / `doc_search` / `collab_run` |
+| `urban_collab_agent` | v12 | JSON | **6** | `event_deduce` / `twin_neighbors` / `conflict_check` / `allocation_plan` / `evidence_locate` / `collab_run` |
+| `urban_asset_qa` | v11 | JSON | **1** | 平台内置 `knowledge_base_search` |
 
 ```bash
-docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python -c \"
-import asyncio, pathlib
-from management.services.agent.management import export_agent_with_skills_impl
-r = asyncio.run(export_agent_with_skills_impl(3, 'Bearer <token>', version_no=34))
-pathlib.Path('/tmp/v34.zip').write_bytes(r['data'])
-\""
+docker cp deploy/nexent/platform_client.py  nexent-config:/tmp/platform_client.py
+docker cp deploy/nexent/export_published.py nexent-config:/tmp/export_published.py
+docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/export_published.py \
+    --json /tmp/published_exports.json --out-dir /tmp/published"
+docker cp nexent-config:/tmp/published_exports.json   samples/nexent/live/published_exports.json
+docker cp nexent-config:/tmp/published/urban_deduction_agent-v34.zip samples/nexent/live/
 ```
 
-> 这段**未实测**：平台栈当前没起（5013 端口能连但不回包，5010/3000 未监听），没有环境跑。字段签名出自源码，命令形态与 `export_bundle.py` 一致。
+提交口径：**交 `published_exports.json` + v34 的 zip**，再附配置摘要 JSON（含 `draft_vs_published` 差集）。
+只交路由导出的包并声称是 v34 会被当场对照出来——包里只有 2 个工具。
+整包 sha256 不可复算（zip 条目头带导出时刻时间戳），对账用清单里的 `agent_json_sha256` 与工具名清单。
 
 ---
 
@@ -238,26 +244,40 @@ $ python -m decision_poc.mcp_sse --port 8872 --groups presentation
 
 ### 5.3 已测到哪一步
 
-离线五步全部走完（底稿 `docs/reports/nexent-memory-walkthrough.md`）：
+**离线侧**：五步全过（底稿 `docs/reports/nexent-memory-walkthrough.md`）——同场景三作用域写入、召回排序、逐层降级、持久化往返、字段对照。
 
-1. 同场景三作用域各写一条，偏差 tenant 0.3520 / user 0.1210 / agent 0.0000；
-2. 召回按 agent → user → tenant 排序，三条相似度均 1.000；
-3. 逐层降级：去掉 agent 命中 user（0.1210），只剩 tenant 命中（0.3520），全空则从零起步（初始偏差 0.2264）；
-4. 持久化往返 3 479 字节，写入再读回顺序一致；
-5. 字段对照平台 `MemoryRecord`，差异逐条列出（我们结构化 JSON vs 平台自由文本）。
+**平台侧（2026-11-22 实测，`samples/nexent/live/memory_roundtrip.json`）**：
 
-**平台侧一次真实写入与召回都没做过。** 现状与原因：
+| 步骤 | 接口 | 结果 |
+|---|---|---|
+| 写 agent 层 | `POST /memory/records` | 200，`memory_id=456` |
+| 落库确认 | `GET /memory/records` | 列表内可见 |
+| 召回 | `POST /memory/records/search` | 命中 1 条，相似度 `0.8448` |
+| 上下文注入 | `GET /memory/context` | `agent_short_term` 1 块，prompt 161 字符含探针内容 |
+| 跨用户隔离 | 换一个 `sub` 再列 | 对方 0 条，探针不可见 |
+| 清理 | `DELETE /memory/records/456` | 200，再列已无 |
 
-- 平台栈当前没起来（5013 连着不回包，5010 管理 API 与 3000 前端未监听），写不进去；
-- 台账问答 Agent 的工具链里出现过 `search_memory`（`platform_qa_current.json`），说明**平台的自动记忆检索通道是接通的**，但那读的是平台自己攒的会话记忆，不是我们写进去的三层内容——这两件事不能混着说。
+过程中踩到一条平台约束，写材料时别写错：`memory_records_t` 上有
+`ck_memory_records_agent_short_term`（`layer='agent' AND memory_type='short_term'`），
+**这张表只收 agent 层短期记忆**，还要带 `conversation_id` 才能按会话隔离。租户/用户两层是
+版本化 Markdown，走 `/memory/long-term/{scope}/versions`，tenant 作用域还要求 ADMIN 角色。
+第一次按 `memory_type=long_term` 写 agent 层，被 406 `Failed to persist memory record` 打回，
+根因就是这个 CheckViolation。
 
-所以对外只有一种写法：
+所以现在准确的表述是：
 
-> 决策记忆（租户 / 用户 / 智能体三层）在离线同构实现中跑通，写入、召回、逐层降级、持久化四项均有实测；平台侧的记忆写入、检索、上下文取用与按作用域写长期记忆四个接口位置已核实，但未做过一次真实写入与召回。
+> 决策记忆的**进化循环**在离线同构实现中跑通（写入、召回、逐层降级、持久化四项有实测）；
+> 平台侧已验证 **agent 层短期记忆**的写入、召回、上下文注入与跨用户隔离；
+> 租户/用户两层的长期记忆未写入——写它们会改变所有对话看到的上下文，属平台状态变更，
+> 没在无人值守脚本里做。
 
-平台起来后补完的四步（完整命令见 `nexent-memory-walkthrough.md` §四）：写一条 agent 层记忆 → 列表确认落库 → 检索确认召回 → 取 `/memory/context` 确认注入；再做跨会话与跨用户两条隔离验证。
+复现（宿主机三条命令，细节见脚本 docstring）：
 
-还有一个前置坑：平台有从最终答案自动抽取记忆的 `fa_memory_extractor`，输入是自由文本，而我们的答案被约束成 `<code>` 里的 `final_answer(json)`——自动抽取大概率抽不出可用记忆。接的时候要在工具侧主动写，别指望一条龙。
+```bash
+docker cp deploy/nexent/platform_client.py  nexent-config:/tmp/platform_client.py
+docker cp deploy/nexent/memory_roundtrip.py nexent-config:/tmp/memory_roundtrip.py
+docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/memory_roundtrip.py --json /tmp/m.json"
+```
 
 ---
 
@@ -339,12 +359,13 @@ uv run --locked python scripts/nexent_chain_live.py
 
 ---
 
-## 8 还没补上的两格
+## 8 还差的一格
 
 | 缺口 | 现状 | 补齐条件 |
 |---|---|---|
-| 平台侧分层记忆读写闭环 | 离线五步过，平台零次写入 | 平台栈起来后跑 §5.3 的四步 |
 | 新提问的问答全过程录屏 | 平台前端流式回答触发 React #185，一问就崩 | 初赛函评不到场，非必需；决赛要现场演示则先修前端或走历史会话回放 |
+
+分层记忆那一格已于 2026-11-22 补上（§5.3），租户/用户两层长期记忆刻意没写，属取舍不属缺口。
 
 其余各格都有可读文件可复核。历史快照与当前状态的边界统一看 `docs/reports/nexent-evidence-index.md`。
 
@@ -361,6 +382,6 @@ uv run --locked python scripts/nexent_chain_live.py
 | 技能正文导致退化 | 「实测结果是 8/8 直接掉到 0/8——技能正文里"必须调 twin_neighbors / conflict_check / allocation_plan"的指令覆盖了主提示词的约束」 | 一致（归因指向技能正文，与 §6.2 相同） |
 | 测试数 | 「981 项测试（967 通过 + 14 项按设计跳过；依赖装齐的机器上只跳 1 项）」 | 一致：2026-11-22 实测 981 收集 / 980 通过 / 1 跳过 |
 | 对外数字自检 | 「108/108 项一致，核对值 a63cbf4f9fc53c6e」 | 一致 |
-| 分层记忆 | 限制条目第 4 条：「离线同构跑通…平台侧四个接口位置已核实，但没有做过一次真实写入与召回」 | 一致，与 §5.3 同一表述 |
+| 分层记忆 | 限制条目第 4 条仍是「没有做过一次真实写入与召回」 | **已过时**：2026-11-22 实测已写入并召回（§5.3），提交件这一条需改成「平台侧已验证 agent 层短期记忆，租户/用户长期记忆未写入」 |
 
 一处建议改、未改（属提交件，改动需你点头）：第 245 段写「职责重叠会让模型在两份相似结果之间反复挑，**实测正是 8/8 掉到 0/8 的原因之一**」。实测变量是"技能正文要求逐个调中间态工具"，"职责重叠"没有单独做过对照，建议删掉「实测」二字，改成「会让模型反复挑，这也是把结论收在一个工具里的原因」。

@@ -1,12 +1,13 @@
 {
   "schema_version": "nexent-agent-config-1",
-  "generated_at": "2026-11-22T21:57:13+0800",
+  "generated_at": "2026-11-22T22:47:20+0800",
   "generator": "deploy/nexent/export_capability_pack.py",
   "sources": {
     "platform_versions": "artifacts/ledger/platform_versions.json",
     "live_agents": "samples/nexent/live/agents.json",
     "tools_contract": "samples/nexent/tools.json",
-    "tool_binding": "deploy/nexent/setup_nexent.py"
+    "tool_binding": "deploy/nexent/setup_nexent.py",
+    "published_exports": "samples/nexent/live/published_exports.json"
   },
   "agents": [
     {
@@ -53,6 +54,20 @@
         "evidence_locate"
       ],
       "tools_source": "deploy/nexent/setup_nexent.py::MAIN_TOOLS（已发布版本的工具绑定）",
+      "published_export": {
+        "version_no": 34,
+        "kind": "zip",
+        "tools_count": 4,
+        "tools": [
+          "doc_search",
+          "collab_run",
+          "event_deduce",
+          "evidence_locate"
+        ],
+        "agent_json_sha256": "fc041ffd97af1301279ae0907a9d1088081335bc57cd297fb7f4e5267a98f990",
+        "matches_binding": true,
+        "source": "samples/nexent/live/published_exports.json"
+      },
       "tool_descriptions_present": true,
       "tool_descriptions_note": null,
       "skills": [
@@ -125,6 +140,22 @@
         "twin_neighbors"
       ],
       "tools_source": "deploy/nexent/setup_nexent.py::COLLAB_TOOLS（已发布版本的工具绑定）",
+      "published_export": {
+        "version_no": 12,
+        "kind": "json",
+        "tools_count": 6,
+        "tools": [
+          "collab_run",
+          "event_deduce",
+          "twin_neighbors",
+          "allocation_plan",
+          "conflict_check",
+          "evidence_locate"
+        ],
+        "agent_json_sha256": "bb23fec909280dcab6816ce0fb7023be211e2ff916f55b42c71eee862d28592d",
+        "matches_binding": true,
+        "source": "samples/nexent/live/published_exports.json"
+      },
       "tool_descriptions_present": true,
       "tool_descriptions_note": null,
       "skills": [],
@@ -181,6 +212,17 @@
         "knowledge_base_search"
       ],
       "tools_source": "平台内置 knowledge_base_search（导出件 agent_info.tools）",
+      "published_export": {
+        "version_no": 11,
+        "kind": "json",
+        "tools_count": 1,
+        "tools": [
+          "knowledge_base_search"
+        ],
+        "agent_json_sha256": "3c68f8a64035cc14462ba3f1c94dd0e4e551d24e18f0f8d52478e4215ff06d1d",
+        "matches_binding": true,
+        "source": "samples/nexent/live/published_exports.json"
+      },
       "tool_descriptions_present": null,
       "tool_descriptions_note": "knowledge_base_search 是平台内置工具，不在本项目 tools.json 契约内",
       "skills": [],
@@ -212,6 +254,6 @@
       "Nexent/backend/management/services/agent/management.py:1410 —— impl 支持 version_no，默认 0（草稿）",
       "主 Agent 导出包 2 工具、协同 Agent 导出包 0 工具，而发布版本分别为 4 / 6"
     ],
-    "workaround": "容器内直调 impl 并传 version_no=<已发布版本号>；命令见 docs/reports/nexent-platform-capability-pack.md §1"
+    "workaround": "容器内直调 impl 并传 version_no=<已发布版本号>：deploy/nexent/export_published.py（2026-11-22 实测通过，产物 samples/nexent/live/published_exports.json）"
   }
 }

@@ -1,0 +1,112 @@
+{
+  "schema_version": "nexent-memory-roundtrip-1",
+  "generated_at": "2026-11-22T22:43:33+0800",
+  "base_url": "http://localhost:5010",
+  "probe": {
+    "content": "场景：A-03 兴华路积水 30cm + B-01 缺口 0.667；在该场景下 flood-response-v1.2 的分配偏差为 0.0，跨区调 2 台移动泵后 A-03 缺口归零、B-01 未满足 2 项。",
+    "query": "A-03 B-01 抽排缺口 分配策略 偏差",
+    "idempotency_key": "mem-probe-20261122"
+  },
+  "steps": [
+    {
+      "step": "read_long_term_tenant",
+      "http": 200,
+      "detail": {
+        "empty": true
+      }
+    },
+    {
+      "step": "read_long_term_user",
+      "http": 200,
+      "detail": {
+        "empty": true
+      }
+    },
+    {
+      "step": "baseline_list",
+      "http": 200,
+      "detail": {
+        "count": 50
+      }
+    },
+    {
+      "step": "write_agent_record",
+      "http": 200,
+      "detail": {
+        "memory_id": 456,
+        "request": {
+          "layer": "agent",
+          "memory_type": "short_term",
+          "agent_id": "urban_deduction_agent",
+          "idempotency_key": "mem-probe-20261122"
+        }
+      }
+    },
+    {
+      "step": "list_after_write",
+      "http": 200,
+      "detail": {
+        "found": true,
+        "count": 50
+      }
+    },
+    {
+      "step": "search_recall",
+      "http": 200,
+      "detail": {
+        "count": 1,
+        "hits": [
+          {
+            "memory_id": 456,
+            "score": 0.8447633
+          }
+        ],
+        "hit_probe": true
+      }
+    },
+    {
+      "step": "context_injection",
+      "http": 200,
+      "detail": {
+        "blocks": {
+          "tenant_long_term": 0,
+          "user_long_term": 0,
+          "agent_short_term": 1,
+          "external": 0
+        },
+        "prompt_chars": 161,
+        "contains_probe": true
+      }
+    },
+    {
+      "step": "isolation_other_user",
+      "http": 200,
+      "detail": {
+        "visible_to_other_user": false,
+        "count_for_other_user": 0
+      }
+    },
+    {
+      "step": "delete_probe",
+      "http": 200,
+      "detail": {
+        "memory_id": 456
+      }
+    },
+    {
+      "step": "list_after_delete",
+      "http": 200,
+      "detail": {
+        "still_present": false
+      }
+    }
+  ],
+  "summary": {
+    "write_ok": true,
+    "listed": true,
+    "recall_hit": true,
+    "isolation_ok": true,
+    "all_http_ok": true
+  },
+  "note": "tenant/user 两层只做只读探测：写它们会改变所有对话看到的长期记忆，属平台状态变更。"
+}

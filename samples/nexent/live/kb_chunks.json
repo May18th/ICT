@@ -1,6 +1,6 @@
 {
   "schema_version": "nexent-kb-chunks-1",
-  "generated_at": "2026-11-22T21:57:13+0800",
+  "generated_at": "2026-11-22T22:47:20+0800",
   "method": "deploy/nexent/ingest_knowledge.py::build_docs()（与入库同一份切分代码）",
   "note": "只统计切分结果，不写平台；入库需平台在线（--apply）",
   "total_chunks": 125,

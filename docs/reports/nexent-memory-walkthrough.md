@@ -1,5 +1,7 @@
 # 分层记忆走查：平台侧到哪一步（2026-11-22）
 
+> **2026-11-22 22:41 状态更新：平台侧已补完 agent 层短期记忆的读写闭环，见文末 §七。§一「平台侧走不了」只对当天 15:59 那个时点成立，平台栈起不来时的判断仍可复用。**
+
 > 本文是 §5 的底稿，从工作区临时目录搬进仓库，便于复核。走查脚本当时是临时文件，未随仓库分发；下面每条结论都能由 `samples/eval/decision_memory.json` 与 `src/decision_poc/experience.py` 直接核对。
 
 ## 结论先说
@@ -124,3 +126,31 @@ curl -s -X DELETE "$B/memory/records/<memory_id>" -H "Authorization: Bearer $K"
 页数仍 22，两份 sha `8dc4fc702168b53d…`，禁词 0。
 
 这样改的用意：把「没验证」从一句自我否定变成「哪四项已测 + 哪四个位置已定位 + 缺的最后一步是什么」。评委要追问时，问的是最后一句话，而不是整条存不存在。
+
+---
+
+## 七、平台侧补完了（2026-11-22 22:41 实测）
+
+平台栈起来后按 §四 跑，三处与当时规划不同，先说清：
+
+1. **接口不在北向**。记忆路由挂在 5010 管理 API（`/memory/records`、`/memory/records/search`、`/memory/context`、`/memory/long-term/{scope}`）。5013 上实测 404，§四 那几条 curl 打 5013 是错的。
+2. **`memory_records_t` 只收 agent 层短期记忆**。库上有 `ck_memory_records_agent_short_term`：
+   `CHECK (layer = 'agent' AND memory_type = 'short_term')`。第一次按 `long_term` 写直接被
+   406 `Failed to persist memory record` 打回，容器日志里的根因是 `CheckViolation`。这条表还要带
+   `conversation_id` 才能按会话隔离。
+3. **长期记忆是版本化 Markdown**，不是这张表：`/memory/long-term/{scope}/versions`，
+   `scope` 只有 tenant / user，tenant 的写入要求 ADMIN 角色。
+
+实测结果（`samples/nexent/live/memory_roundtrip.json`，脚本 `deploy/nexent/memory_roundtrip.py`）：
+
+| 步骤 | 接口 | 结果 |
+|---|---|---|
+| 写 agent 层 | `POST /memory/records` | 200，`memory_id=456` |
+| 落库确认 | `GET /memory/records` | 可见 |
+| 召回 | `POST /memory/records/search` | 命中 1 条，相似度 `0.8448` |
+| 上下文注入 | `GET /memory/context` | `agent_short_term` 1 块，prompt 161 字符，含探针内容 |
+| 跨用户隔离 | 换 `sub` 再列 | 0 条，不可见 |
+| 清理 | `DELETE /memory/records/456` | 200，再列已无 |
+
+所以 §一 的结论要收窄成一句：**agent 层短期记忆的平台侧读写闭环已验证；租户/用户两层长期记忆没写**——
+写它们会改变所有对话看到的上下文，属平台状态变更，没在无人值守脚本里做。

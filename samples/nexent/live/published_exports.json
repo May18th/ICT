@@ -1,0 +1,98 @@
+{
+  "schema_version": "nexent-published-exports-1",
+  "method": "容器内直调 export_agent_with_skills_impl(version_no=<已发布版本号>)，绕开路由固定导草稿的限制",
+  "agents": [
+    {
+      "agent_id": 3,
+      "name": "urban_deduction_agent",
+      "version_no": 34,
+      "ok": true,
+      "kind": "zip",
+      "file": "/tmp/published/urban_deduction_agent-v34.zip",
+      "bytes": 10927,
+      "sha256": "165db93393eafa9c44955e757bf2ba0fe6a90930e2c7f4ad9da9ba53ee5eddb9",
+      "entries": [
+        {
+          "name": "agent.json",
+          "bytes": 17038,
+          "sha256": "fc041ffd97af1301279ae0907a9d1088081335bc57cd297fb7f4e5267a98f990"
+        },
+        {
+          "name": "skills/scarcity-allocation-evolution.zip",
+          "bytes": 2188,
+          "sha256": "6aab9fab8cbb26a90b60e9f72aba1122f482ca955464e7ffdad8477b565993d5"
+        },
+        {
+          "name": "skills/urban-six-hop-deduction.zip",
+          "bytes": 2943,
+          "sha256": "b36d48792c3650c87ff7f306196044d27ea7c4c877b00abe5cc85ce7ddad6aa0"
+        }
+      ],
+      "agent_json_sha256": "fc041ffd97af1301279ae0907a9d1088081335bc57cd297fb7f4e5267a98f990",
+      "tools": [
+        "doc_search",
+        "collab_run",
+        "event_deduce",
+        "evidence_locate"
+      ],
+      "tools_count": 4,
+      "skill_names": [
+        "scarcity-allocation-evolution",
+        "urban-six-hop-deduction"
+      ],
+      "max_steps": 20,
+      "requested_output_tokens": 8192,
+      "mcp_info": [
+        {
+          "mcp_server_name": "urban-twin-mcp",
+          "mcp_url": "http://urban-twin-mcp:8000/sse"
+        }
+      ]
+    },
+    {
+      "agent_id": 4,
+      "name": "urban_collab_agent",
+      "version_no": 12,
+      "ok": true,
+      "kind": "json",
+      "file": "/tmp/published/urban_collab_agent-v12.json",
+      "agent_json_sha256": "bb23fec909280dcab6816ce0fb7023be211e2ff916f55b42c71eee862d28592d",
+      "tools": [
+        "collab_run",
+        "event_deduce",
+        "twin_neighbors",
+        "allocation_plan",
+        "conflict_check",
+        "evidence_locate"
+      ],
+      "tools_count": 6,
+      "skill_names": [],
+      "max_steps": 20,
+      "requested_output_tokens": 8192,
+      "mcp_info": [
+        {
+          "mcp_server_name": "urban-twin-mcp",
+          "mcp_url": "http://urban-twin-mcp:8000/sse"
+        }
+      ]
+    },
+    {
+      "agent_id": 40,
+      "name": "urban_asset_qa",
+      "version_no": 11,
+      "ok": true,
+      "kind": "json",
+      "file": "/tmp/published/urban_asset_qa-v11.json",
+      "agent_json_sha256": "3c68f8a64035cc14462ba3f1c94dd0e4e551d24e18f0f8d52478e4215ff06d1d",
+      "tools": [
+        "knowledge_base_search"
+      ],
+      "tools_count": 1,
+      "skill_names": [],
+      "max_steps": 12,
+      "requested_output_tokens": 8192,
+      "mcp_info": []
+    }
+  ],
+  "all_ok": true
+}

@@ -872,7 +872,8 @@ def render_showcase_markdown(showcase: ShowcaseReport) -> str:
         "- 反馈来源：冻结 ground truth + 人工评审结论（受控评测环境下的反馈信号），"
         "不是真实市政数据回流；" + review_source,
         "- 分层记忆为**离线同构实现**（Tenant/User/Agent 三层契约与 Nexent 对齐），"
-        "**未在真实 Nexent 平台验证**。",
+        "这个进化循环**未在真实 Nexent 平台验证**；平台侧只验证过 agent 层短期记忆的"
+        "写入与召回（2026-11-22，见 `deploy/nexent/memory_roundtrip.py`）。",
         "",
         "## 0 一句话结论",
         "",
