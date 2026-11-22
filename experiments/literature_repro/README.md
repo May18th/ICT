@@ -14,7 +14,7 @@
 | # | 路线 | 状态 | 结果 | 卡在哪 |
 |---|---|---|---|---|
 | 1 | Xu 2023 LightGBM | 方法复现完成 | 合成基线 NSE 0.866 / MAPE 6.55% | 缺 PCSWMM 49 场情景与标签，结果复现未开始 |
-| 2 | 刘成帅 2023 GRGM-LSTM | GRGM 完成 | 18 事件体积守恒残差 1.8e-12 m³ | LSTM 需 torch，`--stage full` 返回退出码 2 |
+| 2 | 刘成帅 2023 GRGM-LSTM | 方法链完成（GRGM + LSTM） | 守恒残差 1.8e-12 m³；合成目标 NSE test 0.998、RMSE 0.0009 m³/s | 目标是合成观测，缺 18 场实测洪水与标签 |
 | 3 | 卢兴超 2024 SWMM–LISFLOOD-FP | 接口完成 | 单向耦合体积相对残差 -9e-15 | 无 SWMM 求解器与二维浅水格式，无 DEM/管网 |
 | 4 | 王小杰 2024 1D–2D 双向 | 接口完成 | 四模式同场对比，峰值水深单调下降（23.3% → 28.7%） | 无 Glasgow 几何与观测；面积按格量化 |
 
@@ -46,8 +46,9 @@
 ```text
 uv venv .venv-exp --python 3.12
 uv pip install --python .venv-exp/Scripts/python.exe numpy lightgbm scikit-learn
+uv pip install --python .venv-exp/Scripts/python.exe torch --index-url https://download.pytorch.org/whl/cpu
 ```
 
 - `lightgbm` 的 sklearn 接口还需要 `scikit-learn`，只装前者会在构造 `LGBMRegressor` 时报错。
-- 版本口径以结果文件里的 `environment` 字段为准（当前 python 3.12.14 / numpy 2.5.5 / lightgbm 4.7.0 / scikit-learn 1.9.1）。
-- LSTM 路线需要 `torch`，体积大，未装；`--stage full` 与 `--stage lstm-gate` 会返回退出码 2 并明确报缺依赖，不会降级成别的模型。
+- 版本口径以结果文件里的 `environment` 字段为准（当前 python 3.12.14 / numpy 2.5.5 / lightgbm 4.7.0 / scikit-learn 1.9.1 / torch 2.15.0+cpu）。
+- LSTM 路线需要 `torch`，已装 CPU 版 `2.15.0+cpu`（走 pytorch CPU 索引，不带 CUDA 依赖）；缺它时 `--stage full` 与 `--stage lstm-gate` 返回退出码 2，不会降级成别的模型。

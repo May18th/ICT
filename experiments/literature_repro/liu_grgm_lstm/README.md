@@ -9,7 +9,8 @@
 - 当前仓库没有上述原始网格、雨量站、率定参数和观测标签。`--source synthetic` 只验收输入输出形状、产流守恒和依赖门，结果带有 `source_type=synthetic`，不能作为论文精度、NSE 或观测复现结果。
 - 脚本把 10 m 土壤/土地利用/坡度判别后的 `mode_grid` 作为输入，内部仅使用可审计的最小超渗、蓄满和混合算子。该算子用于接口 smoke，不等同于论文率定后的完整 GRGM 参数化。
 - 预见期边界按论文表述记录为“预见期小于 6 h”与“12 h”两档，不对第二档额外解释为其他阈值。当前阶段没有时序训练和评估，因此不外推到其他预见期。
-- 当前脚本不实现 LSTM。`--stage full` 或 `--stage lstm-gate` 会检查 PyTorch，缺少 `torch` 时返回非零状态并明确报错，不使用 RNN、线性模型或其他替代。
+- LSTM 汇流阶段已实现：GRGM 的网格产流序列作为输入特征，输出逐时流量。缺少 `torch` 时 `--stage full` 与 `--stage lstm-gate` 返回退出码 2 并明确报错，不使用 RNN、线性模型或其他替代。
+- **关键限定**：目标量要么来自输入自带的 `observed_discharge_m3s`（合成 fixture 里是面雨量的线性换算，`target_source=synthetic`），要么来自 GRGM 自算流量（`task=closed_loop_self_consistency`）。**两者都不是实测**，NSE 接近 1 只说明接口与训练流程可用，不能当作洪水预报能力。
 
 ## 最小输入契约
 
@@ -24,7 +25,7 @@
 | `mode_grid` | `[rows, cols]`，0=超渗、1=蓄满、2=混合 |
 | `parameters` | `f0_mm_h`、`fc_mm_h`、`decay_h_inv`、`storage_capacity_mm`，均为非负有限值 |
 
-`observed_discharge_m3s` 可以作为标签随输入提供，形状必须是 `[events, hours]`。脚本仅检查形状，不以合成标签计算论文指标。
+`observed_discharge_m3s` 可以随输入提供（形状 `[events, hours]`）。**提供时 LSTM 以它为监督目标**，结果里 `task` 记为 `observed_discharge`；未提供时退回 GRGM 自算流量，`task` 记为 `closed_loop_self_consistency`。两种情况下 `paper_result_claim` 都是 `false`。
 
 ## 运行
 
@@ -39,14 +40,35 @@ python experiments/literature_repro/liu_grgm_lstm/run_grgm_lstm.py --source synt
 依赖门单独运行：
 
 ```powershell
-python experiments/literature_repro/liu_grgm_lstm/run_grgm_lstm.py --source synthetic --stage lstm-gate
+.venv-exp/Scripts/python.exe experiments/literature_repro/liu_grgm_lstm/run_grgm_lstm.py --stage lstm-gate
 ```
 
-完整阶段会先运行 GRGM，再检查 PyTorch。当前环境未安装 PyTorch 时应明确失败：
+完整阶段（GRGM → LSTM 训练与留出评估）需要 `.venv-exp` 里的 torch：
 
 ```powershell
-python experiments/literature_repro/liu_grgm_lstm/run_grgm_lstm.py --source synthetic --stage full
+.venv-exp/Scripts/python.exe experiments/literature_repro/liu_grgm_lstm/run_grgm_lstm.py --stage full
 ```
+
+分场次留出是硬约束：最后 4 场作为测试集、前 14 场训练，按事件切分而不是按时间点切分，避免同一场洪水泄漏到两侧。缺 torch 的环境跑 `--stage full` 返回退出码 2，并把 `lstm_dependency` 标成 `blocked` 写进 `run.json`。
+
+## 当前结果（合成输入）
+
+```text
+留出事件 14–17（前 14 场训练）  torch 2.15.0+cpu  单线程  seed 42
+task=observed_discharge  target_source=synthetic
+NSE train 0.9995    NSE test 0.9981    RMSE test 0.0009 m³/s
+均值基线 NSE test -0.0201（说明指标本身没算错）
+隐藏层 16 / 400 epoch / Adam lr 0.01
+```
+
+两点必须同时读：
+
+1. 目标量不是实测。fixture 自带的 `observed_discharge_m3s` 是"面雨量 × 0.0015"的合成序列（注释里已写明不能拿来宣称 LSTM 精度），所以 `target_source` 标 `synthetic`。
+2. NSE 接近 1 是**预期结果而不是成果**。输入是 GRGM 网格产流、目标由同一场降雨换算而来，信息几乎全在输入里，这个映射接近恒等。
+
+它能证明的三件事：产流字段能喂进时序模型、按事件留出没有泄漏、训练可复现（同机同码两次运行指标逐位相同）。它不能证明任何预报能力。
+
+若换成 `--source json` 且输入不带 `observed_discharge_m3s`，脚本退回 GRGM 自算流量当目标，`task` 会标成 `closed_loop_self_consistency`，`target_source=grgm`。
 
 ## 结果解释
 
