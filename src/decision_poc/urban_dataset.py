@@ -374,6 +374,28 @@ SUPPLEMENTARY_ASSETS: tuple[SupplementaryAssetSpec, ...] = (
         scope="CD-CITY",
         note="方法出处资产；不进入 19 项业务台账，不作为事实 source_ref",
     ),
+    SupplementaryAssetSpec(
+        rel_path="references/paper-p1-1-hydrodynamic-coupling.md",
+        asset_type="reference_card",
+        title="摘录卡 P1-1：城市街区管网—地表水动力耦合路线",
+        source_org="内部依据文档（文献摘录卡）",
+        version="v1",
+        published_at="2026-11-22T00:00:00+08:00",
+        valid_from="2026-11-22T00:00:00+08:00",
+        scope="CD-CITY",
+        note="方法出处资产；不进入 19 项业务台账，不作为事实 source_ref",
+    ),
+    SupplementaryAssetSpec(
+        rel_path="references/paper-p1-2-surrogate-prediction.md",
+        asset_type="reference_card",
+        title="摘录卡 P1-2：城市内涝代理模型与快速预测路线",
+        source_org="内部依据文档（文献摘录卡）",
+        version="v1",
+        published_at="2026-11-22T00:00:00+08:00",
+        valid_from="2026-11-22T00:00:00+08:00",
+        scope="CD-CITY",
+        note="方法出处资产；不进入 19 项业务台账，不作为事实 source_ref",
+    ),
 )
 
 

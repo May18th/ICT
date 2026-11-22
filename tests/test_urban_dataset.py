@@ -27,6 +27,8 @@ def test_every_declared_file_exists() -> None:
         "paper-p0-1-knowledge-element-mapping.md",
         "paper-p0-2-chain-breaking.md",
         "paper-p0-4-complex-network-review.md",
+        "paper-p1-1-hydrodynamic-coupling.md",
+        "paper-p1-2-surrogate-prediction.md",
     }
     assert all(asset.asset_id.startswith("AS-CD-CITY-") for asset, _, _ in supplement)
     assert all(gov.status is AssetStatus.PUBLISHED for _, gov, _ in supplement)
