@@ -208,7 +208,7 @@ def build_evolution_payload(showcase: ShowcaseReport | None = None) -> dict[str,
         "boundaries": [
             "反馈信号 = 固定的 ground truth + 人工评审结论（受控评测环境），不是真实市政数据回流",
             "人工评审为角色扮演，用于演示第二反馈通道，不代表真实部门批复",
-            "分层记忆的进化循环为离线同构契约（Tenant/User/Agent），未在真实 Nexent 平台验证；平台侧只验证了 agent 层短期记忆的写入与召回",
+            "分层记忆的进化循环为离线同构契约（Tenant/User/Agent），未在真实 Nexent 平台验证；平台侧验证的是三层记忆的写入、召回与提示词注入",
         ],
     }
 

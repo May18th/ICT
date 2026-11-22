@@ -13,7 +13,7 @@
 | MCP 接入方式 | 4 个主工具同属一个容器内 SSE 端点，不是"远程地址"也不是"OpenAPI 转 MCP" | `samples/nexent/live/mcp_status.json`、`samples/nexent/tools.json` | 已补，`/health` 现场抓取 |
 | 知识库 | 单索引 125 个切片 / 21 个源文件，引用回 `文件名#行号` | `samples/nexent/live/kb_chunks.json`、`samples/nexent/live/platform_qa_current.json` | 已补；**未按四类分库**，见 §3.4 |
 | 多智能体调用图 | 主 Agent → 三组工具 → 大屏；总控与 5 部门在 `collab_run` 内，不是平台 sub-agent | `docs/figures/nexent-multiagent-callgraph.svg` | 已补，含平台机制对照 |
-| 分层记忆 | 离线五步全过；平台侧 agent 层短期记忆**已实测**写入/召回/注入/隔离，租户与用户两层长期记忆未写 | `samples/nexent/live/memory_roundtrip.json`、`docs/reports/nexent-memory-walkthrough.md` | 已补，边界见 §5.3 |
+| 分层记忆 | 离线五步全过；平台侧**三层均已实测**（agent 短期记忆的写入/召回/注入/隔离，tenant 与 user 长期记忆的写入/注入），进化循环仍离线 | `samples/nexent/live/memory_roundtrip.json`、`memory_long_term.json` | 已补，边界见 §5.3 |
 | 调试迭代 | 版本—会话号—结论可逐条对上；CI 五道闸有运行记录 | `docs/reports/nexent-live-integration-report.md`、`docs/reports/ci-runs.json` | 已补；顺带更正一处口径 |
 
 重新生成上面三份 JSON：
@@ -264,19 +264,42 @@ $ python -m decision_poc.mcp_sse --port 8872 --groups presentation
 第一次按 `memory_type=long_term` 写 agent 层，被 406 `Failed to persist memory record` 打回，
 根因就是这个 CheckViolation。
 
+**租户层与用户层（2026-11-22 23:05 实测，`samples/nexent/live/memory_long_term.json`）**：
+这两层是版本化 Markdown，不是 `memory_records_t`。
+
+| 步骤 | 接口 | 结果 |
+|---|---|---|
+| 写前探测 | `GET /memory/long-term/{tenant,user}` | 两层均 `empty=true`（此前从未写过） |
+| 写 tenant | `POST /memory/long-term/tenant/versions` | 201，`version_id=1`，312 字 |
+| 写 user | `POST /memory/long-term/user/versions` | 201，`version_id=2`，124 字 |
+| 读回 | `GET /memory/long-term/{scope}` | `empty=false`，正文逐字一致 |
+| 版本链 | `GET …/{scope}/versions` | 各 1 版 |
+| 提示词注入 | `GET /memory/context` | `tenant_long_term=1`、`user_long_term=1`，prompt 522 字符，两层正文都在里面 |
+| 回归 | `scripts/nexent_chain_live.py` | 主链 + 协同链仍通过（conv 329 / 330） |
+
+写入内容按三层分工放，不写与工单绑定的东西：
+
+- tenant（312 字）：片区范围、引用纪律（条款必须落原文、事实走工具条款走检索）、数值口径
+  （29.3cm 是几何估算、缺口按 0.8 折算）、策略变更须过门禁并可回退；
+- user（124 字）：先结论后依据、结论带责任机构、下穿隧道与医院学校周边优先、无出处数字宁写待核。
+
+**这两层改的是所有对话看到的长期记忆**，写之前已在平台侧确认是空的。回退方式是新写一版覆盖，
+旧版本留在 `/memory/long-term/{scope}/versions` 里可查——不是删除。
+
 所以现在准确的表述是：
 
 > 决策记忆的**进化循环**在离线同构实现中跑通（写入、召回、逐层降级、持久化四项有实测）；
-> 平台侧已验证 **agent 层短期记忆**的写入、召回、上下文注入与跨用户隔离；
-> 租户/用户两层的长期记忆未写入——写它们会改变所有对话看到的上下文，属平台状态变更，
-> 没在无人值守脚本里做。
+> 平台侧三层都已验证：agent 层短期记忆的写入、召回、上下文注入与跨用户隔离，
+> tenant 层城市值守规范与 user 层指挥员偏好的写入与提示词注入（2026-11-22）；
+> **但平台上跑的是记忆读写与注入，不是策略自动进化。**
 
-复现（宿主机三条命令，细节见脚本 docstring）：
+复现（宿主机四条命令，细节见脚本 docstring）：
 
 ```bash
-docker cp deploy/nexent/platform_client.py  nexent-config:/tmp/platform_client.py
-docker cp deploy/nexent/memory_roundtrip.py nexent-config:/tmp/memory_roundtrip.py
-docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/memory_roundtrip.py --json /tmp/m.json"
+docker cp deploy/nexent/platform_client.py       nexent-config:/tmp/platform_client.py
+docker cp deploy/nexent/memory_roundtrip.py      nexent-config:/tmp/memory_roundtrip.py
+docker cp deploy/nexent/memory_long_term_seed.py nexent-config:/tmp/memory_long_term_seed.py
+docker exec nexent-config sh -c "cd /opt/backend && .venv/bin/python /tmp/memory_long_term_seed.py --json /tmp/m.json"
 ```
 
 ---
@@ -365,7 +388,7 @@ uv run --locked python scripts/nexent_chain_live.py
 |---|---|---|
 | 新提问的问答全过程录屏 | 平台前端流式回答触发 React #185，一问就崩 | 初赛函评不到场，非必需；决赛要现场演示则先修前端或走历史会话回放 |
 
-分层记忆那一格已于 2026-11-22 补上（§5.3），租户/用户两层长期记忆刻意没写，属取舍不属缺口。
+分层记忆那一格已于 2026-11-22 补上（§5.3），三层记忆都已写入并注入；仍属离线的是**进化循环**本身。
 
 其余各格都有可读文件可复核。历史快照与当前状态的边界统一看 `docs/reports/nexent-evidence-index.md`。
 
@@ -382,7 +405,7 @@ uv run --locked python scripts/nexent_chain_live.py
 | 技能正文导致退化 | 「实测结果是 8/8 直接掉到 0/8——技能正文里"必须调 twin_neighbors / conflict_check / allocation_plan"的指令覆盖了主提示词的约束」 | 一致（归因指向技能正文，与 §6.2 相同） |
 | 测试数 | 「981 项测试（967 通过 + 14 项按设计跳过；依赖装齐的机器上只跳 1 项）」 | 一致：2026-11-22 实测 981 收集 / 980 通过 / 1 跳过 |
 | 对外数字自检 | 「108/108 项一致，核对值 a63cbf4f9fc53c6e」 | 一致 |
-| 分层记忆 | 限制条目第 4 条原为「未在平台侧验证……没有做过一次真实写入与召回」 | **已改**：现为「分层记忆只验证到智能体层短期记忆：平台侧已实测写入、召回、上下文注入与跨用户隔离……租户与用户两层长期记忆未写入，决策记忆的进化循环仍为离线同构实现」 |
+| 分层记忆 | 限制条目第 4 条原为「未在平台侧验证……没有做过一次真实写入与召回」 | **又变了**：tenant/user 两层写入后已改为「三层都已接上平台……但进化循环仍是离线同构实现」，提交件待同步 |
 | 导出缺陷归因 | 原写「导出智能体配置时不完整带出 MCP 工具绑定」，把现象当原因 | **已改**：真正原因是路由未传版本号、导出的是草稿；正文与限制条目同步补上直调导出 v34 / v12 / v11 的 4 / 6 / 1 个工具 |
 
 第 245 段原写「职责重叠会让模型在两份相似结果之间反复挑，**实测正是 8/8 掉到 0/8 的原因之一**」——「职责重叠」没有单独做过对照，已删去「实测」二字，改为「这也是把结论收在一个工具里的原因」。

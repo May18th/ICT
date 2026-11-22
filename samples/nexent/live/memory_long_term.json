@@ -1,0 +1,114 @@
+{
+  "schema_version": "nexent-memory-long-term-1",
+  "generated_at": "2026-11-22T23:07:05+0800",
+  "base_url": "http://localhost:5010",
+  "scopes": {
+    "tenant": {
+      "chars": 312,
+      "version_id": 1,
+      "content": "# 城市内涝处置值守规范（成都兴华路片区）\n\n## 适用范围\n- 单片区：成都兴华路片区约 3 公里。方案可迁移，标定参数不可迁移。\n\n## 引用纪律\n- 条款依据必须落到预案原文，引用带文件名与条款定位；查不到原文的结论不输出。\n- 事实类问题走工具（台账查询），条款类问题走检索，两者不混用。\n\n## 数值口径\n- 积水深度以台账值为准。峰值 29.3cm 是几何路径估算，对台账 30cm 偏差 −2.4%，不宣称模型精度。\n- 资源缺口按“额定能力 × 0.8 保守折算”，属折算口径，不是水力模型测算值。\n\n## 策略变更\n- 任何策略调整先过评测门禁（训练集与留出集双集），不达标不上线；上线后保留可回退版本。\n"
+    },
+    "user": {
+      "chars": 124,
+      "version_id": 2,
+      "content": "# 值班指挥员偏好\n\n- 先给结论与处置顺序，再给依据；不先铺陈过程。\n- 每条结论标责任机构；涉及条款的标原文定位。\n- 下穿隧道、医院与学校周边路段优先处置。\n- 不接受没有出处的数字，宁可写“待核实”。\n- 跨部门动作先说明谁与谁联合发布。\n"
+    }
+  },
+  "steps": [
+    {
+      "step": "read_before_tenant",
+      "http": 200,
+      "detail": {
+        "empty": true,
+        "active_version_id": null
+      }
+    },
+    {
+      "step": "read_before_user",
+      "http": 200,
+      "detail": {
+        "empty": true,
+        "active_version_id": null
+      }
+    },
+    {
+      "step": "write_tenant",
+      "http": 201,
+      "detail": {
+        "version_id": 1,
+        "chars": 312,
+        "active": true
+      }
+    },
+    {
+      "step": "write_user",
+      "http": 201,
+      "detail": {
+        "version_id": 2,
+        "chars": 124,
+        "active": true
+      }
+    },
+    {
+      "step": "read_after_tenant",
+      "http": 200,
+      "detail": {
+        "empty": false,
+        "version_id": 1,
+        "chars": 312,
+        "content_matches": true
+      }
+    },
+    {
+      "step": "versions_tenant",
+      "http": 200,
+      "detail": {
+        "count": 1,
+        "ids": [
+          1
+        ]
+      }
+    },
+    {
+      "step": "read_after_user",
+      "http": 200,
+      "detail": {
+        "empty": false,
+        "version_id": 2,
+        "chars": 124,
+        "content_matches": true
+      }
+    },
+    {
+      "step": "versions_user",
+      "http": 200,
+      "detail": {
+        "count": 1,
+        "ids": [
+          2
+        ]
+      }
+    },
+    {
+      "step": "context_injection",
+      "http": 200,
+      "detail": {
+        "blocks": {
+          "tenant_long_term": 1,
+          "user_long_term": 1,
+          "agent_short_term": 0,
+          "external": 0
+        },
+        "prompt_chars": 522,
+        "has_tenant_text": true,
+        "has_user_text": true
+      }
+    }
+  ],
+  "summary": {
+    "all_http_ok": true,
+    "tenant_written": true,
+    "user_written": true
+  },
+  "note": "两层长期记忆是版本链，写后对所有对话生效；回退方式是新写一版覆盖，旧版本仍可从 /memory/long-term/{scope}/versions 查到。"
+}

@@ -346,7 +346,7 @@ uv run --locked python -m decision_poc.policy_evolution --report docs/reports/p9
 
 反馈信号来自 `samples/eval/allocation_cases.json`（8 训练 + 4 留出，逐例标注依据条款）的**固定 ground truth**
 与 `samples/eval/decision_reviews.json` 的**人工评审结论**，不是真实市政数据回流；报告口径统一写作
-「受控评测环境下的反馈信号」。分层记忆的**进化循环**是离线同构实现，没有在平台上跑过；平台侧只单独验证了 agent 层短期记忆的写入、召回、上下文注入与跨用户隔离（`reports/nexent-memory-walkthrough.md` §七），两件事别混。
+「受控评测环境下的反馈信号」。分层记忆的**进化循环**是离线同构实现，没有在平台上跑过；平台侧验证的是记忆本身——agent 层短期记忆（写入、召回、上下文注入、跨用户隔离）与 tenant/user 两层长期记忆（`reports/nexent-memory-walkthrough.md` §七、§八），两件事别混。
 策略本身可由 Nexent 通过 MCP 工具 `allocation_plan` 调用（`policy` 参数可传进化后的版本），
 见 [P9 设计规格](superpowers/specs/2026-10-30-p9-decision-evolution-design.md) 与
 [P9 报告](reports/p9-policy-evolution-report.md)。

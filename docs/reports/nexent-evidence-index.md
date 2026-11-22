@@ -23,6 +23,7 @@
 | 知识库切分口径与 125 条切片统计 | `samples/nexent/live/kb_chunks.json` | 2026-11-22 由 `ingest_knowledge.build_docs()` 生成 |
 | CI 五道闸最近三次运行 | `docs/reports/ci-runs.json` | 2026-11-22 由 `gh run view` 抓取，含 run id 与 commit sha |
 | 分层记忆平台读写闭环（agent 层短期） | `samples/nexent/live/memory_roundtrip.json` | 2026-11-22 22:41 实测，探针已清理 |
+| 长期记忆两层（tenant 值守规范 / user 指挥员偏好） | `samples/nexent/live/memory_long_term.json` | 2026-11-22 23:05 实测，写前为空，写入后注入提示词 522 字符 |
 | 三个 Agent 的**已发布版本**导出件（4 / 6 / 1 个工具） | `samples/nexent/live/published_exports.json`、`urban_deduction_agent-v34.zip` | 2026-11-22 容器内直调 impl 导出，绕开路由只导草稿的限制 |
 
 ## 架构边界
@@ -58,7 +59,7 @@
 ## 尚未取得的外部证据
 
 - **新提问的问答全过程**录屏仍未取得，原因见上方「已知平台缺陷」。2026-11-21 已录 35 秒界面演示（六个 Agent 与版本号、平台历史会话的完整推演结论、知识库索引、`/evolution`）；问答数值证据仍以 JSON 为准。
-- 分层记忆：agent 层短期记忆的平台读写闭环已取得运行快照（`samples/nexent/live/memory_roundtrip.json`，写入/召回/注入/隔离/清理五步）；租户与用户两层的长期记忆未写入，仍只有离线同构契约。
+- 分层记忆：三层均已取得平台运行快照——agent 层短期（`memory_roundtrip.json`，写入/召回/注入/隔离/清理五步）、tenant 与 user 层长期（`memory_long_term.json`，写入/读回/版本链/提示词注入）；仍只有离线同构契约的是**进化循环**本身。
 - `data-gate-report.md` 中一项高程基准、逐字段来源补齐，以及前池库容曲线的图纸或实测来源，仓库和公开检索均没有对应原始资料。
 - 平台运行时系统提示词要求检索型回答保留 `[[字母+数字]]` 引用标记，当前没有发现 Agent 配置项可关闭。`urban_asset_qa` 提示词已要求提交前删除角标，但 2026-11-21 三问实测仍有 1/3 返回 `[[a1]]`。网页端已有展示层清理，北向原始 `final_answer` 仍需按 `marker_free` 字段验收。
 

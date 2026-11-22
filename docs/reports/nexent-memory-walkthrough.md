@@ -152,5 +152,28 @@ curl -s -X DELETE "$B/memory/records/<memory_id>" -H "Authorization: Bearer $K"
 | 跨用户隔离 | 换 `sub` 再列 | 0 条，不可见 |
 | 清理 | `DELETE /memory/records/456` | 200，再列已无 |
 
-所以 §一 的结论要收窄成一句：**agent 层短期记忆的平台侧读写闭环已验证；租户/用户两层长期记忆没写**——
-写它们会改变所有对话看到的上下文，属平台状态变更，没在无人值守脚本里做。
+所以 §一 的结论要收窄成一句：**agent 层短期记忆的平台侧读写闭环已验证**；租户/用户两层当时没写——
+写它们会改变所有对话看到的上下文，属平台状态变更。那两层的写入在 §八 补上了。
+
+---
+
+## 八、tenant / user 两层也写完了（2026-11-22 23:05 实测）
+
+脚本 `deploy/nexent/memory_long_term_seed.py`，证据 `samples/nexent/live/memory_long_term.json`。
+写之前两层都是 `empty=true`——平台上此前从未写过长期记忆。
+
+| 步骤 | 接口 | 结果 |
+|---|---|---|
+| 写 tenant | `POST /memory/long-term/tenant/versions` | 201，`version_id=1`，312 字 |
+| 写 user | `POST /memory/long-term/user/versions` | 201，`version_id=2`，124 字 |
+| 读回 | `GET /memory/long-term/{scope}` | `empty=false`，正文逐字一致 |
+| 版本链 | `GET …/{scope}/versions` | 各 1 版 |
+| 提示词注入 | `GET /memory/context` | `tenant_long_term=1`、`user_long_term=1`，prompt 522 字符 |
+| 回归 | `scripts/nexent_chain_live.py` | 主链 + 协同链仍通过（conv 329 / 330） |
+
+两条操作事实：
+
+1. tenant 作用域要求 JWT 的 `sub` 在 `user_tenant_t` 里 `user_role=ADMIN`；本项目用的是
+   `84b8db49-…`（ADMIN），`46c9379e-…` 是 SU，也能用但没必要。
+2. 长期记忆**不能删只能盖**：回退方式是再 POST 一版成为 active，旧版本留在版本链里可查。
+   所以脚本只写「不随工单变化」的稳定内容（值守规范、指挥员偏好），不写单次推演结论。
