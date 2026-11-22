@@ -1,9 +1,10 @@
 # 文献方法复现：四条路线的结论与边界
 
 - 日期：2026-11-22
-- 分支：`exp/literature-tech-repro`（`d7f177d` → `ff36f8e` → `2a8890d`），实验代码在 `experiments/literature_repro/`
+- 代码位置：`experiments/literature_repro/`（已合入 `main`，cherry-pick 自实验分支，内容等价）
+- 提交：实验分支 `exp/literature-tech-repro` 的 `d7f177d` → `ff36f8e` → `2a8890d`；`main` 上对应 `e2db664` → `bd860ea` → `1126904`
 - 对应卡片：[P1-1 水动力耦合](../references/paper-p1-1-hydrodynamic-coupling.md)、[P1-2 代理模型](../references/paper-p1-2-surrogate-prediction.md)
-- 主分支运行时、MCP、门户、19 项业务台账、六跳链、分配规则、对外数字均未改动
+- 主分支运行时、MCP、门户、19 项业务台账、六跳链、分配规则、对外数字均未改动；`experiments/` 不在任何测试或 CI 扫描范围内，四个脚本自带退出码与 `run.json`
 
 ## 结论先行
 
